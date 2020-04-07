@@ -1,0 +1,7 @@
+# Packages required in a production environment
+-r base.txt
+
+gevent
+gunicorn
+#mysqlclient
+PyYAML>=5.1

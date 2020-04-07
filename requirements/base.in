@@ -1,0 +1,13 @@
+# Core requirements for using this application
+
+Django>=2.2,<2.3          # Web application framework
+django-cors-headers
+django-extensions
+django-rest-swagger
+django-waffle
+djangorestframework
+edx-auth-backends
+edx-django-utils
+edx-drf-extensions
+edx-rest-api-client==1.9.2
+pytz

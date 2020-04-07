@@ -1,0 +1,9 @@
+# Additional requirements for development of this application
+
+-r pip-tools.txt          # pip-tools and its deps, for managing requirements files
+-r validation.txt         # Core, testing, and quality check dependencies
+
+diff-cover                # Changeset diff test coverage
+edx-i18n-tools            # For i18n_tool dummy
+django-debug-toolbar      # For debugging Django
+#transifex-client         # For managing translations
