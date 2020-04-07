@@ -6,7 +6,7 @@ License Management Service  |Travis|_ |Codecov|_
 .. |Codecov| image:: http://codecov.io/github/edx/license-manager/coverage.svg?branch=master
 .. _Codecov: http://codecov.io/github/edx/license-manager?branch=master
 
-The ``README.rst`` file should start with a brief description of the repository, which sets it in the context of other repositories under the ``edx`` organization. It should make clear where this fits in to the overall edX codebase. You may also want to provide a brief overview of the code in this repository, including the main components and useful entry points for starting to understand the code in more detail, or link to a comparable description in your repo's docs.
+Django backend for managing licenses and subscriptions.
 
 Documentation
 -------------
