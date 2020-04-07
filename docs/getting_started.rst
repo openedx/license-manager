@@ -17,7 +17,7 @@ Initialize and Provision
 
 Viewing License Manager 
 ------------------------
-Once the server is up and running you can view the license manager at http://localhost:18188/admin.
+Once the server is up and running you can view the license manager at http://localhost:18170/admin.
 
 You can login with the username *edx@example.com* and password *edx*.
 

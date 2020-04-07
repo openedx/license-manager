@@ -22,4 +22,4 @@ license_manager:
     - .:/edx/app/license_manager/license_manager
   command: /edx/app/license_manager/devstack.sh start
   ports:
-    - "18188:18188" # TODO: change this to your port
+    - "18170:18170"
