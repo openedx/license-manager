@@ -13,13 +13,11 @@ license_manager:
   # Uncomment this line to use the official license_manager base image
   image: license_manager:v1
 
-  # Uncomment the next two lines to build from a local configuration repo
-  #build: ../configuration
-  #dockerfile: docker/build/license_manager/Dockerfile
-
   container_name: license_manager
   volumes:
     - .:/edx/app/license_manager/license_manager
-  command: /edx/app/license_manager/devstack.sh start
+  command: bash -c 'gunicorn --reload --workers=2 --name license_manager -b :18170 -c /edx/app/license_manager/license_manager/docker_gunicorn_configuration.py --log-file - --max-requests=1000 license_manager.wsgi:application'
+  environment:
+    DJANGO_SETTINGS_MODULE: license_manager.settings.devstack
   ports:
-    - "18170:18170"
+    - "18170:18170" # TODO: change this to your port

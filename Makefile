@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := test
+.DEFAULT_GOAL := help
 
 .PHONY: help clean piptools requirements ci_requirements dev_requirements \
         validation_requirements doc_requirementsprod_requirements static shell \
@@ -133,3 +133,20 @@ detect_changed_source_translations: ## check if translation files are up-to-date
 	cd license_manager && i18n_tool changed
 
 validate_translations: fake_translations detect_changed_source_translations ## install fake translations and check if translation files are up-to-date
+
+docker_build:
+	docker build . -f Dockerfile -t openedx/license_manager
+	docker build . -f Dockerfile --target newrelic -t openedx/license_manager:latest-newrelic
+
+docker_tag: docker_build
+	docker tag openedx/license_manager openedx/license_manager:$$TRAVIS_COMMIT
+	docker tag openedx/license_manager:latest-newrelic openedx/license_manager:$$TRAVIS_COMMIT-newrelic
+
+docker_auth:
+	echo "$$DOCKER_PASSWORD" | docker login -u "$$DOCKER_USERNAME" --password-stdin
+
+docker_push: docker_tag docker_auth ## push to docker hub
+	docker push 'openedx/license_manager:latest'
+	docker push "openedx/license_manager:$$TRAVIS_COMMIT"
+	docker push 'openedx/license_manager:latest-newrelic'
+	docker push "openedx/license_manager:$$TRAVIS_COMMIT-newrelic"

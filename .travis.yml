@@ -15,3 +15,8 @@ script:
     - make validate
 after_success:
     - codecov
+deploy:
+  provider: script
+  script: make docker_push
+  on: 
+    branch: master

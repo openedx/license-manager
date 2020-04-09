@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# License Management Service documentation build configuration file, created by
+# License Manager documentation build configuration file, created by
 # sphinx-quickstart on Sun Feb 17 11:46:20 2013.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -48,7 +48,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'License Management Service'
+project = u'License Manager'
 copyright = edx_theme.COPYRIGHT
 author = u'edX'
 
@@ -192,7 +192,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ('index', 'license_manager.tex', u'License Management Service Documentation',
+    ('index', 'license_manager.tex', u'License Manager Documentation',
      u'edX', 'manual'),
 ]
 
@@ -222,7 +222,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'License Management Service', u'License Management Service Documentation',
+    ('index', 'License Manager', u'License Manager Documentation',
      [u'edX'], 1)
 ]
 
@@ -236,8 +236,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'License Management Service', u'License Management Service Documentation',
-     u'edX', 'License Management Service', 'License Management Service',
+    ('index', 'License Manager', u'License Manager Documentation',
+     u'edX', 'License Manager', 'License Manager',
      'Miscellaneous'
      ),
 ]

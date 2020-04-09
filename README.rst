@@ -1,4 +1,4 @@
-License Management Service  |Travis|_ |Codecov|_
+License Manager  |Travis|_ |Codecov|_
 ===================================================
 .. |Travis| image:: https://travis-ci.org/edx/license-manager.svg?branch=master
 .. _Travis: https://travis-ci.org/edx/license-manager
