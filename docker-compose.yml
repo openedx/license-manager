@@ -11,11 +11,11 @@ memcache:
 
 license_manager:
   # Uncomment this line to use the official license_manager base image
-  image: license_manager:v1
+  image: openedx/license_manager
 
   container_name: license_manager
   volumes:
-    - .:/edx/app/license_manager/license_manager
+    - .:/edx/app/license_manager/
   command: bash -c 'gunicorn --reload --workers=2 --name license_manager -b :18170 -c /edx/app/license_manager/license_manager/docker_gunicorn_configuration.py --log-file - --max-requests=1000 license_manager.wsgi:application'
   environment:
     DJANGO_SETTINGS_MODULE: license_manager.settings.devstack
