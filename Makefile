@@ -53,7 +53,7 @@ prod_requirements: ## install requirements for production
 static: ## generate static files
 	python manage.py collectstatic --noinput
 
-shell: ## run Django shell
+django_shell: ## run Django shell
 	python manage.py shell
 
 test: clean ## run tests and generate coverage report
@@ -120,9 +120,6 @@ pull_translations: ## pull translations from Transifex
 push_translations: ## push source translation files (.po) from Transifex
 	tx push -s
 
-start-devstack: ## run a local development copy of the server
-	docker-compose --x-networking up
-
 open-devstack: ## open a shell on the server started by start-devstack
 	docker exec -it license_manager /edx/app/license_manager/devstack.sh open
 
@@ -150,3 +147,12 @@ docker_push: docker_tag docker_auth ## push to docker hub
 	docker push "openedx/license_manager:$$TRAVIS_COMMIT"
 	docker push 'openedx/license_manager:latest-newrelic'
 	docker push "openedx/license_manager:$$TRAVIS_COMMIT-newrelic"
+
+dev.provision:
+	bash ./provision-license-manager.sh
+
+dev.up: # Starts all containers
+	docker-compose up -d --build
+
+app-shell: # Run a shell on the app container
+	docker exec -it license_manager bash

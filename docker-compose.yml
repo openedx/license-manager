@@ -1,13 +1,13 @@
-db:
+license_manager.mysql:
   image: mysql:5.6
-  container_name: db
+  container_name: license_manager.mysql
   environment:
     MYSQL_ROOT_PASSWORD: ""
     MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
 
-memcache:
+license_manager.memcache:
   image: memcached:1.4.24
-  container_name: memcache
+  container_name: license_manager.memcache
 
 license_manager:
   # Uncomment this line to use the official license_manager base image
