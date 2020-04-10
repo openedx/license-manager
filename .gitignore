@@ -59,6 +59,9 @@ license_manager/conf/locale/messages.mo
 .project
 .pydevproject
 
+# emacs
+*~
+
 # QA
 coverage.xml
 diff_*.html
