@@ -2,3 +2,5 @@
 
 -r quality.txt
 -r test.txt
+
+edx-i18n-tools            # For i18n_tool dummy

@@ -34,13 +34,13 @@ drf-jwt==1.14.0           # via -r requirements/validation.txt, edx-drf-extensio
 edx-auth-backends==3.0.2  # via -r requirements/validation.txt
 edx-django-utils==3.2.0   # via -r requirements/validation.txt, edx-drf-extensions
 edx-drf-extensions==5.0.2  # via -r requirements/validation.txt
-edx-i18n-tools==0.5.0     # via -r requirements/dev.in
+edx-i18n-tools==0.5.0     # via -r requirements/validation.txt
 edx-lint==1.4.1           # via -r requirements/validation.txt
 edx-opaque-keys==2.0.2    # via -r requirements/validation.txt, edx-drf-extensions
 edx-rest-api-client==1.9.2  # via -r requirements/validation.txt
 future==0.18.2            # via -r requirements/validation.txt, pyjwkest
 idna==2.9                 # via -r requirements/validation.txt, requests
-importlib-metadata==1.6.0  # via -r requirements/validation.txt, inflect, path, pluggy, pytest
+importlib-metadata==1.6.0  # via -r requirements/validation.txt, path, pluggy, pytest
 inflect==4.1.0            # via jinja2-pluralize
 isort==4.3.21             # via -r requirements/validation.txt, pylint
 itypes==1.1.0             # via -r requirements/validation.txt, coreapi
@@ -55,12 +55,12 @@ newrelic==5.10.0.138      # via -r requirements/validation.txt, edx-django-utils
 oauthlib==3.1.0           # via -r requirements/validation.txt, requests-oauthlib, social-auth-core
 openapi-codec==1.3.2      # via -r requirements/validation.txt, django-rest-swagger
 packaging==20.3           # via -r requirements/validation.txt, caniusepython3, pytest
-path.py==12.4.0           # via edx-i18n-tools
-path==13.1.0              # via path.py
+path.py==12.4.0           # via -r requirements/validation.txt, edx-i18n-tools
+path==13.1.0              # via -r requirements/validation.txt, path.py
 pbr==5.4.5                # via -r requirements/validation.txt, stevedore
 pip-tools==4.5.1          # via -r requirements/pip-tools.txt
 pluggy==0.13.1            # via -r requirements/validation.txt, diff-cover, pytest
-polib==1.1.0              # via edx-i18n-tools
+polib==1.1.0              # via -r requirements/validation.txt, edx-i18n-tools
 psutil==1.2.1             # via -r requirements/validation.txt, edx-django-utils
 py==1.8.1                 # via -r requirements/validation.txt, pytest
 pycodestyle==2.5.0        # via -r requirements/validation.txt

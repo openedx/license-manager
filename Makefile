@@ -36,7 +36,7 @@ piptools: ## install pinned version of pip-compile and pip-sync
 
 requirements: piptools dev_requirements ## sync to default requirements
 
-ci_requirements: validation_requirements ## sync to requirements needed for CI checks
+ci_requirements: piptools validation_requirements ## sync to requirements needed for CI checks
 
 dev_requirements: ## sync to requirements for local development
 	pip-sync -q requirements/dev.txt
