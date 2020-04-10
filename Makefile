@@ -131,6 +131,29 @@ detect_changed_source_translations: ## check if translation files are up-to-date
 
 validate_translations: fake_translations detect_changed_source_translations ## install fake translations and check if translation files are up-to-date
 
+# Docker dev commands below
+
+dev.provision:
+	bash ./provision-license-manager.sh
+
+dev.up: # Starts all containers
+	docker-compose up -d
+
+dev.up.build:
+	docker-compose up -d --build
+
+dev.down: # Kills containers and all of their data that isn't in volumes
+	docker-compose down
+
+dev.stop: # Stops containers so they can be restarted
+	docker-compose stop
+
+app-shell: # Run a shell on the app container
+	docker exec -u 0 -it license_manager bash
+
+attach:
+	docker attach license_manager
+
 docker_build:
 	docker build . -f Dockerfile -t openedx/license_manager
 	docker build . -f Dockerfile --target newrelic -t openedx/license_manager:latest-newrelic
@@ -147,12 +170,3 @@ docker_push: docker_tag docker_auth ## push to docker hub
 	docker push "openedx/license_manager:$$TRAVIS_COMMIT"
 	docker push 'openedx/license_manager:latest-newrelic'
 	docker push "openedx/license_manager:$$TRAVIS_COMMIT-newrelic"
-
-dev.provision:
-	bash ./provision-license-manager.sh
-
-dev.up: # Starts all containers
-	docker-compose up -d --build
-
-app-shell: # Run a shell on the app container
-	docker exec -it license_manager bash
