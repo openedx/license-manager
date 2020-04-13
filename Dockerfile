@@ -33,6 +33,7 @@ ENV LC_ALL en_US.UTF-8
 ENV DJANGO_SETTINGS_MODULE license_manager.settings.production
 
 EXPOSE 18170
+EXPOSE 18171
 RUN useradd -m --shell /bin/false app
 
 WORKDIR /edx/app/license_manager

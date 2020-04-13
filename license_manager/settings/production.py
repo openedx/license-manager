@@ -51,5 +51,17 @@ DB_OVERRIDES = dict(
     PORT=environ.get('DB_MIGRATION_PORT', DATABASES['default']['PORT']),
 )
 
+# BEGIN CELERY
+CELERYD_HIJACK_ROOT_LOGGER = False
+
+BROKER_URL = "{0}://{1}:{2}@{3}/{4}".format(
+    CELERY_BROKER_TRANSPORT,
+    CELERY_BROKER_USER,
+    CELERY_BROKER_PASSWORD,
+    CELERY_BROKER_HOSTNAME,
+    CELERY_BROKER_VHOST
+)
+# END CELERY
+
 for override, value in DB_OVERRIDES.iteritems():
     DATABASES['default'][override] = value
