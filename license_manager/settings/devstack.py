@@ -22,3 +22,10 @@ JWT_AUTH.update({
     'JWT_ISSUER': 'http://localhost:18000/oauth2',
     'JWT_AUDIENCE': SOCIAL_AUTH_EDX_OAUTH2_KEY,
 })
+
+# BEGIN CELERY
+CELERYD_HIJACK_ROOT_LOGGER = True
+CELERY_ALWAYS_EAGER = (
+    os.environ.get("CELERY_ALWAYS_EAGER", "false").lower() == "true"
+)
+# END CELERY

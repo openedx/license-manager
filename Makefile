@@ -151,11 +151,15 @@ dev.stop: # Stops containers so they can be restarted
 app-shell: # Run a shell on the app container
 	docker exec -u 0 -it license_manager bash
 
+app-restart:
+	docker-compose restart license_manager
+
 attach:
 	docker attach license_manager
 
 docker_build:
 	docker build . -f Dockerfile -t openedx/license_manager
+	docker build . -f Dockerfile -t openedx/license_manager.worker
 	docker build . -f Dockerfile --target newrelic -t openedx/license_manager:latest-newrelic
 
 docker_tag: docker_build

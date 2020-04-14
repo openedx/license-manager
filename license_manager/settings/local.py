@@ -37,7 +37,7 @@ if os.environ.get('ENABLE_DJANGO_TOOLBAR', False):
         'debug_toolbar',
     )
 
-    MIDDLEWARE_CLASSES += (
+    MIDDLEWARE += (
         'debug_toolbar.middleware.DebugToolbarMiddleware',
     )
 
@@ -61,6 +61,10 @@ JWT_AUTH.update({
 })
 
 ENABLE_AUTO_AUTH = True
+
+# BEGIN CELERY
+CELERY_ALWAYS_EAGER = True
+# END CELERY
 
 LOGGING = get_logger_config(debug=DEBUG, dev_env=True, local_loglevel='DEBUG')
 

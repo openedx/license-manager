@@ -1,5 +1,43 @@
 Getting Started
 ===============
+First, make sure your devstack is up and running as license-manager currently depends on the edx devstack.
+Next, run the following commands:
+
+.. code-block:: bash
+
+    $ make docker_build
+    $ make dev.up
+    $ make dev.provision
+    $ make app-shell
+    $ make requirements
+
+At this point, the license_manager app should be ready to go.
+
+Viewing License Manager 
+------------------------
+Once the server is up and running you can view the app admin at http://localhost:18170/admin.
+
+You can login with the username *edx* and password *edx*.
+
+Makefile Commands
+--------------------
+The `Makefile <../Makefile>`_ includes numerous commands to start the service, but the basic commands are the following:
+
+Start the Docker containers to run the license manager servers
+
+.. code-block:: bash
+
+    $ make dev.up
+
+Open the shell to the license manager container for manual commands
+
+.. code-block:: bash
+
+    $ make app-shell
+
+Advanced Setup Outside Docker
+=============================
+The following is provided for informational purposes only. You can likely ignore this section.
 
 If you have not already done so, create/activate a `virtualenv`_. Unless otherwise stated, assume all terminal code
 below is executed within the virtualenv.
@@ -7,8 +45,6 @@ below is executed within the virtualenv.
 .. _virtualenv: https://virtualenvwrapper.readthedocs.org/en/latest/
 
 
-The following is provided for informational purposes only. You can likely ignore this section.
-=======
 Install dependencies
 --------------------
 Dependencies can be installed via the command below.

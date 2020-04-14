@@ -226,3 +226,53 @@ PLATFORM_NAME = 'Your Platform Name Here'
 
 # Set up logging for development use (logging to stdout)
 LOGGING = get_logger_config(debug=DEBUG, dev_env=True, local_loglevel='DEBUG')
+
+"""############################# BEGIN CELERY CONFIG ##################################"""
+
+# Message configuration
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_MESSAGE_COMPRESSION = 'gzip'
+
+# Results configuration
+CELERY_IGNORE_RESULT = False
+CELERY_STORE_ERRORS_EVEN_IF_IGNORED = True
+
+# Events configuration
+CELERY_TRACK_STARTED = True
+CELERY_SEND_EVENTS = True
+CELERY_SEND_TASK_SENT_EVENT = True
+
+# Celery task routing configuration.
+# Only the license_manager worker should receive license_manager tasks.
+# Explicitly define these to avoid name collisions with other services
+# using the same broker and the standard default queue name of "celery".
+CELERY_DEFAULT_EXCHANGE = os.environ.get('CELERY_DEFAULT_EXCHANGE', 'license_manager')
+CELERY_DEFAULT_ROUTING_KEY = os.environ.get('CELERY_DEFAULT_ROUTING_KEY', 'license_manager')
+CELERY_DEFAULT_QUEUE = os.environ.get('CELERY_DEFAULT_QUEUE', 'license_manager.default')
+
+# Celery Broker
+# These settings need not be set if CELERY_ALWAYS_EAGER == True, like in Standalone.
+# Devstack overrides these in its docker-compose.yml.
+# Production environments can override these to be whatever they want.
+CELERY_BROKER_TRANSPORT = os.environ.get('CELERY_BROKER_TRANSPORT', '')
+CELERY_BROKER_HOSTNAME = os.environ.get('CELERY_BROKER_HOSTNAME', '')
+CELERY_BROKER_VHOST = os.environ.get('CELERY_BROKER_VHOST', '')
+CELERY_BROKER_USER = os.environ.get('CELERY_BROKER_USER', '')
+CELERY_BROKER_PASSWORD = os.environ.get('CELERY_BROKER_PASSWORD', '')
+BROKER_URL = '{0}://{1}:{2}@{3}/{4}'.format(
+    CELERY_BROKER_TRANSPORT,
+    CELERY_BROKER_USER,
+    CELERY_BROKER_PASSWORD,
+    CELERY_BROKER_HOSTNAME,
+    CELERY_BROKER_VHOST
+)
+
+# Celery task time limits.
+# Tasks will be asked to quit after four minutes, and un-gracefully killed
+# after five.
+CELERY_TASK_SOFT_TIME_LIMIT = 240
+CELERY_TASK_TIME_LIMIT = 300
+
+"""############################# END CELERY CONFIG ##################################"""
