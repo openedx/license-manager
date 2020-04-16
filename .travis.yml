@@ -1,28 +1,22 @@
 language: python
 python:
 - 3.6
-
 env:
-- TOXENV=django22
-
+  global:
+  - DOCKER_USERNAME=edxbuilder
+  - secure: Q9+1NOsQtf8kqggC0TLQdCl3/IeWa11T8W1D0757zbgyPT6yGPCxR1gL0FpY+pte7IkXClcz3H1tvX67sGiwLOq/b8wxUl/nhyRNutnOIAt6aVqFHqJ9iSklfuLFF4B9wJ7pNPq9E+Z778W6j/o42VOSfeAxYX+bMwvaLnXWZwMav1T8CgWxO6zP7CU70UkClx3b6hXrGwbMDe5+MSSzXibGo+AlERocJemTibokum0jZiAiJkPzofCFD98gMg6yJ766M/BTuGlLNUTYlI1ZhREfPR2N96gTFWyB/ivsQtHUSd95OVGuX24pR3JjXd/JYT9y/GFtr3+rjQlsQuhq0WLNJJ10ExjHAhu6mqC7N8sDS8lvvnSt8DHpPvVgLGFGI7cLGKvETL4T+RGMFjfxnRNEVJSFveYRRTWpKFEkVMU+oYb6Z3jWY1BojkaTEqteyqo+YOAdmKXi+vZl0bT3Cs/nnt0RCGEw1XUxRX72i7t6Eoj1lwS/yN8u6FDnAlN3DqnIGAm8MeUpEmqeSELF8e0JlhD2v/e13dbHsYFGlMKCGIGHyWZk/9JTKFHO1O1Bo9x0N2slNVeonEUy9+vKuSjjFt+i1BJtzkqhPv/jUtB6H8PQHxuXxbFrytuHdZIlVu/0I4Hb7bjqPOAgbKTxSZeDc6sxqGHwdza11XAXAaM=
 sudo: false
-
 cache: pip
-
 before_install:
 - export DISPLAY=:99.0
-
 install:
 - make ci_requirements
 - pip install -U pip wheel codecov
-
 script:
 - make validate_translations
 - make validate
-
 after_success:
 - codecov
-
 deploy:
   provider: script
   script: make docker_push
