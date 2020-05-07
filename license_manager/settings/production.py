@@ -63,5 +63,5 @@ BROKER_URL = "{0}://{1}:{2}@{3}/{4}".format(
 )
 # END CELERY
 
-for override, value in DB_OVERRIDES.iteritems():
+for override, value in DB_OVERRIDES.items():
     DATABASES['default'][override] = value
