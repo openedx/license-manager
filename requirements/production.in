@@ -3,5 +3,5 @@
 
 gevent
 gunicorn
-#mysqlclient
+mysqlclient
 PyYAML>=5.1
