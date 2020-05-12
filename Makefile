@@ -165,14 +165,14 @@ docker_build:
 	docker build . -f Dockerfile -t openedx/license-manager.worker
 	docker build . -f Dockerfile --target newrelic -t openedx/license-manager:latest-newrelic
 
-docker_tag: docker_build
+travis_docker_tag: docker_build
 	docker tag openedx/license-manager openedx/license-manager:$$TRAVIS_COMMIT
 	docker tag openedx/license-manager:latest-newrelic openedx/license-manager:$$TRAVIS_COMMIT-newrelic
 
-docker_auth:
+travis_docker_auth:
 	echo "$$DOCKER_PASSWORD" | docker login -u "$$DOCKER_USERNAME" --password-stdin
 
-docker_push: docker_tag docker_auth ## push to docker hub
+travis_docker_push: travis_docker_tag travis_docker_auth ## push to docker hub
 	docker push 'openedx/license-manager:latest'
 	docker push "openedx/license-manager:$$TRAVIS_COMMIT"
 	docker push 'openedx/license-manager:latest-newrelic'
