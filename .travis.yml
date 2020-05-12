@@ -28,4 +28,5 @@ deploy:
     script: ".travis/deployment_prs.sh"
     on:
       branch: master
+      python: 3.5
 
