@@ -23,11 +23,6 @@ after_success:
 - codecov
 deploy:
 - provider: script
-  script: make docker_push
-  on:
-    branch: master
-    python: 3.5
-- provider: script
   script: ".travis/deployment_prs.sh"
   on:
     branch: master
