@@ -25,7 +25,7 @@ deploy:
       branch: master
       python: 3.5
   - provider: script
-      script: ".travis/deployment_prs.sh"
-      on:
-        branch: master
+    script: ".travis/deployment_prs.sh"
+    on:
+      branch: master
 
