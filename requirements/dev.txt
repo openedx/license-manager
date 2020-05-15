@@ -14,7 +14,6 @@ billiard==3.3.0.23        # via -r requirements/validation.txt, celery
 caniusepython3==7.2.0     # via -r requirements/validation.txt
 celery==3.1.26.post2      # via -r requirements/validation.txt
 certifi==2020.4.5.1       # via -r requirements/validation.txt, requests
-cffi==1.14.0              # via -r requirements/validation.txt, cryptography
 chardet==3.0.4            # via -r requirements/validation.txt, requests
 click-log==0.3.2          # via -r requirements/validation.txt, edx-lint
 click==7.1.2              # via -r requirements/pip-tools.txt, -r requirements/validation.txt, click-log, code-annotations, edx-lint, pip-tools
@@ -22,7 +21,6 @@ code-annotations==0.3.4   # via -r requirements/validation.txt
 coreapi==2.3.3            # via -r requirements/validation.txt, django-rest-swagger, openapi-codec
 coreschema==0.0.4         # via -r requirements/validation.txt, coreapi
 coverage==5.1             # via -r requirements/validation.txt, pytest-cov
-cryptography==2.9.2       # via -r requirements/validation.txt, social-auth-core
 defusedxml==0.6.0         # via -r requirements/validation.txt, python3-openid, social-auth-core
 diff-cover==2.6.1         # via -r requirements/dev.in
 distlib==0.3.0            # via -r requirements/validation.txt, caniusepython3
@@ -35,16 +33,17 @@ django-waffle==0.20.0     # via -r requirements/validation.txt, edx-django-utils
 django==2.2.12            # via -r requirements/validation.txt, code-annotations, django-cors-headers, django-debug-toolbar, djangorestframework, drf-jwt, edx-auth-backends, edx-django-utils, edx-drf-extensions, edx-i18n-tools, rest-condition
 djangorestframework==3.11.0  # via -r requirements/validation.txt, django-rest-swagger, drf-jwt, edx-drf-extensions, rest-condition
 drf-jwt==1.14.0           # via -r requirements/validation.txt, edx-drf-extensions
-edx-auth-backends==3.0.2  # via -r requirements/validation.txt
+edx-auth-backends==3.1.0  # via -r requirements/validation.txt
 edx-django-utils==3.2.2   # via -r requirements/validation.txt, edx-drf-extensions
 edx-drf-extensions==6.0.0  # via -r requirements/validation.txt
-edx-i18n-tools==0.5.1     # via -r requirements/validation.txt
+edx-i18n-tools==0.5.3     # via -r requirements/validation.txt
 edx-lint==1.4.1           # via -r requirements/validation.txt
 edx-opaque-keys==2.1.0    # via -r requirements/validation.txt, edx-drf-extensions
 edx-rest-api-client==1.9.2  # via -r requirements/validation.txt
 future==0.18.2            # via -r requirements/validation.txt, pyjwkest
 idna==2.9                 # via -r requirements/validation.txt, requests
-inflect==4.1.0            # via jinja2-pluralize
+importlib-metadata==1.6.0  # via -r requirements/validation.txt, path, pluggy, pytest
+inflect==3.0.2            # via jinja2-pluralize
 isort==4.3.21             # via -r requirements/validation.txt, pylint
 itypes==1.2.0             # via -r requirements/validation.txt, coreapi
 jinja2-pluralize==0.3.0   # via diff-cover
@@ -61,14 +60,14 @@ openapi-codec==1.3.2      # via -r requirements/validation.txt, django-rest-swag
 packaging==20.3           # via -r requirements/validation.txt, caniusepython3, pytest
 path.py==12.4.0           # via -r requirements/validation.txt, edx-i18n-tools
 path==13.1.0              # via -r requirements/validation.txt, path.py
+pathlib2==2.3.5           # via -r requirements/validation.txt, pytest
 pbr==5.4.5                # via -r requirements/validation.txt, stevedore
 pip-tools==5.1.2          # via -r requirements/pip-tools.txt
 pluggy==0.13.1            # via -r requirements/validation.txt, diff-cover, pytest
 polib==1.1.0              # via -r requirements/validation.txt, edx-i18n-tools
 psutil==1.2.1             # via -r requirements/validation.txt, edx-django-utils
 py==1.8.1                 # via -r requirements/validation.txt, pytest
-pycodestyle==2.5.0        # via -r requirements/validation.txt
-pycparser==2.20           # via -r requirements/validation.txt, cffi
+pycodestyle==2.6.0        # via -r requirements/validation.txt
 pycryptodomex==3.9.7      # via -r requirements/validation.txt, pyjwkest
 pydocstyle==5.0.2         # via -r requirements/validation.txt
 pygments==2.6.1           # via diff-cover
@@ -82,7 +81,7 @@ pymongo==3.10.1           # via -r requirements/validation.txt, edx-opaque-keys
 pyparsing==2.4.7          # via -r requirements/validation.txt, packaging
 pytest-cov==2.8.1         # via -r requirements/validation.txt
 pytest-django==3.9.0      # via -r requirements/validation.txt
-pytest==5.4.1             # via -r requirements/validation.txt, pytest-cov, pytest-django
+pytest==5.4.2             # via -r requirements/validation.txt, pytest-cov, pytest-django
 python-dateutil==2.8.1    # via -r requirements/validation.txt, edx-drf-extensions
 python-slugify==4.0.0     # via -r requirements/validation.txt, code-annotations
 python3-openid==3.1.0     # via -r requirements/validation.txt, social-auth-core
@@ -94,18 +93,20 @@ requests==2.23.0          # via -r requirements/validation.txt, caniusepython3, 
 rest-condition==1.0.3     # via -r requirements/validation.txt, edx-drf-extensions
 semantic-version==2.8.5   # via -r requirements/validation.txt, edx-drf-extensions
 simplejson==3.17.0        # via -r requirements/validation.txt, django-rest-swagger
-six==1.14.0               # via -r requirements/pip-tools.txt, -r requirements/validation.txt, astroid, cryptography, diff-cover, django-dynamic-fixture, django-extensions, django-waffle, edx-auth-backends, edx-drf-extensions, edx-i18n-tools, edx-lint, edx-opaque-keys, mock, packaging, pip-tools, pyjwkest, python-dateutil, social-auth-app-django, social-auth-core, stevedore
+six==1.14.0               # via -r requirements/pip-tools.txt, -r requirements/validation.txt, astroid, diff-cover, django-dynamic-fixture, django-extensions, django-waffle, edx-auth-backends, edx-drf-extensions, edx-i18n-tools, edx-lint, edx-opaque-keys, mock, packaging, pathlib2, pip-tools, pyjwkest, python-dateutil, social-auth-app-django, social-auth-core, stevedore
 slumber==0.7.1            # via -r requirements/validation.txt, edx-rest-api-client
 snowballstemmer==2.0.0    # via -r requirements/validation.txt, pydocstyle
 social-auth-app-django==3.1.0  # via -r requirements/validation.txt, edx-auth-backends
-social-auth-core==3.3.3   # via -r requirements/validation.txt, edx-auth-backends, social-auth-app-django
+social-auth-core==3.2.0   # via -r requirements/validation.txt, edx-auth-backends, social-auth-app-django
 sqlparse==0.3.1           # via -r requirements/validation.txt, django, django-debug-toolbar
 stevedore==1.32.0         # via -r requirements/validation.txt, code-annotations, edx-opaque-keys
 text-unidecode==1.3       # via -r requirements/validation.txt, python-slugify
+typed-ast==1.4.1          # via -r requirements/validation.txt, astroid
 uritemplate==3.0.1        # via -r requirements/validation.txt, coreapi
 urllib3==1.25.9           # via -r requirements/validation.txt, requests
 wcwidth==0.1.9            # via -r requirements/validation.txt, pytest
 wrapt==1.11.2             # via -r requirements/validation.txt, astroid
+zipp==1.2.0               # via -r requirements/validation.txt, importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
