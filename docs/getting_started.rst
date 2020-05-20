@@ -35,6 +35,14 @@ Open the shell to the license manager container for manual commands
 
     $ make app-shell
 
+
+Local/Private Settings
+----------------------
+When developing locally, it may be useful to have settings overrides that you do not wish to commit to the repository.
+If you need such overrides, create a file :file:`license-manager/settings/private.py`. This file's values are
+read by :file:`license-manager/settings/local.py`, but ignored by Git.
+
+
 Advanced Setup Outside Docker
 =============================
 The following is provided for informational purposes only. You can likely ignore this section.
@@ -53,12 +61,6 @@ Dependencies can be installed via the command below.
 
     $ make requirements
 
-
-Local/Private Settings
-----------------------
-When developing locally, it may be useful to have settings overrides that you do not wish to commit to the repository.
-If you need such overrides, create a file :file:`license-manager/settings/private.py`. This file's values are
-read by :file:`license-manager/settings/local.py`, but ignored by Git.
 
 Configure edX OAuth (Optional)
 -------------------------------

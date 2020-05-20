@@ -15,6 +15,8 @@ Documentation
 
 `Documentation <https://license-manager.readthedocs.io/en/latest/>`_ is hosted on Read the Docs. The source is hosted in this repo's `docs <https://github.com/edx/license-manager/tree/master/docs>`_ directory. To contribute, please open a PR against this repo.
 
+For instructions on starting local development, see `Getting Started <https://github.com/edx/license-manager/blob/master/docs/getting_started.rst>`_.
+
 License
 -------
 
