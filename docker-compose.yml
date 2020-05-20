@@ -13,6 +13,7 @@ services:
       - license_manager_mysql:/var/lib/mysql
 
   app:
+    image: openedx/license-manager
     build:
       context: .
       dockerfile: Dockerfile
