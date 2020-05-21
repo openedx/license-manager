@@ -24,24 +24,29 @@ class SubscriptionPlan(TimeStampedModel):
     )
 
     purchase_date = models.DateField(
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
+    )
+
+    start_date = models.DateField(
+        blank=True,
+        null=True,
     )
 
     expiration_date = models.DateField(
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
     )
 
     enterprise_customer_uuid = models.UUIDField(
         blank=True,
-        null=False,
+        null=True,
         db_index=True,
     )
 
     enterprise_catalog_uuid = models.UUIDField(
         blank=True,
-        null=False,
+        null=True,
     )
 
     history = HistoricalRecords()
@@ -68,7 +73,7 @@ class License(TimeStampedModel):
     """
     Stores information related to an individual subscriptions license.
 
-    .. no_pii:
+    .. pii: Stores email address for a user.
     """
     uuid = models.UUIDField(
         primary_key=True,
@@ -95,24 +100,19 @@ class License(TimeStampedModel):
         default=UNASSIGNED,
     )
 
-    start_date = models.DateField(
-        blank=False,
-        null=False,
-    )
-
     activation_date = models.DateTimeField(
         blank=True,
-        null=False,
+        null=True,
     )
 
     last_remind_date = models.DateTimeField(
         blank=True,
-        null=False,
+        null=True,
     )
 
     user_email = models.EmailField(
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
     )
 
     lms_user_id = models.IntegerField(
@@ -120,6 +120,10 @@ class License(TimeStampedModel):
         null=True,
     )
 
-    subscription_plan_uuid = models.ForeignKey('subscriptions.SubscriptionPlan', on_delete=models.CASCADE)
+    subscription_plan = models.ForeignKey(
+        'subscriptions.SubscriptionPlan',
+        related_name='licenses',
+        on_delete=models.CASCADE,
+    )
 
     history = HistoricalRecords()

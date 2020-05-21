@@ -151,6 +151,9 @@ dev.stop: # Stops containers so they can be restarted
 app-shell: # Run a shell on the app container
 	docker exec -u 0 -it license_manager bash
 
+mysql-shell: # Run a shell on the mysql container
+	docker exec -u 0 -it license_manager.mysql bash
+
 app-restart:
 	docker-compose restart license_manager
 

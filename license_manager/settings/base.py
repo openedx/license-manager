@@ -42,6 +42,7 @@ THIRD_PARTY_APPS = (
 PROJECT_APPS = (
     'license_manager.apps.core',
     'license_manager.apps.api',
+    'license_manager.apps.subscriptions',
 )
 
 INSTALLED_APPS += THIRD_PARTY_APPS

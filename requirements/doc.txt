@@ -22,12 +22,14 @@ coreapi==2.3.3            # via -r requirements/test.txt, django-rest-swagger, o
 coreschema==0.0.4         # via -r requirements/test.txt, coreapi
 coverage==5.1             # via -r requirements/test.txt, pytest-cov
 defusedxml==0.6.0         # via -r requirements/test.txt, python3-openid, social-auth-core
-django-cors-headers==3.2.1  # via -r requirements/test.txt
+django-cors-headers==3.3.0  # via -r requirements/test.txt
 django-dynamic-fixture==3.1.0  # via -r requirements/test.txt
 django-extensions==2.2.9  # via -r requirements/test.txt
+django-model-utils==4.0.0  # via -r requirements/test.txt
 django-rest-swagger==2.2.0  # via -r requirements/test.txt
+django-simple-history==2.10.0  # via -r requirements/test.txt
 django-waffle==0.20.0     # via -r requirements/test.txt, edx-django-utils, edx-drf-extensions
-django==2.2.12            # via -r requirements/test.txt, code-annotations, django-cors-headers, djangorestframework, drf-jwt, edx-auth-backends, edx-django-utils, edx-drf-extensions, rest-condition
+django==2.2.12            # via -r requirements/test.txt, code-annotations, django-cors-headers, django-model-utils, djangorestframework, drf-jwt, edx-auth-backends, edx-django-utils, edx-drf-extensions, rest-condition
 djangorestframework==3.11.0  # via -r requirements/test.txt, django-rest-swagger, drf-jwt, edx-drf-extensions, rest-condition
 doc8==0.8.0               # via -r requirements/doc.in
 docutils==0.16            # via doc8, readme-renderer, restructuredtext-lint, sphinx
@@ -51,12 +53,11 @@ lazy-object-proxy==1.4.3  # via -r requirements/test.txt, astroid
 markupsafe==1.1.1         # via -r requirements/test.txt, jinja2
 mccabe==0.6.1             # via -r requirements/test.txt, pylint
 mock==3.0.5               # via -r requirements/test.txt
-more-itertools==8.2.0     # via -r requirements/test.txt, pytest
+more-itertools==8.3.0     # via -r requirements/test.txt, pytest
 newrelic==5.12.1.141      # via -r requirements/test.txt, edx-django-utils
 oauthlib==3.1.0           # via -r requirements/test.txt, requests-oauthlib, social-auth-core
 openapi-codec==1.3.2      # via -r requirements/test.txt, django-rest-swagger
-packaging==20.3           # via -r requirements/test.txt, bleach, pytest, sphinx
-pathlib2==2.3.5           # via -r requirements/test.txt, pytest
+packaging==20.4           # via -r requirements/test.txt, bleach, pytest, sphinx
 pbr==5.4.5                # via -r requirements/test.txt, stevedore
 pluggy==0.13.1            # via -r requirements/test.txt, pytest
 psutil==1.2.1             # via -r requirements/test.txt, edx-django-utils
@@ -87,7 +88,7 @@ rest-condition==1.0.3     # via -r requirements/test.txt, edx-drf-extensions
 restructuredtext-lint==1.3.0  # via doc8
 semantic-version==2.8.5   # via -r requirements/test.txt, edx-drf-extensions
 simplejson==3.17.0        # via -r requirements/test.txt, django-rest-swagger
-six==1.14.0               # via -r requirements/test.txt, astroid, bleach, django-dynamic-fixture, django-extensions, django-waffle, doc8, edx-auth-backends, edx-drf-extensions, edx-lint, edx-opaque-keys, edx-sphinx-theme, mock, packaging, pathlib2, pyjwkest, python-dateutil, readme-renderer, social-auth-app-django, social-auth-core, stevedore
+six==1.14.0               # via -r requirements/test.txt, astroid, bleach, django-dynamic-fixture, django-extensions, django-simple-history, django-waffle, doc8, edx-auth-backends, edx-drf-extensions, edx-lint, edx-opaque-keys, edx-sphinx-theme, mock, packaging, pyjwkest, python-dateutil, readme-renderer, social-auth-app-django, social-auth-core, stevedore
 slumber==0.7.1            # via -r requirements/test.txt, edx-rest-api-client
 snowballstemmer==2.0.0    # via sphinx
 social-auth-app-django==3.1.0  # via -r requirements/test.txt, edx-auth-backends
@@ -108,7 +109,7 @@ urllib3==1.25.9           # via -r requirements/test.txt, requests
 wcwidth==0.1.9            # via -r requirements/test.txt, pytest
 webencodings==0.5.1       # via bleach
 wrapt==1.11.2             # via -r requirements/test.txt, astroid
-zipp==1.2.0               # via -r requirements/test.txt, importlib-metadata
+zipp==3.1.0               # via -r requirements/test.txt, importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

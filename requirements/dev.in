@@ -6,3 +6,4 @@
 diff-cover                # Changeset diff test coverage
 django-debug-toolbar      # For debugging Django
 #transifex-client         # For managing translations
+inflect<4.0.0             # Inflect 4.0.0 requires python>=3.6
