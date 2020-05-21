@@ -1,9 +1,6 @@
 from django.contrib import admin
 
-from license_manager.apps.subscriptions.models import (
-    License,
-    SubscriptionPlan,
-)
+from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 
 
 @admin.register(License)
@@ -12,5 +9,5 @@ class LicenseAdmin(admin.ModelAdmin):
 
 
 @admin.register(SubscriptionPlan)
-class SubscriptionPlan(admin.ModelAdmin):
+class SubscriptionPlanAdmin(admin.ModelAdmin):
     exclude = ['history']

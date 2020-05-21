@@ -1,19 +1,22 @@
 from uuid import uuid4
-from logging import getLogger
 
-from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext as _
 from model_utils.models import TimeStampedModel
 from simple_history.models import HistoricalRecords
 
-
-LOGGER = getLogger(__name__)
+from license_manager.apps.subscriptions.constants import (
+    LICENSE_STATUS_CHOICES,
+    UNASSIGNED,
+)
 
 
 class SubscriptionPlan(TimeStampedModel):
     """
     Stores top-level information related to a Subscriptions purchase.
+
+    We allow enterprise_customer_uuid and enterprise_catalog_uuid to be NULL to support the
+    potential future use of subscriptions for non-enterprise customers.
 
     .. no_pii:
     """
@@ -81,17 +84,6 @@ class License(TimeStampedModel):
         editable=False
     )
 
-    ACTIVATED = 'activated'
-    ASSIGNED = 'assigned'
-    EMAIL_PENDING = 'email_pending'
-    UNASSIGNED = 'unassigned'
-    LICENSE_STATUS_CHOICES = (
-        (ACTIVATED, 'Activated'),
-        (ASSIGNED, 'Assigned'),
-        (EMAIL_PENDING, 'Assignment Email Pending'),
-        (UNASSIGNED, 'Unassigned'),
-    )
-
     status = models.CharField(
         max_length=25,
         blank=False,
@@ -121,9 +113,21 @@ class License(TimeStampedModel):
     )
 
     subscription_plan = models.ForeignKey(
-        'subscriptions.SubscriptionPlan',
+        SubscriptionPlan,
         related_name='licenses',
         on_delete=models.CASCADE,
     )
 
     history = HistoricalRecords()
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return (
+            "<License with UUID '{uuid}' "
+            "for SubscriptionPlan'{subscription_plan_uuid}'>".format(
+                uuid=self.uuid,
+                subscription_plan_uuid=self.subscription_plan.uuid,
+            )
+        )

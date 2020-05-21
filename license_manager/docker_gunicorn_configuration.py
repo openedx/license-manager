@@ -48,6 +48,7 @@ def close_all_caches():
 def post_fork(server, worker):  # pylint: disable=unused-argument
     close_all_caches()
 
+
 def when_ready(server):  # pylint: disable=unused-argument
     """When running in debug mode, run Django's `check` to better match what `manage.py runserver` does"""
     from django.conf import settings
