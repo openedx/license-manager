@@ -74,9 +74,12 @@ class License(TimeStampedModel):
     """
     Stores information related to an individual subscriptions license.
 
-    .. pii: Stores email address for a user.
+    .. pii: Stores email address for a user. The email could potentially be for a customer who is
+    not yet an edx user. Note: We are currently working on the plan of how to retire this pii, but
+    are proceeding for the moment as we have no user data in stage or production. Marking as
+    `local_api` for now as that is likely the retirement solution we will take.
     .. pii_types: email_address
-    .. pii_retirement: TODO: Figure out pii retirement plan if we use email
+    .. pii_retirement: local_api
     """
     uuid = models.UUIDField(
         primary_key=True,
