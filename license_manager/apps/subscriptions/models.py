@@ -17,8 +17,6 @@ class SubscriptionPlan(TimeStampedModel):
 
     We allow enterprise_customer_uuid and enterprise_catalog_uuid to be NULL to support the
     potential future use of subscriptions for non-enterprise customers.
-
-    .. no_pii:
     """
     uuid = models.UUIDField(
         primary_key=True,
@@ -77,6 +75,8 @@ class License(TimeStampedModel):
     Stores information related to an individual subscriptions license.
 
     .. pii: Stores email address for a user.
+    .. pii_types: email_address
+    .. pii_retirement: TODO: Figure out pii retirement plan if we use email
     """
     uuid = models.UUIDField(
         primary_key=True,
