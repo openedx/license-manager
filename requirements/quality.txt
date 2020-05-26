@@ -81,6 +81,7 @@ typed-ast==1.4.1          # via astroid
 uritemplate==3.0.1        # via -r requirements/base.txt, coreapi
 urllib3==1.25.9           # via -r requirements/base.txt, requests
 wrapt==1.11.2             # via astroid
+zipp==1.2.0               # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
