@@ -10,7 +10,8 @@
 
 # Inflect 4.0.0 requires python>=3.6
 inflect<4.0.0
-
+# Upgrading requires social-auth-core>=3.3.0 which we don't want yet
+social-auth-app-django==3.1.0
 # The upgrade to 3.3.0 is what triggered users to lose superuser status; see ARCHBOM-1078 for details.
 social-auth-core==3.2.0
 

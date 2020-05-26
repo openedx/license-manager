@@ -23,7 +23,7 @@ services:
       - ../src:/edx/src:cached
     # This should be the same as the `CMD` in the devapp build stage
     # of the Dockerfile
-    command: bash -c 'gunicorn --reload --workers=2 --name license_manager -b :18170 -c /edx/app/license_manager/license_manager/docker_gunicorn_configuration.py --log-file - --max-requests=1000 license_manager.wsgi:application'
+    command: bash -c 'while true; do gunicorn --reload --workers=2 --name license_manager -b :18170 -c /edx/app/license_manager/license_manager/docker_gunicorn_configuration.py --log-file - --max-requests=1000 license_manager.wsgi:application; sleep 2; done'
     ports:
       - "18170:18170"
     depends_on:

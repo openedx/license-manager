@@ -6,6 +6,8 @@ from model_utils.models import TimeStampedModel
 from simple_history.models import HistoricalRecords
 
 from license_manager.apps.subscriptions.constants import (
+    ACTIVATED,
+    ASSIGNED,
     LICENSE_STATUS_CHOICES,
     UNASSIGNED,
 )
@@ -68,6 +70,28 @@ class SubscriptionPlan(TimeStampedModel):
         return License.objects.bulk_create(new_licenses)
 
     history = HistoricalRecords()
+
+    @property
+    def num_licenses(self):
+        """
+        Gets the total number of licenses associated with the subscription.
+
+        Returns:
+            int: The count of how many licenses are associated with the subscription plan.
+        """
+        return self.licenses.count()
+
+    @property
+    def num_allocated_licenses(self):
+        """
+        Gets the number of allocated licenses associated with the subscription. A license is
+        defined as allocated if it has either been activated by a user, or assigned to a user.
+
+        Returns:
+        int: The count of how many licenses that are associated with the subscription plan are
+            already allocated.
+        """
+        return self.licenses.filter(status__in=(ACTIVATED, ASSIGNED)).count()
 
     class Meta:
         verbose_name = _("Subscription Plan")
