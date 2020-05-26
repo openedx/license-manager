@@ -17,6 +17,8 @@ class SubscriptionPlan(TimeStampedModel):
 
     We allow enterprise_customer_uuid and enterprise_catalog_uuid to be NULL to support the
     potential future use of subscriptions for non-enterprise customers.
+
+    .. no_pii: This model has no PII
     """
     uuid = models.UUIDField(
         primary_key=True,
