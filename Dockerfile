@@ -68,6 +68,6 @@ FROM app as devapp
 EXPOSE 18170
 EXPOSE 18171
 USER root
-RUN pip3 install -r /edx/app/license_manager/requirements/dev.txt
+RUN pip install -r /edx/app/license_manager/requirements/dev.txt
 USER app
 CMD gunicorn --reload --workers=2 --name license_manager -c /edx/app/license_manager/license_manager/docker_gunicorn_configuration.py --log-file - --max-requests=1000 license_manager.wsgi:application
