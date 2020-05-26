@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from uuid import uuid4
 
 import factory
@@ -20,7 +20,8 @@ class SubscriptionPlanFactory(factory.DjangoModelFactory):
     uuid = factory.LazyFunction(uuid4)
     purchase_date = date.today()
     start_date = date.today()
-    expiration_date = date.max
+    # Make the subscription expire in roughly a year and a day
+    expiration_date = date.today() + timedelta(days=366)
     enterprise_customer_uuid = factory.LazyFunction(uuid4)
     enterprise_catalog_uuid = factory.LazyFunction(uuid4)
 
