@@ -158,7 +158,7 @@ mysql-shell: # Run a shell on the mysql container
 	docker exec -u 0 -it license_manager.mysql bash
 
 app-restart:
-	docker-compose restart license_manager
+	docker-compose restart app
 
 attach:
 	docker attach license_manager
