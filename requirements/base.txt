@@ -59,4 +59,4 @@ sqlparse==0.3.1           # via django
 stevedore==1.32.0         # via edx-opaque-keys
 uritemplate==3.0.1        # via coreapi
 urllib3==1.25.9           # via requests
-zipp==1.2.0               # via -r requirements/base.in
+zipp==1.2.0               # via -c requirements/constraints.txt, -r requirements/base.in

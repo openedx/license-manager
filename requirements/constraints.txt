@@ -10,3 +10,4 @@
 
 # The upgrade to 3.3.0 is what triggered users to lose superuser status; see ARCHBOM-1078 for details.
 social-auth-core==3.2.0
+zipp<2.0
