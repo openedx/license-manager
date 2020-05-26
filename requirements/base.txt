@@ -13,11 +13,13 @@ chardet==3.0.4            # via requests
 coreapi==2.3.3            # via django-rest-swagger, openapi-codec
 coreschema==0.0.4         # via coreapi
 defusedxml==0.6.0         # via python3-openid, social-auth-core
-django-cors-headers==3.2.1  # via -r requirements/base.in
+django-cors-headers==3.3.0  # via -r requirements/base.in
 django-extensions==2.2.9  # via -r requirements/base.in
+django-model-utils==4.0.0  # via -r requirements/base.in
 django-rest-swagger==2.2.0  # via -r requirements/base.in
+django-simple-history==2.10.0  # via -r requirements/base.in
 django-waffle==0.20.0     # via -r requirements/base.in, edx-django-utils, edx-drf-extensions
-django==2.2.12            # via -r requirements/base.in, django-cors-headers, djangorestframework, drf-jwt, edx-auth-backends, edx-django-utils, edx-drf-extensions, rest-condition
+django==2.2.12            # via -r requirements/base.in, django-cors-headers, django-model-utils, djangorestframework, drf-jwt, edx-auth-backends, edx-django-utils, edx-drf-extensions, rest-condition
 djangorestframework==3.11.0  # via -r requirements/base.in, django-rest-swagger, drf-jwt, edx-drf-extensions, rest-condition
 drf-jwt==1.14.0           # via edx-drf-extensions
 edx-auth-backends==3.1.0  # via -r requirements/base.in
@@ -49,7 +51,7 @@ requests==2.23.0          # via coreapi, edx-drf-extensions, edx-rest-api-client
 rest-condition==1.0.3     # via edx-drf-extensions
 semantic-version==2.8.5   # via edx-drf-extensions
 simplejson==3.17.0        # via django-rest-swagger
-six==1.14.0               # via django-extensions, django-waffle, edx-auth-backends, edx-drf-extensions, edx-opaque-keys, pyjwkest, python-dateutil, social-auth-app-django, social-auth-core, stevedore
+six==1.15.0               # via django-extensions, django-simple-history, django-waffle, edx-auth-backends, edx-drf-extensions, edx-opaque-keys, pyjwkest, python-dateutil, social-auth-app-django, social-auth-core, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 social-auth-app-django==3.1.0  # via edx-auth-backends
 social-auth-core==3.2.0   # via -c requirements/constraints.txt, edx-auth-backends, social-auth-app-django
@@ -57,3 +59,4 @@ sqlparse==0.3.1           # via django
 stevedore==1.32.0         # via edx-opaque-keys
 uritemplate==3.0.1        # via coreapi
 urllib3==1.25.9           # via requests
+zipp==1.2.0               # via -c requirements/constraints.txt, -r requirements/base.in

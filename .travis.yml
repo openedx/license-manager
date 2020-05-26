@@ -11,8 +11,6 @@ env:
   - secure: EoOlM/xF3qGE/65+VUJ5kRKvHIrnmnFeZ0TRsVECmzBKZvRtSeHDTybosFvuh1BB4kIn06aXtCaGgeqNsupVHWhxKCeSN6bW+bkpyI4/fi5bTCm6mH9yol3faGgB8vwskbhnkElxa+Wa79pahiSG9EsdKC8WqZj4h6C3pPP7EIwSsJ99lmntjjJDScfRo2OyyHiUFR3NYT+wUjLWYLb/HHCeMP8ROQ01SD/u3goDFskEpQ2oMAv6d5HW5pmg/XtetUKQfZT181CCEUnw99a1jPDM0+W62Gm9ooY2C7A+q9lcuBe6LJTqLa0ZXbhXbQ0yOA114qRqDfFATVIwk6iI/7BY9F9MENeA+86Bg+p1OAPkEtc7tqSlh/0HKa9BfnAPqJxt4M2Vbs1IZjQv4CoCL9JL8j1QguKzqjiBodxKTXy2pSPQR7juGDJGFodaQfxAa4X+34SOEMYvwZsEspsrpd8Op6vF/DJTv6wqIhydtzc2uKmeGQC3TFjMEwBucG3OAQQdluNgIiVIMlRiSw/NusdbdLW5fnkJmYKvYfKxGGPHwBiPyjjC6uO/0VZ/1WwmotUpeIiP5L/wByXLtvla0lBw5dIAOz8Ko2fxe+aPuUdeXN+5YBCVY3YV/x0IlbvjpJDJzsMbVfWf4M2dOADCI+nDxrkD49kibxqLheGGkgs=
 sudo: false
 cache: pip
-before_install:
-- export DISPLAY=:99.0
 install:
 - make ci_requirements
 - pip install -U pip wheel codecov

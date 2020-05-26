@@ -41,11 +41,11 @@ services:
       CELERY_BROKER_VHOST: 0
       CELERY_BROKER_PASSWORD: password
       DJANGO_SETTINGS_MODULE: license_manager.settings.devstack
+      ENABLE_DJANGO_TOOLBAR: 1
 
   memcached:
     image: memcached:1.4.24
     container_name: license_manager.memcache
-
 
   worker:
     build:
