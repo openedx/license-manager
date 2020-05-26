@@ -126,6 +126,12 @@ class License(TimeStampedModel):
 
     history = HistoricalRecords()
 
+    class Meta:
+        unique_together = (
+            ('subscription_plan', 'user_email'),
+            ('subscription_plan', 'lms_user_id'),
+        )
+
     def __str__(self):
         """
         Return human-readable string representation.
