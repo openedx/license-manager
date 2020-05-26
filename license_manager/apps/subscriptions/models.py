@@ -96,6 +96,16 @@ class License(TimeStampedModel):
         null=False,
         choices=LICENSE_STATUS_CHOICES,
         default=UNASSIGNED,
+        help_text=_(
+            "The status fields has the following options and definitions:"
+            "\nActive: A license which has been created, assigned to a learner, and the learner has enrolled"
+            " in a course with that license. The license also must not have expired."
+            "\nAssigned: A license which has been created and assigned to a learner, but which has not been used by"
+            " that learner to enroll in a course since the time of assignment."
+            "\nUnassigned: A license which has been created but does not have a learner assigned to it."
+            "\nDeactivated: A license which has been created but is no longer active (intentionally made inactive or"
+            " has expired). A license in this state may or may not have a learner assigned."
+        )
     )
 
     activation_date = models.DateTimeField(
