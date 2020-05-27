@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 
 
@@ -10,4 +11,16 @@ class LicenseAdmin(admin.ModelAdmin):
 
 @admin.register(SubscriptionPlan)
 class SubscriptionPlanAdmin(admin.ModelAdmin):
-    exclude = ['history']
+    form = SubscriptionPlanForm
+
+    fieldsets = (
+        (None, {
+            'fields': ('purchase_date',
+                       'start_date',
+                       'expiration_date',
+                       'enterprise_customer_uuid',
+                       'enterprise_catalog_uuid',
+                       'num_licenses',
+                       ),
+        }),
+    )
