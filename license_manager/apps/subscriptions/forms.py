@@ -22,4 +22,4 @@ class SubscriptionPlanForm(forms.ModelForm):
 
     class Meta:
         model = SubscriptionPlan
-        exclude = ['history']
+        fields = '__all__'
