@@ -12,17 +12,21 @@ from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 
 
 class SubscriptionPlanForm(forms.ModelForm):
+    # Extra form field to specify the number of licenses to be associated with the subscription plan
     num_licenses = forms.IntegerField(label="Number of Licenses", required=False)
 
     def __init__(self, *args, **kwargs):
         super(SubscriptionPlanForm, self).__init__(*args, **kwargs)
         self.calc_num_licenses = 0
+        # If a subscription has been created it'll have the 'instance' attribute
         if hasattr(self, 'instance'):
             self.calc_num_licenses = self.instance.calc_num_licenses
+        # Set the initial value for the 'Number of Licenses' form field
         self.fields['num_licenses'].initial = self.calc_num_licenses
 
     def save(self, commit=True):
         num_licenses = self.cleaned_data.get('num_licenses', None)
+        # Ensure the number of licenses is not being decreased
         if num_licenses < self.calc_num_licenses:
             raise ValidationError(
                 gettext('Invalid value: %(value)s'),
@@ -31,6 +35,7 @@ class SubscriptionPlanForm(forms.ModelForm):
             )
         num_new_licenses = num_licenses - self.calc_num_licenses
         subscription_uuid = super(SubscriptionPlanForm, self).save(commit=commit)
+        # Create licenses to be associated with the subscription plan
         for _ in range(num_new_licenses):
             lic = License(subscription_plan=subscription_uuid)
             lic.save()
