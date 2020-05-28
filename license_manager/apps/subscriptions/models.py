@@ -52,6 +52,11 @@ class SubscriptionPlan(TimeStampedModel):
         null=True,
     )
 
+    def _get_num_licenses(self):
+        return len(License.objects.filter(subscription_plan=self.uuid))
+
+    calc_num_licenses = property(_get_num_licenses)
+
     history = HistoricalRecords()
 
     class Meta:
