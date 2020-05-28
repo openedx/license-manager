@@ -29,8 +29,7 @@ class SubscriptionPlanForm(forms.ModelForm):
                 code='cannot decrease num_licenses',
                 params={'value': num_licenses}
             )
-        else:
-            num_new_licenses = num_licenses - self.calc_num_licenses
+        num_new_licenses = num_licenses - self.calc_num_licenses
         subscription_uuid = super(SubscriptionPlanForm, self).save(commit=commit)
         for _ in range(num_new_licenses):
             lic = License(subscription_plan=subscription_uuid)
