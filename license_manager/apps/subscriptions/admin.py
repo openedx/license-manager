@@ -12,21 +12,22 @@ class LicenseAdmin(admin.ModelAdmin):
 @admin.register(SubscriptionPlan)
 class SubscriptionPlanAdmin(admin.ModelAdmin):
     form = SubscriptionPlanForm
-    fields = ('purchase_date',
-              'start_date',
-              'expiration_date',
-              'enterprise_customer_uuid',
-              'enterprise_catalog_uuid',
-              'num_licenses',
-              'is_active',
-              )
+    fields = (
+        'purchase_date',
+        'start_date',
+        'expiration_date',
+        'enterprise_customer_uuid',
+        'enterprise_catalog_uuid',
+        'num_licenses',
+        'is_active',
+    )
 
     # If subscription already exists, make all fields but num_licenses and is_active read-only
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return ['purchase_date',
+            return ('purchase_date',
                     'start_date',
                     'expiration_date',
                     'enterprise_customer_uuid',
-                    'enterprise_catalog_uuid']
-        return []
+                    'enterprise_catalog_uuid')
+        return ()

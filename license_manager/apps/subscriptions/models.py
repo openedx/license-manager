@@ -56,10 +56,9 @@ class SubscriptionPlan(TimeStampedModel):
         default=False
     )
 
-    def _get_num_licenses(self):
+    @property
+    def calc_num_licenses(self):
         return self.licenses.all().count()
-
-    calc_num_licenses = property(_get_num_licenses)
 
     history = HistoricalRecords()
 
