@@ -14,12 +14,12 @@ class SubscriptionPlanForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SubscriptionPlanForm, self).__init__(*args, **kwargs)
-        self.fields['num_licenses'].initial = self.instance.calc_num_licenses
+        self.fields['num_licenses'].initial = self.instance.num_licenses
 
     def save(self, commit=True):
         subscription_uuid = super(SubscriptionPlanForm, self).save(commit=commit)
         # Create licenses to be associated with the subscription plan
-        num_new_licenses = self.cleaned_data.get('num_licenses', 0) - self.instance.calc_num_licenses
+        num_new_licenses = self.cleaned_data.get('num_licenses', 0) - self.instance.num_licenses
         new_licenses = [License(subscription_plan=subscription_uuid) for _ in range(num_new_licenses)]
         License.objects.bulk_create(new_licenses)
         return subscription_uuid
@@ -29,7 +29,7 @@ class SubscriptionPlanForm(forms.ModelForm):
         if not super(SubscriptionPlanForm, self).is_valid():
             return False
         # Ensure the number of licenses is not being decreased
-        if self.cleaned_data.get('num_licenses', 0) < self.instance.calc_num_licenses:
+        if self.cleaned_data.get('num_licenses', 0) < self.instance.num_licenses:
             self.add_error('num_licenses', 'Number of Licenses cannot be decreased.')
             return False
         return True

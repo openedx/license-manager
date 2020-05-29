@@ -57,7 +57,7 @@ class SubscriptionPlan(TimeStampedModel):
     )
 
     @property
-    def calc_num_licenses(self):
+    def num_licenses(self):
         return self.licenses.all().count()
 
     history = HistoricalRecords()
