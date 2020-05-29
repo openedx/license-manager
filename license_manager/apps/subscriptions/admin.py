@@ -25,9 +25,11 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     # If subscription already exists, make all fields but num_licenses and is_active read-only
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return ('purchase_date',
-                    'start_date',
-                    'expiration_date',
-                    'enterprise_customer_uuid',
-                    'enterprise_catalog_uuid')
+            return (
+                'purchase_date',
+                'start_date',
+                'expiration_date',
+                'enterprise_customer_uuid',
+                'enterprise_catalog_uuid'
+            )
         return ()
