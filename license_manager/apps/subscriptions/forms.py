@@ -5,8 +5,6 @@ Forms to be used in the subscriptions django app.
 from __future__ import absolute_import, unicode_literals
 
 from django import forms
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext
 
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 
@@ -17,29 +15,26 @@ class SubscriptionPlanForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SubscriptionPlanForm, self).__init__(*args, **kwargs)
-        self.calc_num_licenses = 0
-        # If a subscription has been created it'll have the 'instance' attribute
-        if hasattr(self, 'instance'):
-            self.calc_num_licenses = self.instance.calc_num_licenses
-        # Set the initial value for the 'Number of Licenses' form field
-        self.fields['num_licenses'].initial = self.calc_num_licenses
+        self.fields['num_licenses'].initial = self.instance.calc_num_licenses
 
     def save(self, commit=True):
-        num_licenses = self.cleaned_data.get('num_licenses', None)
-        # Ensure the number of licenses is not being decreased
-        if num_licenses < self.calc_num_licenses:
-            raise ValidationError(
-                gettext('Invalid value: %(value)s'),
-                code='cannot decrease num_licenses',
-                params={'value': num_licenses}
-            )
-        num_new_licenses = num_licenses - self.calc_num_licenses
         subscription_uuid = super(SubscriptionPlanForm, self).save(commit=commit)
         # Create licenses to be associated with the subscription plan
+        num_new_licenses = self.cleaned_data.get('num_licenses', None) - self.instance.calc_num_licenses
         for _ in range(num_new_licenses):
             lic = License(subscription_plan=subscription_uuid)
             lic.save()
         return subscription_uuid
+
+    def is_valid(self):
+        # Perform original validation and return if false
+        if not super(SubscriptionPlanForm, self).is_valid():
+            return False
+        # Ensure the number of licenses is not being decreased
+        if self.cleaned_data.get('num_licenses', None) < self.instance.calc_num_licenses:
+            self.add_error('num_licenses', 'Number of Licenses cannot be decreased.')
+            return False
+        return True
 
     class Meta:
         model = SubscriptionPlan
