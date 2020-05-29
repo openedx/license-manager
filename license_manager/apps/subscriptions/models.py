@@ -52,6 +52,10 @@ class SubscriptionPlan(TimeStampedModel):
         null=True,
     )
 
+    is_active = models.BooleanField(
+        default=False
+    )
+
     def _get_num_licenses(self):
         return len(License.objects.filter(subscription_plan=self.uuid))
 

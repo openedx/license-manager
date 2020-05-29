@@ -18,6 +18,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
               'enterprise_customer_uuid',
               'enterprise_catalog_uuid',
               'num_licenses',
+              'is_active',
               )
 
     # If subscription already exists, make all fields but num_licenses read-only
