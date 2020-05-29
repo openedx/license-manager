@@ -20,8 +20,7 @@ class SubscriptionPlanForm(forms.ModelForm):
         subscription_uuid = super(SubscriptionPlanForm, self).save(commit=commit)
         # Create licenses to be associated with the subscription plan
         num_new_licenses = self.cleaned_data.get('num_licenses', 0) - self.instance.num_licenses
-        new_licenses = [License(subscription_plan=subscription_uuid) for _ in range(num_new_licenses)]
-        License.objects.bulk_create(new_licenses)
+        SubscriptionPlan.increase_num_licenses(self.instance, num_new_licenses)
         return subscription_uuid
 
     def is_valid(self):
