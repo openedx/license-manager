@@ -57,7 +57,7 @@ class SubscriptionPlan(TimeStampedModel):
     )
 
     def _get_num_licenses(self):
-        return len(License.objects.filter(subscription_plan=self.uuid))
+        return self.licenses.all().count()
 
     calc_num_licenses = property(_get_num_licenses)
 
