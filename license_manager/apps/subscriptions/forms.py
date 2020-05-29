@@ -10,7 +10,7 @@ from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 
 class SubscriptionPlanForm(forms.ModelForm):
     # Extra form field to specify the number of licenses to be associated with the subscription plan
-    num_licenses = forms.IntegerField(label="Number of Licenses", required=False)
+    num_licenses = forms.IntegerField(label="Number of Licenses", required=False, max_value=1000)
 
     def __init__(self, *args, **kwargs):
         super(SubscriptionPlanForm, self).__init__(*args, **kwargs)
