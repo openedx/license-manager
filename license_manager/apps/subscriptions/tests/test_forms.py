@@ -70,11 +70,10 @@ class TestSubscriptionPlanForm(TestCase):
         assert form.is_valid() is is_valid
 
     @ddt.data(
-        (0,),    # Create no Licenses
-        (1,),    # Create a single License
-        (1000,)  # Create the maximum number of Licenses possible
+        0,    # Create no Licenses
+        1,    # Create a single License
+        1000  # Create the maximum number of Licenses possible
     )
-    @ddt.unpack
     def test_save_increase_num_licenses(self, num_licenses):
         """
         Test to check that increase_num_licenses is called with num_licenses
