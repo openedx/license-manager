@@ -151,14 +151,14 @@ dev.down: # Kills containers and all of their data that isn't in volumes
 dev.stop: # Stops containers so they can be restarted
 	docker-compose stop
 
-app-shell: # Run a shell on the app container
-	docker exec -u 0 -it license_manager bash
+%-shell: # Run a shell, as root, on the specified service container
+	docker exec -u 0 -it license_manager.$* bash
 
-mysql-shell: # Run a shell on the mysql container
-	docker exec -u 0 -it license_manager.mysql bash
+%-logs: # View the logs of the specified service container
+	docker-compose logs -f --tail=500 $*
 
-app-restart:
-	docker-compose restart license_manager
+%-restart: # Restart the specified service container
+	docker-compose restart $*
 
 attach:
 	docker attach license_manager

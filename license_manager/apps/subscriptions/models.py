@@ -52,6 +52,21 @@ class SubscriptionPlan(TimeStampedModel):
         null=True,
     )
 
+    is_active = models.BooleanField(
+        default=False
+    )
+
+    @property
+    def num_licenses(self):
+        return self.licenses.all().count()
+
+    def increase_num_licenses(self, num_new_licenses):
+        """
+        Method to increase the number of licenses associated with an instance of SubscriptionPlan by num_new_licenses.
+        """
+        new_licenses = [License(subscription_plan=self) for _ in range(num_new_licenses)]
+        return License.objects.bulk_create(new_licenses)
+
     history = HistoricalRecords()
 
     class Meta:

@@ -17,7 +17,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: license_manager
+    container_name: license_manager.app
     volumes:
       - .:/edx/app/license_manager/
       - ../src:/edx/src:cached

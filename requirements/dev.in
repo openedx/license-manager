@@ -5,6 +5,7 @@
 -r pip-tools.txt          # pip-tools and its deps, for managing requirements files
 -r validation.txt         # Core, testing, and quality check dependencies
 
+ddt                       # Data-driven tests
 diff-cover                # Changeset diff test coverage
 django-debug-toolbar      # For debugging Django
 #transifex-client         # For managing translations
