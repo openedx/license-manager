@@ -18,6 +18,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'expiration_date',
             'enterprise_customer_uuid',
             'enterprise_catalog_uuid',
+            'is_active',
             'licenses',
         ]
 

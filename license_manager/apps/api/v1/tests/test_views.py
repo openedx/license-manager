@@ -115,6 +115,7 @@ def _assert_subscription_response_correct(response, subscription):
     assert response['start_date'] == _get_date_string(subscription.start_date)
     assert response['expiration_date'] == _get_date_string(subscription.expiration_date)
     assert response['enterprise_catalog_uuid'] == str(subscription.enterprise_catalog_uuid)
+    assert response['is_active'] == subscription.is_active
     assert response['licenses'] == {
         'total': subscription.num_licenses,
         'allocated': subscription.num_allocated_licenses,
