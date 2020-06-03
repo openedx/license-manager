@@ -5,11 +5,13 @@
 Django>=2.2,<2.3          # Web application framework
 django-cors-headers
 django-extensions
+django-filter
 django-model-utils
 django-rest-swagger
 django-simple-history
 django-waffle
 djangorestframework
+drf-nested-routers
 edx-auth-backends
 edx-django-utils
 edx-drf-extensions
