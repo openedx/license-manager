@@ -2,7 +2,7 @@ from os import environ
 import yaml
 
 from license_manager.settings.base import *
-from license_manager.settings.utils import get_env_setting
+from license_manager.settings.utils import get_env_setting, get_logger_config
 
 
 DEBUG = False
@@ -10,7 +10,7 @@ TEMPLATE_DEBUG = DEBUG
 
 ALLOWED_HOSTS = ['*']
 
-LOGGING['handlers']['local']['level'] = 'INFO'
+LOGGING = get_logger_config()
 
 # Keep track of the names of settings that represent dicts. Instead of overriding the values in base.py,
 # the values read from disk should UPDATE the pre-configured dicts.
