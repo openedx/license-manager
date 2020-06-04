@@ -13,6 +13,8 @@ Next, run the following commands:
 
 At this point, the license_manager app should be ready to go.
 
+**NOTE** The development server is currently not hot reloading, so when you make code changes you'll need to run ``make app-restart``
+
 Viewing License Manager 
 ------------------------
 Once the server is up and running you can view the app admin at http://localhost:18170/admin.
