@@ -9,4 +9,5 @@ ddt                       # Data-driven tests
 diff-cover                # Changeset diff test coverage
 django-debug-toolbar      # For debugging Django
 #transifex-client         # For managing translations
+gunicorn
 inflect
