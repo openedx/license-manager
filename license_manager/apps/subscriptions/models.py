@@ -28,20 +28,11 @@ class SubscriptionPlan(TimeStampedModel):
         editable=False
     )
 
-    purchase_date = models.DateField(
-        blank=True,
-        null=True,
-    )
+    purchase_date = models.DateField()
 
-    start_date = models.DateField(
-        blank=True,
-        null=True,
-    )
+    start_date = models.DateField()
 
-    expiration_date = models.DateField(
-        blank=True,
-        null=True,
-    )
+    expiration_date = models.DateField()
 
     enterprise_customer_uuid = models.UUIDField(
         blank=True,
