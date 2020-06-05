@@ -27,14 +27,20 @@ class SubscriptionPlanForm(forms.ModelForm):
         # Perform original validation and return if false
         if not super(SubscriptionPlanForm, self).is_valid():
             return False
+
         # Ensure the number of licenses is not being decreased
         if self.cleaned_data.get('num_licenses', 0) < self.instance.num_licenses:
             self.add_error('num_licenses', 'Number of Licenses cannot be decreased.')
             return False
-        # Ensure the expiration date is at least one year after purchase date
-        if self.cleaned_data.get('expiration_date') < self.cleaned_data.get('start_date') + dt.timedelta(days=365):
-            self.add_error('expiration_date', 'Expiration Date must be at least a year after the Start Date.')
-            return False
+
+        # Ensure the expiration date is at least one year after start date if has been submitted
+        expiration_date = self.cleaned_data.get('expiration_date')
+        start_date = self.cleaned_data.get('start_date')
+        if expiration_date and start_date:
+            if expiration_date < start_date + dt.timedelta(days=365):
+                self.add_error('expiration_date', 'Expiration Date must be at least a year after the Start Date.')
+                return False
+
         return True
 
     class Meta:
