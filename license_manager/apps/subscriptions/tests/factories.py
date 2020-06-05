@@ -16,6 +16,7 @@ class SubscriptionPlanFactory(factory.DjangoModelFactory):
     class Meta:
         model = SubscriptionPlan
 
+    title = factory.Faker('word')
     uuid = factory.LazyFunction(uuid4)
     purchase_date = date.today()
     start_date = date.today()

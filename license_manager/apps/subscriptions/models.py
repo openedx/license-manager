@@ -22,6 +22,12 @@ class SubscriptionPlan(TimeStampedModel):
 
     .. no_pii: This model has no PII
     """
+    title = models.CharField(
+        max_length=128,
+        blank=False,
+        null=False,
+    )
+
     uuid = models.UUIDField(
         primary_key=True,
         default=uuid4,
@@ -84,15 +90,18 @@ class SubscriptionPlan(TimeStampedModel):
         verbose_name = _("Subscription Plan")
         verbose_name_plural = _("Subscription Plans")
         app_label = 'subscriptions'
+        unique_together = (
+            ('title', 'enterprise_customer_uuid'),
+        )
 
     def __str__(self):
         """
         Return human-readable string representation.
         """
         return (
-            "<SubscriptionPlan with UUID '{uuid}' "
+            "<SubscriptionPlan with Title '{title}' "
             "for EnterpriseCustomer '{enterprise_customer_uuid}'>".format(
-                uuid=self.uuid,
+                title=self.title,
                 enterprise_customer_uuid=self.enterprise_customer_uuid
             )
         )

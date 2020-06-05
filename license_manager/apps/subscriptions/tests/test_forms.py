@@ -20,6 +20,7 @@ class TestSubscriptionPlanForm(TestCase):
     """
     @staticmethod
     def _make_bound_form(
+        title=faker.pystr(min_chars=1, max_chars=127),
         purchase_date=date.today(),
         start_date=date.today(),
         expiration_date=date.today() + timedelta(days=366),
@@ -32,6 +33,7 @@ class TestSubscriptionPlanForm(TestCase):
         Builds a bound SubscriptionPlanForm
         """
         form_data = {
+            'title': title,
             'purchase_date': purchase_date,
             'start_date': start_date,
             'expiration_date': expiration_date,
