@@ -45,7 +45,8 @@ edx-opaque-keys==2.1.0    # via -r requirements/validation.txt, edx-drf-extensio
 edx-rest-api-client==1.9.2  # via -r requirements/validation.txt
 factory-boy==2.12.0       # via -r requirements/validation.txt
 faker==4.1.0              # via -r requirements/validation.txt, factory-boy
-future==0.18.2            # via -r requirements/validation.txt, django-ses, pyjwkest
+future==0.18.2            # via -r requirements/validation.txt, pyjwkest
+gunicorn==20.0.4          # via -r requirements/dev.in
 idna==2.9                 # via -r requirements/validation.txt, requests
 importlib-metadata==1.6.0  # via -r requirements/validation.txt, inflect, path, pluggy, pytest
 inflect==3.0.2            # via -c requirements/constraints.txt, -r requirements/dev.in, jinja2-pluralize
@@ -114,3 +115,4 @@ zipp==1.2.0               # via -c requirements/constraints.txt, -r requirements
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
+# setuptools
