@@ -8,6 +8,7 @@ django-extensions
 django-filter
 django-model-utils
 django-rest-swagger
+django-ses
 django-simple-history
 django-waffle
 djangorestframework

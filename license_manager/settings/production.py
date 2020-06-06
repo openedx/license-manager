@@ -63,5 +63,9 @@ BROKER_URL = "{0}://{1}:{2}@{3}/{4}".format(
 )
 # END CELERY
 
+# Email configuration settings
+EMAIL_BACKEND = 'django_ses.SESBackend'  # Using Amazon AWS SES as an email backend
+SUBSCRIPTIONS_FROM_EMAIL = 'donotreply@edx.org'  # TODO: probably going to want this setting to come from edx-internal
+
 for override, value in DB_OVERRIDES.items():
     DATABASES['default'][override] = value

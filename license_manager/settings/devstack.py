@@ -29,3 +29,7 @@ CELERY_ALWAYS_EAGER = (
     os.environ.get("CELERY_ALWAYS_EAGER", "false").lower() == "true"
 )
 # END CELERY
+
+# Email configuration settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Prints 'sent' emails to the console for development
+SUBSCRIPTIONS_FROM_EMAIL = 'from@example.com'  # Dummy from email address for development use
