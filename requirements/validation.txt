@@ -24,7 +24,7 @@ defusedxml==0.6.0         # via -r requirements/quality.txt, -r requirements/tes
 django-cors-headers==3.3.0  # via -r requirements/quality.txt, -r requirements/test.txt
 django-dynamic-fixture==3.1.0  # via -r requirements/test.txt
 django-extensions==2.2.9  # via -r requirements/quality.txt, -r requirements/test.txt
-django-filter==2.2.0      # via -r requirements/quality.txt, -r requirements/test.txt
+django-filter==2.3.0      # via -r requirements/quality.txt, -r requirements/test.txt
 django-model-utils==4.0.0  # via -r requirements/quality.txt, -r requirements/test.txt
 django-rest-swagger==2.2.0  # via -r requirements/quality.txt, -r requirements/test.txt
 django-ses==0.8.14        # via -r requirements/quality.txt, -r requirements/test.txt
@@ -45,7 +45,7 @@ factory-boy==2.12.0       # via -r requirements/test.txt
 faker==4.1.0              # via -r requirements/test.txt, factory-boy
 future==0.18.2            # via -r requirements/quality.txt, -r requirements/test.txt, django-ses, pyjwkest
 idna==2.9                 # via -r requirements/quality.txt, -r requirements/test.txt, requests
-importlib-metadata==1.6.0  # via -r requirements/test.txt, path, pluggy, pytest
+importlib-metadata==1.6.1  # via -r requirements/test.txt, path, pluggy, pytest
 isort==4.3.21             # via -r requirements/quality.txt, -r requirements/test.txt, pylint
 itypes==1.2.0             # via -r requirements/quality.txt, -r requirements/test.txt, coreapi
 jinja2==2.11.2            # via -r requirements/quality.txt, -r requirements/test.txt, code-annotations, coreschema

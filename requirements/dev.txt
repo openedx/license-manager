@@ -21,12 +21,12 @@ coreschema==0.0.4         # via -r requirements/validation.txt, coreapi
 coverage==5.1             # via -r requirements/validation.txt, pytest-cov
 ddt==1.4.1                # via -r requirements/dev.in, -r requirements/validation.txt
 defusedxml==0.6.0         # via -r requirements/validation.txt, python3-openid, social-auth-core
-diff-cover==3.0.0         # via -r requirements/dev.in
+diff-cover==3.0.1         # via -r requirements/dev.in
 django-cors-headers==3.3.0  # via -r requirements/validation.txt
 django-debug-toolbar==2.2  # via -r requirements/dev.in
 django-dynamic-fixture==3.1.0  # via -r requirements/validation.txt
 django-extensions==2.2.9  # via -r requirements/validation.txt
-django-filter==2.2.0      # via -r requirements/validation.txt
+django-filter==2.3.0      # via -r requirements/validation.txt
 django-model-utils==4.0.0  # via -r requirements/validation.txt
 django-rest-swagger==2.2.0  # via -r requirements/validation.txt
 django-ses==0.8.14        # via -r requirements/validation.txt
@@ -45,10 +45,10 @@ edx-opaque-keys==2.1.0    # via -r requirements/validation.txt, edx-drf-extensio
 edx-rest-api-client==1.9.2  # via -r requirements/validation.txt
 factory-boy==2.12.0       # via -r requirements/validation.txt
 faker==4.1.0              # via -r requirements/validation.txt, factory-boy
-future==0.18.2            # via -r requirements/validation.txt, pyjwkest
+future==0.18.2            # via -r requirements/validation.txt, django-ses, pyjwkest
 gunicorn==20.0.4          # via -r requirements/dev.in
 idna==2.9                 # via -r requirements/validation.txt, requests
-importlib-metadata==1.6.0  # via -r requirements/validation.txt, inflect, path, pluggy, pytest
+importlib-metadata==1.6.1  # via -r requirements/validation.txt, inflect, path, pluggy, pytest
 inflect==3.0.2            # via -c requirements/constraints.txt, -r requirements/dev.in, jinja2-pluralize
 isort==4.3.21             # via -r requirements/validation.txt, pylint
 itypes==1.2.0             # via -r requirements/validation.txt, coreapi

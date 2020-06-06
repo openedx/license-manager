@@ -16,7 +16,7 @@ coreschema==0.0.4         # via -r requirements/base.txt, coreapi
 defusedxml==0.6.0         # via -r requirements/base.txt, python3-openid, social-auth-core
 django-cors-headers==3.3.0  # via -r requirements/base.txt
 django-extensions==2.2.9  # via -r requirements/base.txt
-django-filter==2.2.0      # via -r requirements/base.txt
+django-filter==2.3.0      # via -r requirements/base.txt
 django-model-utils==4.0.0  # via -r requirements/base.txt
 django-rest-swagger==2.2.0  # via -r requirements/base.txt
 django-ses==0.8.14        # via -r requirements/base.txt
@@ -32,8 +32,8 @@ edx-drf-extensions==6.0.0  # via -r requirements/base.txt
 edx-opaque-keys==2.1.0    # via -r requirements/base.txt, edx-drf-extensions
 edx-rest-api-client==1.9.2  # via -r requirements/base.txt
 future==0.18.2            # via -r requirements/base.txt, django-ses, pyjwkest
-gevent==20.5.2            # via -r requirements/production.in
-greenlet==0.4.15          # via gevent
+gevent==20.6.0            # via -r requirements/production.in
+greenlet==0.4.16          # via gevent
 gunicorn==20.0.4          # via -r requirements/production.in
 idna==2.9                 # via -r requirements/base.txt, requests
 itypes==1.2.0             # via -r requirements/base.txt, coreapi
