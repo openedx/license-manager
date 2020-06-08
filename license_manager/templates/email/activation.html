@@ -1,0 +1,27 @@
+{% extends "email/email_base.html" %}
+{% load i18n %}
+{% block body %}
+    <!-- Message Body -->
+    <p>
+        {% filter force_escape %}
+            "{{ TEMPLATE_GREETING }}"
+        {% endfilter %}
+    </p>
+    <p>
+        {% filter force_escape %}
+            {% trans "You may redeem your license for any course(s) that are in your organization's subscription catalog. To redeem:" %}
+            <br><br>
+            <a href="{{ LICENSE_ACTIVATION_LINK }}">{% trans "Activate your edX license" %}</a>
+            <br><br>
+            {% trans "edX Login" %} {{ USER_EMAIL }}
+            <br>
+            {% trans "Expiration Date:" %} {{ EXPIRATION_DATE }}
+        {% endfilter %}
+    </p>
+    <p>
+        {% filter force_escape %}
+            "{{ TEMPLATE_CLOSING }}"
+        {% endfilter %}
+    </p>
+    <!-- End Message Body -->
+{% endblock body %}

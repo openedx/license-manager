@@ -11,5 +11,6 @@ LICENSE_STATUS_CHOICES = (
 )
 
 # Subject line used for emails
-LICENSE_ACTIVATION_EMAIL_SUBJECT = ''  # TODO: Get subject line for each type of email from UX (ENT-2979)
-LICENSE_REMINDER_EMAIL_SUBJECT = ''
+# TODO: Get subject line for each type of email from UX (ENT-2979)
+LICENSE_ACTIVATION_EMAIL_SUBJECT = 'edX License Activation'
+LICENSE_REMINDER_EMAIL_SUBJECT = 'Reminder: Activate your edX License!'
