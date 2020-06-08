@@ -9,7 +9,7 @@ anyjson==0.3.3            # via kombu
 billiard==3.3.0.23        # via celery
 boto==2.49.0              # via django-ses
 celery==3.1.26.post2      # via -r requirements/base.in
-certifi==2020.4.5.1       # via requests
+certifi==2020.4.5.2       # via requests
 chardet==3.0.4            # via requests
 coreapi==2.3.3            # via django-rest-swagger, openapi-codec
 coreschema==0.0.4         # via coreapi
@@ -55,12 +55,12 @@ requests==2.23.0          # via coreapi, edx-drf-extensions, edx-rest-api-client
 rest-condition==1.0.3     # via edx-drf-extensions
 semantic-version==2.8.5   # via edx-drf-extensions
 simplejson==3.17.0        # via django-rest-swagger
-six==1.15.0               # via django-extensions, django-simple-history, django-waffle, edx-auth-backends, edx-drf-extensions, edx-opaque-keys, pyjwkest, python-dateutil, social-auth-app-django, social-auth-core
+six==1.15.0               # via django-extensions, django-simple-history, django-waffle, edx-auth-backends, edx-drf-extensions, edx-opaque-keys, pyjwkest, python-dateutil, social-auth-app-django, social-auth-core, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 social-auth-app-django==3.1.0  # via -c requirements/constraints.txt, edx-auth-backends
 social-auth-core==3.2.0   # via -c requirements/constraints.txt, edx-auth-backends, social-auth-app-django
 sqlparse==0.3.1           # via django
-stevedore==2.0.0          # via edx-opaque-keys
+stevedore==1.32.0         # via -c requirements/constraints.txt, edx-opaque-keys
 uritemplate==3.0.1        # via coreapi
 urllib3==1.25.9           # via requests
 zipp==1.2.0               # via -c requirements/constraints.txt, -r requirements/base.in
