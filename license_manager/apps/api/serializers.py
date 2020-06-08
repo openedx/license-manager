@@ -12,6 +12,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlan
         fields = [
+            'title',
             'uuid',
             'purchase_date',
             'start_date',

@@ -14,6 +14,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     form = SubscriptionPlanForm
     # This is not to be confused with readonly_fields of the BaseModelAdmin class
     read_only_fields = (
+        'title',
         'purchase_date',
         'start_date',
         'expiration_date',
