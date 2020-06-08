@@ -4,6 +4,7 @@ from django.template.loader import get_template
 
 from license_manager.apps.subscriptions.constants import (
     LICENSE_ACTIVATION_EMAIL_SUBJECT,
+    LICENSE_ACTIVATION_EMAIL_TEMPLATE,
 )
 
 
@@ -11,8 +12,6 @@ def send_activation_emails(custom_template_text, email_recipient_list, subscript
     """
     Send a license activation email to a given set of users
     """
-    activation_emails = []
-    template_name = 'activation'
 
     # Construct context to be used for Django template rendering
     context = {
@@ -22,13 +21,14 @@ def send_activation_emails(custom_template_text, email_recipient_list, subscript
     }
 
     # Construct each message to be sent and append onto the activation_emails list
+    activation_emails = []
     for email_address in email_recipient_list:
         # Update user specific context for each message
         context.update({
             'LICENSE_ACTIVATION_LINK': _generate_license_activation_link(),
             'USER_EMAIL': email_address,
         })
-        activation_emails.append(_message_from_context_and_template(context, template_name))
+        activation_emails.append(_message_from_context_and_template(context, LICENSE_ACTIVATION_EMAIL_TEMPLATE))
 
     # Use a single connection to send all messages
     with mail.get_connection() as connection:
@@ -37,7 +37,7 @@ def send_activation_emails(custom_template_text, email_recipient_list, subscript
         connection.close()
 
 
-def _generate_license_activation_link():  # TODO: implement - what needs to be in this link?
+def _generate_license_activation_link():  # TODO: implement 'How users will activate licenses' (ENT-2748)
     return 'edx.org'
 
 
