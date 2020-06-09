@@ -32,4 +32,9 @@ CELERY_ALWAYS_EAGER = (
 
 # Email configuration settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Prints 'sent' emails to the console for development
+# Alternative email backend enables the output of emails to a given filepath (useful for HTML template debugging)
+"""
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = './emails'
+"""
 SUBSCRIPTIONS_FROM_EMAIL = 'from@example.com'  # Dummy from email address for development use

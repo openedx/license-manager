@@ -4,23 +4,21 @@
     <!-- Message Body -->
     <p>
         {% filter force_escape %}
-            "{{ TEMPLATE_GREETING }}"
+            {{ TEMPLATE_GREETING }}
         {% endfilter %}
     </p>
     <p>
-        {% filter force_escape %}
-            {% trans "You may redeem your license for any course(s) that are in your organization's subscription catalog. To redeem:" %}
-            <br><br>
-            <a href="{{ LICENSE_ACTIVATION_LINK }}">{% trans "Activate your edX license" %}</a>
-            <br><br>
-            {% trans "edX Login" %} {{ USER_EMAIL }}
-            <br>
-            {% trans "Expiration Date:" %} {{ EXPIRATION_DATE }}
-        {% endfilter %}
+        {% trans "You may redeem your license for any course(s) that are in your organization's subscription catalog. To redeem:" %}
+        <br><br>
+        <a href="{{ LICENSE_ACTIVATION_LINK }}">{% trans "Activate your edX license" %}</a>
+        <br><br>
+        {% trans "edX Login:" %} {{ USER_EMAIL }}
+        <br>
+        {% trans "Expiration Date:" %} {{ EXPIRATION_DATE }}
     </p>
     <p>
         {% filter force_escape %}
-            "{{ TEMPLATE_CLOSING }}"
+            {{ TEMPLATE_CLOSING }}
         {% endfilter %}
     </p>
     <!-- End Message Body -->
