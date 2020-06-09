@@ -160,8 +160,8 @@ dev.stop: # Stops containers so they can be restarted
 %-restart: # Restart the specified service container
 	docker-compose restart $*
 
-attach:
-	docker attach license_manager
+%-attach:
+	docker attach license_manager.$*
 
 docker_build:
 	docker build . -f Dockerfile -t openedx/license-manager

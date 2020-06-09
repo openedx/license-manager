@@ -27,6 +27,12 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     )
     fields = read_only_fields + writable_fields
 
+    def save_model(self, request, obj, form, change):
+        # Create licenses to be associated with the subscription plan after creating the subscription plan
+        num_new_licenses = form.cleaned_data.get('num_licenses', 0) - obj.num_licenses
+        super().save_model(request, obj, form, change)
+        SubscriptionPlan.increase_num_licenses(obj, num_new_licenses)
+
     def get_readonly_fields(self, request, obj=None):
         """
         If subscription already exists, make all fields but num_licenses and is_active read-only
