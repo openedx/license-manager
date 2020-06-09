@@ -38,7 +38,7 @@ def send_activation_emails(custom_template_text, email_recipient_list, subscript
 
 
 def _generate_license_activation_link():  # TODO: implement 'How users will activate licenses' (ENT-2748)
-    return 'edx.org'
+    return 'https://www.edx.org/'
 
 
 def _message_from_context_and_template(context, template_name):
