@@ -37,4 +37,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Prints 'sent
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = './emails'
 """
+EMAIL_UNSUBSCRIBE_LINK = 'https://www.edx.org'  # Dummy unsubscribe link for development use
 SUBSCRIPTIONS_FROM_EMAIL = 'from@example.com'  # Dummy from email address for development use

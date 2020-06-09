@@ -10,3 +10,5 @@
 {% trans "Expiration Date:" %} {{ EXPIRATION_DATE }}
 
 {{ TEMPLATE_CLOSING }}
+
+{% trans "Unsubscribe:" %} {{ UNSUBSCRIBE_LINK }}
