@@ -65,7 +65,7 @@ BROKER_URL = "{0}://{1}:{2}@{3}/{4}".format(
 # Email configuration settings
 EMAIL_BACKEND = 'django_ses.SESBackend'  # Using Amazon AWS SES as an email backend
 EMAIL_UNSUBSCRIBE_LINK = environ.get('EMAIL_UNSUBSCRIBE_LINK', 'https://www.edx.org')  # TODO: implement unsubscribe
-SUBSCRIPTIONS_FROM_EMAIL = environ.get('SUBSCRIPTIONS_FROM_EMAIL', 'donotreply@edx.org')
+SUBSCRIPTIONS_FROM_EMAIL = environ.get('SUBSCRIPTIONS_FROM_EMAIL', 'customersuccess@edx.org')
 
 for override, value in DB_OVERRIDES.items():
     DATABASES['default'][override] = value
