@@ -293,3 +293,13 @@ CELERY_TASK_SOFT_TIME_LIMIT = 240
 CELERY_TASK_TIME_LIMIT = 300
 
 """############################# END CELERY CONFIG ##################################"""
+
+# Email configuration settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Prints 'sent' emails to the console for development
+# Alternative email backend enables the output of emails to a given filepath (useful for HTML template debugging)
+"""
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = './emails'
+"""
+EMAIL_UNSUBSCRIBE_LINK = 'https://www.edx.org'  # Dummy unsubscribe link for development use
+SUBSCRIPTIONS_FROM_EMAIL = 'from@example.com'  # Dummy from email address for development use
