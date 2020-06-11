@@ -2,14 +2,13 @@ from datetime import date, timedelta
 from unittest import TestCase
 
 import ddt
-from faker import Factory as FakerFactory
 from pytest import mark
 
 from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.models import SubscriptionPlan
-
-
-faker = FakerFactory.create()
+from license_manager.apps.subscriptions.tests.utils import (
+    make_bound_subscription_form,
+)
 
 
 @mark.django_db
@@ -18,30 +17,6 @@ class TestSubscriptionPlanForm(TestCase):
     """
     Unit tests for the SubscriptionPlanForm
     """
-    @staticmethod
-    def _make_bound_form(
-        purchase_date=date.today(),
-        start_date=date.today(),
-        expiration_date=date.today() + timedelta(days=366),
-        enterprise_customer_uuid=faker.uuid4(),
-        enterprise_catalog_uuid=faker.uuid4(),
-        num_licenses=0,
-        is_active=False
-    ):
-        """
-        Builds a bound SubscriptionPlanForm
-        """
-        form_data = {
-            'purchase_date': purchase_date,
-            'start_date': start_date,
-            'expiration_date': expiration_date,
-            'enterprise_customer_uuid': enterprise_customer_uuid,
-            'enterprise_catalog_uuid': enterprise_catalog_uuid,
-            'num_licenses': num_licenses,
-            'is_active': is_active
-        }
-        return SubscriptionPlanForm(form_data)
-
     @ddt.data(
         (0, True),     # Minimum value for num_licenses
         (1000, True),  # Maximum value for num_licenses
@@ -53,7 +28,7 @@ class TestSubscriptionPlanForm(TestCase):
         """
         Test to check validation conditions for the num_licenses field
         """
-        form = self._make_bound_form(num_licenses=num_licenses)
+        form = make_bound_subscription_form(num_licenses=num_licenses)
         assert form.is_valid() is is_valid
 
     @ddt.data(
@@ -66,18 +41,5 @@ class TestSubscriptionPlanForm(TestCase):
         """
         Test to check validation conditions for the expiration_date field
         """
-        form = self._make_bound_form(expiration_date=expiration_date)
+        form = make_bound_subscription_form(expiration_date=expiration_date)
         assert form.is_valid() is is_valid
-
-    @ddt.data(
-        0,    # Create no Licenses
-        1,    # Create a single License
-        1000  # Create the maximum number of Licenses possible
-    )
-    def test_save_increase_num_licenses(self, num_licenses):
-        """
-        Test to check that increase_num_licenses is called with num_licenses
-        """
-        form = self._make_bound_form(num_licenses=num_licenses)
-        subscription_plan = form.save()
-        assert SubscriptionPlan.objects.get(uuid=subscription_plan.uuid).num_licenses == num_licenses

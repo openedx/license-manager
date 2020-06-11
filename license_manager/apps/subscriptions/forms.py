@@ -16,13 +16,6 @@ class SubscriptionPlanForm(forms.ModelForm):
         super(SubscriptionPlanForm, self).__init__(*args, **kwargs)
         self.fields['num_licenses'].initial = self.instance.num_licenses
 
-    def save(self, commit=True):
-        subscription_uuid = super(SubscriptionPlanForm, self).save(commit=commit)
-        # Create licenses to be associated with the subscription plan
-        num_new_licenses = self.cleaned_data.get('num_licenses', 0) - self.instance.num_licenses
-        SubscriptionPlan.increase_num_licenses(self.instance, num_new_licenses)
-        return subscription_uuid
-
     def is_valid(self):
         # Perform original validation and return if false
         if not super(SubscriptionPlanForm, self).is_valid():

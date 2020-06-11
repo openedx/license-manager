@@ -3,6 +3,17 @@ from license_manager.settings.local import *
 # Generic OAuth2 variables irrespective of SSO/backend service key types.
 OAUTH2_PROVIDER_URL = 'http://edx.devstack.lms:18000/oauth2'
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'license_manager',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'license_manager.mysql',
+        'PORT': '3306',
+    }
+}
+
 # OAuth2 variables specific to social-auth/SSO login use case.
 SOCIAL_AUTH_EDX_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_EDX_OAUTH2_KEY', 'license_manager-sso-key')
 SOCIAL_AUTH_EDX_OAUTH2_SECRET = os.environ.get('SOCIAL_AUTH_EDX_OAUTH2_SECRET', 'license_manager-sso-secret')
