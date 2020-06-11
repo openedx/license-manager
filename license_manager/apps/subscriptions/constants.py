@@ -9,3 +9,12 @@ LICENSE_STATUS_CHOICES = (
     (UNASSIGNED, 'Unassigned'),
     (DEACTIVATED, 'Deactivated'),
 )
+
+# Subject line used for emails
+# TODO: Get subject line for each type of email from UX (ENT-2979)
+LICENSE_ACTIVATION_EMAIL_SUBJECT = 'edX License Activation'
+LICENSE_REMINDER_EMAIL_SUBJECT = 'Reminder: Activate your edX License!'
+
+# Template names used for emails
+LICENSE_ACTIVATION_EMAIL_TEMPLATE = 'activation'
+LICENSE_REMINDER_EMAIL_TEMPLATE = 'reminder'  # TODO: implement reminder email functionality (ENT-2835)

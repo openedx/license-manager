@@ -9,8 +9,9 @@ anyjson==0.3.3            # via -r requirements/validation.txt, kombu
 astroid==2.3.3            # via -r requirements/validation.txt, pylint, pylint-celery
 attrs==19.3.0             # via -r requirements/validation.txt, pytest
 billiard==3.3.0.23        # via -r requirements/validation.txt, celery
+boto==2.49.0              # via -r requirements/validation.txt, django-ses
 celery==3.1.26.post2      # via -r requirements/validation.txt
-certifi==2020.4.5.1       # via -r requirements/validation.txt, requests
+certifi==2020.4.5.2       # via -r requirements/validation.txt, requests
 chardet==3.0.4            # via -r requirements/validation.txt, requests
 click-log==0.3.2          # via -r requirements/validation.txt, edx-lint
 click==7.1.2              # via -r requirements/pip-tools.txt, -r requirements/validation.txt, click-log, code-annotations, edx-lint, pip-tools
@@ -20,22 +21,23 @@ coreschema==0.0.4         # via -r requirements/validation.txt, coreapi
 coverage==5.1             # via -r requirements/validation.txt, pytest-cov
 ddt==1.4.1                # via -r requirements/dev.in, -r requirements/validation.txt
 defusedxml==0.6.0         # via -r requirements/validation.txt, python3-openid, social-auth-core
-diff-cover==2.6.1         # via -r requirements/dev.in
+diff-cover==3.0.1         # via -r requirements/dev.in
 django-cors-headers==3.3.0  # via -r requirements/validation.txt
 django-debug-toolbar==2.2  # via -r requirements/dev.in
 django-dynamic-fixture==3.1.0  # via -r requirements/validation.txt
 django-extensions==2.2.9  # via -r requirements/validation.txt
-django-filter==2.2.0      # via -r requirements/validation.txt
+django-filter==2.3.0      # via -r requirements/validation.txt
 django-model-utils==4.0.0  # via -r requirements/validation.txt
 django-rest-swagger==2.2.0  # via -r requirements/validation.txt
+django-ses==0.8.14        # via -r requirements/validation.txt
 django-simple-history==2.10.0  # via -r requirements/validation.txt
 django-waffle==0.20.0     # via -r requirements/validation.txt, edx-django-utils, edx-drf-extensions
-django==2.2.12            # via -r requirements/validation.txt, code-annotations, django-cors-headers, django-debug-toolbar, django-filter, django-model-utils, djangorestframework, drf-jwt, drf-nested-routers, edx-auth-backends, edx-django-utils, edx-drf-extensions, edx-i18n-tools, rest-condition
+django==2.2.13            # via -r requirements/validation.txt, code-annotations, django-cors-headers, django-debug-toolbar, django-filter, django-model-utils, djangorestframework, drf-jwt, drf-nested-routers, edx-auth-backends, edx-django-utils, edx-drf-extensions, edx-i18n-tools, rest-condition
 djangorestframework==3.11.0  # via -r requirements/validation.txt, django-rest-swagger, drf-jwt, drf-nested-routers, edx-drf-extensions, rest-condition
 drf-jwt==1.14.0           # via -r requirements/validation.txt, edx-drf-extensions
 drf-nested-routers==0.91  # via -r requirements/validation.txt
 edx-auth-backends==3.1.0  # via -r requirements/validation.txt
-edx-django-utils==3.2.2   # via -r requirements/validation.txt, edx-drf-extensions
+edx-django-utils==3.2.3   # via -r requirements/validation.txt, edx-drf-extensions
 edx-drf-extensions==6.0.0  # via -r requirements/validation.txt
 edx-i18n-tools==0.5.3     # via -r requirements/validation.txt
 edx-lint==1.4.1           # via -r requirements/validation.txt
@@ -43,10 +45,10 @@ edx-opaque-keys==2.1.0    # via -r requirements/validation.txt, edx-drf-extensio
 edx-rest-api-client==1.9.2  # via -r requirements/validation.txt
 factory-boy==2.12.0       # via -r requirements/validation.txt
 faker==4.1.0              # via -r requirements/validation.txt, factory-boy
-future==0.18.2            # via -r requirements/validation.txt, pyjwkest
+future==0.18.2            # via -r requirements/validation.txt, django-ses, pyjwkest
 gunicorn==20.0.4          # via -r requirements/dev.in
 idna==2.9                 # via -r requirements/validation.txt, requests
-importlib-metadata==1.6.0  # via -r requirements/validation.txt, inflect, path, pluggy, pytest
+importlib-metadata==1.6.1  # via -r requirements/validation.txt, inflect, path, pluggy, pytest
 inflect==3.0.2            # via -c requirements/constraints.txt, -r requirements/dev.in, jinja2-pluralize
 isort==4.3.21             # via -r requirements/validation.txt, pylint
 itypes==1.2.0             # via -r requirements/validation.txt, coreapi
@@ -88,7 +90,7 @@ pytest==5.4.3             # via -r requirements/validation.txt, pytest-cov, pyte
 python-dateutil==2.8.1    # via -r requirements/validation.txt, edx-drf-extensions, faker
 python-slugify==4.0.0     # via -r requirements/validation.txt, code-annotations
 python3-openid==3.1.0     # via -r requirements/validation.txt, social-auth-core
-pytz==2020.1              # via -r requirements/validation.txt, celery, django
+pytz==2020.1              # via -r requirements/validation.txt, celery, django, django-ses
 pyyaml==5.3.1             # via -r requirements/validation.txt, code-annotations, edx-i18n-tools
 redis==2.8                # via -r requirements/validation.txt
 requests-oauthlib==1.3.0  # via -r requirements/validation.txt, social-auth-core
@@ -102,12 +104,12 @@ snowballstemmer==2.0.0    # via -r requirements/validation.txt, pydocstyle
 social-auth-app-django==3.1.0  # via -c requirements/constraints.txt, -r requirements/validation.txt, edx-auth-backends
 social-auth-core==3.2.0   # via -c requirements/constraints.txt, -r requirements/validation.txt, edx-auth-backends, social-auth-app-django
 sqlparse==0.3.1           # via -r requirements/validation.txt, django, django-debug-toolbar
-stevedore==1.32.0         # via -r requirements/validation.txt, code-annotations, edx-opaque-keys
+stevedore==1.32.0         # via -c requirements/constraints.txt, -r requirements/validation.txt, code-annotations, edx-opaque-keys
 text-unidecode==1.3       # via -r requirements/validation.txt, faker, python-slugify
 typed-ast==1.4.1          # via -r requirements/validation.txt, astroid
 uritemplate==3.0.1        # via -r requirements/validation.txt, coreapi
 urllib3==1.25.9           # via -r requirements/validation.txt, requests
-wcwidth==0.2.3            # via -r requirements/validation.txt, pytest
+wcwidth==0.2.4            # via -r requirements/validation.txt, pytest
 wrapt==1.11.2             # via -r requirements/validation.txt, astroid
 zipp==1.2.0               # via -c requirements/constraints.txt, -r requirements/validation.txt, importlib-metadata
 

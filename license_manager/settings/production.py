@@ -40,7 +40,6 @@ with open(CONFIG_FILE, encoding='utf-8') as f:
     # of Django settings.
     vars().update(FILE_STORAGE_BACKEND)
     vars().update(MEDIA_STORAGE_BACKEND)
-2
 
 DB_OVERRIDES = dict(
     PASSWORD=environ.get('DB_MIGRATION_PASS', DATABASES['default']['PASSWORD']),
@@ -62,6 +61,9 @@ BROKER_URL = "{0}://{1}:{2}@{3}/{4}".format(
     CELERY_BROKER_VHOST
 )
 # END CELERY
+
+# Email configuration settings
+EMAIL_BACKEND = 'django_ses.SESBackend'  # Using Amazon AWS SES as an email backend
 
 for override, value in DB_OVERRIDES.items():
     DATABASES['default'][override] = value

@@ -1,0 +1,14 @@
+{% load i18n %}
+
+{{ TEMPLATE_GREETING }}
+
+{% trans "You may redeem your license for any course(s) that are in your organization's subscription catalog. To redeem:" %}
+
+{{ LICENSE_ACTIVATION_LINK }}
+
+{% trans "edX Login:" %} {{ USER_EMAIL }}
+{% trans "Expiration Date:" %} {{ EXPIRATION_DATE }}
+
+{{ TEMPLATE_CLOSING }}
+
+{% trans "Unsubscribe:" %} {{ UNSUBSCRIBE_LINK }}
