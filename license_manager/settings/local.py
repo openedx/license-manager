@@ -62,10 +62,6 @@ JWT_AUTH.update({
 
 ENABLE_AUTO_AUTH = True
 
-# BEGIN CELERY
-CELERY_ALWAYS_EAGER = True
-# END CELERY
-
 LOGGING = get_logger_config(debug=DEBUG, dev_env=True, local_loglevel='DEBUG')
 
 #####################################################################
