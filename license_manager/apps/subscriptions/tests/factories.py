@@ -3,8 +3,12 @@ from uuid import uuid4
 
 import factory
 
+from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions.constants import UNASSIGNED
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+
+
+USER_PASSWORD = 'password'
 
 
 class SubscriptionPlanFactory(factory.DjangoModelFactory):
@@ -38,3 +42,20 @@ class LicenseFactory(factory.DjangoModelFactory):
     uuid = factory.LazyFunction(uuid4)
     status = UNASSIGNED
     subscription_plan = factory.SubFactory(SubscriptionPlanFactory)
+
+
+class UserFactory(factory.DjangoModelFactory):
+    """
+    Test factory for the `User` model.
+    """
+    username = factory.Faker('user_name')
+    password = factory.PostGenerationMethodCall('set_password', USER_PASSWORD)
+    email = factory.Faker('email')
+    first_name = factory.Faker('first_name')
+    last_name = factory.Faker('last_name')
+    is_active = True
+    is_staff = False
+    is_superuser = False
+
+    class Meta:
+        model = User

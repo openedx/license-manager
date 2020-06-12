@@ -55,6 +55,7 @@ markupsafe==1.1.1         # via -r requirements/quality.txt, -r requirements/tes
 mccabe==0.6.1             # via -r requirements/quality.txt, -r requirements/test.txt, pylint
 mock==3.0.5               # via -r requirements/test.txt
 more-itertools==8.3.0     # via -r requirements/test.txt, pytest
+mysqlclient==1.4.6        # via -r requirements/quality.txt, -r requirements/test.txt
 newrelic==5.14.0.142      # via -r requirements/quality.txt, -r requirements/test.txt, edx-django-utils
 oauthlib==3.1.0           # via -r requirements/quality.txt, -r requirements/test.txt, requests-oauthlib, social-auth-core
 openapi-codec==1.3.2      # via -r requirements/quality.txt, -r requirements/test.txt, django-rest-swagger
