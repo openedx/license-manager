@@ -2,20 +2,26 @@
 """
 Tests for the Subscription and License V1 API view sets.
 """
+from datetime import date
 from uuid import uuid4
 
+import mock
 import pytest
 from django.contrib.auth.models import AnonymousUser
+from django.test import TestCase
 from django.urls import reverse
 from django_dynamic_fixture import get as get_model_fixture
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from license_manager.apps.api.v1 import views
 from license_manager.apps.core.models import User
-from license_manager.apps.subscriptions.constants import ASSIGNED
+from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.tests.factories import (
+    USER_PASSWORD,
     LicenseFactory,
     SubscriptionPlanFactory,
+    UserFactory,
 )
 
 
@@ -205,7 +211,7 @@ def test_subscription_plan_list_staff_user_200(api_client, staff_user):
     first_subscription = SubscriptionPlanFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
     # Associate some unassigned and assigned licenses to the first subscription
     unassigned_licenses = LicenseFactory.create_batch(5)
-    assigned_licenses = LicenseFactory.create_batch(2, status=ASSIGNED)
+    assigned_licenses = LicenseFactory.create_batch(2, status=constants.ASSIGNED)
     first_subscription.licenses.set(unassigned_licenses + assigned_licenses)
     # Create one more subscription for the enterprise with no licenses
     second_subscription = SubscriptionPlanFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
@@ -252,7 +258,7 @@ def test_subscription_plan_detail_staff_user_200(api_client, staff_user):
     subscription = SubscriptionPlanFactory.create()
     # Associate some licenses with the subscription
     unassigned_licenses = LicenseFactory.create_batch(3)
-    assigned_licenses = LicenseFactory.create_batch(5, status=ASSIGNED)
+    assigned_licenses = LicenseFactory.create_batch(5, status=constants.ASSIGNED)
     subscription.licenses.set(unassigned_licenses + assigned_licenses)
     response = _subscriptions_detail_request(api_client, staff_user, subscription.uuid)
     assert status.HTTP_200_OK == response.status_code
@@ -264,7 +270,7 @@ def test_license_list_staff_user_200(api_client, staff_user):
     subscription = SubscriptionPlanFactory.create()
     # Associate some licenses with the subscription
     unassigned_license = LicenseFactory.create()
-    assigned_license = LicenseFactory.create(status=ASSIGNED, user_email='fake@fake.com')
+    assigned_license = LicenseFactory.create(status=constants.ASSIGNED, user_email='fake@fake.com')
     subscription.licenses.set([unassigned_license, assigned_license])
     response = _licenses_list_request(api_client, staff_user, subscription.uuid)
     assert status.HTTP_200_OK == response.status_code
@@ -283,3 +289,88 @@ def test_license_detail_staff_user_200(api_client, staff_user):
     response = _licenses_detail_request(api_client, staff_user, subscription.uuid, subscription_license.uuid)
     assert status.HTTP_200_OK == response.status_code
     _assert_license_response_correct(response.data, subscription_license)
+
+
+class LicenseViewSetActionTests(TestCase):
+    """
+    Tests for special actions on the LicenseViewSet.
+    """
+    def setUp(self):
+        super().setUp()
+
+        # API client setup
+        self.api_client = APIClient()
+        self.user = UserFactory(is_staff=True, is_superuser=True)
+        self.api_client.login(username=self.user.username, password=USER_PASSWORD)
+
+        # Routes setup
+        self.subscription_plan = SubscriptionPlanFactory()
+        self.remind_url = reverse('api:v1:licenses-remind', kwargs={'subscription_uuid': self.subscription_plan.uuid})
+        self.remind_all_url = reverse('api:v1:licenses-remind-all', kwargs={'subscription_uuid': self.subscription_plan.uuid})
+
+    def test_remind_no_email(self):
+        """
+        Verify that the remind endpoint returns a 400 if no email is provided.
+        """
+        response = self.api_client.post(self.remind_url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_remind_invalid_email(self):
+        """
+        Verify that the remind endpoint returns a 400 if an invalid email is provided.
+        """
+        response = self.api_client.post(self.remind_url, {'user_email': 'lkajsf'})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_remind_blank_email(self):
+        """
+        Verify that the remind endpoint returns a 400 if an empty string is submitted for an email.
+        """
+        response = self.api_client.post(self.remind_url, {'user_email': ''})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_remind_no_license_for_user(self):
+        """
+        Verify that the remind endpoint returns a 404 if there is no license associated with the given email.
+        """
+        response = self.api_client.post(self.remind_url, {'user_email': 'nolicense@example.com'})
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_remind_no_pending_license_for_user(self):
+        """
+        Verify that the remind endpoint returns a 404 if there is no pending license associated with the given email.
+        """
+        email = 'test@example.com'
+        activated_license = LicenseFactory.create(user_email=email, status=constants.ACTIVATED)
+        self.subscription_plan.licenses.set([activated_license])
+
+        response = self.api_client.post(self.remind_url, {'user_email': email})
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
+    def test_remind(self, mock_send_reminder_emails):
+        """
+        Verify that the remind endpoint sends an email to the specified user with a pending license.
+
+        Also verifies that:
+            - A custom greeting and closing can be sent to the endpoint
+            - The license's `last_remind_date` is updated to reflect that an email was just sent out
+        """
+        email = 'test@example.com'
+        pending_license = LicenseFactory.create(user_email=email, status=constants.ASSIGNED)
+        assert pending_license.last_remind_date is None  # The learner should not have been reminded yet
+        self.subscription_plan.licenses.set([pending_license])
+
+        greeting = 'Hello'
+        closing = 'Goodbye'
+        response = self.api_client.post(self.remind_url, {'user_email': email, 'greeting': greeting, 'closing': closing})
+        assert response.status_code == status.HTTP_200_OK
+        mock_send_reminder_emails.assert_called_with(
+            {'greeting': greeting, 'closing': closing}, 
+            [email],
+            self.subscription_plan,
+        )
+
+        # Reload license and verify that now the license has had a reminder today
+        pending_license.refresh_from_db()
+        assert pending_license.last_remind_date.date() == date.today()

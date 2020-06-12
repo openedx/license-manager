@@ -22,6 +22,13 @@ class SubscriptionViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'uuid'
     lookup_url_kwarg = 'subscription_uuid'
     serializer_class = SubscriptionPlanSerializer
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = [
+        'licenses__user_email',
+    ]
+    filterset_fields = [
+        'licenses__status'
+    ]
 
     def get_queryset(self):
         """
@@ -103,12 +110,11 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
         """
         Helper that validates the data sent in from a POST request.
 
-        Return HTTP 400 response if the data is invalid.
+        Raises an exception with the error in the serializer if the data is invalid.
         """
         serializer_class = self.get_serializer_class()
         serializer = serializer_class(data=data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
 
     @action(detail=False, methods=['post'])
     def remind(self, request, subscription_uuid=None, license_uuid=None):
@@ -118,6 +124,8 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
         This endpoint reminds users by sending an email to the given email address, if there is a license which has not
         yet been activated that is associated with that email address.
         Additionally, updates the license to reflect that a reminder was just sent.
+
+        # TODO: Restrict to enterprise admins with edx-rbac implementation
         """
         # Validate the user_email and text sent in the data
         self._validate_data(request.data)
