@@ -2,7 +2,7 @@
 
 {{ TEMPLATE_GREETING }}
 
-{% if REMINDER %} {% trans "Reminder - your edX enterprise license is awaiting activation!" %} {% endif %}
+{% if REMINDER %} {% trans "Reminder - your edX license is awaiting activation!" %} {% endif %}
 
 {% trans "You may redeem your license for any course(s) that are in your organization's subscription catalog. To redeem:" %}
 
