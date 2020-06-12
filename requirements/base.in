@@ -2,7 +2,8 @@
 
 -c constraints.txt
 
-Django>=2.2,<2.3          # Web application framework
+celery
+Django
 django-cors-headers
 django-extensions
 django-filter
@@ -14,11 +15,11 @@ django-waffle
 djangorestframework
 drf-nested-routers
 edx-auth-backends
+edx-celeryutils
 edx-django-utils
 edx-drf-extensions
-edx-rest-api-client==1.9.2
+edx-rest-api-client
 mysqlclient
 pytz
-celery==3.1.26.post2
 redis==2.8
 zipp
