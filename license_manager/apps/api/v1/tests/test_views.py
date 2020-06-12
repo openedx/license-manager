@@ -14,7 +14,6 @@ from django_dynamic_fixture import get as get_model_fixture
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from license_manager.apps.api.v1 import views
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.tests.factories import (
@@ -306,37 +305,62 @@ class LicenseViewSetActionTests(TestCase):
         # Routes setup
         self.subscription_plan = SubscriptionPlanFactory()
         self.remind_url = reverse('api:v1:licenses-remind', kwargs={'subscription_uuid': self.subscription_plan.uuid})
-        self.remind_all_url = reverse('api:v1:licenses-remind-all', kwargs={'subscription_uuid': self.subscription_plan.uuid})
+        self.remind_all_url = reverse(
+            'api:v1:licenses-remind-all',
+            kwargs={'subscription_uuid': self.subscription_plan.uuid},
+        )
 
-    def test_remind_no_email(self):
+    def _assert_last_remind_date_correct(self, licenses, should_be_updated):
+        """
+        Helper that verifies that all of the given licenses have had their last_remind_date updated if applicable.
+
+        If they should not have been updated, then it checks that last_remind_date is still None.
+        """
+        for license_obj in licenses:
+            license_obj.refresh_from_db()
+            if should_be_updated:
+                assert license_obj.last_remind_date.date() == date.today()
+            else:
+                assert license_obj.last_remind_date is None
+
+    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
+    def test_remind_no_email(self, mock_send_reminder_emails):
         """
         Verify that the remind endpoint returns a 400 if no email is provided.
         """
         response = self.api_client.post(self.remind_url)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        mock_send_reminder_emails.assert_not_called()
 
-    def test_remind_invalid_email(self):
+    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
+    def test_remind_invalid_email(self, mock_send_reminder_emails):
         """
         Verify that the remind endpoint returns a 400 if an invalid email is provided.
         """
         response = self.api_client.post(self.remind_url, {'user_email': 'lkajsf'})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        mock_send_reminder_emails.assert_not_called()
 
-    def test_remind_blank_email(self):
+    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
+    def test_remind_blank_email(self, mock_send_reminder_emails):
         """
         Verify that the remind endpoint returns a 400 if an empty string is submitted for an email.
         """
         response = self.api_client.post(self.remind_url, {'user_email': ''})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        mock_send_reminder_emails.assert_not_called()
 
-    def test_remind_no_license_for_user(self):
+    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
+    def test_remind_no_license_for_user(self, mock_send_reminder_emails):
         """
         Verify that the remind endpoint returns a 404 if there is no license associated with the given email.
         """
         response = self.api_client.post(self.remind_url, {'user_email': 'nolicense@example.com'})
         assert response.status_code == status.HTTP_404_NOT_FOUND
+        mock_send_reminder_emails.assert_not_called()
 
-    def test_remind_no_pending_license_for_user(self):
+    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
+    def test_remind_no_pending_license_for_user(self, mock_send_reminder_emails):
         """
         Verify that the remind endpoint returns a 404 if there is no pending license associated with the given email.
         """
@@ -346,6 +370,8 @@ class LicenseViewSetActionTests(TestCase):
 
         response = self.api_client.post(self.remind_url, {'user_email': email})
         assert response.status_code == status.HTTP_404_NOT_FOUND
+        self._assert_last_remind_date_correct([activated_license], False)
+        mock_send_reminder_emails.assert_not_called()
 
     @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
     def test_remind(self, mock_send_reminder_emails):
@@ -363,14 +389,57 @@ class LicenseViewSetActionTests(TestCase):
 
         greeting = 'Hello'
         closing = 'Goodbye'
-        response = self.api_client.post(self.remind_url, {'user_email': email, 'greeting': greeting, 'closing': closing})
+        response = self.api_client.post(
+            self.remind_url,
+            {'user_email': email, 'greeting': greeting, 'closing': closing},
+        )
         assert response.status_code == status.HTTP_200_OK
         mock_send_reminder_emails.assert_called_with(
-            {'greeting': greeting, 'closing': closing}, 
+            {'greeting': greeting, 'closing': closing},
             [email],
             self.subscription_plan,
         )
+        self._assert_last_remind_date_correct([pending_license], True)
 
-        # Reload license and verify that now the license has had a reminder today
-        pending_license.refresh_from_db()
-        assert pending_license.last_remind_date.date() == date.today()
+    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
+    def test_remind_all_no_pending_licenses(self, mock_send_reminder_emails):
+        """
+        Verify that the remind all endpoint returns a 404 if there are no pending licenses.
+        """
+        unassigned_licenses = LicenseFactory.create_batch(5, status=constants.UNASSIGNED)
+        self.subscription_plan.licenses.set(unassigned_licenses)
+
+        response = self.api_client.post(self.remind_all_url)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        self._assert_last_remind_date_correct(unassigned_licenses, False)
+        mock_send_reminder_emails.assert_not_called()
+
+    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
+    def test_remind_all(self, mock_send_reminder_emails):
+        """
+        Verify that the remind all endpoint sends an email to each user with a pending license.
+
+        Also verifies that:
+            - A custom greeting and closing can be sent to the endpoint.
+            - The licenses' `last_remind_date` fields are updated to reflect that an email was just sent out.
+        """
+        # Create some pending and non-pending licenses for the subscription
+        unassigned_licenses = LicenseFactory.create_batch(5, status=constants.UNASSIGNED)
+        pending_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
+        self.subscription_plan.licenses.set(unassigned_licenses + pending_licenses)
+
+        greeting = 'Hello'
+        closing = 'Goodbye'
+        response = self.api_client.post(self.remind_all_url, {'greeting': greeting, 'closing': closing})
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify that the unassigned licenses did not have `last_remind_date` updated, but the pending licenses did
+        self._assert_last_remind_date_correct(unassigned_licenses, False)
+        self._assert_last_remind_date_correct(pending_licenses, True)
+
+        # Verify emails sent to only the pending licenses
+        mock_send_reminder_emails.assert_called_with(
+            {'greeting': greeting, 'closing': closing},
+            [license.user_email for license in pending_licenses],
+            self.subscription_plan,
+        )

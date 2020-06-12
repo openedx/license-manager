@@ -2,14 +2,14 @@ from datetime import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, views, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from license_manager.apps.api.serializers import (
     CustomTextSerializer,
-    LicenseSerializer,
     LicenseEmailSerializer,
+    LicenseSerializer,
     SubscriptionPlanSerializer,
 )
 from license_manager.apps.subscriptions import emails
@@ -22,13 +22,6 @@ class SubscriptionViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'uuid'
     lookup_url_kwarg = 'subscription_uuid'
     serializer_class = SubscriptionPlanSerializer
-    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = [
-        'licenses__user_email',
-    ]
-    filterset_fields = [
-        'licenses__status'
-    ]
 
     def get_queryset(self):
         """
@@ -133,7 +126,7 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
         # Make sure there is a license that is still pending activation associated with the given email
         user_email = request.data.get('user_email')
         try:
-            license = License.objects.get(user_email=user_email, status=ASSIGNED)
+            user_license = License.objects.get(user_email=user_email, status=ASSIGNED)
         except ObjectDoesNotExist:
             msg = 'Could not find any licenses pending activation that are associated with the email: {}'.format(
                 user_email,
@@ -149,8 +142,8 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
         )
 
         # Set last remind date to now
-        license.last_remind_date = datetime.now()
-        license.save()
+        user_license.last_remind_date = datetime.now()
+        user_license.save()
 
         return Response(status=status.HTTP_200_OK)
 
@@ -166,18 +159,20 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
 
         subscription_plan = self._get_subscription_plan()
         pending_licenses = License.objects.filter(subscription_plan=subscription_plan, status=ASSIGNED)
-        pending_user_emails = pending_licenses.values_list('user_email', flat=True)
+        if not pending_licenses:
+            return Response('Could not find any licenses pending activation', status=status.HTTP_404_NOT_FOUND)
 
+        pending_user_emails = [license.user_email for license in pending_licenses]
         # Send activation reminder email to all pending users
         emails.send_reminder_emails(
             self._get_custom_text(request.data),
-            [pending_user_emails],
+            pending_user_emails,
             subscription_plan,
         )
 
         # Set last remind date to now for all pending licenses
-        for license in pending_licenses:
-            license.last_remind_date = datetime.now()
+        for pending_license in pending_licenses:
+            pending_license.last_remind_date = datetime.now()
         License.objects.bulk_update(pending_licenses, ['last_remind_date'])
 
         return Response(status=status.HTTP_200_OK)

@@ -183,8 +183,9 @@ class License(TimeStampedModel):
         """
         return (
             "<License with UUID '{uuid}' "
-            "for SubscriptionPlan'{subscription_plan_uuid}'>".format(
+            "for SubscriptionPlan '{title}' with UUID '{subscription_plan_uuid}'>".format(
                 uuid=self.uuid,
+                title=self.subscription_plan.title,
                 subscription_plan_uuid=self.subscription_plan.uuid,
             )
         )

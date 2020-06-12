@@ -3,7 +3,6 @@ from uuid import uuid4
 
 import factory
 
-
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions.constants import UNASSIGNED
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan

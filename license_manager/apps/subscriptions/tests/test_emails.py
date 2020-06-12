@@ -1,8 +1,7 @@
 from django.core import mail
 from django.test import TestCase
 
-from license_manager.apps.subscriptions import constants
-from license_manager.apps.subscriptions import emails
+from license_manager.apps.subscriptions import constants, emails
 from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
 )
