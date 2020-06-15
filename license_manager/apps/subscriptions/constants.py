@@ -18,3 +18,11 @@ LICENSE_REMINDER_EMAIL_SUBJECT = 'Your edX License is pending'
 
 # Template names used for emails
 LICENSE_ACTIVATION_EMAIL_TEMPLATE = 'activation'
+
+# Role-based access control
+SUBSCRIPTIONS_ADMIN_ROLE = 'enterprise_subscriptions_admin'
+
+SYSTEM_ENTERPRISE_ADMIN_ROLE = 'enterprise_admin'
+SYSTEM_ENTERPRISE_OPERATOR_ROLE = 'enterprise_openedx_operator'
+
+SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION = 'subscriptions.has_admin_access'
