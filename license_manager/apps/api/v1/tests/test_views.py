@@ -309,6 +309,10 @@ class LicenseViewSetActionTests(TestCase):
             'api:v1:licenses-remind-all',
             kwargs={'subscription_uuid': self.subscription_plan.uuid},
         )
+        self.license_overview_url = reverse(
+            'api:v1:licenses-overview',
+            kwargs={'subscription_uuid': self.subscription_plan.uuid},
+        )
 
     def _assert_last_remind_date_correct(self, licenses, should_be_updated):
         """
@@ -443,3 +447,20 @@ class LicenseViewSetActionTests(TestCase):
             [license.user_email for license in pending_licenses],
             self.subscription_plan,
         )
+
+    def test_license_overview(self):
+        unassigned_licenses = LicenseFactory.create_batch(5, status=constants.UNASSIGNED)
+        pending_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
+        deactivated_licenses = LicenseFactory.create_batch(1, status=constants.DEACTIVATED)
+        self.subscription_plan.licenses.set(unassigned_licenses + pending_licenses + deactivated_licenses)
+
+        response = self.api_client.get(self.license_overview_url)
+        assert response.status_code == status.HTTP_200_OK
+
+        expected_response = [
+            {'status': constants.UNASSIGNED, 'count': len(unassigned_licenses)},
+            {'status': constants.ASSIGNED, 'count': len(pending_licenses)},
+            {'status': constants.DEACTIVATED, 'count': len(deactivated_licenses)},
+        ]
+        actual_response = response.data
+        assert expected_response == actual_response
