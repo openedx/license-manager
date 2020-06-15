@@ -1,8 +1,7 @@
-from datetime import datetime
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
+from edx_rbac.mixins import PermissionRequiredForListingMixin
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -13,48 +12,60 @@ from license_manager.apps.api.serializers import (
     LicenseSerializer,
     SubscriptionPlanSerializer,
 )
-from license_manager.apps.subscriptions import emails
+from license_manager.apps.api.utils import localized_utcnow
+from license_manager.apps.subscriptions import constants, emails
 from license_manager.apps.subscriptions.constants import ASSIGNED
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.models import (
+    License,
+    SubscriptionPlan,
+    SubscriptionsRoleAssignment,
+)
 
 
-class SubscriptionViewSet(viewsets.ReadOnlyModelViewSet):
+class SubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
     """ Viewset for read operations on SubscriptionPlans."""
     lookup_field = 'uuid'
     lookup_url_kwarg = 'subscription_uuid'
     serializer_class = SubscriptionPlanSerializer
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
 
-    def get_queryset(self):
+    # fields that control permissions for 'list' actions
+    list_lookup_field = 'enterprise_customer_uuid'
+    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
+    role_assignment_class = SubscriptionsRoleAssignment
+
+    @property
+    def requested_enterprise_uuid(self):
+        return self.request.query_params.get('enterprise_customer_uuid')
+
+    @property
+    def requested_subscription_uuid(self):
+        return self.kwargs.get('subscription_uuid')
+
+    def get_permission_object(self):
         """
-        Gets the queryset of subscriptions available to the requester and their enterprise.
-
-        For the detail view, all subscriptions are currently in the queryset, but this will change when we add rbac.
-        The enterprise is specified by the `enterprise_customer_uuid` query parameter. This query parameter is useable
-        only by staff users, with non-staff users already restricted from this viewset. Additionally, staff users are
-        only able to get information about subscriptions associated with enterprises for which they are admins.
-
-        TODO: Some of this functionality is not currently implemented, and will need to be done as part of the work to
-        add edx-rbac permissions to the service.
-
-        Returns:
-            Queryset: The queryset of SubscriptionPlans the user has access to.
+        Used for "retrieve" actions.  Determines which SubscriptionPlan instances
+        to check for role-based permissions against.
         """
-        request_action = getattr(self, 'action', None)
-        if request_action == 'retrieve':
-            return SubscriptionPlan.objects.all()
+        try:
+            return SubscriptionPlan.objects.get(uuid=self.requested_subscription_uuid)
+        except SubscriptionPlan.DoesNotExist:
+            return None
 
-        user = self.request.user
-        if user.is_superuser:
-            return SubscriptionPlan.objects.all()
+    @property
+    def base_queryset(self):
+        """
+        Required by the `PermissionRequiredForListingMixin`.
+        For non-list actions, this is what's returned by `get_queryset()`.
+        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
+        """
+        queryset = SubscriptionPlan.objects.all()
+        if self.requested_enterprise_uuid:
+            queryset = SubscriptionPlan.objects.filter(enterprise_customer_uuid=self.requested_enterprise_uuid)
+        return queryset.order_by('-start_date')
 
-        enterprise_customer_uuid = self.request.query_params.get('enterprise_customer_uuid', None)
-        if not enterprise_customer_uuid:
-            return SubscriptionPlan.objects.none()
 
-        return SubscriptionPlan.objects.filter(enterprise_customer_uuid=enterprise_customer_uuid)
-
-
-class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
+class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
     """ Viewset for read operations on Licenses."""
     lookup_field = 'uuid'
     lookup_url_kwarg = 'license_uuid'
@@ -67,14 +78,30 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
     ]
     search_fields = ['user_email']
     filterset_fields = ['status']
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
 
-    def get_queryset(self):
-        """
-        Restricts licenses to those only linked with the subscription plan specified in the route.
+    # The fields that control permissions for 'list' actions.
+    # Roles are granted on specific enterprise identifiers, so we have to join
+    # from this model to SubscriptionPlan to find the corresponding customer identifier.
+    list_lookup_field = 'subscription_plan__enterprise_customer_uuid'
+    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
+    role_assignment_class = SubscriptionsRoleAssignment
 
-        TODO: Restrict this to only those valid with the user's enterprise when we add rbac
+    def get_permission_object(self):
         """
-        return License.objects.filter(subscription_plan=self._get_subscription_plan())
+        The requesting user needs access to the license's SubscriptionPlan
+        in order to access the license.
+        """
+        return self._get_subscription_plan()
+
+    @property
+    def base_queryset(self):
+        """
+        Required by the `PermissionRequiredForListingMixin`.
+        For non-list actions, this is what's returned by `get_queryset()`.
+        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
+        """
+        return License.objects.filter(subscription_plan=self._get_subscription_plan()).order_by('-activation_date')
 
     def get_serializer_class(self):
         if self.action == 'remind':
@@ -87,7 +114,10 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
         """
         Helper that returns the subscription plan specified by `subscription_uuid` in the request.
         """
-        return SubscriptionPlan.objects.get(uuid=self.kwargs['subscription_uuid'])
+        try:
+            return SubscriptionPlan.objects.get(uuid=self.kwargs['subscription_uuid'])
+        except SubscriptionPlan.DoesNotExist:
+            return None
 
     def _get_custom_text(self, data):
         """
@@ -141,7 +171,7 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
         )
 
         # Set last remind date to now
-        user_license.last_remind_date = datetime.now()
+        user_license.last_remind_date = localized_utcnow()
         user_license.save()
 
         return Response(status=status.HTTP_200_OK)
@@ -171,7 +201,7 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Set last remind date to now for all pending licenses
         for pending_license in pending_licenses:
-            pending_license.last_remind_date = datetime.now()
+            pending_license.last_remind_date = localized_utcnow()
         License.objects.bulk_update(pending_licenses, ['last_remind_date'])
 
         return Response(status=status.HTTP_200_OK)
