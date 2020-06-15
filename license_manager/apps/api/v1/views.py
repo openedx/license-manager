@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -57,17 +58,15 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
     """ Viewset for read operations on Licenses."""
     lookup_field = 'uuid'
     lookup_url_kwarg = 'license_uuid'
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     ordering_fields = [
         'user_email',
         'status',
         'activation_date',
         'last_remind_date',
     ]
-    filterset_fields = [
-        'user_email',
-        'status'
-    ]
+    search_fields = ['user_email']
+    filterset_fields = ['status']
 
     def get_queryset(self):
         """
@@ -176,3 +175,10 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
         License.objects.bulk_update(pending_licenses, ['last_remind_date'])
 
         return Response(status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='overview')
+    def overview(self, request, subscription_uuid=None):
+        queryset = self.filter_queryset(self.get_queryset())
+        queryset_values = queryset.values('status').annotate(count=Count('status')).order_by('-count')
+        license_overview = list(queryset_values)
+        return Response(license_overview, status=status.HTTP_200_OK)
