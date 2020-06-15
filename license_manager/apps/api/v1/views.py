@@ -109,7 +109,7 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
         serializer.is_valid(raise_exception=True)
 
     @action(detail=False, methods=['post'])
-    def remind(self, request, subscription_uuid=None, license_uuid=None):
+    def remind(self, request, subscription_uuid=None):
         """
         Given a single email in the POST data, sends a reminder email that they have a license pending activation.
 
@@ -147,7 +147,7 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='remind-all')
-    def remind_all(self, request, subscription_uuid=None, license_uuid=None):
+    def remind_all(self, request, subscription_uuid=None):
         """
         Reminds all users in the subscription who have a pending license that their license is awaiting activation.
 
@@ -176,9 +176,20 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'], url_path='overview')
+    @action(detail=False, methods=['get'])
     def overview(self, request, subscription_uuid=None):
         queryset = self.filter_queryset(self.get_queryset())
         queryset_values = queryset.values('status').annotate(count=Count('status')).order_by('-count')
         license_overview = list(queryset_values)
         return Response(license_overview, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='test-send-email')
+    def test_send_email(self, request, subscription_uuid=None):
+        client = emails.SESEmailClient()
+        response = client.send_email(
+            ['bbaker@edx.org'],
+            'Test Subject',
+            'Test Text Body',
+            '<p>Test Html Body</p>',
+        )
+        return Response(response, status=status.HTTP_200_OK)
