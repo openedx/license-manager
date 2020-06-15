@@ -5,6 +5,9 @@ from django.utils.translation import gettext as _
 from model_utils.models import TimeStampedModel
 from simple_history.models import HistoricalRecords
 
+from edx_rbac.models import UserRole, UserRoleAssignment
+from edx_rbac.utils import ALL_ACCESS_CONTEXT
+
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
@@ -188,3 +191,62 @@ class License(TimeStampedModel):
                 subscription_plan_uuid=self.subscription_plan.uuid,
             )
         )
+
+
+class SubscriptionsFeatureRole(UserRole):
+    """
+    User role definitions specific to subscriptions.
+     .. no_pii:
+    """
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "SubscriptionsFeatureRole(name={name})".format(name=self.name)
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+class SubscriptionsRoleAssignment(UserRoleAssignment):
+    """
+    Model to map users to a SubscriptionsFeatureRole.
+     .. no_pii:
+    """
+
+    role_class = SubscriptionsFeatureRole
+    enterprise_customer_uuid = models.UUIDField(blank=True, null=True, verbose_name='Enterprise Customer UUID')
+
+    def get_context(self):
+        """
+        Return the enterprise customer id or `*` if the user has access to all resources.
+        """
+        if self.enterprise_customer_uuid:
+            return str(self.enterprise_customer_uuid)
+        return ALL_ACCESS_CONTEXT
+
+    @classmethod
+    def user_assignments_for_role_name(cls, user, role_name):
+        """
+        Returns assignments for a given user and role name.
+        """
+        return cls.objects.filter(user__id=user.id, role__name=role_name)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "SubscriptionsRoleAssignment(name={name}, user={user})".format(
+            name=self.role.name,  # pylint: disable=no-member
+            user=self.user.id,
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()

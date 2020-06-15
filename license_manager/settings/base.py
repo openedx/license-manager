@@ -3,6 +3,11 @@ from os.path import abspath, dirname, join
 
 from corsheaders.defaults import default_headers as corsheaders_default_headers
 
+from license_manager.apps.subscriptions.constants import (
+    SUBSCRIPTIONS_ADMIN_ROLE,
+    SYSTEM_ENTERPRISE_ADMIN_ROLE,
+    SYSTEM_ENTERPRISE_OPERATOR_ROLE,
+)
 from license_manager.settings.utils import get_logger_config
 
 # PATH vars
@@ -293,3 +298,9 @@ CELERY_TASK_SOFT_TIME_LIMIT = 240
 CELERY_TASK_TIME_LIMIT = 300
 
 """############################# END CELERY CONFIG ##################################"""
+
+# Set up system-to-feature roles mapping for edx-rbac
+SYSTEM_TO_FEATURE_ROLE_MAPPING = {
+    SYSTEM_ENTERPRISE_OPERATOR_ROLE: [SUBSCRIPTIONS_ADMIN_ROLE],
+    SYSTEM_ENTERPRISE_ADMIN_ROLE: [SUBSCRIPTIONS_ADMIN_ROLE],
+}

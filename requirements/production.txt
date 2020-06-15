@@ -8,30 +8,32 @@ amqp==1.4.9               # via -r requirements/base.txt, kombu
 anyjson==0.3.3            # via -r requirements/base.txt, kombu
 billiard==3.3.0.23        # via -r requirements/base.txt, celery
 celery==3.1.26.post2      # via -r requirements/base.txt
-certifi==2020.4.5.1       # via -r requirements/base.txt, requests
+certifi==2020.4.5.2       # via -r requirements/base.txt, requests
 chardet==3.0.4            # via -r requirements/base.txt, requests
 coreapi==2.3.3            # via -r requirements/base.txt, django-rest-swagger, openapi-codec
 coreschema==0.0.4         # via -r requirements/base.txt, coreapi
 defusedxml==0.6.0         # via -r requirements/base.txt, python3-openid, social-auth-core
-django-cors-headers==3.3.0  # via -r requirements/base.txt
+django-cors-headers==3.4.0  # via -r requirements/base.txt
+django-crum==0.7.6        # via -r requirements/base.txt, edx-rbac
 django-extensions==2.2.9  # via -r requirements/base.txt
-django-filter==2.2.0      # via -r requirements/base.txt
-django-model-utils==4.0.0  # via -r requirements/base.txt
+django-filter==2.3.0      # via -r requirements/base.txt
+django-model-utils==4.0.0  # via -r requirements/base.txt, edx-rbac
 django-rest-swagger==2.2.0  # via -r requirements/base.txt
 django-simple-history==2.10.0  # via -r requirements/base.txt
 django-waffle==0.20.0     # via -r requirements/base.txt, edx-django-utils, edx-drf-extensions
-django==2.2.12            # via -r requirements/base.txt, django-cors-headers, django-filter, django-model-utils, djangorestframework, drf-jwt, drf-nested-routers, edx-auth-backends, edx-django-utils, edx-drf-extensions, rest-condition
+django==2.2.13            # via -r requirements/base.txt, django-cors-headers, django-crum, django-filter, django-model-utils, djangorestframework, drf-jwt, drf-nested-routers, edx-auth-backends, edx-django-utils, edx-drf-extensions, edx-rbac, rest-condition
 djangorestframework==3.11.0  # via -r requirements/base.txt, django-rest-swagger, drf-jwt, drf-nested-routers, edx-drf-extensions, rest-condition
 drf-jwt==1.14.0           # via -r requirements/base.txt, edx-drf-extensions
 drf-nested-routers==0.91  # via -r requirements/base.txt
 edx-auth-backends==3.1.0  # via -r requirements/base.txt
-edx-django-utils==3.2.2   # via -r requirements/base.txt, edx-drf-extensions
-edx-drf-extensions==6.0.0  # via -r requirements/base.txt
+edx-django-utils==3.2.3   # via -r requirements/base.txt, edx-drf-extensions
+edx-drf-extensions==6.0.0  # via -r requirements/base.txt, edx-rbac
 edx-opaque-keys==2.1.0    # via -r requirements/base.txt, edx-drf-extensions
+edx-rbac==1.3.0           # via -r requirements/base.txt
 edx-rest-api-client==1.9.2  # via -r requirements/base.txt
 future==0.18.2            # via -r requirements/base.txt, pyjwkest
-gevent==20.5.2            # via -r requirements/production.in
-greenlet==0.4.15          # via gevent
+gevent==20.6.1            # via -r requirements/production.in
+greenlet==0.4.16          # via gevent
 gunicorn==20.0.4          # via -r requirements/production.in
 idna==2.9                 # via -r requirements/base.txt, requests
 itypes==1.2.0             # via -r requirements/base.txt, coreapi
@@ -58,12 +60,12 @@ requests==2.23.0          # via -r requirements/base.txt, coreapi, edx-drf-exten
 rest-condition==1.0.3     # via -r requirements/base.txt, edx-drf-extensions
 semantic-version==2.8.5   # via -r requirements/base.txt, edx-drf-extensions
 simplejson==3.17.0        # via -r requirements/base.txt, django-rest-swagger
-six==1.15.0               # via -r requirements/base.txt, django-extensions, django-simple-history, django-waffle, edx-auth-backends, edx-drf-extensions, edx-opaque-keys, pyjwkest, python-dateutil, social-auth-app-django, social-auth-core, stevedore
+six==1.15.0               # via -r requirements/base.txt, django-extensions, django-simple-history, django-waffle, edx-auth-backends, edx-drf-extensions, edx-opaque-keys, edx-rbac, pyjwkest, python-dateutil, social-auth-app-django, social-auth-core
 slumber==0.7.1            # via -r requirements/base.txt, edx-rest-api-client
 social-auth-app-django==3.1.0  # via -r requirements/base.txt, edx-auth-backends
 social-auth-core==3.2.0   # via -r requirements/base.txt, edx-auth-backends, social-auth-app-django
 sqlparse==0.3.1           # via -r requirements/base.txt, django
-stevedore==1.32.0         # via -r requirements/base.txt, edx-opaque-keys
+stevedore==2.0.0          # via -r requirements/base.txt, edx-opaque-keys
 uritemplate==3.0.1        # via -r requirements/base.txt, coreapi
 urllib3==1.25.9           # via -r requirements/base.txt, requests
 zipp==1.2.0               # via -r requirements/base.txt
