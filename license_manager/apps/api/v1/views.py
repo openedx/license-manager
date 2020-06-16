@@ -182,14 +182,3 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
         queryset_values = queryset.values('status').annotate(count=Count('status')).order_by('-count')
         license_overview = list(queryset_values)
         return Response(license_overview, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=['get'], url_path='test-send-email')
-    def test_send_email(self, request, subscription_uuid=None):
-        client = emails.SESEmailClient()
-        response = client.send_email(
-            ['bbaker@edx.org'],
-            'Test Subject',
-            'Test Text Body',
-            '<p>Test Html Body</p>',
-        )
-        return Response(response, status=status.HTTP_200_OK)

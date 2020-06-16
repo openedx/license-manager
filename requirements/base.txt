@@ -7,8 +7,8 @@
 amqp==1.4.9               # via kombu
 anyjson==0.3.3            # via kombu
 billiard==3.3.0.23        # via celery
-boto3==1.14.2             # via -r requirements/base.in, django-ses
-botocore==1.17.2          # via boto3, s3transfer
+boto3==1.14.3             # via django-ses
+botocore==1.17.3          # via boto3, s3transfer
 celery==3.1.26.post2      # via -r requirements/base.in
 certifi==2020.4.5.2       # via requests
 chardet==3.0.4            # via requests

@@ -2,7 +2,6 @@
 
 -c constraints.txt
 
-boto3
 Django>=2.2,<2.3          # Web application framework
 django-cors-headers
 django-extensions
