@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -12,9 +13,12 @@ from license_manager.apps.api.serializers import (
     LicenseSerializer,
     SubscriptionPlanSerializer,
 )
-from license_manager.apps.subscriptions import emails
+from license_manager.apps.api.tasks import send_reminder_email_task
 from license_manager.apps.subscriptions.constants import ASSIGNED
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+
+
+logger = logging.getLogger(__name__)
 
 
 class SubscriptionViewSet(viewsets.ReadOnlyModelViewSet):
@@ -133,13 +137,16 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
             )
             return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
-        subscription_plan = self._get_subscription_plan()
         # Send activation reminder email
-        emails.send_reminder_emails(
+        async_task = send_reminder_email_task.delay(
             self._get_custom_text(request.data),
             [user_email],
-            subscription_plan,
+            self.kwargs['subscription_uuid'],
         )
+        message = (
+            'Spinning off send_reminder_email_task (%s) for SubscriptionPlan (%s) to email 1 recipient.'
+        )
+        logger.info(message, async_task.task_id, self.kwargs['subscription_uuid'])
 
         # Set last remind date to now
         user_license.last_remind_date = datetime.now()
@@ -164,11 +171,15 @@ class LicenseViewSet(viewsets.ReadOnlyModelViewSet):
 
         pending_user_emails = [license.user_email for license in pending_licenses]
         # Send activation reminder email to all pending users
-        emails.send_reminder_emails(
+        async_task = send_reminder_email_task.delay(
             self._get_custom_text(request.data),
             pending_user_emails,
-            subscription_plan,
+            self.kwargs['subscription_uuid'],
         )
+        message = (
+            'Spinning off send_reminder_email_task (%s) for SubscriptionPlan (%s) to email (%s) recipients.'
+        )
+        logger.info(message, async_task.task_id, self.kwargs['subscription_uuid'], len(pending_user_emails))
 
         # Set last remind date to now for all pending licenses
         for pending_license in pending_licenses:
