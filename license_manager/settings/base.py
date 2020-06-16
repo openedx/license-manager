@@ -32,7 +32,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles'
+    'django.contrib.staticfiles',
 )
 
 THIRD_PARTY_APPS = (
@@ -41,6 +41,7 @@ THIRD_PARTY_APPS = (
     'django_filters',
     'rest_framework',
     'rest_framework_swagger',
+    'rules.apps.AutodiscoverRulesConfig',
     'social_django',
     'waffle',
 )
@@ -205,6 +206,7 @@ AUTH_USER_MODEL = 'core.User'
 
 AUTHENTICATION_BACKENDS = (
     'auth_backends.backends.EdXOAuth2',
+    'rules.permissions.ObjectPermissionBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
 
@@ -232,6 +234,16 @@ JWT_AUTH = {
     'JWT_AUTH_COOKIE_HEADER_PAYLOAD': 'edx-jwt-cookie-header-payload',
     'JWT_AUTH_COOKIE_SIGNATURE': 'edx-jwt-cookie-signature',
     'JWT_AUTH_REFRESH_COOKIE': 'edx-jwt-refresh-cookie',
+    # JWT_ISSUERS enables token decoding for multiple issuers (Note: This is not a native DRF-JWT field)
+    # We use it to allow different values for the 'ISSUER' field, but keep the same SECRET_KEY and
+    # AUDIENCE values across all issuers.
+    'JWT_ISSUERS': [
+        {
+            'AUDIENCE': 'SET-ME-PLEASE',
+            'ISSUER': 'http://localhost:8000/oauth2',
+            'SECRET_KEY': 'SET-ME-PLEASE'
+        },
+    ],
 }
 
 # Request the user's permissions in the ID token
@@ -304,3 +316,10 @@ SYSTEM_TO_FEATURE_ROLE_MAPPING = {
     SYSTEM_ENTERPRISE_OPERATOR_ROLE: [SUBSCRIPTIONS_ADMIN_ROLE],
     SYSTEM_ENTERPRISE_ADMIN_ROLE: [SUBSCRIPTIONS_ADMIN_ROLE],
 }
+
+
+# Make some loggers less noisy (useful during test failure)
+import logging
+
+for logger_to_silence in ['faker', 'jwkest', 'edx_rest_framework_extensions']:
+    logging.getLogger(logger_to_silence).setLevel(logging.WARNING)

@@ -15,3 +15,5 @@ SUBSCRIPTIONS_ADMIN_ROLE = 'enterprise_subscriptions_admin'
 
 SYSTEM_ENTERPRISE_ADMIN_ROLE = 'enterprise_admin'
 SYSTEM_ENTERPRISE_OPERATOR_ROLE = 'enterprise_openedx_operator'
+
+SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION = 'subscriptions.has_admin_access'

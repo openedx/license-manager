@@ -8,6 +8,7 @@ django-extensions
 django-filter
 django-model-utils
 django-rest-swagger
+rules
 django-simple-history
 django-waffle
 djangorestframework
@@ -20,4 +21,5 @@ edx-rest-api-client==1.9.2
 pytz
 celery==3.1.26.post2
 redis==2.8
+rules
 zipp
