@@ -153,7 +153,7 @@ def _send_email_with_activation(custom_template_text, email_recipient_list, subs
     with mail.get_connection() as connection:
         connection.open()
         connection.send_messages(emails)
-        connection.close()
+        # connection.close()
 
 
 def _generate_license_activation_link():  # TODO: implement 'How users will activate licenses' (ENT-2748)
