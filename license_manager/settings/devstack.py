@@ -36,5 +36,7 @@ JWT_AUTH.update({
 
 # BEGIN CELERY
 CELERYD_HIJACK_ROOT_LOGGER = True
-CELERY_ALWAYS_EAGER = os.environ.get('CELERY_ALWAYS_EAGER', False)
+CELERY_ALWAYS_EAGER = (
+    os.environ.get("CELERY_ALWAYS_EAGER", "false").lower() == "true"
+)
 # END CELERY
