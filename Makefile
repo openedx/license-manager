@@ -145,6 +145,9 @@ dev.provision:
 dev.up: # Starts all containers
 	docker-compose up -d
 
+dev.up.build:
+	docker-compose up -d --build
+
 dev.down: # Kills containers and all of their data that isn't in volumes
 	docker-compose down
 
