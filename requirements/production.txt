@@ -7,8 +7,8 @@
 amqp==1.4.9               # via -r requirements/base.txt, kombu
 anyjson==0.3.3            # via -r requirements/base.txt, kombu
 billiard==3.3.0.23        # via -r requirements/base.txt, celery
-boto3==1.14.2             # via -r requirements/base.txt, django-ses
-botocore==1.17.2          # via -r requirements/base.txt, boto3, s3transfer
+boto3==1.14.3             # via -r requirements/base.txt, django-ses
+botocore==1.17.3          # via -r requirements/base.txt, boto3, s3transfer
 celery==3.1.26.post2      # via -r requirements/base.txt
 certifi==2020.4.5.2       # via -r requirements/base.txt, requests
 chardet==3.0.4            # via -r requirements/base.txt, requests
@@ -34,7 +34,7 @@ edx-drf-extensions==6.0.0  # via -r requirements/base.txt
 edx-opaque-keys==2.1.0    # via -r requirements/base.txt, edx-drf-extensions
 edx-rest-api-client==1.9.2  # via -r requirements/base.txt
 future==0.18.2            # via -r requirements/base.txt, django-ses, pyjwkest
-gevent==20.6.1            # via -r requirements/production.in
+gevent==20.6.2            # via -r requirements/production.in
 greenlet==0.4.16          # via gevent
 gunicorn==20.0.4          # via -r requirements/production.in
 idna==2.9                 # via -r requirements/base.txt, requests

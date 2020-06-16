@@ -1,7 +1,3 @@
-import logging
-import time
-
-import boto3
 from django.conf import settings
 from django.core import mail
 from django.template.loader import get_template
@@ -11,68 +7,6 @@ from license_manager.apps.subscriptions.constants import (
     LICENSE_ACTIVATION_EMAIL_TEMPLATE,
     LICENSE_REMINDER_EMAIL_SUBJECT,
 )
-
-
-logger = logging.getLogger(__name__)
-
-
-class SESEmailClient:
-    """
-    Client to establish connection to AWS SES and send emails.
-
-    This client uses the "assume role policy", currently specified in terraform, as the initial credentials to access
-    STS. STS can then be used to assume the correct role and get the proper credentials for SES.
-    """
-    def __init__(self):
-        role_arn = getattr(settings, 'AWS_SES_ROLE_ARN', None)
-        sts_client = boto3.client('sts')
-        # Use integer unix timestamps for simple session name differentiation
-        session_name = 'license-manager-amazon-ses-{}'.format(int(time.time()))
-        assume_role_kwargs = {
-            'RoleArn': role_arn,
-            'RoleSessionName': session_name,
-        }
-        assumed_role_object = sts_client.assume_role(**assume_role_kwargs)
-        credentials = assumed_role_object['Credentials']
-        self.client = boto3.client(
-            'ses',
-            aws_access_key_id=credentials['AccessKeyId'],
-            aws_secret_access_key=credentials['SecretAccessKey'],
-            aws_session_token=credentials['SessionToken'],
-        )
-
-    def send_email(self, recipient_list, subject, text_body, html_body):
-        try:
-            response = self.client.send_email(
-                Source=settings.SUBSCRIPTIONS_FROM_EMAIL,
-                Destination={
-                    'ToAddresses': recipient_list,
-                },
-                Message={
-                    'Subject': {
-                        'Data': subject,
-                    },
-                    'Body': {
-                        'Text': {
-                            'Data': text_body,
-                        },
-                        'Html': {
-                            'Data': html_body,
-                        },
-                    },
-                },
-            )
-            logger.info(
-                'Received response: %s from ses send email',
-                response
-            )
-            return response
-        except Exception as exc:
-            logger.error(
-                'Unable to send email due to exception: %s',
-                exc,
-            )
-            raise exc
 
 
 def send_activation_emails(custom_template_text, email_recipient_list, subscription_plan):
@@ -153,7 +87,6 @@ def _send_email_with_activation(custom_template_text, email_recipient_list, subs
     with mail.get_connection() as connection:
         connection.open()
         connection.send_messages(emails)
-        # connection.close()
 
 
 def _generate_license_activation_link():  # TODO: implement 'How users will activate licenses' (ENT-2748)

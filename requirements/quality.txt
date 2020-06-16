@@ -8,8 +8,8 @@ amqp==1.4.9               # via -r requirements/base.txt, kombu
 anyjson==0.3.3            # via -r requirements/base.txt, kombu
 astroid==2.3.3            # via pylint, pylint-celery
 billiard==3.3.0.23        # via -r requirements/base.txt, celery
-boto3==1.14.2             # via -r requirements/base.txt, django-ses
-botocore==1.17.2          # via -r requirements/base.txt, boto3, s3transfer
+boto3==1.14.3             # via -r requirements/base.txt, django-ses
+botocore==1.17.3          # via -r requirements/base.txt, boto3, s3transfer
 celery==3.1.26.post2      # via -r requirements/base.txt
 certifi==2020.4.5.2       # via -r requirements/base.txt, requests
 chardet==3.0.4            # via -r requirements/base.txt, requests

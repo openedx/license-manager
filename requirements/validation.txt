@@ -9,8 +9,8 @@ anyjson==0.3.3            # via -r requirements/quality.txt, -r requirements/tes
 astroid==2.3.3            # via -r requirements/quality.txt, -r requirements/test.txt, pylint, pylint-celery
 attrs==19.3.0             # via -r requirements/test.txt, pytest
 billiard==3.3.0.23        # via -r requirements/quality.txt, -r requirements/test.txt, celery
-boto3==1.14.2             # via -r requirements/quality.txt, -r requirements/test.txt, django-ses
-botocore==1.17.2          # via -r requirements/quality.txt, -r requirements/test.txt, boto3, s3transfer
+boto3==1.14.3             # via -r requirements/quality.txt, -r requirements/test.txt, django-ses
+botocore==1.17.3          # via -r requirements/quality.txt, -r requirements/test.txt, boto3, s3transfer
 celery==3.1.26.post2      # via -r requirements/quality.txt, -r requirements/test.txt
 certifi==2020.4.5.2       # via -r requirements/quality.txt, -r requirements/test.txt, requests
 chardet==3.0.4            # via -r requirements/quality.txt, -r requirements/test.txt, requests
