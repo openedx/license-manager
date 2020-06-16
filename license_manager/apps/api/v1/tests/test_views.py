@@ -19,11 +19,15 @@ from rest_framework.test import APIClient
 
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
-from license_manager.apps.subscriptions.models import SubscriptionsFeatureRole, SubscriptionsRoleAssignment
+from license_manager.apps.subscriptions.models import (
+    SubscriptionsFeatureRole,
+    SubscriptionsRoleAssignment,
+)
 from license_manager.apps.subscriptions.tests.factories import (
     LicenseFactory,
     SubscriptionPlanFactory,
 )
+
 
 _ = logging.getLogger(__name__)
 
@@ -50,6 +54,15 @@ def set_jwt_cookie(client, user, role_context_pairs=None):
     """
     jwt_token = _jwt_token_from_role_context_pairs(user, role_context_pairs or [])
     client.cookies[jwt_cookie_name()] = jwt_token
+
+
+@pytest.fixture(params=[True, False])
+def boolean_toggle(request):
+    """
+    Simple fixture that toggles between boolean states.
+    Any test that uses this fixture will actually be two tests - one for each boolean value.
+    """
+    return request.param
 
 
 @pytest.fixture
@@ -227,7 +240,7 @@ def test_license_detail_non_staff_user_403(api_client, non_staff_user):
 
 
 @pytest.mark.django_db
-def test_subscription_plan_list_staff_user_200_via_jwt(api_client, staff_user):
+def test_subscription_plan_list_staff_user_200(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription list view for staff users gives the correct response
     when the staff user is granted implicit permission to access the enterprise customer.
@@ -237,11 +250,7 @@ def test_subscription_plan_list_staff_user_200_via_jwt(api_client, staff_user):
     """
     enterprise_customer_uuid = uuid4()
     first_subscription, second_subscription = _create_subscription_plans(enterprise_customer_uuid)
-
-    # In the request's JWT, grant an admin role for this enterprise customer.
-    set_jwt_cookie(
-        api_client, staff_user, [(constants.SYSTEM_ENTERPRISE_ADMIN_ROLE, str(enterprise_customer_uuid))]
-    )
+    _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, boolean_toggle)
 
     response = _subscriptions_list_request(api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid)
 
@@ -277,7 +286,7 @@ def test_subscription_plan_list_superuser_200(api_client, superuser):
 
 
 @pytest.mark.django_db
-def test_subscription_plan_detail_staff_user_200(api_client, staff_user):
+def test_subscription_plan_detail_staff_user_200(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription detail view for staff gives the correct result.
     """
@@ -288,42 +297,17 @@ def test_subscription_plan_detail_staff_user_200(api_client, staff_user):
     assigned_licenses = LicenseFactory.create_batch(5, status=constants.ASSIGNED)
     subscription.licenses.set(unassigned_licenses + assigned_licenses)
 
-    # In the request's JWT, grant an admin role for this enterprise customer.
-    set_jwt_cookie(
-        api_client, staff_user, [(constants.SYSTEM_ENTERPRISE_ADMIN_ROLE, str(subscription.enterprise_customer_uuid))]
-    )
+    _assign_role_via_jwt_or_db(api_client, staff_user, subscription.enterprise_customer_uuid, boolean_toggle)
 
     response = _subscriptions_detail_request(api_client, staff_user, subscription.uuid)
     assert status.HTTP_200_OK == response.status_code
     _assert_subscription_response_correct(response.data, subscription)
 
 
-@pytest.fixture(params=[True, False])
-def assign_role_from_jwt(request):
-    """
-    Simple toggle that returns a boolean.
-    """
-    return request.param
-
-
 @pytest.mark.django_db
-def test_license_list_staff_user_200(api_client, staff_user, assign_role_from_jwt):
+def test_license_list_staff_user_200(api_client, staff_user, boolean_toggle):
     subscription, assigned_license, unassigned_license = _subscription_and_licenses()
-
-    if assign_role_from_jwt:
-        # In the request's JWT, grant an admin role for this enterprise customer.
-        set_jwt_cookie(
-            api_client,
-            staff_user,
-            [(constants.SYSTEM_ENTERPRISE_ADMIN_ROLE, str(subscription.enterprise_customer_uuid))]
-        )
-    else:
-         # Assign a feature role to the staff_user via database record.
-        SubscriptionsRoleAssignment.objects.create(
-            enterprise_customer_uuid=subscription.enterprise_customer_uuid,
-            user=staff_user,
-            role=SubscriptionsFeatureRole.objects.get(name=constants.SUBSCRIPTIONS_ADMIN_ROLE),
-        )
+    _assign_role_via_jwt_or_db(api_client, staff_user, subscription.enterprise_customer_uuid, boolean_toggle)
 
     response = _licenses_list_request(api_client, staff_user, subscription.uuid)
 
@@ -334,23 +318,40 @@ def test_license_list_staff_user_200(api_client, staff_user, assign_role_from_jw
     _assert_license_response_correct(results[1], assigned_license)
 
 
-# @pytest.mark.django_db
-# def test_license_list_staff_user_200_via_db_assignment(api_client, staff_user):
-#     subscription, assigned_license, unassigned_license = _subscription_and_licenses()
+@pytest.mark.django_db
+def test_license_detail_staff_user_200(api_client, staff_user, boolean_toggle):
+    subscription = SubscriptionPlanFactory.create()
 
-#     # Assign a feature role to the staff_user via database record.
-#     SubscriptionRoleAssignment.objects.create(
-#         enterprise_customer_uuid=subscription.enterprise_customer_uuid,
-#         user=staff_user,
-#     )
+    # Associate some licenses with the subscription
+    subscription_license = LicenseFactory.create()
+    subscription.licenses.set([subscription_license])
 
-#     response = _licenses_list_request(api_client, staff_user, subscription.uuid)
+    _assign_role_via_jwt_or_db(api_client, staff_user, subscription.enterprise_customer_uuid, boolean_toggle)
 
-#     assert status.HTTP_200_OK == response.status_code
-#     results = response.data['results']
-#     assert len(results) == 2
-#     _assert_license_response_correct(results[0], unassigned_license)
-#     _assert_license_response_correct(results[1], assigned_license)
+    response = _licenses_detail_request(api_client, staff_user, subscription.uuid, subscription_license.uuid)
+    assert status.HTTP_200_OK == response.status_code
+    _assert_license_response_correct(response.data, subscription_license)
+
+
+def _assign_role_via_jwt_or_db(client, user, enterprise_customer_uuid, assign_via_jwt):
+    """
+    Helper method to assign the enterprise/subscriptions admin role
+    via a request JWT or DB role assignment class.
+    """
+    if assign_via_jwt:
+        # In the request's JWT, grant an admin role for this enterprise customer.
+        set_jwt_cookie(
+            client,
+            user,
+            [(constants.SYSTEM_ENTERPRISE_ADMIN_ROLE, str(enterprise_customer_uuid))]
+        )
+    else:
+        # Assign a feature role to the staff_user via database record.
+        SubscriptionsRoleAssignment.objects.create(
+            enterprise_customer_uuid=enterprise_customer_uuid,
+            user=user,
+            role=SubscriptionsFeatureRole.objects.get(name=constants.SUBSCRIPTIONS_ADMIN_ROLE),
+        )
 
 
 def _subscription_and_licenses():
@@ -365,24 +366,6 @@ def _subscription_and_licenses():
     subscription.licenses.set([unassigned_license, assigned_license])
 
     return subscription, assigned_license, unassigned_license
-
-
-@pytest.mark.django_db
-def test_license_detail_staff_user_200(api_client, staff_user):
-    subscription = SubscriptionPlanFactory.create()
-
-    # Associate some licenses with the subscription
-    subscription_license = LicenseFactory.create()
-    subscription.licenses.set([subscription_license])
-
-    # In the request's JWT, grant an admin role for this enterprise customer.
-    set_jwt_cookie(
-        api_client, staff_user, [(constants.SYSTEM_ENTERPRISE_ADMIN_ROLE, str(subscription.enterprise_customer_uuid))]
-    )
-
-    response = _licenses_detail_request(api_client, staff_user, subscription.uuid, subscription_license.uuid)
-    assert status.HTTP_200_OK == response.status_code
-    _assert_license_response_correct(response.data, subscription_license)
 
 
 def _create_subscription_plans(enterprise_customer_uuid):

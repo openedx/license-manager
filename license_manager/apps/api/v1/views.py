@@ -2,7 +2,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 
 from edx_rbac.mixins import PermissionRequiredForListingMixin
-
 from license_manager.apps.api.serializers import (
     LicenseSerializer,
     SubscriptionPlanSerializer,
@@ -10,8 +9,8 @@ from license_manager.apps.api.serializers import (
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
     License,
-    SubscriptionsRoleAssignment,
     SubscriptionPlan,
+    SubscriptionsRoleAssignment,
 )
 
 

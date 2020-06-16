@@ -7,7 +7,6 @@ from simple_history.models import HistoricalRecords
 
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rbac.utils import ALL_ACCESS_CONTEXT
-
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
