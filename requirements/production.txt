@@ -29,10 +29,10 @@ edx-auth-backends==3.1.0  # via -r requirements/base.txt
 edx-django-utils==3.2.3   # via -r requirements/base.txt, edx-drf-extensions
 edx-drf-extensions==6.0.0  # via -r requirements/base.txt, edx-rbac
 edx-opaque-keys==2.1.0    # via -r requirements/base.txt, edx-drf-extensions
-edx-rbac==1.3.0           # via -r requirements/base.txt
+edx-rbac==1.3.1           # via -r requirements/base.txt
 edx-rest-api-client==1.9.2  # via -r requirements/base.txt
 future==0.18.2            # via -r requirements/base.txt, pyjwkest
-gevent==20.6.1            # via -r requirements/production.in
+gevent==20.6.2            # via -r requirements/production.in
 greenlet==0.4.16          # via gevent
 gunicorn==20.0.4          # via -r requirements/production.in
 idna==2.9                 # via -r requirements/base.txt, requests
