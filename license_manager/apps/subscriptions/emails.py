@@ -92,12 +92,12 @@ def _send_email_with_activation(custom_template_text, email_recipient_list, subs
     with mail.get_connection() as connection:
         try:
             connection.send_messages(emails)
-        except AttributeError as exc:
+        except Exception as exc:
             # Catch and log the AttributeError: <'SES' object has no attribute 'close'>.
             # We'd like to eventually find the root cause of this error and get rid of it, however it does not seem to
             # be having any negative repurcussions at the moment.
             logger.info(
-                'Received attribute error: %s',
+                'Received error: %s',
                 exc,
             )
 
