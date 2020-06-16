@@ -85,7 +85,6 @@ def _send_email_with_activation(custom_template_text, email_recipient_list, subs
 
     # Use a single connection to send all messages
     with mail.get_connection() as connection:
-        connection.open()
         connection.send_messages(emails)
 
 
