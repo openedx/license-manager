@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.core import mail
 from django.template.loader import get_template
@@ -7,6 +9,9 @@ from license_manager.apps.subscriptions.constants import (
     LICENSE_ACTIVATION_EMAIL_TEMPLATE,
     LICENSE_REMINDER_EMAIL_SUBJECT,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def send_activation_emails(custom_template_text, email_recipient_list, subscription_plan):
@@ -85,7 +90,16 @@ def _send_email_with_activation(custom_template_text, email_recipient_list, subs
 
     # Use a single connection to send all messages
     with mail.get_connection() as connection:
-        connection.send_messages(emails)
+        try:
+            connection.send_messages(emails)
+        except AttributeError as exc:
+            # Catch and log the AttributeError: <'SES' object has no attribute 'close'>.
+            # We'd like to eventually find the root cause of this error and get rid of it, however it does not seem to
+            # be having any negative repurcussions at the moment.
+            logger.info(
+                'Received attribute error: %s',
+                exc,
+            )
 
 
 def _generate_license_activation_link():  # TODO: implement 'How users will activate licenses' (ENT-2748)
