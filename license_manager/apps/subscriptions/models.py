@@ -58,6 +58,16 @@ class SubscriptionPlan(TimeStampedModel):
     )
 
     @property
+    def unassigned_licenses(self):
+        """
+        Gets all of the unassigned licenses associated with the subscription.
+
+        Returns:
+            Queryset
+        """
+        return self.licenses.filter(status=UNASSIGNED)
+
+    @property
     def num_licenses(self):
         """
         Gets the total number of licenses associated with the subscription.
