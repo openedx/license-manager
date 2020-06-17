@@ -40,3 +40,9 @@ CELERY_ALWAYS_EAGER = (
     os.environ.get("CELERY_ALWAYS_EAGER", "false").lower() == "true"
 )
 # END CELERY
+
+# Make some loggers less noisy (useful during test failure)
+import logging
+
+for logger_to_silence in ['faker', 'jwkest', 'edx_rest_framework_extensions']:
+    logging.getLogger(logger_to_silence).setLevel(logging.WARNING)

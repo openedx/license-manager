@@ -19,3 +19,9 @@ DATABASES = {
 # BEGIN CELERY
 CELERY_ALWAYS_EAGER = True
 # END CELERY
+
+# Make some loggers less noisy (useful during test failure)
+import logging
+
+for logger_to_silence in ['faker', 'jwkest', 'edx_rest_framework_extensions']:
+    logging.getLogger(logger_to_silence).setLevel(logging.WARNING)

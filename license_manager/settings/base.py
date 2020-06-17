@@ -3,6 +3,11 @@ from os.path import abspath, dirname, join
 
 from corsheaders.defaults import default_headers as corsheaders_default_headers
 
+from license_manager.apps.subscriptions.constants import (
+    SUBSCRIPTIONS_ADMIN_ROLE,
+    SYSTEM_ENTERPRISE_ADMIN_ROLE,
+    SYSTEM_ENTERPRISE_OPERATOR_ROLE,
+)
 from license_manager.settings.utils import get_logger_config
 
 # PATH vars
@@ -27,7 +32,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles'
+    'django.contrib.staticfiles',
 )
 
 THIRD_PARTY_APPS = (
@@ -36,6 +41,7 @@ THIRD_PARTY_APPS = (
     'django_filters',
     'rest_framework',
     'rest_framework_swagger',
+    'rules.apps.AutodiscoverRulesConfig',
     'social_django',
     'waffle',
 )
@@ -200,6 +206,7 @@ AUTH_USER_MODEL = 'core.User'
 
 AUTHENTICATION_BACKENDS = (
     'auth_backends.backends.EdXOAuth2',
+    'rules.permissions.ObjectPermissionBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
 
@@ -227,6 +234,16 @@ JWT_AUTH = {
     'JWT_AUTH_COOKIE_HEADER_PAYLOAD': 'edx-jwt-cookie-header-payload',
     'JWT_AUTH_COOKIE_SIGNATURE': 'edx-jwt-cookie-signature',
     'JWT_AUTH_REFRESH_COOKIE': 'edx-jwt-refresh-cookie',
+    # JWT_ISSUERS enables token decoding for multiple issuers (Note: This is not a native DRF-JWT field)
+    # We use it to allow different values for the 'ISSUER' field, but keep the same SECRET_KEY and
+    # AUDIENCE values across all issuers.
+    'JWT_ISSUERS': [
+        {
+            'AUDIENCE': 'SET-ME-PLEASE',
+            'ISSUER': 'http://localhost:8000/oauth2',
+            'SECRET_KEY': 'SET-ME-PLEASE'
+        },
+    ],
 }
 
 # Request the user's permissions in the ID token
@@ -303,3 +320,9 @@ EMAIL_FILE_PATH = './emails'
 """
 EMAIL_UNSUBSCRIBE_LINK = 'https://www.edx.org'  # Dummy unsubscribe link for development use
 SUBSCRIPTIONS_FROM_EMAIL = 'from@example.com'  # Dummy from email address for development use
+
+# Set up system-to-feature roles mapping for edx-rbac
+SYSTEM_TO_FEATURE_ROLE_MAPPING = {
+    SYSTEM_ENTERPRISE_OPERATOR_ROLE: [SUBSCRIPTIONS_ADMIN_ROLE],
+    SYSTEM_ENTERPRISE_ADMIN_ROLE: [SUBSCRIPTIONS_ADMIN_ROLE],
+}
