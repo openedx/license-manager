@@ -4,7 +4,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.mixins import PermissionRequiredForListingMixin
-from rest_framework import filters, status, viewsets
+from edx_rest_framework_extensions.auth.jwt.authentication import (
+    JwtAuthentication,
+)
+from rest_framework import filters, permissions, status, viewsets
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -27,6 +31,9 @@ logger = logging.getLogger(__name__)
 
 class SubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
     """ Viewset for read operations on SubscriptionPlans."""
+    authentication_classes = [JwtAuthentication, SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
     lookup_field = 'uuid'
     lookup_url_kwarg = 'subscription_uuid'
     serializer_class = serializers.SubscriptionPlanSerializer
@@ -70,6 +77,9 @@ class SubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMo
 
 class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
     """ Viewset for read operations on Licenses."""
+    authentication_classes = [JwtAuthentication, SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
     lookup_field = 'uuid'
     lookup_url_kwarg = 'license_uuid'
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]

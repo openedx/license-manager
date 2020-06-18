@@ -29,10 +29,23 @@ BACKEND_SERVICE_EDX_OAUTH2_KEY = os.environ.get('BACKEND_SERVICE_EDX_OAUTH2_KEY'
 BACKEND_SERVICE_EDX_OAUTH2_SECRET = os.environ.get('BACKEND_SERVICE_EDX_OAUTH2_SECRET', 'license_manager-backend-service-secret')
 
 JWT_AUTH.update({
-    'JWT_SECRET_KEY': SOCIAL_AUTH_EDX_OAUTH2_SECRET,
+    'JWT_SECRET_KEY': 'lms-secret',
     'JWT_ISSUER': 'http://localhost:18000/oauth2',
-    'JWT_AUDIENCE': SOCIAL_AUTH_EDX_OAUTH2_KEY,
+    'JWT_AUDIENCE': None,
+    'JWT_VERIFY_AUDIENCE': False,
+    'JWT_PUBLIC_SIGNING_JWK_SET': (
+        '{"keys": [{"kid": "devstack_key", "e": "AQAB", "kty": "RSA", "n": "smKFSYowG6nNUAdeqH1jQQnH1PmIHphzBmwJ5vRf1vu'
+        '48BUI5VcVtUWIPqzRK_LDSlZYh9D0YFL0ZTxIrlb6Tn3Xz7pYvpIAeYuQv3_H5p8tbz7Fb8r63c1828wXPITVTv8f7oxx5W3lFFgpFAyYMmROC'
+        '4Ee9qG5T38LFe8_oAuFCEntimWxN9F3P-FJQy43TL7wG54WodgiM0EgzkeLr5K6cDnyckWjTuZbWI-4ffcTgTZsL_Kq1owa_J2ngEfxMCObnzG'
+        'y5ZLcTUomo4rZLjghVpq6KZxfS6I1Vz79ZsMVUWEdXOYePCKKsrQG20ogQEkmTf9FT_SouC6jPcHLXw"}]}'
+    ),
+    'JWT_ISSUERS': [{
+        'AUDIENCE': 'lms-key',
+        'ISSUER': 'http://localhost:18000/oauth2',
+        'SECRET_KEY': 'lms-secret',
+    }],
 })
+
 
 # BEGIN CELERY
 CELERYD_HIJACK_ROOT_LOGGER = True
