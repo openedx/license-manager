@@ -42,6 +42,53 @@ class LicenseSerializer(serializers.ModelSerializer):
             'user_email',
             'activation_date',
             'last_remind_date',
+            'revoked_date',
+        ]
+
+
+class SingleEmailSerializer(serializers.ModelSerializer):
+    """
+    Serializer for specifying a single email
+
+    It's a bit of a hack for it to be a model serializer, but it makes the connection to the license model in the views
+    cleaner.
+
+    Requires that a valid, non-empty email is submitted.
+    """
+    user_email = serializers.EmailField(
+        allow_blank=False,
+        required=True,
+        write_only=True,
+    )
+
+    class Meta:
+        model = License
+        fields = [
+            'user_email',
+        ]
+
+
+class MultipleEmailsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for specifying multiple emails
+
+    It's a bit of a hack for it to be a model serializer, but it makes the connection to the license model in the views
+    cleaner.
+
+    Requires that a list of valid, non-empty emails are submitted.
+    """
+    user_emails = serializers.ListField(
+        child=serializers.EmailField(
+            allow_blank=False,
+            write_only=True,
+        ),
+        allow_empty=False,
+    )
+
+    class Meta:
+        model = License
+        fields = [
+            'user_emails',
         ]
 
 
@@ -71,39 +118,24 @@ class CustomTextSerializer(serializers.ModelSerializer):
         ]
 
 
-class LicenseSingleEmailSerializer(CustomTextSerializer):
+def combine_serializers(*serializers_to_compose):
     """
-    Serializer that takes custom text and allows additionally specifying a user_email for license management.
+    Function for combining multiple serializers into a single serializer
+    This allows for having multiple base serializers that don't inherit from each other and eliminates the need
+    to have additional serializers that serve to just compose other serializers
 
-    Requires that a valid, non-empty email is submitted.
+    Instead the serializer definition is composed in `views` via using this function:
+    e.g. combine_serializers(MultipleEmailsSerializer, CustomTextSerializer)
+
+    Limitations: the Meta model can only be set to a single model class here it is set to the License Model
+    serializers.ModelSerializer is assumed to be inherited in the serializers being combined because of the previously
+    mentioned hacky trick of using serializers.ModelSerializer to make the connection to the license model in the views
+    cleaner.
     """
-    user_email = serializers.EmailField(
-        allow_blank=False,
-        required=True,
-        write_only=True,
-    )
-
-    class Meta(CustomTextSerializer.Meta):
-        fields = CustomTextSerializer.Meta.fields + [
-            'user_email',
-        ]
-
-
-class LicenseEmailSerializer(CustomTextSerializer):
-    """
-    Serializer that takes custom text and allows additionally specifying multiple user_emails for license management.
-
-    Requires that a list of valid, non-empty emails are submitted.
-    """
-    user_emails = serializers.ListField(
-        child=serializers.EmailField(
-            allow_blank=False,
-            write_only=True,
-        ),
-        allow_empty=False,
-    )
-
-    class Meta(CustomTextSerializer.Meta):
-        fields = CustomTextSerializer.Meta.fields + [
-            'user_emails',
-        ]
+    class CombinedSerializer(*serializers_to_compose):
+        class Meta:
+            model = License
+            fields = []
+            for x in serializers_to_compose:
+                fields = fields + x.Meta.fields
+    return CombinedSerializer

@@ -78,6 +78,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         'status',
         'activation_date',
         'last_remind_date',
+        'revoked_date',
     ]
     search_fields = ['user_email']
     filterset_fields = ['status']
@@ -108,11 +109,15 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
 
     def get_serializer_class(self):
         if self.action == 'assign':
-            return serializers.LicenseEmailSerializer
+            return serializers.combine_serializers(serializers.MultipleEmailsSerializer,
+                                                   serializers.CustomTextSerializer)
         if self.action == 'remind':
-            return serializers.LicenseSingleEmailSerializer
+            return serializers.combine_serializers(serializers.SingleEmailSerializer,
+                                                   serializers.CustomTextSerializer)
         if self.action == 'remind_all':
             return serializers.CustomTextSerializer
+        if self.action == 'revoke':
+            return serializers.SingleEmailSerializer
         return serializers.LicenseSerializer
 
     def _get_subscription_plan(self):
@@ -143,6 +148,28 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         serializer = serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
 
+    @action(detail=False, methods=['post'], url_path='revoke')
+    def revoke(self, request, subscription_uuid=None, license_uuid=None):
+        self._validate_data(request.data)
+        # Find the active or pending license for the user
+        user_email = request.data.get('user_email')
+        try:
+            user_license = License.objects.get(user_email=user_email, status__in=[constants.ACTIVATED,
+                                                                                  constants.ASSIGNED])
+            # Deactivate the license being revoked
+            user_license.status = constants.DEACTIVATED
+            user_license.revoked_date = localized_utcnow()
+            user_license.save()
+            # Create new license to add to the unassigned license pool
+            subscription_plan = self._get_subscription_plan()
+            subscription_plan.increase_num_licenses(1)
+        except ObjectDoesNotExist:
+            msg = 'Could not find any licenses that are associated with the email: {}'.format(
+                user_email,
+            )
+            return Response(msg, status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['post'])
     def assign(self, request, subscription_uuid=None):
         # Validate the user_emails and text sent in the data
@@ -163,7 +190,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
 
         # Make sure none of the provided emails have already been associated with a license in the subscription
         already_associated_emails = list(
-            subscription_plan.licenses.filter(user_email__in=user_emails).values_list('user_email', flat=True)
+            subscription_plan.licenses.filter(user_email__in=user_emails).exclude(status=constants.DEACTIVATED).values_list('user_email', flat=True)
         )
         if already_associated_emails:
             msg = 'The following user emails are already associated with a license: {}'.format(

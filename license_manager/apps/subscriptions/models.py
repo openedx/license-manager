@@ -165,6 +165,11 @@ class License(TimeStampedModel):
         null=True,
     )
 
+    revoked_date = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
     user_email = models.EmailField(
         blank=True,
         null=True,
@@ -185,7 +190,7 @@ class License(TimeStampedModel):
 
     class Meta:
         unique_together = (
-            ('subscription_plan', 'user_email'),
+            ('subscription_plan', 'user_email', 'status', 'revoked_date'),
             ('subscription_plan', 'lms_user_id'),
         )
 
