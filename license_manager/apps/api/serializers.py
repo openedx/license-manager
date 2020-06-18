@@ -45,12 +45,47 @@ class LicenseSerializer(serializers.ModelSerializer):
         ]
 
 
-class CustomTextSerializer(serializers.ModelSerializer):
+class SingleEmailSerializer(serializers.Serializer):  # pylint: disable=abstract-method
+    """
+    Serializer for specifying a single email
+
+    Requires that a valid, non-empty email is submitted.
+    """
+    user_email = serializers.EmailField(
+        allow_blank=False,
+        required=True,
+        write_only=True,
+    )
+
+    class Meta:
+        fields = [
+            'user_email',
+        ]
+
+
+class MultipleEmailsSerializer(serializers.Serializer):  # pylint: disable=abstract-method
+    """
+    Serializer for specifying multiple emails
+
+    Requires that a list of valid, non-empty emails are submitted.
+    """
+    user_emails = serializers.ListField(
+        child=serializers.EmailField(
+            allow_blank=False,
+            write_only=True,
+        ),
+        allow_empty=False,
+    )
+
+    class Meta:
+        fields = [
+            'user_emails',
+        ]
+
+
+class CustomTextSerializer(serializers.Serializer):  # pylint: disable=abstract-method
     """
     Serializer for specifying custom text to use in license management emails.
-
-    It's a bit of a hack for it to be a model serializer, but it makes the connection to the license model in the views
-    cleaner.
     """
     greeting = serializers.CharField(
         allow_blank=True,
@@ -64,46 +99,23 @@ class CustomTextSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = License
         fields = [
             'greeting',
             'closing',
         ]
 
 
-class LicenseSingleEmailSerializer(CustomTextSerializer):
+class CustomTextWithSingleEmailSerializer(SingleEmailSerializer, CustomTextSerializer):  # pylint: disable=abstract-method
     """
-    Serializer that takes custom text and allows additionally specifying a user_email for license management.
-
-    Requires that a valid, non-empty email is submitted.
+    Serializer for specifying custom text to use in a license management email for a single user_email
     """
-    user_email = serializers.EmailField(
-        allow_blank=False,
-        required=True,
-        write_only=True,
-    )
-
-    class Meta(CustomTextSerializer.Meta):
-        fields = CustomTextSerializer.Meta.fields + [
-            'user_email',
-        ]
+    class Meta:
+        fields = SingleEmailSerializer.Meta.fields + CustomTextSerializer.Meta.fields
 
 
-class LicenseEmailSerializer(CustomTextSerializer):
+class CustomTextWithMultipleEmailsSerializer(MultipleEmailsSerializer, CustomTextSerializer):  # pylint: disable=abstract-method
     """
-    Serializer that takes custom text and allows additionally specifying multiple user_emails for license management.
-
-    Requires that a list of valid, non-empty emails are submitted.
+    Serializer for specifying custom text to use in a license management email for multiple user_emails
     """
-    user_emails = serializers.ListField(
-        child=serializers.EmailField(
-            allow_blank=False,
-            write_only=True,
-        ),
-        allow_empty=False,
-    )
-
-    class Meta(CustomTextSerializer.Meta):
-        fields = CustomTextSerializer.Meta.fields + [
-            'user_emails',
-        ]
+    class Meta:
+        fields = MultipleEmailsSerializer.Meta.fields + CustomTextSerializer.Meta.fields

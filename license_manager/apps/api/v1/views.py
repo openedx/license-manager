@@ -117,11 +117,13 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
 
     def get_serializer_class(self):
         if self.action == 'assign':
-            return serializers.LicenseEmailSerializer
+            return serializers.CustomTextWithMultipleEmailsSerializer
         if self.action == 'remind':
-            return serializers.LicenseSingleEmailSerializer
+            return serializers.CustomTextWithSingleEmailSerializer
         if self.action == 'remind_all':
             return serializers.CustomTextSerializer
+        if self.action == 'revoke':
+            return serializers.SingleEmailSerializer
         return serializers.LicenseSerializer
 
     def _get_subscription_plan(self):
@@ -291,6 +293,30 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         )
 
         return Response(status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    def revoke(self, request, subscription_uuid=None):
+        self._validate_data(request.data)
+        # Find the active or pending license for the user
+        user_email = request.data.get('user_email')
+        subscription_plan = self._get_subscription_plan()
+        try:
+            user_license = subscription_plan.licenses.get(
+                user_email=user_email,
+                status__in=[constants.ACTIVATED, constants.ASSIGNED]
+            )
+        except ObjectDoesNotExist:
+            msg = 'Could not find any active licenses that are associated with the email: {}'.format(
+                user_email,
+            )
+            return Response(msg, status=status.HTTP_404_NOT_FOUND)
+
+        # Deactivate the license being revoked
+        user_license.status = constants.DEACTIVATED
+        user_license.save()
+        # Create new license to add to the unassigned license pool
+        subscription_plan.increase_num_licenses(1)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
     def overview(self, request, subscription_uuid=None):
