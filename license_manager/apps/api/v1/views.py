@@ -148,7 +148,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         # Validate the user_emails and text sent in the data
         self._validate_data(request.data)
         # Dedupe emails before turning back into a list for indexing
-        user_emails = list(set(request.data.get('user_emails')))
+        user_emails = list(set(request.data.get('user_emails', [])))
 
         # Make sure there are enough unassigned licenses
         num_user_emails = len(user_emails)
@@ -173,9 +173,9 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
 
         # Get a queryset of only the number of licenses we need to assign
         unassigned_licenses = subscription_plan.unassigned_licenses[:num_user_emails]
-        for index, unassigned_license in enumerate(unassigned_licenses):
+        for unassigned_license, email in zip(unassigned_licenses, user_emails):
             # Assign each email to a license and mark the license as assigned
-            unassigned_license.user_email = user_emails[index]
+            unassigned_license.user_email = email
             unassigned_license.status = constants.ASSIGNED
         # Efficiently update the licenses in bulk
         License.objects.bulk_update(unassigned_licenses, ['user_email', 'status'])
