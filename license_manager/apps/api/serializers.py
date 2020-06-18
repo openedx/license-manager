@@ -71,7 +71,7 @@ class CustomTextSerializer(serializers.ModelSerializer):
         ]
 
 
-class LicenseEmailSerializer(CustomTextSerializer):
+class LicenseSingleEmailSerializer(CustomTextSerializer):
     """
     Serializer that takes custom text and allows additionally specifying a user_email for license management.
 
@@ -86,4 +86,24 @@ class LicenseEmailSerializer(CustomTextSerializer):
     class Meta(CustomTextSerializer.Meta):
         fields = CustomTextSerializer.Meta.fields + [
             'user_email',
+        ]
+
+
+class LicenseEmailSerializer(CustomTextSerializer):
+    """
+    Serializer that takes custom text and allows additionally specifying multiple user_emails for license management.
+
+    Requires that a list of valid, non-empty emails are submitted.
+    """
+    user_emails = serializers.ListField(
+        child=serializers.EmailField(
+            allow_blank=False,
+            write_only=True,
+        ),
+        allow_empty=False,
+    )
+
+    class Meta(CustomTextSerializer.Meta):
+        fields = CustomTextSerializer.Meta.fields + [
+            'user_emails',
         ]

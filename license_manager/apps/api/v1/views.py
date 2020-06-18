@@ -8,16 +8,13 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from license_manager.apps.api.serializers import (
-    CustomTextSerializer,
-    LicenseEmailSerializer,
-    LicenseSerializer,
-    SubscriptionPlanSerializer,
+from license_manager.apps.api import serializers
+from license_manager.apps.api.tasks import (
+    send_activation_email_task,
+    send_reminder_email_task,
 )
-from license_manager.apps.api.tasks import send_reminder_email_task
 from license_manager.apps.api.utils import localized_utcnow
 from license_manager.apps.subscriptions import constants
-from license_manager.apps.subscriptions.constants import ASSIGNED
 from license_manager.apps.subscriptions.models import (
     License,
     SubscriptionPlan,
@@ -32,7 +29,7 @@ class SubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMo
     """ Viewset for read operations on SubscriptionPlans."""
     lookup_field = 'uuid'
     lookup_url_kwarg = 'subscription_uuid'
-    serializer_class = SubscriptionPlanSerializer
+    serializer_class = serializers.SubscriptionPlanSerializer
     permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
 
     # fields that control permissions for 'list' actions
@@ -110,11 +107,13 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         return License.objects.filter(subscription_plan=self._get_subscription_plan()).order_by('-activation_date')
 
     def get_serializer_class(self):
+        if self.action == 'assign':
+            return serializers.LicenseEmailSerializer
         if self.action == 'remind':
-            return LicenseEmailSerializer
+            return serializers.LicenseSingleEmailSerializer
         if self.action == 'remind_all':
-            return CustomTextSerializer
-        return LicenseSerializer
+            return serializers.CustomTextSerializer
+        return serializers.LicenseSerializer
 
     def _get_subscription_plan(self):
         """
@@ -145,6 +144,52 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         serializer.is_valid(raise_exception=True)
 
     @action(detail=False, methods=['post'])
+    def assign(self, request, subscription_uuid=None):
+        # Validate the user_emails and text sent in the data
+        self._validate_data(request.data)
+        # Dedupe emails before turning back into a list for indexing
+        user_emails = list(set(request.data.get('user_emails', [])))
+
+        # Make sure there are enough unassigned licenses
+        num_user_emails = len(user_emails)
+        subscription_plan = self._get_subscription_plan()
+        num_unassigned_licenses = subscription_plan.unassigned_licenses.count()
+        if num_user_emails > num_unassigned_licenses:
+            msg = (
+                'There are not enough unassigned licenses to complete your request.'
+                'You attempted to assign {} licenses, but there are only {} available.'
+            ).format(num_user_emails, num_unassigned_licenses)
+            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+
+        # Make sure none of the provided emails have already been associated with a license in the subscription
+        already_associated_emails = list(
+            subscription_plan.licenses.filter(user_email__in=user_emails).values_list('user_email', flat=True)
+        )
+        if already_associated_emails:
+            msg = 'The following user emails are already associated with a license: {}'.format(
+                already_associated_emails,
+            )
+            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get a queryset of only the number of licenses we need to assign
+        unassigned_licenses = subscription_plan.unassigned_licenses[:num_user_emails]
+        for unassigned_license, email in zip(unassigned_licenses, user_emails):
+            # Assign each email to a license and mark the license as assigned
+            unassigned_license.user_email = email
+            unassigned_license.status = constants.ASSIGNED
+        # Efficiently update the licenses in bulk
+        License.objects.bulk_update(unassigned_licenses, ['user_email', 'status'])
+
+        # Send activation emails
+        send_activation_email_task.delay(
+            self._get_custom_text(request.data),
+            user_emails,
+            subscription_uuid,
+        )
+
+        return Response(status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
     def remind(self, request, subscription_uuid=None):
         """
         Given a single email in the POST data, sends a reminder email that they have a license pending activation.
@@ -160,8 +205,13 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
 
         # Make sure there is a license that is still pending activation associated with the given email
         user_email = request.data.get('user_email')
+        subscription_plan = self._get_subscription_plan()
         try:
-            user_license = License.objects.get(user_email=user_email, status=ASSIGNED)
+            user_license = License.objects.get(
+                subscription_plan=subscription_plan,
+                user_email=user_email,
+                status=constants.ASSIGNED,
+            )
         except ObjectDoesNotExist:
             msg = 'Could not find any licenses pending activation that are associated with the email: {}'.format(
                 user_email,
@@ -172,7 +222,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         send_reminder_email_task.delay(
             self._get_custom_text(request.data),
             [user_email],
-            self.kwargs['subscription_uuid'],
+            subscription_uuid,
         )
 
         # Set last remind date to now
@@ -192,7 +242,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         self._validate_data(request.data)
 
         subscription_plan = self._get_subscription_plan()
-        pending_licenses = License.objects.filter(subscription_plan=subscription_plan, status=ASSIGNED)
+        pending_licenses = subscription_plan.licenses.filter(status=constants.ASSIGNED)
         if not pending_licenses:
             return Response('Could not find any licenses pending activation', status=status.HTTP_404_NOT_FOUND)
 
@@ -201,7 +251,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         send_reminder_email_task.delay(
             self._get_custom_text(request.data),
             pending_user_emails,
-            self.kwargs['subscription_uuid'],
+            subscription_uuid,
         )
 
         # Set last remind date to now for all pending licenses
