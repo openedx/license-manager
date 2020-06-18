@@ -65,6 +65,7 @@ MIDDLEWARE = (
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'edx_rest_framework_extensions.auth.jwt.middleware.JwtAuthCookieMiddleware',
+    'edx_rest_framework_extensions.auth.jwt.middleware.JwtRedirectToLoginIfUnauthenticatedMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -225,7 +226,8 @@ BACKEND_SERVICE_EDX_OAUTH2_KEY = 'license-manager-backend-service-key'
 BACKEND_SERVICE_EDX_OAUTH2_SECRET = 'license-manager-service-secret'
 
 JWT_AUTH = {
-    'JWT_ISSUER': 'http://127.0.0.1:8000/oauth2',
+    'JWT_AUTH_HEADER_PREFIX': 'JWT',
+    'JWT_ISSUER': 'http://127.0.0.1:18000/oauth2',
     'JWT_ALGORITHM': 'HS256',
     'JWT_VERIFY_EXPIRATION': True,
     'JWT_PAYLOAD_GET_USERNAME_HANDLER': lambda d: d.get('preferred_username'),
@@ -235,13 +237,14 @@ JWT_AUTH = {
     'JWT_AUTH_COOKIE_HEADER_PAYLOAD': 'edx-jwt-cookie-header-payload',
     'JWT_AUTH_COOKIE_SIGNATURE': 'edx-jwt-cookie-signature',
     'JWT_AUTH_REFRESH_COOKIE': 'edx-jwt-refresh-cookie',
+    'JWT_SECRET_KEY': 'SET-ME-PLEASE',
     # JWT_ISSUERS enables token decoding for multiple issuers (Note: This is not a native DRF-JWT field)
     # We use it to allow different values for the 'ISSUER' field, but keep the same SECRET_KEY and
     # AUDIENCE values across all issuers.
     'JWT_ISSUERS': [
         {
             'AUDIENCE': 'SET-ME-PLEASE',
-            'ISSUER': 'http://localhost:8000/oauth2',
+            'ISSUER': 'http://localhost:18000/oauth2',
             'SECRET_KEY': 'SET-ME-PLEASE'
         },
     ],
