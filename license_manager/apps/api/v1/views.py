@@ -1,3 +1,5 @@
+import logging
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
@@ -12,14 +14,18 @@ from license_manager.apps.api.serializers import (
     LicenseSerializer,
     SubscriptionPlanSerializer,
 )
+from license_manager.apps.api.tasks import send_reminder_email_task
 from license_manager.apps.api.utils import localized_utcnow
-from license_manager.apps.subscriptions import constants, emails
+from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.constants import ASSIGNED
 from license_manager.apps.subscriptions.models import (
     License,
     SubscriptionPlan,
     SubscriptionsRoleAssignment,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class SubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
@@ -162,12 +168,11 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
             )
             return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
-        subscription_plan = self._get_subscription_plan()
         # Send activation reminder email
-        emails.send_reminder_emails(
+        send_reminder_email_task.delay(
             self._get_custom_text(request.data),
             [user_email],
-            subscription_plan,
+            self.kwargs['subscription_uuid'],
         )
 
         # Set last remind date to now
@@ -193,10 +198,10 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
 
         pending_user_emails = [license.user_email for license in pending_licenses]
         # Send activation reminder email to all pending users
-        emails.send_reminder_emails(
+        send_reminder_email_task.delay(
             self._get_custom_text(request.data),
             pending_user_emails,
-            subscription_plan,
+            self.kwargs['subscription_uuid'],
         )
 
         # Set last remind date to now for all pending licenses

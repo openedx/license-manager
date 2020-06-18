@@ -1,6 +1,9 @@
 # Packages required in a production environment
+
+-c constraints.txt
+
 -r base.txt
 
 gevent
 gunicorn
-PyYAML>=5.1
+PyYAML

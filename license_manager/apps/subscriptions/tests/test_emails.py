@@ -2,24 +2,16 @@ from django.core import mail
 from django.test import TestCase
 
 from license_manager.apps.subscriptions import constants, emails
-from license_manager.apps.subscriptions.tests.factories import (
-    SubscriptionPlanFactory,
-)
+from license_manager.apps.subscriptions.tests.utils import make_test_email_data
 
 
 class EmailTests(TestCase):
     def setUp(self):
         super().setUp()
-        self.subscription_plan = SubscriptionPlanFactory()
-        self.custom_template_text = {
-            'greeting': 'Hello',
-            'closing': 'Goodbye',
-        }
-        self.email_recipient_list = [
-            'boatymcboatface@mit.edu',
-            'saul.goodman@bettercallsaul.com',
-            't.soprano@badabing.net',
-        ]
+        test_email_data = make_test_email_data()
+        self.subscription_plan = test_email_data['subscription_plan']
+        self.custom_template_text = test_email_data['custom_template_text']
+        self.email_recipient_list = test_email_data['email_recipient_list']
 
     def test_send_activation_emails(self):
         """

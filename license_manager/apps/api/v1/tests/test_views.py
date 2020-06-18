@@ -473,7 +473,7 @@ class LicenseViewSetActionTests(TestCase):
         self._assert_last_remind_date_correct([activated_license], False)
         mock_send_reminder_emails.assert_not_called()
 
-    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
     def test_remind(self, mock_send_reminder_emails):
         """
         Verify that the remind endpoint sends an email to the specified user with a pending license.
@@ -497,7 +497,7 @@ class LicenseViewSetActionTests(TestCase):
         mock_send_reminder_emails.assert_called_with(
             {'greeting': greeting, 'closing': closing},
             [email],
-            self.subscription_plan,
+            str(self.subscription_plan.uuid),
         )
         self._assert_last_remind_date_correct([pending_license], True)
 
@@ -514,7 +514,7 @@ class LicenseViewSetActionTests(TestCase):
         self._assert_last_remind_date_correct(unassigned_licenses, False)
         mock_send_reminder_emails.assert_not_called()
 
-    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
     def test_remind_all(self, mock_send_reminder_emails):
         """
         Verify that the remind all endpoint sends an email to each user with a pending license.
@@ -541,7 +541,7 @@ class LicenseViewSetActionTests(TestCase):
         mock_send_reminder_emails.assert_called_with(
             {'greeting': greeting, 'closing': closing},
             [license.user_email for license in pending_licenses],
-            self.subscription_plan,
+            str(self.subscription_plan.uuid),
         )
 
     def test_license_overview(self):
