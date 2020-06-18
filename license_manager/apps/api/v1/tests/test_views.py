@@ -400,6 +400,7 @@ class LicenseViewSetActionTests(TestCase):
 
         # Routes setup
         self.subscription_plan = SubscriptionPlanFactory()
+        self.assign_url = reverse('api:v1:licenses-assign', kwargs={'subscription_uuid': self.subscription_plan.uuid})
         self.remind_url = reverse('api:v1:licenses-remind', kwargs={'subscription_uuid': self.subscription_plan.uuid})
         self.remind_all_url = reverse(
             'api:v1:licenses-remind-all',
@@ -423,44 +424,157 @@ class LicenseViewSetActionTests(TestCase):
             else:
                 assert license_obj.last_remind_date is None
 
-    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
-    def test_remind_no_email(self, mock_send_reminder_emails):
+    def _create_available_licenses(self, num_licenses=5):
+        """
+        Helper that creates `num_licenses` licenses that can be assigned, associated with the subscription.
+        """
+        unassigned_licenses = LicenseFactory.create_batch(num_licenses)
+        self.subscription_plan.licenses.set(unassigned_licenses)
+
+    def _assert_licenses_assigned(self, user_emails):
+        """
+        Helper that verifies that there is an assigned license associated with each email in `user_emails`.
+        """
+        for email in user_emails:
+            user_license = self.subscription_plan.licenses.get(user_email=email)
+            assert user_license.status == constants.ASSIGNED
+
+    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    def test_assign_no_emails(self, mock_send_activation_email_task):
+        """
+        Verify the assign endpoint returns a 400 if no user emails are provided.
+        """
+        response = self.api_client.post(self.assign_url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        mock_send_activation_email_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    def test_assign_empty_emails(self, mock_send_activation_email_task):
+        """
+        Verify the assign endpoint returns a 400 if the list of emails provided is empty.
+        """
+        response = self.api_client.post(self.assign_url, {'user_emails': []})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        mock_send_activation_email_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    def test_assign_invalid_emails(self, mock_send_activation_email_task):
+        """
+        Verify the assign endpoint returns a 400 if the list contains an invalid email.
+        """
+        response = self.api_client.post(self.assign_url, {'user_emails': ['lkajsdf']})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        mock_send_activation_email_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    def test_assign_insufficient_licenses(self, mock_send_activation_email_task):
+        """
+        Verify the assign endpoint returns a 400 if there are not enough unassigned licenses to assign to.
+        """
+        # Create some assigned licenses which will not factor into the count
+        assigned_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
+        self.subscription_plan.licenses.set(assigned_licenses)
+        response = self.api_client.post(self.assign_url, {'user_emails': ['test@example.com']})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        mock_send_activation_email_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    def test_assign_already_associated_email(self, mock_send_activation_email_task):
+        """
+        Verify the assign endpoint returns a 400 if there is already a license associated with a provided email.
+
+        Also checks that the conflict email is listed in the response.
+        """
+        self._create_available_licenses()
+        assigned_email = 'test@example.com'
+        assigned_license = LicenseFactory.create(user_email=assigned_email, status=constants.ASSIGNED)
+        self.subscription_plan.licenses.set([assigned_license])
+        response = self.api_client.post(self.assign_url, {'user_emails': [assigned_email, 'unassigned@example.com']})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert assigned_email in response.data
+        mock_send_activation_email_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    def test_assign(self, mock_send_activation_email_task):
+        """
+        Verify the assign endpoint assigns licenses to the provided emails and sends activation emails.
+
+        Also verifies that a greeting and closing can be sent.
+        """
+        self._create_available_licenses()
+        user_emails = ['bb8@mit.edu', 'test@example.com']
+        greeting = 'hello'
+        closing = 'goodbye'
+        response = self.api_client.post(
+            self.assign_url,
+            {'greeting': greeting, 'closing': closing, 'user_emails': user_emails},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        self._assert_licenses_assigned(user_emails)
+
+        # We don't verify the call arguments in this particular test as the email ordering can change
+        mock_send_activation_email_task.assert_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    def test_assign_dedupe_input(self, mock_send_activation_email_task):
+        """
+        Verify the assign endpoint deduplicates submitted emails.
+        """
+        self._create_available_licenses()
+        user_email = 'test@example.com'
+        user_emails = [user_email, user_email]
+        greeting = 'hello'
+        closing = 'goodbye'
+        response = self.api_client.post(
+            self.assign_url,
+            {'greeting': greeting, 'closing': closing, 'user_emails': user_emails},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        self._assert_licenses_assigned([user_email])
+        mock_send_activation_email_task.assert_called_with(
+            {'greeting': greeting, 'closing': closing},
+            [user_email],
+            str(self.subscription_plan.uuid),
+        )
+
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
+    def test_remind_no_email(self, mock_send_reminder_emails_task):
         """
         Verify that the remind endpoint returns a 400 if no email is provided.
         """
         response = self.api_client.post(self.remind_url)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        mock_send_reminder_emails.assert_not_called()
+        mock_send_reminder_emails_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
-    def test_remind_invalid_email(self, mock_send_reminder_emails):
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
+    def test_remind_invalid_email(self, mock_send_reminder_emails_task):
         """
         Verify that the remind endpoint returns a 400 if an invalid email is provided.
         """
         response = self.api_client.post(self.remind_url, {'user_email': 'lkajsf'})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        mock_send_reminder_emails.assert_not_called()
+        mock_send_reminder_emails_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
-    def test_remind_blank_email(self, mock_send_reminder_emails):
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
+    def test_remind_blank_email(self, mock_send_reminder_emails_task):
         """
         Verify that the remind endpoint returns a 400 if an empty string is submitted for an email.
         """
         response = self.api_client.post(self.remind_url, {'user_email': ''})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        mock_send_reminder_emails.assert_not_called()
+        mock_send_reminder_emails_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
-    def test_remind_no_license_for_user(self, mock_send_reminder_emails):
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
+    def test_remind_no_license_for_user(self, mock_send_reminder_emails_task):
         """
         Verify that the remind endpoint returns a 404 if there is no license associated with the given email.
         """
         response = self.api_client.post(self.remind_url, {'user_email': 'nolicense@example.com'})
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        mock_send_reminder_emails.assert_not_called()
+        mock_send_reminder_emails_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
-    def test_remind_no_pending_license_for_user(self, mock_send_reminder_emails):
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
+    def test_remind_no_pending_license_for_user(self, mock_send_reminder_emails_task):
         """
         Verify that the remind endpoint returns a 404 if there is no pending license associated with the given email.
         """
@@ -471,10 +585,10 @@ class LicenseViewSetActionTests(TestCase):
         response = self.api_client.post(self.remind_url, {'user_email': email})
         assert response.status_code == status.HTTP_404_NOT_FOUND
         self._assert_last_remind_date_correct([activated_license], False)
-        mock_send_reminder_emails.assert_not_called()
+        mock_send_reminder_emails_task.assert_not_called()
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
-    def test_remind(self, mock_send_reminder_emails):
+    def test_remind(self, mock_send_reminder_emails_task):
         """
         Verify that the remind endpoint sends an email to the specified user with a pending license.
 
@@ -494,15 +608,15 @@ class LicenseViewSetActionTests(TestCase):
             {'user_email': email, 'greeting': greeting, 'closing': closing},
         )
         assert response.status_code == status.HTTP_200_OK
-        mock_send_reminder_emails.assert_called_with(
+        mock_send_reminder_emails_task.assert_called_with(
             {'greeting': greeting, 'closing': closing},
             [email],
             str(self.subscription_plan.uuid),
         )
         self._assert_last_remind_date_correct([pending_license], True)
 
-    @mock.patch('license_manager.apps.subscriptions.emails.send_reminder_emails')
-    def test_remind_all_no_pending_licenses(self, mock_send_reminder_emails):
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
+    def test_remind_all_no_pending_licenses(self, mock_send_reminder_emails_task):
         """
         Verify that the remind all endpoint returns a 404 if there are no pending licenses.
         """
@@ -512,10 +626,10 @@ class LicenseViewSetActionTests(TestCase):
         response = self.api_client.post(self.remind_all_url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
         self._assert_last_remind_date_correct(unassigned_licenses, False)
-        mock_send_reminder_emails.assert_not_called()
+        mock_send_reminder_emails_task.assert_not_called()
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
-    def test_remind_all(self, mock_send_reminder_emails):
+    def test_remind_all(self, mock_send_reminder_emails_task):
         """
         Verify that the remind all endpoint sends an email to each user with a pending license.
 
@@ -538,7 +652,7 @@ class LicenseViewSetActionTests(TestCase):
         self._assert_last_remind_date_correct(pending_licenses, True)
 
         # Verify emails sent to only the pending licenses
-        mock_send_reminder_emails.assert_called_with(
+        mock_send_reminder_emails_task.assert_called_with(
             {'greeting': greeting, 'closing': closing},
             [license.user_email for license in pending_licenses],
             str(self.subscription_plan.uuid),
