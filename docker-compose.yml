@@ -48,6 +48,7 @@ services:
     container_name: license_manager.memcache
 
   worker:
+    image: openedx/license-manager.worker
     build:
       context: .
       dockerfile: Dockerfile
