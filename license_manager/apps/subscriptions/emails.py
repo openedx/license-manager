@@ -96,10 +96,7 @@ def _send_email_with_activation(custom_template_text, email_recipient_list, subs
         # Specifically raise AttributeError if it comes up from: <'SES' object has no attribute 'close'>.
         raise exc
     except Exception as exc:  # pylint: disable=broad-except
-        logger.info(
-            'Received error: %s',
-            exc,
-        )
+        logger.warning('License manager activation email sending received an exception.', exc_info=True)
 
 
 def _generate_license_activation_link():  # TODO: implement 'How users will activate licenses' (ENT-2748)
