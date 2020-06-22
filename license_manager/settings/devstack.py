@@ -54,6 +54,12 @@ CELERY_ALWAYS_EAGER = (
 )
 # END CELERY
 
+# CORS CONFIG
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:8734',  # frontend-app-learner-portal-enterprise
+]
+# END CORS
+
 # Make some loggers less noisy (useful during test failure)
 import logging
 
