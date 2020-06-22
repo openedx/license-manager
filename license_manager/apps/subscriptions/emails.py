@@ -65,22 +65,11 @@ def send_reminder_emails(custom_template_text, email_recipient_list, subscriptio
     )
 
     # Gather the licenses for each email that's been reminded
-    pending_licenses = []
-    for user_email in email_recipient_list:
-        try:
-            pending_licenses.append(
-                License.objects.get(
-                    subscription_plan=subscription_plan,
-                    user_email=user_email,
-                    status=ASSIGNED,
-                )
-            )
-        except ObjectDoesNotExist:
-            # This should never be hit since the same condition is checked in api.v1.views.remind
-            logger.info(
-                'Could not find any licenses pending activation that are associated with the email: %s', user_email
-            )
-            raise
+    pending_licenses = License.objects.filter(
+        subscription_plan=subscription_plan,
+        status=ASSIGNED,
+        user_email__in=email_recipient_list
+    )
 
     # Set last remind date to now for all pending licenses
     for pending_license in pending_licenses:

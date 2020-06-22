@@ -1,3 +1,5 @@
+import mock
+
 from django.core import mail
 from django.test import TestCase
 
@@ -61,3 +63,19 @@ class EmailTests(TestCase):
         self.assertTrue('Reminder' in message.body)
         # Verify the 'last_remind_date' of all licenses have been updated
         assert_last_remind_date_correct([self.license], True)
+
+    @mock.patch('license_manager.apps.subscriptions.emails.mail.get_connection')
+    def test_send_reminder_email_failure_no_remind_date_update(self, mock_get_connection):
+        """
+        Tests that when sending the remind email fails, last_remind_date is not updated
+        """
+        mock_get_connection.send_messages.side_effect = Exception('Test Exception')
+        emails.send_reminder_emails(
+            self.custom_template_text,
+            [self.license.user_email],
+            self.license.subscription_plan,
+        )
+        # Verify no messages were sent
+        self.assertEqual(len(mail.outbox), 0)
+        # Verify the 'last_remind_date' was not updated
+        assert_last_remind_date_correct([self.license], False)
