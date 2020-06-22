@@ -19,8 +19,8 @@ class EmailTests(TestCase):
 
         self.license = test_email_data['license']
         self.license.status = ASSIGNED
-        self.license.subscription_plan = self.subscription_plan
         self.license.user_email = self.email_recipient_list[0]
+        self.license.save()
 
     def test_send_activation_emails(self):
         """
@@ -48,7 +48,7 @@ class EmailTests(TestCase):
         emails.send_reminder_emails(
             self.custom_template_text,
             user_emails,
-            self.subscription_plan,
+            self.license.subscription_plan,
         )
         self.assertEqual(
             len(mail.outbox),
