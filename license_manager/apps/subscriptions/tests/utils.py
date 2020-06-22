@@ -56,3 +56,17 @@ def make_test_email_data():
             't.soprano@badabing.net',
         ]
     }
+
+
+def assert_last_remind_date_correct(licenses, should_be_updated):
+    """
+    Helper that verifies that all of the given licenses have had their last_remind_date updated if applicable.
+
+    If they should not have been updated, then it checks that last_remind_date is still None.
+    """
+    for license_obj in licenses:
+        license_obj.refresh_from_db()
+        if should_be_updated:
+            assert license_obj.last_remind_date.date() == date.today()
+        else:
+            assert license_obj.last_remind_date is None

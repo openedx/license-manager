@@ -411,19 +411,6 @@ class LicenseViewSetActionTests(TestCase):
             kwargs={'subscription_uuid': self.subscription_plan.uuid},
         )
 
-    def _assert_last_remind_date_correct(self, licenses, should_be_updated):
-        """
-        Helper that verifies that all of the given licenses have had their last_remind_date updated if applicable.
-
-        If they should not have been updated, then it checks that last_remind_date is still None.
-        """
-        for license_obj in licenses:
-            license_obj.refresh_from_db()
-            if should_be_updated:
-                assert license_obj.last_remind_date.date() == date.today()
-            else:
-                assert license_obj.last_remind_date is None
-
     def _create_available_licenses(self, num_licenses=5):
         """
         Helper that creates `num_licenses` licenses that can be assigned, associated with the subscription.
@@ -584,7 +571,6 @@ class LicenseViewSetActionTests(TestCase):
 
         response = self.api_client.post(self.remind_url, {'user_email': email})
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        self._assert_last_remind_date_correct([activated_license], False)
         mock_send_reminder_emails_task.assert_not_called()
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
@@ -613,7 +599,6 @@ class LicenseViewSetActionTests(TestCase):
             [email],
             str(self.subscription_plan.uuid),
         )
-        self._assert_last_remind_date_correct([pending_license], True)
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
     def test_remind_all_no_pending_licenses(self, mock_send_reminder_emails_task):
@@ -625,7 +610,6 @@ class LicenseViewSetActionTests(TestCase):
 
         response = self.api_client.post(self.remind_all_url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        self._assert_last_remind_date_correct(unassigned_licenses, False)
         mock_send_reminder_emails_task.assert_not_called()
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
@@ -646,10 +630,6 @@ class LicenseViewSetActionTests(TestCase):
         closing = 'Goodbye'
         response = self.api_client.post(self.remind_all_url, {'greeting': greeting, 'closing': closing})
         assert response.status_code == status.HTTP_200_OK
-
-        # Verify that the unassigned licenses did not have `last_remind_date` updated, but the pending licenses did
-        self._assert_last_remind_date_correct(unassigned_licenses, False)
-        self._assert_last_remind_date_correct(pending_licenses, True)
 
         # Verify emails sent to only the pending licenses
         mock_send_reminder_emails_task.assert_called_with(
