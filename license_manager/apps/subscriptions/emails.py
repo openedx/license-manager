@@ -2,13 +2,17 @@ import logging
 
 from django.conf import settings
 from django.core import mail
+from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import get_template
 
+from license_manager.apps.api.utils import localized_utcnow
 from license_manager.apps.subscriptions.constants import (
+    ASSIGNED,
     LICENSE_ACTIVATION_EMAIL_SUBJECT,
     LICENSE_ACTIVATION_EMAIL_TEMPLATE,
     LICENSE_REMINDER_EMAIL_SUBJECT,
 )
+from license_manager.apps.subscriptions.models import License
 
 
 logger = logging.getLogger(__name__)
@@ -59,6 +63,28 @@ def send_reminder_emails(custom_template_text, email_recipient_list, subscriptio
         subscription_plan,
         context,
     )
+
+    # Gather the licenses for each email that's been reminded
+    pending_licenses = []
+    for user_email in email_recipient_list:
+        try:
+            pending_licenses.append(
+                License.objects.get(
+                    subscription_plan=subscription_plan,
+                    user_email=user_email,
+                    status=ASSIGNED,
+                )
+            )
+        except ObjectDoesNotExist:
+            # This should never be hit since the same condition is checked in api.v1.views.remind
+            logger.info(
+                'Could not find any licenses pending activation that are associated with the email: %s', user_email
+            )
+
+    # Set last remind date to now for all pending licenses
+    for pending_license in pending_licenses:
+        pending_license.last_remind_date = localized_utcnow()
+    License.objects.bulk_update(pending_licenses, ['last_remind_date'])
 
 
 def _send_email_with_activation(custom_template_text, email_recipient_list, subscription_plan, context):

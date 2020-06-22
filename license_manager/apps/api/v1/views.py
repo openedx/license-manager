@@ -17,7 +17,6 @@ from license_manager.apps.api.tasks import (
     send_activation_email_task,
     send_reminder_email_task,
 )
-from license_manager.apps.api.utils import localized_utcnow
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
     License,
@@ -217,7 +216,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         user_email = request.data.get('user_email')
         subscription_plan = self._get_subscription_plan()
         try:
-            user_license = License.objects.get(
+            License.objects.get(
                 subscription_plan=subscription_plan,
                 user_email=user_email,
                 status=constants.ASSIGNED,
@@ -234,10 +233,6 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
             [user_email],
             subscription_uuid,
         )
-
-        # Set last remind date to now
-        user_license.last_remind_date = localized_utcnow()
-        user_license.save()
 
         return Response(status=status.HTTP_200_OK)
 
@@ -263,11 +258,6 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
             pending_user_emails,
             subscription_uuid,
         )
-
-        # Set last remind date to now for all pending licenses
-        for pending_license in pending_licenses:
-            pending_license.last_remind_date = localized_utcnow()
-        License.objects.bulk_update(pending_licenses, ['last_remind_date'])
 
         return Response(status=status.HTTP_200_OK)
 
