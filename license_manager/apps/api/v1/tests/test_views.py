@@ -2,7 +2,6 @@
 """
 Tests for the Subscription and License V1 API view sets.
 """
-from datetime import date
 from uuid import uuid4
 
 import mock

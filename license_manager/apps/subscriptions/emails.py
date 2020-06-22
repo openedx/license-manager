@@ -80,6 +80,7 @@ def send_reminder_emails(custom_template_text, email_recipient_list, subscriptio
             logger.info(
                 'Could not find any licenses pending activation that are associated with the email: %s', user_email
             )
+            raise
 
     # Set last remind date to now for all pending licenses
     for pending_license in pending_licenses:

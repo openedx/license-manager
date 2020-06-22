@@ -7,6 +7,7 @@ from faker import Factory as FakerFactory
 
 from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.tests.factories import (
+    LicenseFactory,
     SubscriptionPlanFactory,
 )
 
@@ -46,6 +47,7 @@ def make_test_email_data():
     """
     return {
         'subscription_plan': SubscriptionPlanFactory(),
+        'license': LicenseFactory(),
         'custom_template_text': {
             'greeting': 'Hello',
             'closing': 'Goodbye',
