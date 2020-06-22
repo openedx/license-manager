@@ -9,7 +9,7 @@ django-extensions
 django-filter
 django-model-utils
 django-rest-swagger
-django-ses
+git+https://github.com/django-ses/django-ses.git@3069b88dc32d7928c606c783c40119f0cd07633e
 rules
 django-simple-history
 django-waffle
