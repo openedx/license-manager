@@ -66,11 +66,8 @@ def send_reminder_emails(custom_template_text, email_recipient_list, subscriptio
     except AttributeError as exc:
         # Specifically raise AttributeError if it comes up from: <'SES' object has no attribute 'close'>.
         raise exc
-    except Exception as exc:  # pylint: disable=broad-except
-        logger.info(
-            'Received error: %s',
-            exc,
-        )
+    except Exception:  # pylint: disable=broad-except
+        logger.warning('License manager activation email sending received an exception.', exc_info=True)
         # Return without updating the last_remind_date for licenses
         return
 
