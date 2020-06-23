@@ -4,11 +4,14 @@ from django.conf import settings
 from django.core import mail
 from django.template.loader import get_template
 
+from license_manager.apps.api.utils import localized_utcnow
 from license_manager.apps.subscriptions.constants import (
+    ASSIGNED,
     LICENSE_ACTIVATION_EMAIL_SUBJECT,
     LICENSE_ACTIVATION_EMAIL_TEMPLATE,
     LICENSE_REMINDER_EMAIL_SUBJECT,
 )
+from license_manager.apps.subscriptions.models import License
 
 
 logger = logging.getLogger(__name__)
@@ -53,12 +56,32 @@ def send_reminder_emails(custom_template_text, email_recipient_list, subscriptio
         'subject': LICENSE_REMINDER_EMAIL_SUBJECT,
         'REMINDER': True,
     }
-    _send_email_with_activation(
-        custom_template_text,
-        email_recipient_list,
-        subscription_plan,
-        context,
+    try:
+        _send_email_with_activation(
+            custom_template_text,
+            email_recipient_list,
+            subscription_plan,
+            context,
+        )
+    except AttributeError as exc:
+        # Specifically raise AttributeError if it comes up from: <'SES' object has no attribute 'close'>.
+        raise exc
+    except Exception:  # pylint: disable=broad-except
+        logger.warning('License manager activation email sending received an exception.', exc_info=True)
+        # Return without updating the last_remind_date for licenses
+        return
+
+    # Gather the licenses for each email that's been reminded
+    pending_licenses = License.objects.filter(
+        subscription_plan=subscription_plan,
+        status=ASSIGNED,
+        user_email__in=email_recipient_list
     )
+
+    # Set last remind date to now for all pending licenses
+    for pending_license in pending_licenses:
+        pending_license.last_remind_date = localized_utcnow()
+    License.objects.bulk_update(pending_licenses, ['last_remind_date'])
 
 
 def _send_email_with_activation(custom_template_text, email_recipient_list, subscription_plan, context):
@@ -88,15 +111,9 @@ def _send_email_with_activation(custom_template_text, email_recipient_list, subs
             subscription_plan,
         ))
 
-    try:
-        # Use a single connection to send all messages
-        with mail.get_connection() as connection:
-            connection.send_messages(emails)
-    except AttributeError as exc:
-        # Specifically raise AttributeError if it comes up from: <'SES' object has no attribute 'close'>.
-        raise exc
-    except Exception as exc:  # pylint: disable=broad-except
-        logger.warning('License manager activation email sending received an exception.', exc_info=True)
+    # Use a single connection to send all messages
+    with mail.get_connection() as connection:
+        connection.send_messages(emails)
 
 
 def _generate_license_activation_link():  # TODO: implement 'How users will activate licenses' (ENT-2748)
