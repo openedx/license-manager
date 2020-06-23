@@ -5,6 +5,7 @@ from datetime import date, timedelta
 
 from faker import Factory as FakerFactory
 
+from license_manager.apps.subscriptions.constants import ASSIGNED
 from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.tests.factories import (
     LicenseFactory,
@@ -45,18 +46,34 @@ def make_test_email_data():
     """
     Returns a dictionary of data needed to send emails
     """
+
+    # Create a SubscriptionPlan and associate a batch of licenses using Factories
+    subscription = SubscriptionPlanFactory()
+    licenses = LicenseFactory.create_batch(6)
+    subscription.licenses.set(licenses)
+
+    custom_template_text = {
+        'greeting': 'Hello',
+        'closing': 'Goodbye',
+    }
+
+    email_recipient_list = [
+        'boatymcboatface@mit.edu',
+        'saul.goodman@bettercallsaul.com',
+        't.soprano@badabing.net',
+    ]
+
+    # Use emails from list created above to create assigned licenses
+    for i in range(len(email_recipient_list)):
+        licenses[i].user_email = email_recipient_list[i]
+        licenses[i].status = ASSIGNED
+        licenses[i].save()
+
     return {
-        'subscription_plan': SubscriptionPlanFactory(),
-        'license': LicenseFactory(),
-        'custom_template_text': {
-            'greeting': 'Hello',
-            'closing': 'Goodbye',
-        },
-        'email_recipient_list': [
-            'boatymcboatface@mit.edu',
-            'saul.goodman@bettercallsaul.com',
-            't.soprano@badabing.net',
-        ]
+        'subscription_plan': subscription,
+        'licenses': licenses,
+        'custom_template_text': custom_template_text,
+        'email_recipient_list': email_recipient_list
     }
 
 
@@ -69,6 +86,9 @@ def assert_last_remind_date_correct(licenses, should_be_updated):
     for license_obj in licenses:
         license_obj.refresh_from_db()
         if should_be_updated:
-            assert license_obj.last_remind_date.date() == date.today()
+            if license_obj.last_remind_date is None:
+                assert False
+            else:
+                assert license_obj.last_remind_date.date() == date.today()
         else:
             assert license_obj.last_remind_date is None

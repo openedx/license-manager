@@ -2,7 +2,6 @@ import logging
 
 from django.conf import settings
 from django.core import mail
-from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import get_template
 
 from license_manager.apps.api.utils import localized_utcnow
@@ -57,12 +56,23 @@ def send_reminder_emails(custom_template_text, email_recipient_list, subscriptio
         'subject': LICENSE_REMINDER_EMAIL_SUBJECT,
         'REMINDER': True,
     }
-    _send_email_with_activation(
-        custom_template_text,
-        email_recipient_list,
-        subscription_plan,
-        context,
-    )
+    try:
+        _send_email_with_activation(
+            custom_template_text,
+            email_recipient_list,
+            subscription_plan,
+            context,
+        )
+    except AttributeError as exc:
+        # Specifically raise AttributeError if it comes up from: <'SES' object has no attribute 'close'>.
+        raise exc
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.info(
+            'Received error: %s',
+            exc,
+        )
+        # Return without updating the last_remind_date for licenses
+        return
 
     # Gather the licenses for each email that's been reminded
     pending_licenses = License.objects.filter(
@@ -104,18 +114,9 @@ def _send_email_with_activation(custom_template_text, email_recipient_list, subs
             subscription_plan,
         ))
 
-    try:
-        # Use a single connection to send all messages
-        with mail.get_connection() as connection:
-            connection.send_messages(emails)
-    except AttributeError as exc:
-        # Specifically raise AttributeError if it comes up from: <'SES' object has no attribute 'close'>.
-        raise exc
-    except Exception as exc:  # pylint: disable=broad-except
-        logger.info(
-            'Received error: %s',
-            exc,
-        )
+    # Use a single connection to send all messages
+    with mail.get_connection() as connection:
+        connection.send_messages(emails)
 
 
 def _generate_license_activation_link():  # TODO: implement 'How users will activate licenses' (ENT-2748)
