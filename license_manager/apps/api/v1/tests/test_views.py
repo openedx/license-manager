@@ -576,14 +576,10 @@ class LicenseViewSetActionTests(TestCase):
     def test_remind(self, mock_send_reminder_emails_task):
         """
         Verify that the remind endpoint sends an email to the specified user with a pending license.
-
-        Also verifies that:
-            - A custom greeting and closing can be sent to the endpoint
-            - The license's `last_remind_date` is updated to reflect that an email was just sent out
+        Also verifies that a custom greeting and closing can be sent to the endpoint
         """
         email = 'test@example.com'
         pending_license = LicenseFactory.create(user_email=email, status=constants.ASSIGNED)
-        assert pending_license.last_remind_date is None  # The learner should not have been reminded yet
         self.subscription_plan.licenses.set([pending_license])
 
         greeting = 'Hello'
@@ -615,10 +611,7 @@ class LicenseViewSetActionTests(TestCase):
     def test_remind_all(self, mock_send_reminder_emails_task):
         """
         Verify that the remind all endpoint sends an email to each user with a pending license.
-
-        Also verifies that:
-            - A custom greeting and closing can be sent to the endpoint.
-            - The licenses' `last_remind_date` fields are updated to reflect that an email was just sent out.
+        Also verifies that a custom greeting and closing can be sent to the endpoint.
         """
         # Create some pending and non-pending licenses for the subscription
         unassigned_licenses = LicenseFactory.create_batch(5, status=constants.UNASSIGNED)

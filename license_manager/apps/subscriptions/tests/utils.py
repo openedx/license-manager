@@ -64,10 +64,10 @@ def make_test_email_data():
     ]
 
     # Use emails from list created above to create assigned licenses
-    for i in range(len(email_recipient_list)):
-        licenses[i].user_email = email_recipient_list[i]
-        licenses[i].status = ASSIGNED
-        licenses[i].save()
+    for lic, email in zip(licenses, email_recipient_list):
+        lic.user_email = email
+        lic.status = ASSIGNED
+        lic.save()
 
     return {
         'subscription_plan': subscription,
@@ -86,9 +86,6 @@ def assert_last_remind_date_correct(licenses, should_be_updated):
     for license_obj in licenses:
         license_obj.refresh_from_db()
         if should_be_updated:
-            if license_obj.last_remind_date is None:
-                assert False
-            else:
-                assert license_obj.last_remind_date.date() == date.today()
+            assert license_obj.last_remind_date.date() == date.today()
         else:
             assert license_obj.last_remind_date is None

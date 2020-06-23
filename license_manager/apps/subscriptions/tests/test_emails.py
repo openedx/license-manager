@@ -47,7 +47,7 @@ class EmailTests(TestCase):
         emails.send_reminder_emails(
             self.custom_template_text,
             [lic.user_email],
-            self.licenses[0].subscription_plan,
+            lic.subscription_plan,
         )
         self.assertEqual(len(mail.outbox), 1)
         # Verify the contents of the first message
