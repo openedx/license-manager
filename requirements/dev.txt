@@ -9,8 +9,8 @@ anyjson==0.3.3            # via -r requirements/validation.txt, kombu
 astroid==2.3.3            # via -r requirements/validation.txt, pylint, pylint-celery
 attrs==19.3.0             # via -r requirements/validation.txt, pytest
 billiard==3.3.0.23        # via -r requirements/validation.txt, celery
-boto3==1.14.7             # via -r requirements/validation.txt, django-ses
-botocore==1.17.7          # via -r requirements/validation.txt, boto3, s3transfer
+boto3==1.14.8             # via -r requirements/validation.txt, django-ses
+botocore==1.17.8          # via -r requirements/validation.txt, boto3, s3transfer
 celery==3.1.26.post2      # via -c requirements/constraints.txt, -r requirements/validation.txt, edx-celeryutils
 certifi==2020.6.20        # via -r requirements/validation.txt, requests
 chardet==3.0.4            # via -r requirements/validation.txt, requests
@@ -53,7 +53,7 @@ faker==4.1.1              # via -r requirements/validation.txt, factory-boy
 future==0.18.2            # via -r requirements/validation.txt, django-ses, edx-celeryutils, pyjwkest
 gunicorn==20.0.4          # via -r requirements/dev.in
 idna==2.9                 # via -r requirements/validation.txt, requests
-importlib-metadata==1.6.1  # via -r requirements/validation.txt, inflect, path, pluggy, pytest
+importlib-metadata==1.6.1  # via inflect
 inflect==3.0.2            # via -c requirements/constraints.txt, -r requirements/dev.in, jinja2-pluralize
 isort==4.3.21             # via -r requirements/validation.txt, pylint
 itypes==1.2.0             # via -r requirements/validation.txt, coreapi
@@ -117,10 +117,9 @@ social-auth-core==3.2.0   # via -c requirements/constraints.txt, -r requirements
 sqlparse==0.3.1           # via -r requirements/validation.txt, django, django-debug-toolbar
 stevedore==1.32.0         # via -c requirements/constraints.txt, -r requirements/validation.txt, code-annotations, edx-opaque-keys
 text-unidecode==1.3       # via -r requirements/validation.txt, faker, python-slugify
-typed-ast==1.4.1          # via -r requirements/validation.txt, astroid
 uritemplate==3.0.1        # via -r requirements/validation.txt, coreapi
 urllib3==1.25.9           # via -r requirements/validation.txt, botocore, requests
-wcwidth==0.2.4            # via -r requirements/validation.txt, pytest
+wcwidth==0.2.5            # via -r requirements/validation.txt, pytest
 wrapt==1.11.2             # via -r requirements/validation.txt, astroid
 zipp==1.2.0               # via -c requirements/constraints.txt, -r requirements/validation.txt, importlib-metadata
 

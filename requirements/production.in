@@ -7,3 +7,4 @@
 gevent
 gunicorn
 PyYAML
+python-memcached
