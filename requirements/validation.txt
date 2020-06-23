@@ -9,8 +9,8 @@ anyjson==0.3.3            # via -r requirements/quality.txt, -r requirements/tes
 astroid==2.3.3            # via -r requirements/quality.txt, -r requirements/test.txt, pylint, pylint-celery
 attrs==19.3.0             # via -r requirements/test.txt, pytest
 billiard==3.3.0.23        # via -r requirements/quality.txt, -r requirements/test.txt, celery
-boto3==1.14.7             # via -r requirements/quality.txt, -r requirements/test.txt, django-ses
-botocore==1.17.7          # via -r requirements/quality.txt, -r requirements/test.txt, boto3, s3transfer
+boto3==1.14.8             # via -r requirements/quality.txt, -r requirements/test.txt, django-ses
+botocore==1.17.8          # via -r requirements/quality.txt, -r requirements/test.txt, boto3, s3transfer
 celery==3.1.26.post2      # via -c requirements/constraints.txt, -r requirements/quality.txt, -r requirements/test.txt, edx-celeryutils
 certifi==2020.6.20        # via -r requirements/quality.txt, -r requirements/test.txt, requests
 chardet==3.0.4            # via -r requirements/quality.txt, -r requirements/test.txt, requests
@@ -50,7 +50,6 @@ factory-boy==2.12.0       # via -r requirements/test.txt
 faker==4.1.1              # via -r requirements/test.txt, factory-boy
 future==0.18.2            # via -r requirements/quality.txt, -r requirements/test.txt, django-ses, edx-celeryutils, pyjwkest
 idna==2.9                 # via -r requirements/quality.txt, -r requirements/test.txt, requests
-importlib-metadata==1.6.1  # via -r requirements/test.txt, path, pluggy, pytest
 isort==4.3.21             # via -r requirements/quality.txt, -r requirements/test.txt, pylint
 itypes==1.2.0             # via -r requirements/quality.txt, -r requirements/test.txt, coreapi
 jinja2==2.11.2            # via -r requirements/quality.txt, -r requirements/test.txt, code-annotations, coreschema
@@ -110,9 +109,8 @@ social-auth-core==3.2.0   # via -c requirements/constraints.txt, -r requirements
 sqlparse==0.3.1           # via -r requirements/quality.txt, -r requirements/test.txt, django
 stevedore==1.32.0         # via -c requirements/constraints.txt, -r requirements/quality.txt, -r requirements/test.txt, code-annotations, edx-opaque-keys
 text-unidecode==1.3       # via -r requirements/test.txt, faker, python-slugify
-typed-ast==1.4.1          # via -r requirements/quality.txt, -r requirements/test.txt, astroid
 uritemplate==3.0.1        # via -r requirements/quality.txt, -r requirements/test.txt, coreapi
 urllib3==1.25.9           # via -r requirements/quality.txt, -r requirements/test.txt, botocore, requests
-wcwidth==0.2.4            # via -r requirements/test.txt, pytest
+wcwidth==0.2.5            # via -r requirements/test.txt, pytest
 wrapt==1.11.2             # via -r requirements/quality.txt, -r requirements/test.txt, astroid
-zipp==1.2.0               # via -c requirements/constraints.txt, -r requirements/quality.txt, -r requirements/test.txt, importlib-metadata
+zipp==1.2.0               # via -c requirements/constraints.txt, -r requirements/quality.txt, -r requirements/test.txt
