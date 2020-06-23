@@ -28,7 +28,7 @@ git checkout -b edx-deployment/stage/$TRAVIS_COMMIT
 sed -i -e "s/newTag: .*/newTag: $TRAVIS_COMMIT-newrelic/" argocd/applications/${REPO_NAME}/stage/kustomization.yaml
 git commit -a -m "${REPO_NAME} stage deploy: $TRAVIS_COMMIT_MESSAGE" --author "Travis CI Deployment automation <admin@edx.org>"
 git push --set-upstream origin edx-deployment/stage/$TRAVIS_COMMIT
-../hub-linux*/bin/hub pull-request -m "${REPO_NAME} stage deploy: $TRAVIS_COMMIT_MESSAGE" -m "Staging environment deployment of https://github.com/edx/${REPO_NAME}/pull/$GITHUB_UPSTREAM_PR_NUMBER" -m "Review and merge this PR to deploy your code to stage.edx.org"
+../hub-linux*/bin/hub pull-request -m "${REPO_NAME} stage deploy: $TRAVIS_COMMIT_MESSAGE" -m "Staging environment deployment of https://github.com/edx/${REPO_NAME}/pull/$GITHUB_UPSTREAM_PR_NUMBER" -m "Review and merge this PR to deploy your code to stage.edx.org" -l staging-deployment -l automerge
 
 # prod
 git checkout master
