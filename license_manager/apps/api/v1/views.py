@@ -193,7 +193,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
             status__in=[constants.ASSIGNED, constants.ACTIVATED],
         )
         if already_associated_licenses:
-            already_associated_emails = already_associated_licenses.values_list('user_email', flat=True)
+            already_associated_emails = list(already_associated_licenses.values_list('user_email', flat=True))
             msg = 'The following user emails are already associated with a pending or activated license: {}'.format(
                 already_associated_emails,
             )
