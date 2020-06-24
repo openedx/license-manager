@@ -2,6 +2,7 @@
 """
 Tests for the Subscription and License V1 API view sets.
 """
+from datetime import datetime
 from uuid import uuid4
 
 import mock
@@ -465,6 +466,18 @@ class LicenseViewSetActionTests(TestCase):
         mock_send_activation_email_task.assert_not_called()
 
     @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    def test_assign_insufficient_licenses_deactivated(self, mock_send_activation_email_task):
+        """
+        Verify the endpoint returns a 400 if there are not enough licenses to assign to considering deactivated licenses
+        """
+        # Create a deactivated license that is not being assigned to
+        deactivated_license = LicenseFactory.create(status=constants.DEACTIVATED, user_email='deactivated@example.com')
+        self.subscription_plan.licenses.set([deactivated_license])
+        response = self.api_client.post(self.assign_url, {'user_emails': ['test@example.com']})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        mock_send_activation_email_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
     def test_assign_already_associated_email(self, mock_send_activation_email_task):
         """
         Verify the assign endpoint returns a 400 if there is already a license associated with a provided email.
@@ -521,6 +534,36 @@ class LicenseViewSetActionTests(TestCase):
             {'greeting': greeting, 'closing': closing},
             [user_email],
             str(self.subscription_plan.uuid),
+        )
+
+    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    def test_assign_to_deactivated_user(self, mock_send_activation_email_task):
+        """
+        Verify that the assign endpoint allows assigning a license to a user who previously had a license revoked.
+        """
+        user_email = 'test@example.com'
+        deactivated_license = LicenseFactory.create(
+            user_email=user_email,
+            status=constants.DEACTIVATED,
+            lms_user_id=1,
+            last_remind_date=datetime.now(),
+            activation_date=datetime.now(),
+        )
+        self.subscription_plan.licenses.set([deactivated_license])
+
+        response = self.api_client.post(self.assign_url, {'user_emails': [user_email]})
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify all the attributes on the formerly deactivated license are correct
+        deactivated_license.refresh_from_db()
+        self._assert_licenses_assigned([user_email])
+        assert deactivated_license.lms_user_id is None
+        assert deactivated_license.last_remind_date is None
+        assert deactivated_license.activation_date is None
+        mock_send_activation_email_task.assert_called_with(
+            {'greeting': '', 'closing': ''},
+            [user_email],
+            str(self.subscription_plan.uuid)
         )
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')

@@ -154,31 +154,63 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
 
     @action(detail=False, methods=['post'])
     def assign(self, request, subscription_uuid=None):
+        """
+        Given a list of emails, assigns a license to those user emails and sends an activation email.
+
+        This endpoint allows assigning licenses to users who have previously had a license revoked, by removing their
+        association to the revoked licenses and then assigning them to unassigned licenses.
+        """
         # Validate the user_emails and text sent in the data
         self._validate_data(request.data)
         # Dedupe emails before turning back into a list for indexing
         user_emails = list(set(request.data.get('user_emails', [])))
 
-        # Make sure there are enough unassigned licenses
-        num_user_emails = len(user_emails)
         subscription_plan = self._get_subscription_plan()
+        # Get the deactivated licenses that are attempting to be assigned to
+        deactivated_licenses_for_assignment = subscription_plan.licenses.filter(
+            status=constants.DEACTIVATED,
+            user_email__in=user_emails,
+        )
+
+        # Make sure there are enough licenses that we can assign to
+        num_user_emails = len(user_emails)
         num_unassigned_licenses = subscription_plan.unassigned_licenses.count()
-        if num_user_emails > num_unassigned_licenses:
+        # Since we flip the status of deactivated licenses when admins attempt to re-assign that learner to a new
+        # license, we check that there are enough unassigned licenses when combined with the deactivated licenses that
+        # will have their status change
+        num_potential_unassigned_licenses = num_unassigned_licenses + deactivated_licenses_for_assignment.count()
+        if num_user_emails > num_potential_unassigned_licenses:
             msg = (
-                'There are not enough unassigned licenses to complete your request.'
-                'You attempted to assign {} licenses, but there are only {} available.'
-            ).format(num_user_emails, num_unassigned_licenses)
+                'There are not enough licenses that can be assigned to complete your request.'
+                'You attempted to assign {} licenses, but there are only {} potentially available.'
+            ).format(num_user_emails, num_potential_unassigned_licenses)
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
-        # Make sure none of the provided emails have already been associated with a license in the subscription
-        already_associated_emails = list(
-            subscription_plan.licenses.filter(user_email__in=user_emails).values_list('user_email', flat=True)
+        # Make sure none of the provided emails have already been associated with a non-deactivated license in the
+        # subscription.
+        already_associated_licenses = subscription_plan.licenses.filter(
+            user_email__in=user_emails,
+            status__in=[constants.ASSIGNED, constants.ACTIVATED],
         )
-        if already_associated_emails:
-            msg = 'The following user emails are already associated with a license: {}'.format(
+        if already_associated_licenses:
+            already_associated_emails = already_associated_licenses.values_list('user_email', flat=True)
+            msg = 'The following user emails are already associated with a pending or activated license: {}'.format(
                 already_associated_emails,
             )
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+
+        # Flip all deactivated licenses that were associated with emails that we are assigning to unassigned, and clear
+        # all the old data on the license.
+        for deactivated_license in deactivated_licenses_for_assignment:
+            deactivated_license.status = constants.UNASSIGNED
+            deactivated_license.user_email = None
+            deactivated_license.lms_user_id = None
+            deactivated_license.last_remind_date = None
+            deactivated_license.activation_date = None
+        License.objects.bulk_update(
+            deactivated_licenses_for_assignment,
+            ['status', 'user_email', 'lms_user_id', 'last_remind_date', 'activation_date'],
+        )
 
         # Get a queryset of only the number of licenses we need to assign
         unassigned_licenses = subscription_plan.unassigned_licenses[:num_user_emails]
