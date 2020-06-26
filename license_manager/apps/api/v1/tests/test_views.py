@@ -397,25 +397,35 @@ class LicenseViewSetActionTests(TestCase):
 
         # API client setup
         self.api_client = APIClient()
-        self.user = UserFactory(is_staff=True, is_superuser=True)
-        self.api_client.login(username=self.user.username, password=USER_PASSWORD)
+        self.api_client.login(username=self.super_user.username, password=USER_PASSWORD)
+
+        # Try to start every test with the regular user not being staff
+        self.user.is_staff = False
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        # Set up a couple of users
+        cls.user = UserFactory()
+        cls.super_user = UserFactory(is_staff=True, is_superuser=True)
 
         # Routes setup
-        self.subscription_plan = SubscriptionPlanFactory()
-        self.assign_url = reverse('api:v1:licenses-assign', kwargs={'subscription_uuid': self.subscription_plan.uuid})
-        self.remind_url = reverse('api:v1:licenses-remind', kwargs={'subscription_uuid': self.subscription_plan.uuid})
-        self.remind_all_url = reverse(
+        cls.subscription_plan = SubscriptionPlanFactory()
+        cls.assign_url = reverse('api:v1:licenses-assign', kwargs={'subscription_uuid': cls.subscription_plan.uuid})
+        cls.remind_url = reverse('api:v1:licenses-remind', kwargs={'subscription_uuid': cls.subscription_plan.uuid})
+        cls.remind_all_url = reverse(
             'api:v1:licenses-remind-all',
-            kwargs={'subscription_uuid': self.subscription_plan.uuid},
+            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
-        self.license_overview_url = reverse(
+        cls.license_overview_url = reverse(
             'api:v1:licenses-overview',
-            kwargs={'subscription_uuid': self.subscription_plan.uuid},
+            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
 
-        self.revoke_license_url = reverse(
+        cls.revoke_license_url = reverse(
             'api:v1:licenses-revoke',
-            kwargs={'subscription_uuid': self.subscription_plan.uuid},
+            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
 
     def _create_available_licenses(self, num_licenses=5):
@@ -433,6 +443,16 @@ class LicenseViewSetActionTests(TestCase):
             user_license = self.subscription_plan.licenses.get(user_email=email)
             assert user_license.status == constants.ASSIGNED
 
+    def _test_and_assert_forbidden_user(self, url, user_is_staff, mock_task):
+        """
+        Helper to login an unauthorized user, request an action URL, and assert that 403 response is returned.
+        """
+        self.user.is_staff = user_is_staff
+        self.api_client.login(username=self.user.username, password=USER_PASSWORD)
+        response = self.api_client.post(url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_task.assert_not_called()
+
     @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
     def test_assign_no_emails(self, mock_send_activation_email_task):
         """
@@ -441,6 +461,15 @@ class LicenseViewSetActionTests(TestCase):
         response = self.api_client.post(self.assign_url)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         mock_send_activation_email_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    @ddt.data(True, False)
+    def test_assign_non_admin_user(self, user_is_staff, mock_send_activation_email_task):
+        """
+        Verify the assign endpoint returns a 403 if a non-superuser with no
+        admin roles makes the request, even if they're staff (for good measure).
+        """
+        self._test_and_assert_forbidden_user(self.assign_url, user_is_staff, mock_send_activation_email_task)
 
     @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
     def test_assign_empty_emails(self, mock_send_activation_email_task):
@@ -501,12 +530,23 @@ class LicenseViewSetActionTests(TestCase):
         mock_send_activation_email_task.assert_not_called()
 
     @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
-    def test_assign(self, mock_send_activation_email_task):
+    @ddt.data(True, False)
+    def test_assign(self, use_superuser, mock_send_activation_email_task):
         """
         Verify the assign endpoint assigns licenses to the provided emails and sends activation emails.
 
         Also verifies that a greeting and closing can be sent.
         """
+        # setUp() makes us use the superuser by default
+        if not use_superuser:
+            _assign_role_via_jwt_or_db(
+                self.api_client,
+                self.user,
+                self.subscription_plan.enterprise_customer_uuid,
+                assign_via_jwt=True
+            )
+            self.api_client.login(username=self.user.username, password=USER_PASSWORD)
+
         self._create_available_licenses()
         user_emails = ['bb8@mit.edu', 'test@example.com']
         greeting = 'hello'
@@ -587,6 +627,15 @@ class LicenseViewSetActionTests(TestCase):
         mock_send_reminder_emails_task.assert_not_called()
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
+    @ddt.data(True, False)
+    def test_remind_non_admin_user(self, user_is_staff, mock_send_reminder_email_task):
+        """
+        Verify the remind endpoint returns a 403 if a non-superuser with no
+        admin roles makes the request, even if they're staff (for good measure).
+        """
+        self._test_and_assert_forbidden_user(self.remind_url, user_is_staff, mock_send_reminder_email_task)
+
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
     def test_remind_invalid_email(self, mock_send_reminder_emails_task):
         """
         Verify that the remind endpoint returns a 400 if an invalid email is provided.
@@ -627,11 +676,22 @@ class LicenseViewSetActionTests(TestCase):
         mock_send_reminder_emails_task.assert_not_called()
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
-    def test_remind(self, mock_send_reminder_emails_task):
+    @ddt.data(True, False)
+    def test_remind(self, use_superuser, mock_send_reminder_emails_task):
         """
         Verify that the remind endpoint sends an email to the specified user with a pending license.
         Also verifies that a custom greeting and closing can be sent to the endpoint
         """
+        # setUp() makes us use the superuser by default
+        if not use_superuser:
+            _assign_role_via_jwt_or_db(
+                self.api_client,
+                self.user,
+                self.subscription_plan.enterprise_customer_uuid,
+                assign_via_jwt=True
+            )
+            self.api_client.login(username=self.user.username, password=USER_PASSWORD)
+
         email = 'test@example.com'
         pending_license = LicenseFactory.create(user_email=email, status=constants.ASSIGNED)
         self.subscription_plan.licenses.set([pending_license])
@@ -705,34 +765,34 @@ class LicenseViewSetActionTests(TestCase):
         assert expected_response == actual_response
 
     @ddt.data(
-        (
-            constants.ACTIVATED,
-            status.HTTP_204_NO_CONTENT
-        ),
-        (
-            constants.ASSIGNED,
-            status.HTTP_204_NO_CONTENT
-        ),
-        (
-            constants.DEACTIVATED,
-            status.HTTP_404_NOT_FOUND
-        )
+        {'license_state': constants.ACTIVATED, 'expected_status': status.HTTP_204_NO_CONTENT, 'use_superuser': True},
+        {'license_state': constants.ACTIVATED, 'expected_status': status.HTTP_204_NO_CONTENT, 'use_superuser': False},
+        {'license_state': constants.ASSIGNED, 'expected_status': status.HTTP_204_NO_CONTENT, 'use_superuser': True},
+        {'license_state': constants.ASSIGNED, 'expected_status': status.HTTP_204_NO_CONTENT, 'use_superuser': False},
+        {'license_state': constants.DEACTIVATED, 'expected_status': status.HTTP_404_NOT_FOUND, 'use_superuser': True},
+        {'license_state': constants.DEACTIVATED, 'expected_status': status.HTTP_404_NOT_FOUND, 'use_superuser': False},
     )
     @ddt.unpack
-    def test_revoke_license_states(
-            self,
-            license_state,
-            expected_response
-    ):
+    def test_revoke_license_states(self, license_state, expected_status, use_superuser):
         """
         Test that revoking a license behaves correctly for different initial license states
         """
+        # setUp() makes us use the superuser by default
+        if not use_superuser:
+            _assign_role_via_jwt_or_db(
+                self.api_client,
+                self.user,
+                self.subscription_plan.enterprise_customer_uuid,
+                assign_via_jwt=True
+            )
+            self.api_client.login(username=self.user.username, password=USER_PASSWORD)
+
         email = 'test@example.com'
         original_license = LicenseFactory.create(user_email=email, status=license_state)
         self.subscription_plan.licenses.set([original_license])
 
         response = self.api_client.post(self.revoke_license_url, {'user_email': email})
-        assert response.status_code == expected_response
+        assert response.status_code == expected_status
         deactivated_license = self.subscription_plan.licenses.get(uuid=original_license.uuid)
         assert deactivated_license.status == constants.DEACTIVATED
 
@@ -743,6 +803,17 @@ class LicenseViewSetActionTests(TestCase):
         email = 'test@example.com'
         response = self.api_client.post(self.revoke_license_url, {'user_email': email})
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @ddt.data(True, False)
+    def test_revoke_non_admin_user(self, user_is_staff):
+        """
+        Verify the revoke endpoint returns a 403 if a non-superuser with no
+        admin roles makes the request, even if they're staff (for good measure).
+        """
+        self.user.is_staff = user_is_staff
+        self.api_client.login(username=self.user.username, password=USER_PASSWORD)
+        response = self.api_client.post(self.revoke_license_url, {'user_email': 'foo@bar.com'})
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
     def test_assign_after_license_revoke(self, mock_send_activation_email_task):
