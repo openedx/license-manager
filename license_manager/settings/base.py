@@ -263,7 +263,7 @@ PLATFORM_NAME = 'Your Platform Name Here'
 # END OPENEDX-SPECIFIC CONFIGURATION
 
 # Set up logging for development use (logging to stdout)
-LOGGING = get_logger_config(debug=DEBUG, dev_env=True, local_loglevel='DEBUG')
+LOGGING = get_logger_config(debug=DEBUG, dev_env=True)
 
 """############################# BEGIN CELERY CONFIG ##################################"""
 

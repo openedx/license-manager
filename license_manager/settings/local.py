@@ -57,7 +57,7 @@ JWT_AUTH.update({
 
 ENABLE_AUTO_AUTH = True
 
-LOGGING = get_logger_config(debug=DEBUG, dev_env=True, local_loglevel='DEBUG')
+LOGGING = get_logger_config(debug=DEBUG, dev_env=True)
 
 #####################################################################
 # Lastly, see if the developer has any local overrides.
