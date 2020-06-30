@@ -21,8 +21,15 @@ LICENSE_ACTIVATION_EMAIL_TEMPLATE = 'activation'
 
 # Role-based access control
 SUBSCRIPTIONS_ADMIN_ROLE = 'enterprise_subscriptions_admin'
+SUBSCRIPTIONS_LEARNER_ROLE = 'enterprise_subscriptions_learner'
 
 SYSTEM_ENTERPRISE_ADMIN_ROLE = 'enterprise_admin'
+SYSTEM_ENTERPRISE_LEARNER_ROLE = 'enterprise_learner'
 SYSTEM_ENTERPRISE_OPERATOR_ROLE = 'enterprise_openedx_operator'
 
 SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION = 'subscriptions.has_admin_access'
+SUBSCRIPTIONS_LEARNER_ACCESS_PERMISSION = 'subscriptions.has_learner_access'
+
+# Subsidy constants
+PERCENTAGE_DISCOUNT_TYPE = 'percentage'
+LICENSE_DISCOUNT_VALUE = 100  # Represents a 100% off value

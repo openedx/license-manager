@@ -56,3 +56,49 @@ rules.add_perm(
     constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION,
     has_implicit_access_to_subscriptions_admin | has_explicit_access_to_subscriptions_admin
 )
+
+
+@rules.predicate
+def has_implicit_access_to_subscriptions_learner(user, subscription_plan):  # pylint: disable=unused-argument
+    """
+    Check that if request user has implicit access to the given SubscriptionPlan for the
+    `SUBSCRIPTIONS_LEARNER_ROLE` feature role.
+
+    Returns:
+        boolean: whether the request user has access.
+    """
+    if not subscription_plan:
+        return False
+
+    return request_user_has_implicit_access_via_jwt(
+        get_decoded_jwt(crum.get_current_request()),
+        constants.SUBSCRIPTIONS_LEARNER_ROLE,
+        str(subscription_plan.enterprise_customer_uuid),
+    )
+
+
+@rules.predicate
+def has_explicit_access_to_subscriptions_learner(user, subscription_plan):
+    """
+    Check that if request user has explicit access to `SUBSCRIPTIONS_LEARNER_ROLE` feature role.
+
+    Returns:
+        boolean: whether the request user has access.
+    """
+    if not subscription_plan:
+        return False
+
+    return user_has_access_via_database(
+        user,
+        constants.SUBSCRIPTIONS_LEARNER_ROLE,
+        SubscriptionsRoleAssignment,
+        str(subscription_plan.enterprise_customer_uuid),
+    )
+
+
+# Grants learner access permission if the user is a learner or admin
+rules.add_perm(
+    constants.SUBSCRIPTIONS_LEARNER_ACCESS_PERMISSION,
+    (has_implicit_access_to_subscriptions_learner | has_explicit_access_to_subscriptions_learner
+     | has_implicit_access_to_subscriptions_admin | has_explicit_access_to_subscriptions_admin)
+)

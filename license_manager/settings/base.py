@@ -5,7 +5,9 @@ from corsheaders.defaults import default_headers as corsheaders_default_headers
 
 from license_manager.apps.subscriptions.constants import (
     SUBSCRIPTIONS_ADMIN_ROLE,
+    SUBSCRIPTIONS_LEARNER_ROLE,
     SYSTEM_ENTERPRISE_ADMIN_ROLE,
+    SYSTEM_ENTERPRISE_LEARNER_ROLE,
     SYSTEM_ENTERPRISE_OPERATOR_ROLE,
 )
 from license_manager.settings.utils import get_logger_config
@@ -324,9 +326,13 @@ EMAIL_FILE_PATH = './emails'
 """
 EMAIL_UNSUBSCRIBE_LINK = 'https://www.edx.org'  # Dummy unsubscribe link for development use
 SUBSCRIPTIONS_FROM_EMAIL = 'from@example.com'  # Dummy from email address for development use
+# End email configuration
+
+ENTERPRISE_CATALOG_URL = os.environ.get('ENTERPRISE_CATALOG_URL', '')
 
 # Set up system-to-feature roles mapping for edx-rbac
 SYSTEM_TO_FEATURE_ROLE_MAPPING = {
     SYSTEM_ENTERPRISE_OPERATOR_ROLE: [SUBSCRIPTIONS_ADMIN_ROLE],
     SYSTEM_ENTERPRISE_ADMIN_ROLE: [SUBSCRIPTIONS_ADMIN_ROLE],
+    SYSTEM_ENTERPRISE_LEARNER_ROLE: [SUBSCRIPTIONS_LEARNER_ROLE],
 }
