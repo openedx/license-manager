@@ -863,7 +863,7 @@ class LicenseSubsidyViewTests(TestCase):
 
         # API client setup
         self.api_client = APIClient()
-        self.api_client.login(username=self.user.username, password=USER_PASSWORD)
+        self.api_client.force_authenticate(user=self.user)
 
     @classmethod
     def setUpTestData(cls):
@@ -921,6 +921,16 @@ class LicenseSubsidyViewTests(TestCase):
         if use_course_key:
             query_params['course_key'] = self.course_key
         return url + '/?' + query_params.urlencode()
+
+    def test_get_subsidy_no_jwt(self):
+        """
+        Verify the view returns a 401 for users trying to authenticate without a JWT (that is, using session auth).
+        """
+        client = APIClient()
+        client.login(username=self.user.username, password=USER_PASSWORD)
+        url = self._get_url_with_params()
+        response = client.get(url)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_get_subsidy_missing_role(self):
         """
