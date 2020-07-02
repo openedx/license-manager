@@ -351,7 +351,7 @@ class LicenseSubidyView(APIView):
         return self.request.query_params.get('course_key')
 
     @permission_required(
-        constants.SUBSCRIPTIONS_LEARNER_ACCESS_PERMISSION,
+        constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
         fn=lambda request: get_subscription_plan_from_enterprise(request),  # pylint: disable=unnecessary-lambda
     )
     def get(self, request):

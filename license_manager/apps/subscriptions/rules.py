@@ -96,9 +96,9 @@ def has_explicit_access_to_subscriptions_learner(user, subscription_plan):
     )
 
 
-# Grants learner access permission if the user is a learner or admin
+# Grants access permission if the user is a learner or admin
 rules.add_perm(
-    constants.SUBSCRIPTIONS_LEARNER_ACCESS_PERMISSION,
+    constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
     (has_implicit_access_to_subscriptions_learner | has_explicit_access_to_subscriptions_learner
      | has_implicit_access_to_subscriptions_admin | has_explicit_access_to_subscriptions_admin)
 )

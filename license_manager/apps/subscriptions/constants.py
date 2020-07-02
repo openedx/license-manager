@@ -28,7 +28,7 @@ SYSTEM_ENTERPRISE_LEARNER_ROLE = 'enterprise_learner'
 SYSTEM_ENTERPRISE_OPERATOR_ROLE = 'enterprise_openedx_operator'
 
 SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION = 'subscriptions.has_admin_access'
-SUBSCRIPTIONS_LEARNER_ACCESS_PERMISSION = 'subscriptions.has_learner_access'
+SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION = 'subscriptions.has_learner_or_admin_access'
 
 # Subsidy constants
 PERCENTAGE_DISCOUNT_TYPE = 'percentage'
