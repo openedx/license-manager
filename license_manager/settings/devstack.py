@@ -60,6 +60,8 @@ CORS_ORIGIN_WHITELIST = [
 ]
 # END CORS
 
+ENTERPRISE_CATALOG_URL = 'http://enterprise.catalog.app:18160'
+
 # Make some loggers less noisy (useful during test failure)
 import logging
 

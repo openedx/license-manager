@@ -7,6 +7,9 @@ from edx_rbac.utils import ALL_ACCESS_CONTEXT
 from model_utils.models import TimeStampedModel
 from simple_history.models import HistoricalRecords
 
+from license_manager.apps.api_client.enterprise_catalog import (
+    EnterpriseCatalogApiClient,
+)
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
@@ -95,6 +98,26 @@ class SubscriptionPlan(TimeStampedModel):
         """
         new_licenses = [License(subscription_plan=self) for _ in range(num_new_licenses)]
         License.objects.bulk_create(new_licenses)
+
+    def contains_content(self, content_ids):
+        """
+        Checks whether the subscription contains the given content by checking against its linked enterprise catalog.
+
+        If a subscription "contains" a particular piece of content, that means a license for this plan can be used to
+        access that content.
+
+        Arguments:
+            content_ids (list of str): List of content ids to check whether the subscription contains.
+
+        Returns:
+            bool: Whether the given content_ids are part of the subscription.
+        """
+        enterprise_catalog_client = EnterpriseCatalogApiClient()
+        content_in_catalog = enterprise_catalog_client.contains_content_items(
+            self.enterprise_catalog_uuid,
+            content_ids,
+        )
+        return content_in_catalog
 
     history = HistoricalRecords()
 

@@ -1,9 +1,13 @@
 import logging
+from collections import OrderedDict
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from edx_rbac.decorators import permission_required
 from edx_rbac.mixins import PermissionRequiredForListingMixin
+from edx_rbac.utils import get_decoded_jwt
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
@@ -11,12 +15,14 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from license_manager.apps.api import serializers
 from license_manager.apps.api.tasks import (
     send_activation_email_task,
     send_reminder_email_task,
 )
+from license_manager.apps.api.utils import get_subscription_plan_from_enterprise
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
     License,
@@ -324,3 +330,63 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         queryset_values = queryset.values('status').annotate(count=Count('status')).order_by('-count')
         license_overview = list(queryset_values)
         return Response(license_overview, status=status.HTTP_200_OK)
+
+
+class LicenseSubidyView(APIView):
+    """
+    View for fetching the data on the subsidy provided by a license.
+    """
+    authentication_classes = [JwtAuthentication, SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    @property
+    def requested_course_key(self):
+        return self.request.query_params.get('course_key')
+
+    @property
+    def lms_user_id(self):
+        jwt = get_decoded_jwt(self.request)
+        lms_user_id = jwt.get('user_id')
+        return lms_user_id
+
+    @permission_required(
+        constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
+        fn=lambda request: get_subscription_plan_from_enterprise(request),  # pylint: disable=unnecessary-lambda
+    )
+    def get(self, request):
+        """
+        Returns subsidy data for a course by a user's activated license from the given enterprise's active subscription.
+
+        This method checks to see whether the given course is associated with their enterprise's active subscription by
+        checking if the enterprise catalog associated with the subscription contains the specified course.
+        The enterprise is specified by the `enterprise_customer_uuid` parameter, and the course key is specified by the
+        `course_key` parameter.
+        """
+        if not self.requested_course_key:
+            msg = 'You must supply the course_key query parameter'
+            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+
+        subscription_plan = get_subscription_plan_from_enterprise(request)
+        user_license = get_object_or_404(
+            License,
+            subscription_plan=subscription_plan,
+            lms_user_id=self.lms_user_id,
+            status=constants.ACTIVATED,
+        )
+
+        course_in_catalog = subscription_plan.contains_content([self.requested_course_key])
+        if not course_in_catalog:
+            msg = 'This course was not found in your subscription plan\'s catalog.'
+            return Response(msg, status=status.HTTP_404_NOT_FOUND)
+
+        ordered_data = OrderedDict({
+            'discount_type': constants.PERCENTAGE_DISCOUNT_TYPE,
+            'discount_value': constants.LICENSE_DISCOUNT_VALUE,
+            'status': user_license.status,
+            'subsidy_id': user_license.uuid,
+            'start_date': subscription_plan.start_date,
+            'expiration_date': subscription_plan.expiration_date,
+            # TODO: Enrollment link to be implemented by https://openedx.atlassian.net/browse/ENT-3079
+            'enrollment_link': '',
+        })
+        return Response(ordered_data)
