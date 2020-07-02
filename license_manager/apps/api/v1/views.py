@@ -386,7 +386,6 @@ class LicenseSubidyView(APIView):
             msg = 'This course was not found in your subscription plan\'s catalog.'
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        # TODO: Get enrollment link from enterprise-catalog service
         ordered_data = OrderedDict({
             'discount_type': constants.PERCENTAGE_DISCOUNT_TYPE,
             'discount_value': constants.LICENSE_DISCOUNT_VALUE,
@@ -394,6 +393,7 @@ class LicenseSubidyView(APIView):
             'subsidy_id': user_license.uuid,
             'start_date': subscription_plan.start_date,
             'expiration_date': subscription_plan.expiration_date,
+            # TODO: Enrollment link to be implemented by https://openedx.atlassian.net/browse/ENT-3079
             'enrollment_link': '',
         })
         return Response(ordered_data)
