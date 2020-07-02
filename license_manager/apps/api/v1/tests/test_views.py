@@ -863,7 +863,7 @@ class LicenseSubsidyViewTests(TestCase):
 
         # API client setup
         self.api_client = APIClient()
-        self.api_client.login(username=self.user.username, password=USER_PASSWORD)
+        self.api_client.force_authenticate(user=self.user)
 
     @classmethod
     def setUpTestData(cls):
