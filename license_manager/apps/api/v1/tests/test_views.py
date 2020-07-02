@@ -876,6 +876,16 @@ class LicenseSubsidyViewTests(TestCase):
         cls.lms_user_id = 1
 
         cls.base_url = reverse('api:v1:license-subsidy')
+        cls.active_subscription_for_customer = SubscriptionPlanFactory.create(
+            enterprise_customer_uuid=cls.enterprise_customer_uuid,
+            enterprise_catalog_uuid=cls.enterprise_catalog_uuid,
+            is_active=True,
+        )
+        cls.activated_license = LicenseFactory.create(
+            status=constants.ACTIVATED,
+            lms_user_id=cls.lms_user_id,
+            subscription_plan=cls.active_subscription_for_customer,
+        )
 
     @property
     def _decoded_jwt(self):
@@ -894,49 +904,35 @@ class LicenseSubsidyViewTests(TestCase):
             subscriptions_role=constants.SUBSCRIPTIONS_LEARNER_ROLE,
         )
 
-    def _get_url_with_params(self, use_enterprise_customer=True, use_course_key=True):
+    def _get_url_with_params(
+        self,
+        use_enterprise_customer=True,
+        use_course_key=True,
+        enterprise_customer_override=None,
+    ):
         """
         Helper to add the appropriate query parameters to the base url if specified.
         """
         url = reverse('api:v1:license-subsidy')
         query_params = QueryDict(mutable=True)
         if use_enterprise_customer:
-            query_params['enterprise_customer_uuid'] = self.enterprise_customer_uuid
+            # Use the override uuid if it's given
+            query_params['enterprise_customer_uuid'] = enterprise_customer_override or self.enterprise_customer_uuid
         if use_course_key:
             query_params['course_key'] = self.course_key
         return url + '/?' + query_params.urlencode()
-
-    def _create_active_subscription(self):
-        """
-        Returns an active subscription associated with the enterprise customer's catalog.
-        """
-        return SubscriptionPlanFactory.create(
-            enterprise_customer_uuid=self.enterprise_customer_uuid,
-            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
-            is_active=True,
-        )
-
-    def _create_activated_license(self):
-        """
-        Returns an activated license for the tests' user.
-        """
-        return LicenseFactory.create(
-            status=constants.ACTIVATED,
-            lms_user_id=self.lms_user_id,
-        )
 
     def test_get_subsidy_missing_role(self):
         """
         Verify the view returns a 403 for users without the learner role.
         """
-        self._create_active_subscription()
         url = self._get_url_with_params()
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_get_subsidy_wrong_enterprise_customer(self):
         """
-        Verify the view returns a 404 for users associated with a different enterprise than they are requesting.
+        Verify the view returns a 403 for users associated with a different enterprise than they are requesting.
         """
         # Create another enterprise and subscription the user has access to
         other_enterprise_uuid = uuid4()
@@ -953,7 +949,7 @@ class LicenseSubsidyViewTests(TestCase):
         # Request the subsidy view for an enterprise the user does not have access to
         url = self._get_url_with_params()
         response = self.api_client.get(url)
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_get_subsidy_missing_enterprise_customer(self):
         """
@@ -969,7 +965,6 @@ class LicenseSubsidyViewTests(TestCase):
         Verify the view returns a 400 if the course key query param is not provided.
         """
         self._assign_learner_roles()
-        self._create_active_subscription()
         url = self._get_url_with_params(use_course_key=False)
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -979,8 +974,8 @@ class LicenseSubsidyViewTests(TestCase):
         Verify the view returns a 404 if there is no subscription plan for the customer.
         """
         self._assign_learner_roles()
-        SubscriptionPlanFactory.create(is_active=True)
-        url = self._get_url_with_params()
+        # Pass in some random enterprise_customer_uuid that doesn't have a subscripttion
+        url = self._get_url_with_params(enterprise_customer_override=uuid4())
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -1004,8 +999,6 @@ class LicenseSubsidyViewTests(TestCase):
         """
         self._assign_learner_roles()
         mock_get_decoded_jwt.return_value = self._decoded_jwt
-        subscription_plan = self._create_active_subscription()
-        LicenseFactory.create(subscription_plan=subscription_plan)
         url = self._get_url_with_params()
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -1016,13 +1009,16 @@ class LicenseSubsidyViewTests(TestCase):
         Verify the view returns a 404 if the subscription has no activated license for the user.
         """
         self._assign_learner_roles()
-        mock_get_decoded_jwt.return_value = self._decoded_jwt
-        subscription_plan = self._create_active_subscription()
+
+        # Mock the lms_user_id to be one not associated with any activated license
+        unactivated_user_id = 500
+        mock_get_decoded_jwt.return_value = {'user_id': unactivated_user_id}
         LicenseFactory.create(
-            subscription_plan=subscription_plan,
+            subscription_plan=self.active_subscription_for_customer,
             status=constants.UNASSIGNED,
-            lms_user_id=self.lms_user_id,
+            lms_user_id=unactivated_user_id,
         )
+
         url = self._get_url_with_params()
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -1037,16 +1033,13 @@ class LicenseSubsidyViewTests(TestCase):
         # Mock that the content was not found in the subscription's catalog
         mock_subscription_contains_content.return_value = False
         mock_get_decoded_jwt.return_value = self._decoded_jwt
-        subscription_plan = self._create_active_subscription()
-        user_license = self._create_activated_license()
-        subscription_plan.licenses.set([user_license])
 
         url = self._get_url_with_params()
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
         mock_subscription_contains_content.assert_called_with([self.course_key])
 
-    def _assert_correct_subsidy_response(self, response, user_license, subscription_plan):
+    def _assert_correct_subsidy_response(self, response):
         """
         Verifies the license subsidy endpoint returns the correct response.
         """
@@ -1055,9 +1048,9 @@ class LicenseSubsidyViewTests(TestCase):
             'discount_type': constants.PERCENTAGE_DISCOUNT_TYPE,
             'discount_value': constants.LICENSE_DISCOUNT_VALUE,
             'status': constants.ACTIVATED,
-            'subsidy_id': str(user_license.uuid),
-            'start_date': str(subscription_plan.start_date),
-            'expiration_date': str(subscription_plan.expiration_date),
+            'subsidy_id': str(self.activated_license.uuid),
+            'start_date': str(self.active_subscription_for_customer.start_date),
+            'expiration_date': str(self.active_subscription_for_customer.expiration_date),
             'enrollment_link': '',
         }
 
@@ -1071,11 +1064,8 @@ class LicenseSubsidyViewTests(TestCase):
         # Mock that the content was found in the subscription's catalog
         mock_subscription_contains_content.return_value = True
         mock_get_decoded_jwt.return_value = self._decoded_jwt
-        subscription_plan = self._create_active_subscription()
-        user_license = self._create_activated_license()
-        subscription_plan.licenses.set([user_license])
 
         url = self._get_url_with_params()
         response = self.api_client.get(url)
-        self._assert_correct_subsidy_response(response, user_license, subscription_plan)
+        self._assert_correct_subsidy_response(response)
         mock_subscription_contains_content.assert_called_with([self.course_key])
