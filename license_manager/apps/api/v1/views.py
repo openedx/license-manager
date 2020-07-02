@@ -384,7 +384,7 @@ class LicenseSubidyView(APIView):
         )
         if not course_in_catalog:
             msg = 'This course was not found in your subscription plan\'s catalog.'
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
         ordered_data = OrderedDict({
             'discount_type': constants.PERCENTAGE_DISCOUNT_TYPE,
