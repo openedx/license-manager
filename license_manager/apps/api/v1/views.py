@@ -23,9 +23,6 @@ from license_manager.apps.api.tasks import (
     send_reminder_email_task,
 )
 from license_manager.apps.api.utils import get_subscription_plan_from_enterprise
-from license_manager.apps.api_client.enterprise_catalog import (
-    EnterpriseCatalogApiClient,
-)
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
     License,
@@ -343,12 +340,14 @@ class LicenseSubidyView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @property
-    def requested_enterprise_uuid(self):
-        return self.request.query_params.get('enterprise_customer_uuid')
-
-    @property
     def requested_course_key(self):
         return self.request.query_params.get('course_key')
+
+    @property
+    def lms_user_id(self):
+        jwt = get_decoded_jwt(self.request)
+        lms_user_id = jwt.get('user_id')
+        return lms_user_id
 
     @permission_required(
         constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
@@ -368,20 +367,14 @@ class LicenseSubidyView(APIView):
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
         subscription_plan = get_subscription_plan_from_enterprise(request)
-        jwt = get_decoded_jwt(request)
-        lms_user_id = jwt.get('user_id')
         user_license = get_object_or_404(
             License,
             subscription_plan=subscription_plan,
-            lms_user_id=lms_user_id,
+            lms_user_id=self.lms_user_id,
             status=constants.ACTIVATED,
         )
 
-        enterprise_catalog_client = EnterpriseCatalogApiClient()
-        course_in_catalog = enterprise_catalog_client.contains_content_items(
-            subscription_plan.enterprise_catalog_uuid,
-            [self.requested_course_key],
-        )
+        course_in_catalog = subscription_plan.contains_content([self.requested_course_key])
         if not course_in_catalog:
             msg = 'This course was not found in your subscription plan\'s catalog.'
             return Response(msg, status=status.HTTP_404_NOT_FOUND)

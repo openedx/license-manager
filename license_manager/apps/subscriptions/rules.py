@@ -52,9 +52,10 @@ def has_explicit_access_to_subscriptions_admin(user, subscription_plan):
     )
 
 
+has_admin_access = has_implicit_access_to_subscriptions_admin | has_explicit_access_to_subscriptions_admin
 rules.add_perm(
     constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION,
-    has_implicit_access_to_subscriptions_admin | has_explicit_access_to_subscriptions_admin
+    has_admin_access,
 )
 
 
@@ -96,9 +97,9 @@ def has_explicit_access_to_subscriptions_learner(user, subscription_plan):
     )
 
 
+has_learner_access = has_implicit_access_to_subscriptions_learner | has_explicit_access_to_subscriptions_learner
 # Grants access permission if the user is a learner or admin
 rules.add_perm(
     constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
-    (has_implicit_access_to_subscriptions_learner | has_explicit_access_to_subscriptions_learner
-     | has_implicit_access_to_subscriptions_admin | has_explicit_access_to_subscriptions_admin)
+    has_admin_access | has_learner_access,
 )
