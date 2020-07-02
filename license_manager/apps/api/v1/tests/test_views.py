@@ -998,7 +998,8 @@ class LicenseSubsidyViewTests(TestCase):
         Verify the view returns a 404 if the subscription has no license for the user.
         """
         self._assign_learner_roles()
-        mock_get_decoded_jwt.return_value = self._decoded_jwt
+        # Mock the lms_user_id to be one not associated with any licenses
+        mock_get_decoded_jwt.return_value = {'user_id': 500}
         url = self._get_url_with_params()
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
