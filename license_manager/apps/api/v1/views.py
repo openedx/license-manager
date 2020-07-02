@@ -336,7 +336,7 @@ class LicenseSubidyView(APIView):
     """
     View for fetching the data on the subsidy provided by a license.
     """
-    authentication_classes = [JwtAuthentication, SessionAuthentication]
+    authentication_classes = [JwtAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     @property
