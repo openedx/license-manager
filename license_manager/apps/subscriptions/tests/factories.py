@@ -20,7 +20,8 @@ def get_random_salesforce_id():
     """
     Returns a random alpha-numeric string of the correct length for a salesforce opportunity id.
     """
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=SALESFORCE_ID_LENGTH))
+    return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
+                   for _ in range(SALESFORCE_ID_LENGTH))
 
 
 class SubscriptionPlanFactory(factory.DjangoModelFactory):
