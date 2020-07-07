@@ -20,6 +20,8 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'expiration_date',
         'enterprise_customer_uuid',
         'enterprise_catalog_uuid',
+        'salesforce_opportunity_id',
+        'netsuite_product_id',
     )
     writable_fields = (
         'num_licenses',
