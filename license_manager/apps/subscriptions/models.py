@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.translation import gettext as _
 from edx_rbac.models import UserRole, UserRoleAssignment
@@ -14,6 +15,7 @@ from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
     LICENSE_STATUS_CHOICES,
+    SALESFORCE_ID_LENGTH,
     UNASSIGNED,
 )
 
@@ -58,6 +60,22 @@ class SubscriptionPlan(TimeStampedModel):
 
     is_active = models.BooleanField(
         default=False
+    )
+
+    salesforce_opportunity_id = models.CharField(
+        max_length=SALESFORCE_ID_LENGTH,
+        validators=[MinLengthValidator(SALESFORCE_ID_LENGTH)],
+        blank=False,
+        null=False,
+        help_text=_(
+            "Locate the appropriate Salesforce Opportunity record and copy the Opportunity ID field (18 characters)."
+        )
+    )
+
+    netsuite_product_id = models.IntegerField(
+        help_text=_(
+            "Locate the Sales Order record in NetSuite and copy the Product ID field (numeric)."
+        )
     )
 
     @property

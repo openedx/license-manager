@@ -33,3 +33,6 @@ SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION = 'subscriptions.has_learner_or_ad
 # Subsidy constants
 PERCENTAGE_DISCOUNT_TYPE = 'percentage'
 LICENSE_DISCOUNT_VALUE = 100  # Represents a 100% off value
+
+# Salesforce constants
+SALESFORCE_ID_LENGTH = 18  # The salesforce_opportunity_id must be exactly 18 characters
