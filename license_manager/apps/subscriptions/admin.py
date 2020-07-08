@@ -26,6 +26,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     writable_fields = (
         'num_licenses',
         'is_active',
+        'for_internal_use_only',
     )
     fields = read_only_fields + writable_fields
 
