@@ -876,7 +876,7 @@ class LicenseViewSetActionTests(TestCase):
         assert second_detail_response.status_code == status.HTTP_200_OK
         assert second_detail_response.json()['licenses'] == {
             'total': len(allocated_licenses) + 1,
-            # THere should be 1 fewer allocated license now that we revoked the activated license
+            # There should be 1 fewer allocated license now that we revoked the activated license
             'allocated': len(allocated_licenses) - 1,
         }
 
