@@ -14,6 +14,7 @@ from license_manager.apps.api_client.enterprise_catalog import (
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
+    DEACTIVATED,
     LICENSE_STATUS_CHOICES,
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
@@ -98,18 +99,25 @@ class SubscriptionPlan(TimeStampedModel):
     @property
     def num_licenses(self):
         """
-        Gets the total number of licenses associated with the subscription.
+        Gets the number of licenses associated with the subscription excluding deactivated licenses.
+
+        We exclude deactivated licenses from this "total" license count as a new, unassigned license is created
+        whenever a license is deactivated. Excluding deactivated licenses thus makes sure that the total count of
+        licenses remains the same when one is deactivated (and the deactivated one no longer factors into the
+        allocated) count.
 
         Returns:
-            int: The count of how many licenses are associated with the subscription plan.
+            int
         """
-        return self.licenses.count()
+        return self.licenses.exclude(status=DEACTIVATED).count()
 
     @property
     def num_allocated_licenses(self):
         """
-        Gets the number of allocated licenses associated with the subscription. A license is
-        defined as allocated if it has either been activated by a user, or assigned to a user.
+        Gets the number of allocated licenses associated with the subscription. A license is defined as allocated if it
+        has either been activated by a user, or assigned to a user. We exclude deactivated licenses from our definition
+        of allocated as we in practice allow allocating more licenses to make up for the deactivated one. This is done
+        by the creation of a new, unassigned license whenever a license is deactivated.
 
         Returns:
         int: The count of how many licenses that are associated with the subscription plan are
