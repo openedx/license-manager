@@ -417,6 +417,7 @@ class LicenseViewSetActionTests(TestCase):
         # Set up a couple of users
         cls.user = UserFactory()
         cls.super_user = UserFactory(is_staff=True, is_superuser=True)
+        cls.test_email = 'test@example.com'
 
         # Routes setup
         cls.subscription_plan = SubscriptionPlanFactory()
@@ -505,7 +506,7 @@ class LicenseViewSetActionTests(TestCase):
         # Create some assigned licenses which will not factor into the count
         assigned_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
         self.subscription_plan.licenses.set(assigned_licenses)
-        response = self.api_client.post(self.assign_url, {'user_emails': ['test@example.com']})
+        response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         mock_send_activation_email_task.assert_not_called()
 
@@ -517,7 +518,7 @@ class LicenseViewSetActionTests(TestCase):
         # Create a deactivated license that is not being assigned to
         deactivated_license = LicenseFactory.create(status=constants.DEACTIVATED, user_email='deactivated@example.com')
         self.subscription_plan.licenses.set([deactivated_license])
-        response = self.api_client.post(self.assign_url, {'user_emails': ['test@example.com']})
+        response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         mock_send_activation_email_task.assert_not_called()
 
@@ -529,12 +530,11 @@ class LicenseViewSetActionTests(TestCase):
         Also checks that the conflict email is listed in the response.
         """
         self._create_available_licenses()
-        assigned_email = 'test@example.com'
-        assigned_license = LicenseFactory.create(user_email=assigned_email, status=constants.ASSIGNED)
+        assigned_license = LicenseFactory.create(user_email=self.test_email, status=constants.ASSIGNED)
         self.subscription_plan.licenses.set([assigned_license])
-        response = self.api_client.post(self.assign_url, {'user_emails': [assigned_email, 'unassigned@example.com']})
+        response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email, 'unassigned@example.com']})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert assigned_email in response.data
+        assert self.test_email in response.data
         mock_send_activation_email_task.assert_not_called()
 
     @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
@@ -556,7 +556,7 @@ class LicenseViewSetActionTests(TestCase):
             self.api_client.login(username=self.user.username, password=USER_PASSWORD)
 
         self._create_available_licenses()
-        user_emails = ['bb8@mit.edu', 'test@example.com']
+        user_emails = ['bb8@mit.edu', self.test_email]
         greeting = 'hello'
         closing = 'goodbye'
         response = self.api_client.post(
@@ -568,7 +568,7 @@ class LicenseViewSetActionTests(TestCase):
 
         task_args, _ = mock_send_activation_email_task.call_args
         actual_template_text, actual_emails, actual_subscription_uuid = task_args
-        assert ['bb8@mit.edu', 'test@example.com'] == sorted(actual_emails)
+        assert ['bb8@mit.edu', self.test_email] == sorted(actual_emails)
         assert self.subscription_plan.uuid.hex == actual_subscription_uuid.replace('-', '')
         assert greeting == actual_template_text['greeting']
         assert closing == actual_template_text['closing']
@@ -579,8 +579,7 @@ class LicenseViewSetActionTests(TestCase):
         Verify the assign endpoint deduplicates submitted emails.
         """
         self._create_available_licenses()
-        user_email = 'test@example.com'
-        user_emails = [user_email, user_email]
+        user_emails = [self.test_email, self.test_email]
         greeting = 'hello'
         closing = 'goodbye'
         response = self.api_client.post(
@@ -588,10 +587,10 @@ class LicenseViewSetActionTests(TestCase):
             {'greeting': greeting, 'closing': closing, 'user_emails': user_emails},
         )
         assert response.status_code == status.HTTP_200_OK
-        self._assert_licenses_assigned([user_email])
+        self._assert_licenses_assigned([self.test_email])
         mock_send_activation_email_task.assert_called_with(
             {'greeting': greeting, 'closing': closing},
-            [user_email],
+            [self.test_email],
             str(self.subscription_plan.uuid),
         )
 
@@ -600,9 +599,8 @@ class LicenseViewSetActionTests(TestCase):
         """
         Verify that the assign endpoint allows assigning a license to a user who previously had a license revoked.
         """
-        user_email = 'test@example.com'
         deactivated_license = LicenseFactory.create(
-            user_email=user_email,
+            user_email=self.test_email,
             status=constants.DEACTIVATED,
             lms_user_id=1,
             last_remind_date=datetime.now(),
@@ -610,18 +608,18 @@ class LicenseViewSetActionTests(TestCase):
         )
         self.subscription_plan.licenses.set([deactivated_license])
 
-        response = self.api_client.post(self.assign_url, {'user_emails': [user_email]})
+        response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
         assert response.status_code == status.HTTP_200_OK
 
         # Verify all the attributes on the formerly deactivated license are correct
         deactivated_license.refresh_from_db()
-        self._assert_licenses_assigned([user_email])
+        self._assert_licenses_assigned([self.test_email])
         assert deactivated_license.lms_user_id is None
         assert deactivated_license.last_remind_date is None
         assert deactivated_license.activation_date is None
         mock_send_activation_email_task.assert_called_with(
             {'greeting': '', 'closing': ''},
-            [user_email],
+            [self.test_email],
             str(self.subscription_plan.uuid)
         )
 
@@ -675,11 +673,10 @@ class LicenseViewSetActionTests(TestCase):
         """
         Verify that the remind endpoint returns a 404 if there is no pending license associated with the given email.
         """
-        email = 'test@example.com'
-        activated_license = LicenseFactory.create(user_email=email, status=constants.ACTIVATED)
+        activated_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
         self.subscription_plan.licenses.set([activated_license])
 
-        response = self.api_client.post(self.remind_url, {'user_email': email})
+        response = self.api_client.post(self.remind_url, {'user_email': self.test_email})
         assert response.status_code == status.HTTP_404_NOT_FOUND
         mock_send_reminder_emails_task.assert_not_called()
 
@@ -700,20 +697,19 @@ class LicenseViewSetActionTests(TestCase):
             )
             self.api_client.login(username=self.user.username, password=USER_PASSWORD)
 
-        email = 'test@example.com'
-        pending_license = LicenseFactory.create(user_email=email, status=constants.ASSIGNED)
+        pending_license = LicenseFactory.create(user_email=self.test_email, status=constants.ASSIGNED)
         self.subscription_plan.licenses.set([pending_license])
 
         greeting = 'Hello'
         closing = 'Goodbye'
         response = self.api_client.post(
             self.remind_url,
-            {'user_email': email, 'greeting': greeting, 'closing': closing},
+            {'user_email': self.test_email, 'greeting': greeting, 'closing': closing},
         )
         assert response.status_code == status.HTTP_200_OK
         mock_send_reminder_emails_task.assert_called_with(
             {'greeting': greeting, 'closing': closing},
-            [email],
+            [self.test_email],
             str(self.subscription_plan.uuid),
         )
 
@@ -795,11 +791,10 @@ class LicenseViewSetActionTests(TestCase):
             )
             self.api_client.login(username=self.user.username, password=USER_PASSWORD)
 
-        email = 'test@example.com'
-        original_license = LicenseFactory.create(user_email=email, status=license_state)
+        original_license = LicenseFactory.create(user_email=self.test_email, status=license_state)
         self.subscription_plan.licenses.set([original_license])
 
-        response = self.api_client.post(self.revoke_license_url, {'user_email': email})
+        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
         assert response.status_code == expected_status
         deactivated_license = self.subscription_plan.licenses.get(uuid=original_license.uuid)
         assert deactivated_license.status == constants.DEACTIVATED
@@ -808,8 +803,7 @@ class LicenseViewSetActionTests(TestCase):
         """
         Tests revoking a license when the user doesn't have a license
         """
-        email = 'test@example.com'
-        response = self.api_client.post(self.revoke_license_url, {'user_email': email})
+        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @ddt.data(True, False)
@@ -828,14 +822,13 @@ class LicenseViewSetActionTests(TestCase):
         """
         Verifies that assigning a license after revoking one works
         """
-        email = 'test@example.com'
-        original_license = LicenseFactory.create(user_email=email, status=constants.ACTIVATED)
+        original_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
         self.subscription_plan.licenses.set([original_license])
-        response = self.api_client.post(self.revoke_license_url, {'user_email': email})
+        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
         self._create_available_licenses()
-        user_emails = ['bb8@mit.edu', email]
+        user_emails = ['bb8@mit.edu', self.test_email]
         greeting = 'hello'
         closing = 'goodbye'
         response = self.api_client.post(
@@ -847,10 +840,45 @@ class LicenseViewSetActionTests(TestCase):
 
         task_args, _ = mock_send_activation_email_task.call_args
         actual_template_text, actual_emails, actual_subscription_uuid = task_args
-        assert ['bb8@mit.edu', 'test@example.com'] == sorted(actual_emails)
+        assert ['bb8@mit.edu', self.test_email] == sorted(actual_emails)
         assert self.subscription_plan.uuid.hex == actual_subscription_uuid.replace('-', '')
         assert greeting == actual_template_text['greeting']
         assert closing == actual_template_text['closing']
+
+    def test_revoke_total_and_allocated_count(self):
+        """
+        Verifies revoking a license keeps the `total` license count the same, and the `allocated` count decreases by 1.
+        """
+        # Create some allocated licenses
+        assigned_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
+        activated_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
+        allocated_licenses = assigned_licenses + [activated_license]
+        # Create one non allocated license
+        unassigned_license = LicenseFactory.create(status=constants.UNASSIGNED)
+        self.subscription_plan.licenses.set([unassigned_license] + allocated_licenses)
+
+        # Verify the original `total` and `allocated` counts are correct
+        response = _subscriptions_detail_request(self.api_client, self.super_user, self.subscription_plan.uuid)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()['licenses'] == {
+            'total': len(allocated_licenses) + 1,
+            'allocated': len(allocated_licenses),
+        }
+
+        # Revoke the activated license and verify the counts change appropriately
+        revoke_response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
+        assert revoke_response.status_code == status.HTTP_204_NO_CONTENT
+        second_detail_response = _subscriptions_detail_request(
+            self.api_client,
+            self.super_user,
+            self.subscription_plan.uuid,
+        )
+        assert second_detail_response.status_code == status.HTTP_200_OK
+        assert second_detail_response.json()['licenses'] == {
+            'total': len(allocated_licenses) + 1,
+            # THere should be 1 fewer allocated license now that we revoked the activated license
+            'allocated': len(allocated_licenses) - 1,
+        }
 
 
 @ddt.ddt
