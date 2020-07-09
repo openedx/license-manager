@@ -1062,7 +1062,6 @@ class LicenseSubsidyViewTests(TestCase):
             'subsidy_id': str(self.activated_license.uuid),
             'start_date': str(self.active_subscription_for_customer.start_date),
             'expiration_date': str(self.active_subscription_for_customer.expiration_date),
-            'enrollment_link': '',
         }
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
