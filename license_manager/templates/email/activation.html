@@ -7,16 +7,20 @@
             {{ TEMPLATE_GREETING }}
         {% endfilter %}
     </p>
+    {% if REMINDER %}
+        <p>
+            {% trans "Reminder - your edX license is awaiting activation!" %}
+        </p>
+    {% endif %}
     <p>
-        {% if REMINDER %} {% trans "Reminder - your edX license is awaiting activation!" %} {% endif %}
-
-        {% trans "You may redeem your license for any course(s) that are in your organization's subscription catalog. To redeem:" %}
-        <br><br>
-        <a href="{{ LICENSE_ACTIVATION_LINK }}">{% trans "Activate your edX license" %}</a>
-        <br><br>
-        {% trans "edX Login:" %} {{ USER_EMAIL }}
+        {% trans "You have been assigned a license to an edX Enterprise Subscription. edX offers high-quality online courses from the world's best universities and institutions. After activating your license, you'll have instant access to enroll in a wide-array of courses." %}
+    </p>
+    <p>
+        <a href="{{ LICENSE_ACTIVATION_LINK }}">{% trans "Activate your license" %}</a>{% trans " and begin your learning journey." %}
+    </p>
+        {% trans "edX Login: " %}{{ USER_EMAIL }}
         <br>
-        {% trans "Expiration Date:" %} {{ EXPIRATION_DATE }}
+        {% trans "Expiration Date: " %}{{ EXPIRATION_DATE }}
     </p>
     <p>
         {% filter force_escape %}
