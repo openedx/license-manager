@@ -10,6 +10,7 @@ ddt
 django-dynamic-fixture    # library to create dynamic model instances for testing purposes
 edx-lint
 factory-boy
+freezegun
 mock
 pytest-cov
 pytest-django

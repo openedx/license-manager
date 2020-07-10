@@ -73,5 +73,10 @@ urlpatterns = [
         views.LicenseSubidyView.as_view(),
         name='license-subsidy',
     ),
+    url(
+        r'license-activation',
+        views.LicenseActivationView.as_view(),
+        name='license-activation',
+    ),
 ]
 urlpatterns += router.urls + subscription_router.urls
