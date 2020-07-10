@@ -15,6 +15,7 @@ def pre_request(worker, req):
     worker.log.info("%s %s" % (req.method, req.path))
 
 
+# pylint: disable=import-outside-toplevel
 def close_all_caches():
     """
     Close the cache so that newly forked workers cannot accidentally share

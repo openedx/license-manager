@@ -2,7 +2,6 @@
 """
 Tests for the Subscription and License V1 API view sets.
 """
-from datetime import datetime
 from uuid import uuid4
 
 import ddt
@@ -18,12 +17,15 @@ from edx_rest_framework_extensions.auth.jwt.tests.utils import (
     generate_jwt_token,
     generate_unversioned_payload,
 )
+from freezegun import freeze_time
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from license_manager.apps.api.utils import localized_utcnow
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
+    License,
     SubscriptionsFeatureRole,
     SubscriptionsRoleAssignment,
 )
@@ -35,9 +37,9 @@ from license_manager.apps.subscriptions.tests.factories import (
 )
 
 
-def _jwt_token_from_role_context_pairs(user, role_context_pairs):
+def _jwt_payload_from_role_context_pairs(user, role_context_pairs):
     """
-    Generates a new JWT token with roles assigned from pairs of (role name, context).
+    Generates a new JWT payload with roles assigned from pairs of (role name, context).
     """
     roles = []
     for role, context in role_context_pairs:
@@ -48,15 +50,23 @@ def _jwt_token_from_role_context_pairs(user, role_context_pairs):
 
     payload = generate_unversioned_payload(user)
     payload.update({'roles': roles})
-    return generate_jwt_token(payload)
+    return payload
 
 
-def set_jwt_cookie(client, user, role_context_pairs=None):
+def _set_encoded_jwt_in_cookies(client, payload):
     """
-    Set jwt token in cookies
+    JWT-encodes the given payload and sets it in the client's cookies.
     """
-    jwt_token = _jwt_token_from_role_context_pairs(user, role_context_pairs or [])
-    client.cookies[jwt_cookie_name()] = jwt_token
+    client.cookies[jwt_cookie_name()] = generate_jwt_token(payload)
+
+
+def init_jwt_cookie(client, user, role_context_pairs=None, jwt_payload_extra=None):
+    """
+    Initialize a JWT token in the given client's cookies.
+    """
+    jwt_payload = _jwt_payload_from_role_context_pairs(user, role_context_pairs or [])
+    jwt_payload.update(jwt_payload_extra or {})
+    _set_encoded_jwt_in_cookies(client, jwt_payload)
 
 
 @pytest.fixture(params=[True, False])
@@ -344,6 +354,7 @@ def _assign_role_via_jwt_or_db(
     assign_via_jwt,
     system_role=constants.SYSTEM_ENTERPRISE_ADMIN_ROLE,
     subscriptions_role=constants.SUBSCRIPTIONS_ADMIN_ROLE,
+    jwt_payload_extra=None,
 ):
     """
     Helper method to assign the given role (defaulting to enterprise/subscriptions admin role)
@@ -351,10 +362,11 @@ def _assign_role_via_jwt_or_db(
     """
     if assign_via_jwt:
         # In the request's JWT, grant the given role for this enterprise customer.
-        set_jwt_cookie(
+        init_jwt_cookie(
             client,
             user,
-            [(system_role, str(enterprise_customer_uuid))]
+            [(system_role, str(enterprise_customer_uuid))] if system_role else [],
+            jwt_payload_extra,
         )
     else:
         # Assign a feature role to the user via database record.
@@ -603,8 +615,8 @@ class LicenseViewSetActionTests(TestCase):
             user_email=self.test_email,
             status=constants.DEACTIVATED,
             lms_user_id=1,
-            last_remind_date=datetime.now(),
-            activation_date=datetime.now(),
+            last_remind_date=localized_utcnow(),
+            activation_date=localized_utcnow(),
         )
         self.subscription_plan.licenses.set([deactivated_license])
 
@@ -881,11 +893,7 @@ class LicenseViewSetActionTests(TestCase):
         }
 
 
-@ddt.ddt
-class LicenseSubsidyViewTests(TestCase):
-    """
-    Tests for the LicenseSubsidyView.
-    """
+class LicenseViewTestMixin:
     def setUp(self):
         super().setUp()
 
@@ -903,23 +911,17 @@ class LicenseSubsidyViewTests(TestCase):
         cls.course_key = 'testX'
         cls.lms_user_id = 1
 
-        cls.base_url = reverse('api:v1:license-subsidy')
         cls.active_subscription_for_customer = SubscriptionPlanFactory.create(
             enterprise_customer_uuid=cls.enterprise_customer_uuid,
             enterprise_catalog_uuid=cls.enterprise_catalog_uuid,
             is_active=True,
-        )
-        cls.activated_license = LicenseFactory.create(
-            status=constants.ACTIVATED,
-            lms_user_id=cls.lms_user_id,
-            subscription_plan=cls.active_subscription_for_customer,
         )
 
     @property
     def _decoded_jwt(self):
         return {'user_id': self.lms_user_id}
 
-    def _assign_learner_roles(self):
+    def _assign_learner_roles(self, jwt_payload_extra=None):
         """
         Helper that assigns the correct learner role via JWT to the user.
         """
@@ -930,6 +932,24 @@ class LicenseSubsidyViewTests(TestCase):
             assign_via_jwt=True,
             system_role=constants.SYSTEM_ENTERPRISE_LEARNER_ROLE,
             subscriptions_role=constants.SUBSCRIPTIONS_LEARNER_ROLE,
+            jwt_payload_extra=jwt_payload_extra,
+        )
+
+
+@ddt.ddt
+class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
+    """
+    Tests for the LicenseSubsidyView.
+    """
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.base_url = reverse('api:v1:license-subsidy')
+        cls.activated_license = LicenseFactory.create(
+            status=constants.ACTIVATED,
+            lms_user_id=cls.lms_user_id,
+            subscription_plan=cls.active_subscription_for_customer,
         )
 
     def _get_url_with_params(
@@ -1030,7 +1050,7 @@ class LicenseSubsidyViewTests(TestCase):
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @mock.patch('license_manager.apps.api.v1.views.get_decoded_jwt')
+    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
     def test_get_subsidy_no_license_for_user(self, mock_get_decoded_jwt):
         """
         Verify the view returns a 404 if the subscription has no license for the user.
@@ -1042,7 +1062,7 @@ class LicenseSubsidyViewTests(TestCase):
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @mock.patch('license_manager.apps.api.v1.views.get_decoded_jwt')
+    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
     def test_get_subsidy_no_activated_license_for_user(self, mock_get_decoded_jwt):
         """
         Verify the view returns a 404 if the subscription has no activated license for the user.
@@ -1063,7 +1083,7 @@ class LicenseSubsidyViewTests(TestCase):
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
-    @mock.patch('license_manager.apps.api.v1.views.get_decoded_jwt')
+    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
     def test_get_subsidy_course_not_in_catalog(self, mock_get_decoded_jwt, mock_subscription_contains_content):
         """
         Verify the view returns a 404 if the subscription's catalog does not contain the given course.
@@ -1093,7 +1113,7 @@ class LicenseSubsidyViewTests(TestCase):
         }
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
-    @mock.patch('license_manager.apps.api.v1.views.get_decoded_jwt')
+    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
     def test_get_subsidy(self, mock_get_decoded_jwt, mock_subscription_contains_content):
         """
         Verify the view returns the correct response for a course in the user's subscription's catalog.
@@ -1107,3 +1127,120 @@ class LicenseSubsidyViewTests(TestCase):
         response = self.api_client.get(url)
         self._assert_correct_subsidy_response(response)
         mock_subscription_contains_content.assert_called_with([self.course_key])
+
+
+class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
+    """
+    Tests for the license activation view.
+    """
+    NOW = localized_utcnow()
+    ACTIVATION_KEY = uuid4()
+
+    def tearDown(self):
+        """
+        Deletes all licenses after each test method is run.
+        """
+        super().tearDown()
+
+        License.objects.all().delete()
+
+    def _post_request(self, activation_key):
+        """
+        Helper to make the POST request to the license activation endpoint.
+
+        Will update the test client's cookies to contain an lms_user_id and email,
+        which can be overridden from those defined in the class ``setUpTestData()``
+        method with the optional params provided here.
+        """
+        query_params = QueryDict(mutable=True)
+        query_params['activation_key'] = str(activation_key)
+        url = reverse('api:v1:license-activation') + '/?' + query_params.urlencode()
+        return self.api_client.post(url)
+
+    def _create_assigned_license(self):
+        """
+        Helper method to create an assigned license.
+        """
+        return LicenseFactory.create(
+            status=constants.ASSIGNED,
+            lms_user_id=self.lms_user_id,
+            user_email=self.user.email,
+            subscription_plan=self.active_subscription_for_customer,
+            activation_key=self.ACTIVATION_KEY,
+        )
+
+    def test_activation_no_auth(self):
+        """
+        Unauthenticated requests should result in a 401.
+        """
+        # Create a new client with no authentication present.
+        self.api_client = APIClient()
+
+        response = self._post_request(uuid4())
+
+        assert status.HTTP_401_UNAUTHORIZED == response.status_code
+
+    def test_activation_no_jwt_roles(self):
+        """
+        JWT Authenticated requests without the appropriate learner role should result in a 403.
+        """
+        _assign_role_via_jwt_or_db(
+            self.api_client,
+            self.user,
+            self.enterprise_customer_uuid,
+            assign_via_jwt=True,
+            system_role=None,
+        )
+        self._create_assigned_license()
+
+        response = self._post_request(self.ACTIVATION_KEY)
+
+        assert status.HTTP_403_FORBIDDEN == response.status_code
+
+    def test_activation_key_is_malformed(self):
+        self._assign_learner_roles(
+            jwt_payload_extra={
+                'user_id': self.lms_user_id,
+                'email': self.user.email,
+            }
+        )
+
+        response = self._post_request('deadbeef')
+
+        assert status.HTTP_400_BAD_REQUEST == response.status_code
+        assert 'deadbeef is not a valid activation key' in str(response.content)
+
+    def test_activation_key_does_not_exist(self):
+        """
+        When the user is authenticated and has the appropriate role,
+        but no corresponding license exists for the given ``activation_key``,
+        we should return a 404.
+        """
+        self._assign_learner_roles(
+            jwt_payload_extra={
+                'user_id': self.lms_user_id,
+                'email': self.user.email,
+            }
+        )
+
+        response = self._post_request(uuid4())
+
+        assert status.HTTP_404_NOT_FOUND == response.status_code
+
+    def test_activate_an_assigned_license(self):
+        self._assign_learner_roles(
+            jwt_payload_extra={
+                'user_id': self.lms_user_id,
+                'email': self.user.email,
+            }
+        )
+        license_to_be_activated = self._create_assigned_license()
+
+        with freeze_time(self.NOW):
+            response = self._post_request(str(self.ACTIVATION_KEY))
+
+        assert status.HTTP_204_NO_CONTENT == response.status_code
+        license_to_be_activated.refresh_from_db()
+        assert constants.ACTIVATED == license_to_be_activated.status
+        assert self.lms_user_id == license_to_be_activated.lms_user_id
+        assert self.NOW == license_to_be_activated.activation_date

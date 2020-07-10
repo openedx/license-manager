@@ -4,10 +4,10 @@ from collections import OrderedDict
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
+from django.utils.functional import cached_property
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
 from edx_rbac.mixins import PermissionRequiredForListingMixin
-from edx_rbac.utils import get_decoded_jwt
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
@@ -17,12 +17,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from license_manager.apps.api import serializers
+from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.tasks import (
     send_activation_email_task,
     send_reminder_email_task,
 )
-from license_manager.apps.api.utils import get_subscription_plan_from_enterprise
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
     License,
@@ -136,8 +135,12 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         """
         Helper that returns the subscription plan specified by `subscription_uuid` in the request.
         """
+        subscription_uuid = self.kwargs.get('subscription_uuid')
+        if not subscription_uuid:
+            return None
+
         try:
-            return SubscriptionPlan.objects.get(uuid=self.kwargs['subscription_uuid'])
+            return SubscriptionPlan.objects.get(uuid=subscription_uuid)
         except SubscriptionPlan.DoesNotExist:
             return None
 
@@ -332,26 +335,38 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         return Response(license_overview, status=status.HTTP_200_OK)
 
 
-class LicenseSubidyView(APIView):
+class LicenseBaseView(APIView):
     """
-    View for fetching the data on the subsidy provided by a license.
+    Base view for creating specific, one-off views
+    that deal with licenses.
     """
     authentication_classes = [JwtAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
+    @cached_property
+    def decoded_jwt(self):
+        return utils.get_decoded_jwt(self.request)
+
+    @property
+    def lms_user_id(self):
+        return utils.get_user_id_from_jwt(self.decoded_jwt)
+
+    @property
+    def user_email(self):
+        return utils.get_email_from_jwt(self.decoded_jwt)
+
+
+class LicenseSubidyView(LicenseBaseView):
+    """
+    View for fetching the data on the subsidy provided by a license.
+    """
     @property
     def requested_course_key(self):
         return self.request.query_params.get('course_key')
 
-    @property
-    def lms_user_id(self):
-        jwt = get_decoded_jwt(self.request)
-        lms_user_id = jwt.get('user_id')
-        return lms_user_id
-
     @permission_required(
         constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
-        fn=lambda request: get_subscription_plan_from_enterprise(request),  # pylint: disable=unnecessary-lambda
+        fn=lambda request: utils.get_subscription_plan_from_enterprise(request),  # pylint: disable=unnecessary-lambda
     )
     def get(self, request):
         """
@@ -366,7 +381,7 @@ class LicenseSubidyView(APIView):
             msg = 'You must supply the course_key query parameter'
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
-        subscription_plan = get_subscription_plan_from_enterprise(request)
+        subscription_plan = utils.get_subscription_plan_from_enterprise(request)
         user_license = get_object_or_404(
             License,
             subscription_plan=subscription_plan,
@@ -388,3 +403,52 @@ class LicenseSubidyView(APIView):
             'expiration_date': subscription_plan.expiration_date,
         })
         return Response(ordered_data)
+
+
+class LicenseActivationView(LicenseBaseView):
+    """
+    View for activating a license.  Assumes that the user is JWT-Authenticated.
+    """
+
+    @permission_required(
+        constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
+        fn=lambda request: utils.get_subscription_plan_by_activation_key(request),  # pylint: disable=unnecessary-lambda
+    )
+    def post(self, request):
+        """
+        Activates a license, given an ``activation_key`` query param (which should be a UUID).
+
+        Route: /api/v1/license-activation?activation_key=your-key
+
+        Returns:
+            * 400 Bad Request - if the ``activation_key`` query parameter is malformed or missing.
+            * 401 Unauthorized - if the requesting user is not authenticated.
+            * 403 Forbidden - if the requesting user is not allowed to access the associated
+                 license's subscription plan.
+            * 404 Not Found - if the email found in the request's JWT and the provided ``activation_key``
+                 do not match those of any existing assigned license.
+            * 204 No Content - if such a license was found.  In this case, the license is updated
+                 with a status of ``assigned``, its ``activation_date`` is set, and its ``lms_user_id``
+                 is updated to the value found in the request's JWT.
+        """
+        activation_key_uuid = utils.get_activation_key_from_request(request, email_from_jwt=self.user_email)
+        try:
+            user_license = License.objects.get(
+                activation_key=activation_key_uuid,
+                status=constants.ASSIGNED,
+                user_email=self.user_email,
+                subscription_plan__is_active=True,
+            )
+        except License.DoesNotExist:
+            msg = 'No assigned license exists for the email {} with activation key {}'.format(
+                self.user_email,
+                activation_key_uuid,
+            )
+            return Response(msg, status=status.HTTP_404_NOT_FOUND)
+
+        user_license.status = constants.ACTIVATED
+        user_license.activation_date = utils.localized_utcnow()
+        user_license.lms_user_id = self.lms_user_id
+        user_license.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
