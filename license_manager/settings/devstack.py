@@ -61,7 +61,10 @@ CORS_ORIGIN_WHITELIST = [
 ]
 # END CORS
 
+ENTERPRISE_LEARNER_PORTAL_BASE_URL = 'http://localhost:8734'
+LMS_URL_ROOT = 'http://edx.devstack.lms:18000'
 ENTERPRISE_CATALOG_URL = 'http://enterprise.catalog.app:18160'
+ENTERPRISE_API_URL = LMS_URL_ROOT + '/enterprise'
 
 # Make some loggers less noisy (useful during test failure)
 import logging

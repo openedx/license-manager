@@ -22,12 +22,17 @@ from license_manager.apps.api.tasks import (
     send_activation_email_task,
     send_reminder_email_task,
 )
+from license_manager.apps.api_client.enterprise import (
+    EnterpriseApiClient,
+)
+
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
     License,
     SubscriptionPlan,
     SubscriptionsRoleAssignment,
 )
+from uuid import uuid4
 
 
 logger = logging.getLogger(__name__)
@@ -218,6 +223,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
             deactivated_license.lms_user_id = None
             deactivated_license.last_remind_date = None
             deactivated_license.activation_date = None
+            deactivated_license.activation_key = None
         License.objects.bulk_update(
             deactivated_licenses_for_assignment,
             ['status', 'user_email', 'lms_user_id', 'last_remind_date', 'activation_date'],
@@ -225,18 +231,26 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
 
         # Get a queryset of only the number of licenses we need to assign
         unassigned_licenses = subscription_plan.unassigned_licenses[:num_user_emails]
+        email_activation_key_map = {}
+        enterprise_api_client = EnterpriseApiClient()
+        enterprise_slug = enterprise_api_client.get_enterprise_slug(subscription_plan.enterprise_customer_uuid)
         for unassigned_license, email in zip(unassigned_licenses, user_emails):
             # Assign each email to a license and mark the license as assigned
             unassigned_license.user_email = email
             unassigned_license.status = constants.ASSIGNED
+            # Generate the activation key and keep track of which email it's for
+            activation_key = str(uuid4())
+            unassigned_license.activation_key = activation_key
+            email_activation_key_map.update({email: activation_key})
         # Efficiently update the licenses in bulk
-        License.objects.bulk_update(unassigned_licenses, ['user_email', 'status'])
+        License.objects.bulk_update(unassigned_licenses, ['user_email', 'status', 'activation_key'])
 
         # Send activation emails
-        send_activation_email_task.delay(
+        send_activation_email_task(
             self._get_custom_text(request.data),
-            user_emails,
+            email_activation_key_map,
             subscription_uuid,
+            enterprise_slug
         )
 
         return Response(status=status.HTTP_200_OK)

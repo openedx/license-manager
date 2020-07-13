@@ -17,16 +17,18 @@ from license_manager.apps.subscriptions.models import License
 logger = logging.getLogger(__name__)
 
 
-def send_activation_emails(custom_template_text, email_recipient_list, subscription_plan):
+def send_activation_emails(custom_template_text, email_activation_key_map, subscription_plan, enterprise_slug):
     """
     Sends an activation email updated with the custom template text to the given recipients.
 
     Args:
         custom_template_text (dict): Dictionary containing `greeting` and `closing` keys to be used for customizing
             the email template.
-        email_recipient_list (list of str): List of recipients to send the emails to.
+        email_activation_key_map (dict): Dictionary containing the emails of each recipient and the activation key that
+            is unique to the email. Recipient emails are the keys in the dictionary
         subscription_plan (SubscriptionPlan): The subscription that the recipients are associated with or
             will be associated with.
+        enterprise_slug (str): The slug associated with an enterprise to uniquely identify it
     """
     context = {
         'template_name': LICENSE_ACTIVATION_EMAIL_TEMPLATE,
@@ -34,9 +36,10 @@ def send_activation_emails(custom_template_text, email_recipient_list, subscript
     }
     _send_email_with_activation(
         custom_template_text,
-        email_recipient_list,
+        email_activation_key_map,
         subscription_plan,
         context,
+        enterprise_slug
     )
 
 
@@ -81,25 +84,37 @@ def send_reminder_emails(custom_template_text, email_recipient_list, subscriptio
     License.objects.bulk_update(pending_licenses, ['last_remind_date'])
 
 
-def _send_email_with_activation(custom_template_text, email_recipient_list, subscription_plan, context):
+def _send_email_with_activation(
+    custom_template_text,
+    email_activation_key_map,
+    subscription_plan,
+    context,
+    enterprise_slug
+):
     """
     Helper that sends emails with the given template with an activation link to the the given list of emails.
 
     Args:
         custom_template_text (dict): Dictionary containing `greeting` and `closing` keys to be used for customizing
             the email template.
-        email_recipient_list (list of str): List of recipients to send the emails to.
+        email_activation_key_map (dict): Dictionary containing the emails of each recipient and the activation key that
+            is unique to the email. Recipient emails are the keys in the dictionary
         subscription_plan (SubscriptionPlan): The subscription that the recipients are associated with or
             will be associated with.
         context (dict): Dictionary of context variables for template rendering. Context takes an optional `REMINDER`
             key. If `REMINDER` is provided, a reminder message is added to the email.
+        enterprise_slug (str): The slug associated with an enterprise to uniquely identify it
     """
     # Construct each message to be sent and appended onto the email list
+    email_recipient_list = email_activation_key_map.keys()
     emails = []
     for email_address in email_recipient_list:
         # Construct user specific context for each message
         context.update({
-            'LICENSE_ACTIVATION_LINK': _generate_license_activation_link(),
+            'LICENSE_ACTIVATION_LINK': _generate_license_activation_link(
+                enterprise_slug,
+                email_activation_key_map.get(email_address)
+            ),
             'USER_EMAIL': email_address,
         })
         emails.append(_message_from_context_and_template(
@@ -113,8 +128,12 @@ def _send_email_with_activation(custom_template_text, email_recipient_list, subs
         connection.send_messages(emails)
 
 
-def _generate_license_activation_link():  # TODO: implement 'How users will activate licenses' (ENT-2748)
-    return 'https://www.edx.org/'
+def _generate_license_activation_link(enterprise_slug, activation_key):
+    """
+    Returns the activation link displayed in the activation email sent to a learner
+    """
+    return settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL + '/' + enterprise_slug + '/licenses/' +\
+        activation_key + '/activate'
 
 
 def _get_rendered_template_content(template_name, extension, context):
