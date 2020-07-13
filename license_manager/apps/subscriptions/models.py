@@ -218,6 +218,13 @@ class License(TimeStampedModel):
         null=True,
     )
 
+    activation_key = models.UUIDField(
+        default=None,
+        blank=True,
+        editable=False,
+        null=True
+    )
+
     last_remind_date = models.DateTimeField(
         blank=True,
         null=True,
