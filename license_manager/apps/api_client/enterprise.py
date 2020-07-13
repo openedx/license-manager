@@ -1,35 +1,17 @@
 import logging
 
-from django.conf import settings
-from edx_rest_api_client.client import OAuthAPIClient
+from license_manager.apps.api_client.base_oauth import BaseOAuthClient
 
 
 logger = logging.getLogger(__name__)
 
 
-class EnterpriseApiClient:
+class EnterpriseApiClient(BaseOAuthClient):
     """
     API client for calls to the enterprise service.
     """
-    # api_base_url = settings.ENTERPRISE_API_URL + '/api/v1/'
-    api_base_url = settings.LMS_URL + '/enterprise/api/v1/'
-    enterprise_customer_endpoint = api_base_url + 'enterprise-customer/'
-    pending_enterprise_learner_endpoint = api_base_url + 'pending-enterprise-learner/'
-
-    def __init__(self):
-        self.client = OAuthAPIClient(
-            settings.SOCIAL_AUTH_EDX_OAUTH2_URL_ROOT.strip('/'),
-            self.oauth2_client_id,
-            self.oauth2_client_secret
-        )
-
-    @property
-    def oauth2_client_id(self):
-        return settings.BACKEND_SERVICE_EDX_OAUTH2_KEY
-
-    @property
-    def oauth2_client_secret(self):
-        return settings.BACKEND_SERVICE_EDX_OAUTH2_SECRET
+    enterprise_customer_endpoint = BaseOAuthClient.api_base_url + 'enterprise-customer/'
+    pending_enterprise_learner_endpoint = BaseOAuthClient.api_base_url + 'pending-enterprise-learner/'
 
     def get_enterprise_slug(self, enterprise_customer_uuid):
         """

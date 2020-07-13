@@ -22,7 +22,7 @@ class EnterpriseCatalogApiClientTests(TestCase):
         cls.uuid = uuid4()
         cls.content_ids = ['demoX', 'testX']
 
-    @mock.patch('license_manager.apps.api_client.enterprise_catalog.OAuthAPIClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
     def test_contains_content_items_defaults_false(self, mock_oauth_client):
         """
         Verify the `contains_content_items` method returns False if the response does not contain the expected key.
@@ -32,7 +32,7 @@ class EnterpriseCatalogApiClientTests(TestCase):
         client = EnterpriseCatalogApiClient()
         assert client.contains_content_items(self.uuid, self.content_ids) is False
 
-    @mock.patch('license_manager.apps.api_client.enterprise_catalog.OAuthAPIClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
     @ddt.data(True, False)
     def test_contains_content_items(self, contains_content, mock_oauth_client):
         """

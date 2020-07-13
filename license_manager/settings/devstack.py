@@ -61,6 +61,7 @@ CORS_ORIGIN_WHITELIST = [
 ]
 # END CORS
 
+ENTERPRISE_LEARNER_PORTAL_BASE_URL = 'http://localhost:8734'
 ENTERPRISE_CATALOG_URL = 'http://enterprise.catalog.app:18160'
 LMS_URL = 'http://edx.devstack.lms:18000'
 

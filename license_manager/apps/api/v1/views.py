@@ -1,5 +1,6 @@
 import logging
 from collections import OrderedDict
+from uuid import uuid4
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
@@ -219,6 +220,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
             deactivated_license.lms_user_id = None
             deactivated_license.last_remind_date = None
             deactivated_license.activation_date = None
+            deactivated_license.activation_key = None
         License.objects.bulk_update(
             deactivated_licenses_for_assignment,
             ['status', 'user_email', 'lms_user_id', 'last_remind_date', 'activation_date'],
@@ -230,8 +232,10 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
             # Assign each email to a license and mark the license as assigned
             unassigned_license.user_email = email
             unassigned_license.status = constants.ASSIGNED
+            activation_key = str(uuid4())
+            unassigned_license.activation_key = activation_key
         # Efficiently update the licenses in bulk
-        License.objects.bulk_update(unassigned_licenses, ['user_email', 'status'])
+        License.objects.bulk_update(unassigned_licenses, ['user_email', 'status', 'activation_key'])
 
         # Send activation emails
         activation_task.delay(

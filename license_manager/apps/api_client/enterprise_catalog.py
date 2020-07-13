@@ -1,33 +1,11 @@
-import logging
-
-from django.conf import settings
-from edx_rest_api_client.client import OAuthAPIClient
+from license_manager.apps.api_client.base_oauth import BaseOAuthClient
 
 
-logger = logging.getLogger(__name__)
-
-
-class EnterpriseCatalogApiClient:
+class EnterpriseCatalogApiClient(BaseOAuthClient):
     """
     API client for calls to the enterprise catalog service.
     """
-    api_base_url = settings.ENTERPRISE_CATALOG_URL + '/api/v1/'
-    enterprise_catalog_endpoint = api_base_url + 'enterprise-catalogs/'
-
-    def __init__(self):
-        self.client = OAuthAPIClient(
-            settings.SOCIAL_AUTH_EDX_OAUTH2_URL_ROOT.strip('/'),
-            self.oauth2_client_id,
-            self.oauth2_client_secret
-        )
-
-    @property
-    def oauth2_client_id(self):
-        return settings.BACKEND_SERVICE_EDX_OAUTH2_KEY
-
-    @property
-    def oauth2_client_secret(self):
-        return settings.BACKEND_SERVICE_EDX_OAUTH2_SECRET
+    enterprise_catalog_endpoint = BaseOAuthClient.api_base_url + 'enterprise-catalogs/'
 
     def contains_content_items(self, catalog_uuid, content_ids):
         """
