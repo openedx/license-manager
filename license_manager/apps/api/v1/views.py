@@ -426,29 +426,39 @@ class LicenseActivationView(LicenseBaseView):
             * 403 Forbidden - if the requesting user is not allowed to access the associated
                  license's subscription plan.
             * 404 Not Found - if the email found in the request's JWT and the provided ``activation_key``
-                 do not match those of any existing assigned license.
-            * 204 No Content - if such a license was found.  In this case, the license is updated
-                 with a status of ``assigned``, its ``activation_date`` is set, and its ``lms_user_id``
-                 is updated to the value found in the request's JWT.
+                 do not match those of any existing license in an activate subscription plan.
+            * 204 No Content - if such a license was found.  In this case, if the license is currently "assigned",
+                 it is updated with a status of ``assigned``, its ``activation_date`` is set, and its ``lms_user_id``
+                 is updated to the value found in the request's JWT.  If the license is already "activated",
+                 no update is made to it.
+            * 422 Unprocessable Entity - if we find a license, but it's status is not currently "assigned"
+                 or "activated", we do nothing and return a 422 with a message indicating that the license
+                 cannot be activated.
         """
         activation_key_uuid = utils.get_activation_key_from_request(request, email_from_jwt=self.user_email)
         try:
             user_license = License.objects.get(
                 activation_key=activation_key_uuid,
-                status=constants.ASSIGNED,
                 user_email=self.user_email,
                 subscription_plan__is_active=True,
             )
         except License.DoesNotExist:
-            msg = 'No assigned license exists for the email {} with activation key {}'.format(
+            msg = 'No license exists for the email {} with activation key {}'.format(
                 self.user_email,
                 activation_key_uuid,
             )
             return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
-        user_license.status = constants.ACTIVATED
-        user_license.activation_date = utils.localized_utcnow()
-        user_license.lms_user_id = self.lms_user_id
-        user_license.save()
+        if user_license.status not in (constants.ASSIGNED, constants.ACTIVATED):
+            return Response(
+                'Cannot activate a license with a status of {}'.format(user_license.status),
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+
+        if user_license.status == constants.ASSIGNED:
+            user_license.status = constants.ACTIVATED
+            user_license.activation_date = utils.localized_utcnow()
+            user_license.lms_user_id = self.lms_user_id
+            user_license.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)

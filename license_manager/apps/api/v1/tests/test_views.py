@@ -1147,16 +1147,17 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         url = reverse('api:v1:license-activation') + '/?' + query_params.urlencode()
         return self.api_client.post(url)
 
-    def _create_assigned_license(self):
+    def _create_license(self, status=constants.ASSIGNED, activation_date=None):
         """
-        Helper method to create an assigned license.
+        Helper method to create a license.
         """
         return LicenseFactory.create(
-            status=constants.ASSIGNED,
+            status=status,
             lms_user_id=self.lms_user_id,
             user_email=self.user.email,
             subscription_plan=self.active_subscription_for_customer,
             activation_key=self.ACTIVATION_KEY,
+            activation_date=activation_date,
         )
 
     def test_activation_no_auth(self):
@@ -1181,7 +1182,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             assign_via_jwt=True,
             system_role=None,
         )
-        self._create_assigned_license()
+        self._create_license()
 
         response = self._post_request(self.ACTIVATION_KEY)
 
@@ -1224,7 +1225,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
                 'email': self.user.email,
             }
         )
-        license_to_be_activated = self._create_assigned_license()
+        license_to_be_activated = self._create_license()
 
         with freeze_time(self.NOW):
             response = self._post_request(str(self.ACTIVATION_KEY))
@@ -1234,3 +1235,43 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         assert constants.ACTIVATED == license_to_be_activated.status
         assert self.lms_user_id == license_to_be_activated.lms_user_id
         assert self.NOW == license_to_be_activated.activation_date
+
+    def test_license_already_activated_returns_204(self):
+        self._assign_learner_roles(
+            jwt_payload_extra={
+                'user_id': self.lms_user_id,
+                'email': self.user.email,
+            }
+        )
+        already_activated_license = self._create_license(
+            status=constants.ACTIVATED,
+            activation_date=self.NOW,
+        )
+
+        response = self._post_request(str(self.ACTIVATION_KEY))
+
+        assert status.HTTP_204_NO_CONTENT == response.status_code
+        already_activated_license.refresh_from_db()
+        assert constants.ACTIVATED == already_activated_license.status
+        assert self.lms_user_id == already_activated_license.lms_user_id
+        assert self.NOW == already_activated_license.activation_date
+
+    def test_activating_deactivated_license_returns_422(self):
+        self._assign_learner_roles(
+            jwt_payload_extra={
+                'user_id': self.lms_user_id,
+                'email': self.user.email,
+            }
+        )
+        deactivated_license = self._create_license(
+            status=constants.DEACTIVATED,
+            activation_date=self.NOW,
+        )
+
+        response = self._post_request(str(self.ACTIVATION_KEY))
+
+        assert status.HTTP_422_UNPROCESSABLE_ENTITY == response.status_code
+        deactivated_license.refresh_from_db()
+        assert constants.DEACTIVATED == deactivated_license.status
+        assert self.lms_user_id == deactivated_license.lms_user_id
+        assert self.NOW == deactivated_license.activation_date
