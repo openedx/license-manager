@@ -38,7 +38,8 @@ def get_activation_key_from_request(request, email_from_jwt=None):
     Returns: An activation_key UUID.
     """
     if not email_from_jwt:
-        email_from_jwt = get_email_from_jwt(get_decoded_jwt(request))
+        decoded_jwt = get_decoded_jwt(request)
+        email_from_jwt = get_key_from_jwt(decoded_jwt, 'email')
 
     try:
         return uuid.UUID(request.query_params['activation_key'])
@@ -48,18 +49,15 @@ def get_activation_key_from_request(request, email_from_jwt=None):
         raise ParseError('{} is not a valid activation key.'.format(request.query_params['activation_key']))
 
 
-def get_user_id_from_jwt(decoded_jwt):
+def get_key_from_jwt(decoded_jwt, key):
     """
-    Helper function to get the ``user_id`` key out of a decoded JWT.
+    Helper to get the provided ``key`` out of a decoded JWT or raise a validation error if not found in the JWT.
     """
-    return decoded_jwt.get('user_id')
+    value = decoded_jwt.get(key)
+    if not value:
+        raise ParseError('`{key}` is required and could not be found in your jwt'.format(key=key))
 
-
-def get_email_from_jwt(decoded_jwt):
-    """
-    Helper function to get the ``email`` key out of a decoded JWT.
-    """
-    return decoded_jwt.get('email')
+    return value
 
 
 def get_subscription_plan_by_activation_key(request):
@@ -74,7 +72,8 @@ def get_subscription_plan_by_activation_key(request):
     """
     activation_key = get_activation_key_from_request(request)
 
-    email_from_jwt = get_email_from_jwt(get_decoded_jwt(request))
+    decoded_jwt = get_decoded_jwt(request)
+    email_from_jwt = get_key_from_jwt(decoded_jwt, 'email')
 
     user_license = get_object_or_404(
         License,
