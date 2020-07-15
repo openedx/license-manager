@@ -349,11 +349,11 @@ class LicenseBaseView(APIView):
 
     @property
     def lms_user_id(self):
-        return utils.get_user_id_from_jwt(self.decoded_jwt)
+        return utils.get_key_from_jwt(self.decoded_jwt, 'user_id')
 
     @property
     def user_email(self):
-        return utils.get_email_from_jwt(self.decoded_jwt)
+        return utils.get_key_from_jwt(self.decoded_jwt, 'email')
 
 
 class LicenseSubidyView(LicenseBaseView):
@@ -421,7 +421,8 @@ class LicenseActivationView(LicenseBaseView):
         Route: /api/v1/license-activation?activation_key=your-key
 
         Returns:
-            * 400 Bad Request - if the ``activation_key`` query parameter is malformed or missing.
+            * 400 Bad Request - if the ``activation_key`` query parameter is malformed or missing, or if
+                the user's email could not be found in the jwt.
             * 401 Unauthorized - if the requesting user is not authenticated.
             * 403 Forbidden - if the requesting user is not allowed to access the associated
                  license's subscription plan.

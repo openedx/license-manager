@@ -1017,6 +1017,19 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
+    def test_get_subsidy_no_jwt(self, mock_get_decoded_jwt):
+        """
+        Verify the view returns a 400 if the user_id could not be found in the JWT.
+        """
+        self._assign_learner_roles()
+        mock_get_decoded_jwt.return_value = {}
+        url = self._get_url_with_params()
+        response = self.api_client.get(url)
+
+        assert status.HTTP_400_BAD_REQUEST == response.status_code
+        assert '`user_id` is required and could not be found in your jwt' in str(response.content)
+
     def test_get_subsidy_no_subscription_for_customer(self):
         """
         Verify the view returns a 404 if there is no subscription plan for the customer.
@@ -1027,10 +1040,12 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_get_subsidy_no_active_subscription_for_customer(self):
+    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
+    def test_get_subsidy_no_active_subscription_for_customer(self, mock_get_decoded_jwt):
         """
         Verify the view returns a 404 if there is no active subscription plan for the customer.
         """
+        mock_get_decoded_jwt.return_value = self._decoded_jwt
         self._assign_learner_roles()
         SubscriptionPlanFactory.create(
             enterprise_customer_uuid=self.enterprise_customer_uuid,
@@ -1187,6 +1202,17 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         response = self._post_request(self.ACTIVATION_KEY)
 
         assert status.HTTP_403_FORBIDDEN == response.status_code
+
+    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
+    def test_activation_no_jwt(self, mock_get_decoded_jwt):
+        """
+        Verify that license activation returns a 400 if the user's email could not be found in the JWT.
+        """
+        mock_get_decoded_jwt.return_value = {}
+        response = self._post_request(str(self.ACTIVATION_KEY))
+
+        assert status.HTTP_400_BAD_REQUEST == response.status_code
+        assert '`email` is required and could not be found in your jwt' in str(response.content)
 
     def test_activation_key_is_malformed(self):
         self._assign_learner_roles(
