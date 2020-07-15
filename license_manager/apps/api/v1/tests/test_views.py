@@ -970,16 +970,6 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
             query_params['course_key'] = self.course_key
         return url + '/?' + query_params.urlencode()
 
-    def test_get_subsidy_no_jwt(self):
-        """
-        Verify the view returns a 401 for users trying to authenticate without a JWT (that is, using session auth).
-        """
-        client = APIClient()
-        client.login(username=self.user.username, password=USER_PASSWORD)
-        url = self._get_url_with_params()
-        response = client.get(url)
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
     def test_get_subsidy_missing_role(self):
         """
         Verify the view returns a 403 for users without the learner role.
