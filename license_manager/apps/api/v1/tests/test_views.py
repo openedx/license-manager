@@ -921,14 +921,14 @@ class LicenseViewTestMixin:
     def _decoded_jwt(self):
         return {'user_id': self.lms_user_id}
 
-    def _assign_learner_roles(self, jwt_payload_extra=None):
+    def _assign_learner_roles(self, alternate_customer=None, jwt_payload_extra=None):
         """
         Helper that assigns the correct learner role via JWT to the user.
         """
         _assign_role_via_jwt_or_db(
             self.api_client,
             self.user,
-            self.enterprise_customer_uuid,
+            alternate_customer or self.enterprise_customer_uuid,
             assign_via_jwt=True,
             system_role=constants.SYSTEM_ENTERPRISE_LEARNER_ROLE,
             subscriptions_role=constants.SUBSCRIPTIONS_LEARNER_ROLE,
@@ -1046,12 +1046,10 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
         Verify the view returns a 404 if there is no active subscription plan for the customer.
         """
         mock_get_decoded_jwt.return_value = self._decoded_jwt
-        self._assign_learner_roles()
-        SubscriptionPlanFactory.create(
-            enterprise_customer_uuid=self.enterprise_customer_uuid,
-            is_active=False,
-        )
-        url = self._get_url_with_params()
+        other_enterprise_uuid = uuid4()
+        SubscriptionPlanFactory.create(enterprise_customer_uuid=other_enterprise_uuid, is_active=False)
+        self._assign_learner_roles(alternate_customer=other_enterprise_uuid)
+        url = self._get_url_with_params(enterprise_customer_override=other_enterprise_uuid)
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
