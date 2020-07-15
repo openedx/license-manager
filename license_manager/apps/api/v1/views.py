@@ -428,12 +428,12 @@ class LicenseActivationView(LicenseBaseView):
                  license's subscription plan.
             * 404 Not Found - if the email found in the request's JWT and the provided ``activation_key``
                  do not match those of any existing license in an activate subscription plan.
-            * 204 No Content - if such a license was found.  In this case, if the license is currently "assigned",
-                 it is updated with a status of ``assigned``, its ``activation_date`` is set, and its ``lms_user_id``
-                 is updated to the value found in the request's JWT.  If the license is already "activated",
+            * 204 No Content - if such a license was found, and if the license is currently ``assigned``,
+                 it is updated with a status of ``activated``, its ``activation_date`` is set, and its ``lms_user_id``
+                 is updated to the value found in the request's JWT.  If the license is already ``activated``,
                  no update is made to it.
-            * 422 Unprocessable Entity - if we find a license, but it's status is not currently "assigned"
-                 or "activated", we do nothing and return a 422 with a message indicating that the license
+            * 422 Unprocessable Entity - if we find a license, but it's status is not currently ``assigned``
+                 or ``activated``, we do nothing and return a 422 with a message indicating that the license
                  cannot be activated.
         """
         activation_key_uuid = utils.get_activation_key_from_request(request, email_from_jwt=self.user_email)
