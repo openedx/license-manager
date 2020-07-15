@@ -6,6 +6,7 @@ from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 
 @admin.register(License)
 class LicenseAdmin(admin.ModelAdmin):
+    readonly_fields = ['activation_key']
     exclude = ['history']
 
 

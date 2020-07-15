@@ -341,7 +341,6 @@ class LicenseBaseView(APIView):
     Base view for creating specific, one-off views
     that deal with licenses.
     """
-    authentication_classes = [JwtAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     @cached_property
