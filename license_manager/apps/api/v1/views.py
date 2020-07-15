@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from license_manager.apps.api import serializers, utils
+from license_manager.apps.api.filters import LicenseStatusFilter
 from license_manager.apps.api.tasks import (
     send_activation_email_task,
     send_reminder_email_task,
@@ -94,7 +95,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         'last_remind_date',
     ]
     search_fields = ['user_email']
-    filterset_fields = ['status']
+    filter_class = LicenseStatusFilter
     permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
 
     # The fields that control permissions for 'list' actions.
