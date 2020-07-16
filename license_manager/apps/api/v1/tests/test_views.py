@@ -474,44 +474,44 @@ class LicenseViewSetActionTests(TestCase):
         assert response.status_code == status.HTTP_403_FORBIDDEN
         mock_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
-    def test_assign_no_emails(self, mock_send_activation_email_task):
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
+    def test_assign_no_emails(self, mock_activation_task):
         """
         Verify the assign endpoint returns a 400 if no user emails are provided.
         """
         response = self.api_client.post(self.assign_url)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        mock_send_activation_email_task.assert_not_called()
+        mock_activation_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
     @ddt.data(True, False)
-    def test_assign_non_admin_user(self, user_is_staff, mock_send_activation_email_task):
+    def test_assign_non_admin_user(self, user_is_staff, mock_activation_task):
         """
         Verify the assign endpoint returns a 403 if a non-superuser with no
         admin roles makes the request, even if they're staff (for good measure).
         """
-        self._test_and_assert_forbidden_user(self.assign_url, user_is_staff, mock_send_activation_email_task)
+        self._test_and_assert_forbidden_user(self.assign_url, user_is_staff, mock_activation_task)
 
-    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
-    def test_assign_empty_emails(self, mock_send_activation_email_task):
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
+    def test_assign_empty_emails(self, mock_activation_task):
         """
         Verify the assign endpoint returns a 400 if the list of emails provided is empty.
         """
         response = self.api_client.post(self.assign_url, {'user_emails': []})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        mock_send_activation_email_task.assert_not_called()
+        mock_activation_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
-    def test_assign_invalid_emails(self, mock_send_activation_email_task):
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
+    def test_assign_invalid_emails(self, mock_activation_task):
         """
         Verify the assign endpoint returns a 400 if the list contains an invalid email.
         """
         response = self.api_client.post(self.assign_url, {'user_emails': ['lkajsdf']})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        mock_send_activation_email_task.assert_not_called()
+        mock_activation_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
-    def test_assign_insufficient_licenses(self, mock_send_activation_email_task):
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
+    def test_assign_insufficient_licenses(self, mock_activation_task):
         """
         Verify the assign endpoint returns a 400 if there are not enough unassigned licenses to assign to.
         """
@@ -520,10 +520,10 @@ class LicenseViewSetActionTests(TestCase):
         self.subscription_plan.licenses.set(assigned_licenses)
         response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        mock_send_activation_email_task.assert_not_called()
+        mock_activation_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
-    def test_assign_insufficient_licenses_deactivated(self, mock_send_activation_email_task):
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
+    def test_assign_insufficient_licenses_deactivated(self, mock_activation_task):
         """
         Verify the endpoint returns a 400 if there are not enough licenses to assign to considering deactivated licenses
         """
@@ -532,10 +532,10 @@ class LicenseViewSetActionTests(TestCase):
         self.subscription_plan.licenses.set([deactivated_license])
         response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        mock_send_activation_email_task.assert_not_called()
+        mock_activation_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
-    def test_assign_already_associated_email(self, mock_send_activation_email_task):
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
+    def test_assign_already_associated_email(self, mock_activation_task):
         """
         Verify the assign endpoint returns a 400 if there is already a license associated with a provided email.
 
@@ -547,11 +547,11 @@ class LicenseViewSetActionTests(TestCase):
         response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email, 'unassigned@example.com']})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert self.test_email in response.data
-        mock_send_activation_email_task.assert_not_called()
+        mock_activation_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
     @ddt.data(True, False)
-    def test_assign(self, use_superuser, mock_send_activation_email_task):
+    def test_assign(self, use_superuser, mock_activation_task):
         """
         Verify the assign endpoint assigns licenses to the provided emails and sends activation emails.
 
@@ -578,15 +578,15 @@ class LicenseViewSetActionTests(TestCase):
         assert response.status_code == status.HTTP_200_OK
         self._assert_licenses_assigned(user_emails)
 
-        task_args, _ = mock_send_activation_email_task.call_args
+        task_args, _ = mock_activation_task.call_args
         actual_template_text, actual_emails, actual_subscription_uuid = task_args
         assert ['bb8@mit.edu', self.test_email] == sorted(actual_emails)
         assert self.subscription_plan.uuid.hex == actual_subscription_uuid.replace('-', '')
         assert greeting == actual_template_text['greeting']
         assert closing == actual_template_text['closing']
 
-    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
-    def test_assign_dedupe_input(self, mock_send_activation_email_task):
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
+    def test_assign_dedupe_input(self, mock_activation_task):
         """
         Verify the assign endpoint deduplicates submitted emails.
         """
@@ -600,14 +600,14 @@ class LicenseViewSetActionTests(TestCase):
         )
         assert response.status_code == status.HTTP_200_OK
         self._assert_licenses_assigned([self.test_email])
-        mock_send_activation_email_task.assert_called_with(
+        mock_activation_task.assert_called_with(
             {'greeting': greeting, 'closing': closing},
             [self.test_email],
             str(self.subscription_plan.uuid),
         )
 
-    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
-    def test_assign_to_deactivated_user(self, mock_send_activation_email_task):
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
+    def test_assign_to_deactivated_user(self, mock_activation_task):
         """
         Verify that the assign endpoint allows assigning a license to a user who previously had a license revoked.
         """
@@ -629,7 +629,7 @@ class LicenseViewSetActionTests(TestCase):
         assert deactivated_license.lms_user_id is None
         assert deactivated_license.last_remind_date is None
         assert deactivated_license.activation_date is None
-        mock_send_activation_email_task.assert_called_with(
+        mock_activation_task.assert_called_with(
             {'greeting': '', 'closing': ''},
             [self.test_email],
             str(self.subscription_plan.uuid)
@@ -829,8 +829,8 @@ class LicenseViewSetActionTests(TestCase):
         response = self.api_client.post(self.revoke_license_url, {'user_email': 'foo@bar.com'})
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    @mock.patch('license_manager.apps.api.v1.views.send_activation_email_task.delay')
-    def test_assign_after_license_revoke(self, mock_send_activation_email_task):
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
+    def test_assign_after_license_revoke(self, mock_activation_task):
         """
         Verifies that assigning a license after revoking one works
         """
@@ -850,7 +850,7 @@ class LicenseViewSetActionTests(TestCase):
         assert response.status_code == status.HTTP_200_OK
         self._assert_licenses_assigned(user_emails)
 
-        task_args, _ = mock_send_activation_email_task.call_args
+        task_args, _ = mock_activation_task.call_args
         actual_template_text, actual_emails, actual_subscription_uuid = task_args
         assert ['bb8@mit.edu', self.test_email] == sorted(actual_emails)
         assert self.subscription_plan.uuid.hex == actual_subscription_uuid.replace('-', '')

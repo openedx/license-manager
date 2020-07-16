@@ -20,7 +20,7 @@ from rest_framework.views import APIView
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseStatusFilter
 from license_manager.apps.api.tasks import (
-    send_activation_email_task,
+    activation_task,
     send_reminder_email_task,
 )
 from license_manager.apps.subscriptions import constants
@@ -234,7 +234,7 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         License.objects.bulk_update(unassigned_licenses, ['user_email', 'status'])
 
         # Send activation emails
-        send_activation_email_task.delay(
+        activation_task.delay(
             self._get_custom_text(request.data),
             user_emails,
             subscription_uuid,
