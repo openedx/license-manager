@@ -329,6 +329,7 @@ SUBSCRIPTIONS_FROM_EMAIL = 'from@example.com'  # Dummy from email address for de
 # End email configuration
 
 ENTERPRISE_CATALOG_URL = os.environ.get('ENTERPRISE_CATALOG_URL', '')
+LMS_URL = os.environ.get('LMS_URL', '')
 
 # Set up system-to-feature roles mapping for edx-rbac
 SYSTEM_TO_FEATURE_ROLE_MAPPING = {
