@@ -578,10 +578,11 @@ class LicenseViewSetActionTests(TestCase):
         assert response.status_code == status.HTTP_200_OK
         self._assert_licenses_assigned(user_emails)
 
+        # Verify the activation email task was called with the correct args
         task_args, _ = mock_activation_task.call_args
         actual_template_text, actual_emails, actual_subscription_uuid = task_args
         assert ['bb8@mit.edu', self.test_email] == sorted(actual_emails)
-        assert self.subscription_plan.uuid.hex == actual_subscription_uuid.replace('-', '')
+        assert str(self.subscription_plan.uuid) == actual_subscription_uuid
         assert greeting == actual_template_text['greeting']
         assert closing == actual_template_text['closing']
 
@@ -632,7 +633,7 @@ class LicenseViewSetActionTests(TestCase):
         mock_activation_task.assert_called_with(
             {'greeting': '', 'closing': ''},
             [self.test_email],
-            str(self.subscription_plan.uuid)
+            str(self.subscription_plan.uuid),
         )
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
@@ -850,10 +851,11 @@ class LicenseViewSetActionTests(TestCase):
         assert response.status_code == status.HTTP_200_OK
         self._assert_licenses_assigned(user_emails)
 
+        # Verify the activation email task was called with the correct args
         task_args, _ = mock_activation_task.call_args
         actual_template_text, actual_emails, actual_subscription_uuid = task_args
         assert ['bb8@mit.edu', self.test_email] == sorted(actual_emails)
-        assert self.subscription_plan.uuid.hex == actual_subscription_uuid.replace('-', '')
+        assert str(self.subscription_plan.uuid) == actual_subscription_uuid
         assert greeting == actual_template_text['greeting']
         assert closing == actual_template_text['closing']
 

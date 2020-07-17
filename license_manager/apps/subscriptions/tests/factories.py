@@ -55,6 +55,7 @@ class LicenseFactory(factory.DjangoModelFactory):
         model = License
 
     uuid = factory.LazyFunction(uuid4)
+    activation_key = factory.LazyFunction(uuid4)
     status = UNASSIGNED
     subscription_plan = factory.SubFactory(SubscriptionPlanFactory)
 

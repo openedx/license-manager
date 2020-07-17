@@ -1,3 +1,4 @@
+import logging
 from uuid import uuid4
 
 import ddt
@@ -23,7 +24,7 @@ class EnterpriseApiClientTests(TestCase):
         cls.content_ids = ['demoX', 'testX']
 
     @mock.patch('license_manager.apps.api_client.enterprise.logger', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api_client.enterprise.OAuthAPIClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
     def test_create_pending_enterprise_user_logs(self, mock_oauth_client, mock_logger):
         """
         Verify the ``create_pending_enterprise_user`` method logs an error for a status code of >=400.
