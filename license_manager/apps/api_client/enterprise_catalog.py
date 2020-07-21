@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from license_manager.apps.api_client.base_oauth import BaseOAuthClient
 
 
@@ -5,7 +7,8 @@ class EnterpriseCatalogApiClient(BaseOAuthClient):
     """
     API client for calls to the enterprise catalog service.
     """
-    enterprise_catalog_endpoint = BaseOAuthClient.api_base_url + 'enterprise-catalogs/'
+    api_base_url = settings.ENTERPRISE_CATALOG_URL + '/api/v1/'
+    enterprise_catalog_endpoint = api_base_url + 'enterprise-catalogs/'
 
     def contains_content_items(self, catalog_uuid, content_ids):
         """

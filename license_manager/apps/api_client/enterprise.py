@@ -1,5 +1,7 @@
 import logging
 
+from django.conf import settings
+
 from license_manager.apps.api_client.base_oauth import BaseOAuthClient
 
 
@@ -10,8 +12,9 @@ class EnterpriseApiClient(BaseOAuthClient):
     """
     API client for calls to the enterprise service.
     """
-    enterprise_customer_endpoint = BaseOAuthClient.api_base_url + 'enterprise-customer/'
-    pending_enterprise_learner_endpoint = BaseOAuthClient.api_base_url + 'pending-enterprise-learner/'
+    api_base_url = settings.LMS_URL + '/enterprise/api/v1/'
+    enterprise_customer_endpoint = api_base_url + 'enterprise-customer/'
+    pending_enterprise_learner_endpoint = api_base_url + 'pending-enterprise-learner/'
 
     def get_enterprise_slug(self, enterprise_customer_uuid):
         """
