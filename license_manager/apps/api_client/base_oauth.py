@@ -11,7 +11,6 @@ class BaseOAuthClient:
     """
     API client for calls to the enterprise service.
     """
-    api_base_url = settings.LMS_URL + '/enterprise/api/v1/'
 
     def __init__(self):
         self.client = OAuthAPIClient(
