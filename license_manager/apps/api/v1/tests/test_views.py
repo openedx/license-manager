@@ -95,6 +95,15 @@ def non_staff_user():
 
 
 @pytest.fixture
+def licensed_non_staff_user():
+    """
+    Fixture that provides a plain 'ole authenticated User instance.
+    Non-staff, non-admin.
+    """
+    return get_model_fixture(User)
+
+
+@pytest.fixture
 def staff_user():
     """
     Fixture that provides a User instance for whom staff=True.
@@ -116,6 +125,16 @@ def _subscriptions_list_request(api_client, user, enterprise_customer_uuid=None)
     """
     api_client.force_authenticate(user=user)
     url = reverse('api:v1:subscriptions-list')
+    if enterprise_customer_uuid is not None:
+        url += '?enterprise_customer_uuid={uuid}'.format(uuid=enterprise_customer_uuid)
+    return api_client.get(url)
+
+
+def _learner_subscriptions_list_request(api_client, enterprise_customer_uuid=None):
+    """
+    Helper method that requests a list of active subscriptions entities for a given enterprise_customer_uuid.
+    """
+    url = reverse('api:v1:learner-subscriptions-list')
     if enterprise_customer_uuid is not None:
         url += '?enterprise_customer_uuid={uuid}'.format(uuid=enterprise_customer_uuid)
     return api_client.get(url)
@@ -147,6 +166,16 @@ def _licenses_detail_request(api_client, user, subscription_uuid, license_uuid):
     url = reverse('api:v1:licenses-detail', kwargs={
         'subscription_uuid': subscription_uuid,
         'license_uuid': license_uuid
+    })
+    return api_client.get(url)
+
+
+def _learner_license_detail_request(api_client, subscription_uuid):
+    """
+    Helper method that requests a list of active subscriptions entities for a given enterprise_customer_uuid.
+    """
+    url = reverse('api:v1:license-list', kwargs={
+        'subscription_uuid': subscription_uuid,
     })
     return api_client.get(url)
 
@@ -299,6 +328,64 @@ def test_subscription_plan_list_superuser_200(api_client, superuser):
 
 
 @pytest.mark.django_db
+def test_non_staff_user_learner_subscriptions_endpoint(api_client, non_staff_user):
+    """
+    Verify that an enterprise learner can view the active subscriptions their enterprise has
+    """
+    enterprise_customer_uuid = uuid4()
+    active_subscriptions = SubscriptionPlanFactory.create_batch(
+        2,
+        enterprise_customer_uuid=enterprise_customer_uuid,
+        is_active=True
+    )
+    inactive_subscriptions = SubscriptionPlanFactory.create_batch(
+        2,
+        enterprise_customer_uuid=enterprise_customer_uuid,
+        is_active=False
+    )
+    subscriptions = active_subscriptions + inactive_subscriptions
+
+    # Associate some licenses with the subscription
+    unassigned_licenses = LicenseFactory.create_batch(3)
+    assigned_licenses = LicenseFactory.create_batch(5, status=constants.ASSIGNED)
+    assigned_licenses[0].user_email = non_staff_user.email
+    subscriptions[0].licenses.set(unassigned_licenses + assigned_licenses)
+
+    _assign_role_via_jwt_or_db(
+        api_client,
+        non_staff_user,
+        enterprise_customer_uuid,
+        assign_via_jwt=True
+    )
+
+    response = _learner_subscriptions_list_request(
+        api_client,
+        subscriptions[0].enterprise_customer_uuid
+    )
+    assert status.HTTP_200_OK == response.status_code
+    results = response.data['results']
+    assert len(results) == 2
+
+
+@pytest.mark.django_db
+def test_non_staff_user_learner_subscriptions_no_enterprise_customer_uuid(api_client, non_staff_user):
+    """
+    Verify that the learner-subscriptions endpoint returns no subscriptions
+    when an enterprise_customer_uuid isn't specified
+    """
+    _assign_role_via_jwt_or_db(
+        api_client,
+        non_staff_user,
+        uuid4(),
+        assign_via_jwt=True
+    )
+    response = _learner_subscriptions_list_request(api_client)
+    assert status.HTTP_200_OK == response.status_code
+    results = response.data['results']
+    assert len(results) == 0
+
+
+@pytest.mark.django_db
 def test_subscription_plan_detail_staff_user_200(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription detail view for staff gives the correct result.
@@ -344,6 +431,74 @@ def test_license_detail_staff_user_200(api_client, staff_user, boolean_toggle):
     response = _licenses_detail_request(api_client, staff_user, subscription.uuid, subscription_license.uuid)
     assert status.HTTP_200_OK == response.status_code
     _assert_license_response_correct(response.data, subscription_license)
+
+
+@pytest.mark.django_db
+def test_license_detail_non_staff_user_with_assigned_license_200(api_client, non_staff_user):
+    """
+    Verify that a learner is able to view their own license
+    """
+    subscription = SubscriptionPlanFactory.create()
+
+    # Assign the non_staff user a license associated with the subscription
+    subscription_license = LicenseFactory.create(status=constants.ASSIGNED, user_email=non_staff_user.email)
+    subscription.licenses.set([subscription_license])
+    _assign_role_via_jwt_or_db(
+        api_client,
+        non_staff_user,
+        subscription.enterprise_customer_uuid,
+        assign_via_jwt=True
+    )
+
+    # Verify non_staff user can view their own license
+    response = _learner_license_detail_request(api_client, subscription.uuid)
+    assert status.HTTP_200_OK == response.status_code
+    results = response.data['results']
+    assert len(results) == 1
+    _assert_license_response_correct(results[0], subscription_license)
+
+
+@pytest.mark.django_db
+def test_license_detail_non_staff_user_with_no_assigned_license_200(api_client, non_staff_user):
+    """
+    Verify that a learner does not see any licenses when none are assigned to them
+    """
+    subscription = SubscriptionPlanFactory.create()
+    _assign_role_via_jwt_or_db(
+        api_client,
+        non_staff_user,
+        subscription.enterprise_customer_uuid,
+        assign_via_jwt=True
+    )
+
+    # Verify non_staff user can view their own license
+    response = _learner_license_detail_request(api_client, subscription.uuid)
+    assert status.HTTP_200_OK == response.status_code
+    results = response.data['results']
+    assert len(results) == 0
+
+
+@pytest.mark.django_db
+def test_license_detail_non_staff_user_with_deactivated_license_200(api_client, non_staff_user):
+    """
+    Verify that a learner can not view their revoked license
+    """
+    subscription = SubscriptionPlanFactory.create()
+    # Assign the non_staff user a revoked license associated with the subscription
+    subscription_license = LicenseFactory.create(status=constants.DEACTIVATED, user_email=non_staff_user.email)
+    subscription.licenses.set([subscription_license])
+    _assign_role_via_jwt_or_db(
+        api_client,
+        non_staff_user,
+        subscription.enterprise_customer_uuid,
+        assign_via_jwt=True
+    )
+
+    # Verify non_staff user can view their own license
+    response = _learner_license_detail_request(api_client, subscription.uuid)
+    assert status.HTTP_200_OK == response.status_code
+    results = response.data['results']
+    assert len(results) == 0
 
 
 def _assign_role_via_jwt_or_db(

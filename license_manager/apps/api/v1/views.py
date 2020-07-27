@@ -34,19 +34,19 @@ from license_manager.apps.subscriptions.models import (
 logger = logging.getLogger(__name__)
 
 
-class SubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
-    """ Viewset for read operations on SubscriptionPlans."""
+class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
+    """ Viewset for read operations on LearnerSubscriptionPlans."""
     authentication_classes = [JwtAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     lookup_field = 'uuid'
     lookup_url_kwarg = 'subscription_uuid'
     serializer_class = serializers.SubscriptionPlanSerializer
-    permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
 
     # fields that control permissions for 'list' actions
     list_lookup_field = 'enterprise_customer_uuid'
-    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
+    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
 
     @property
@@ -74,19 +74,38 @@ class SubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMo
         For non-list actions, this is what's returned by `get_queryset()`.
         For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
         """
+        if not self.requested_enterprise_uuid:
+            return SubscriptionPlan.objects.none()
+
+        return SubscriptionPlan.objects.filter(
+            enterprise_customer_uuid=self.requested_enterprise_uuid,
+            is_active=True
+        ).order_by('-start_date')
+
+
+class SubscriptionViewSet(LearnerSubscriptionViewSet):
+    """ Viewset for Admin only read operations on SubscriptionPlans."""
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
+    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
+
+    @property
+    def base_queryset(self):
+        """
+        Required by the `PermissionRequiredForListingMixin`.
+        For non-list actions, this is what's returned by `get_queryset()`.
+        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
+        """
         queryset = SubscriptionPlan.objects.all()
         if self.requested_enterprise_uuid:
             queryset = SubscriptionPlan.objects.filter(enterprise_customer_uuid=self.requested_enterprise_uuid)
         return queryset.order_by('-start_date')
 
 
-class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
-    """ Viewset for read operations on Licenses."""
+class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
+    """ Viewset for learner read operations on Licenses."""
     authentication_classes = [JwtAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
-    lookup_field = 'uuid'
-    lookup_url_kwarg = 'license_uuid'
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     ordering_fields = [
         'user_email',
@@ -96,13 +115,13 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
     ]
     search_fields = ['user_email']
     filter_class = LicenseStatusFilter
-    permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
 
     # The fields that control permissions for 'list' actions.
     # Roles are granted on specific enterprise identifiers, so we have to join
     # from this model to SubscriptionPlan to find the corresponding customer identifier.
     list_lookup_field = 'subscription_plan__enterprise_customer_uuid'
-    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
+    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
 
     def get_permission_object(self):
@@ -111,15 +130,6 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         in order to access the license.
         """
         return self._get_subscription_plan()
-
-    @property
-    def base_queryset(self):
-        """
-        Required by the `PermissionRequiredForListingMixin`.
-        For non-list actions, this is what's returned by `get_queryset()`.
-        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
-        """
-        return License.objects.filter(subscription_plan=self._get_subscription_plan()).order_by('-activation_date')
 
     def get_serializer_class(self):
         if self.action == 'assign':
@@ -131,6 +141,18 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
         if self.action == 'revoke':
             return serializers.SingleEmailSerializer
         return serializers.LicenseSerializer
+
+    @property
+    def base_queryset(self):
+        """
+        Required by the `PermissionRequiredForListingMixin`.
+        For non-list actions, this is what's returned by `get_queryset()`.
+        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
+        """
+        return License.objects.filter(
+            subscription_plan=self._get_subscription_plan(),
+            user_email=self.request.user.email,
+        ).exclude(status=constants.DEACTIVATED)
 
     def _get_subscription_plan(self):
         """
@@ -144,6 +166,24 @@ class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelVi
             return SubscriptionPlan.objects.get(uuid=subscription_uuid)
         except SubscriptionPlan.DoesNotExist:
             return None
+
+
+class LicenseViewSet(LearnerLicenseViewSet):
+    """ Viewset for Admin read operations on Licenses."""
+    lookup_field = 'uuid'
+    lookup_url_kwarg = 'license_uuid'
+
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
+    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
+
+    @property
+    def base_queryset(self):
+        """
+        Required by the `PermissionRequiredForListingMixin`.
+        For non-list actions, this is what's returned by `get_queryset()`.
+        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
+        """
+        return License.objects.filter(subscription_plan=self._get_subscription_plan()).order_by('-activation_date')
 
     def _get_custom_text(self, data):
         """
