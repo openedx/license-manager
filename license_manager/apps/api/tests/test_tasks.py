@@ -91,11 +91,12 @@ class LicenseManagerCeleryTaskTests(TestCase):
         """
         Verifies that the arguments passed into send_activation_emails is correct
         """
-        actual_template_text,\
-            actual_licenses,\
-            actual_subscription_plan,\
-            actual_enterprise_slug,\
-            *is_reminder = send_email_args  # pylint: disable=unused-variable
+        (
+            actual_template_text,
+            actual_licenses,
+            actual_subscription_plan,
+            actual_enterprise_slug,
+        ) = send_email_args[:4]
 
         assert list(self.assigned_licenses) == list(actual_licenses)
         assert self.subscription_plan == actual_subscription_plan

@@ -30,7 +30,6 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionsRoleAssignment,
 )
 from license_manager.apps.subscriptions.tests.factories import (
-    USER_PASSWORD,
     LicenseFactory,
     SubscriptionPlanFactory,
     UserFactory,
@@ -417,7 +416,7 @@ class LicenseViewSetActionTests(TestCase):
 
         # API client setup
         self.api_client = APIClient()
-        self.api_client.login(username=self.super_user.username, password=USER_PASSWORD)
+        self._setup_request_jwt()
 
         # Try to start every test with the regular user not being staff
         self.user.is_staff = False
@@ -449,6 +448,17 @@ class LicenseViewSetActionTests(TestCase):
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
 
+    def _setup_request_jwt(self, user=None, enterprise_customer_uuid=None):
+        """
+        Helper method to assign role to the requesting user (via self.client) with a JWT.
+        """
+        _assign_role_via_jwt_or_db(
+            self.api_client,
+            user or self.user,
+            enterprise_customer_uuid or self.subscription_plan.enterprise_customer_uuid,
+            assign_via_jwt=True
+        )
+
     def _create_available_licenses(self, num_licenses=5):
         """
         Helper that creates `num_licenses` licenses that can be assigned, associated with the subscription.
@@ -469,7 +479,8 @@ class LicenseViewSetActionTests(TestCase):
         Helper to login an unauthorized user, request an action URL, and assert that 403 response is returned.
         """
         self.user.is_staff = user_is_staff
-        self.api_client.login(username=self.user.username, password=USER_PASSWORD)
+        completely_different_customer_uuid = uuid4()
+        self._setup_request_jwt(enterprise_customer_uuid=completely_different_customer_uuid)
         response = self.api_client.post(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
         mock_task.assert_not_called()
@@ -557,16 +568,7 @@ class LicenseViewSetActionTests(TestCase):
 
         Also verifies that a greeting and closing can be sent.
         """
-        # setUp() makes us use the superuser by default
-        if not use_superuser:
-            _assign_role_via_jwt_or_db(
-                self.api_client,
-                self.user,
-                self.subscription_plan.enterprise_customer_uuid,
-                assign_via_jwt=True
-            )
-            self.api_client.login(username=self.user.username, password=USER_PASSWORD)
-
+        self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
         self._create_available_licenses()
         user_emails = ['bb8@mit.edu', self.test_email]
         greeting = 'hello'
@@ -700,16 +702,7 @@ class LicenseViewSetActionTests(TestCase):
         Verify that the remind endpoint sends an email to the specified user with a pending license.
         Also verifies that a custom greeting and closing can be sent to the endpoint
         """
-        # setUp() makes us use the superuser by default
-        if not use_superuser:
-            _assign_role_via_jwt_or_db(
-                self.api_client,
-                self.user,
-                self.subscription_plan.enterprise_customer_uuid,
-                assign_via_jwt=True
-            )
-            self.api_client.login(username=self.user.username, password=USER_PASSWORD)
-
+        self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
         pending_license = LicenseFactory.create(user_email=self.test_email, status=constants.ASSIGNED)
         self.subscription_plan.licenses.set([pending_license])
 
@@ -794,16 +787,7 @@ class LicenseViewSetActionTests(TestCase):
         """
         Test that revoking a license behaves correctly for different initial license states
         """
-        # setUp() makes us use the superuser by default
-        if not use_superuser:
-            _assign_role_via_jwt_or_db(
-                self.api_client,
-                self.user,
-                self.subscription_plan.enterprise_customer_uuid,
-                assign_via_jwt=True
-            )
-            self.api_client.login(username=self.user.username, password=USER_PASSWORD)
-
+        self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
         original_license = LicenseFactory.create(user_email=self.test_email, status=license_state)
         self.subscription_plan.licenses.set([original_license])
 
@@ -826,7 +810,8 @@ class LicenseViewSetActionTests(TestCase):
         admin roles makes the request, even if they're staff (for good measure).
         """
         self.user.is_staff = user_is_staff
-        self.api_client.login(username=self.user.username, password=USER_PASSWORD)
+        completely_different_customer_uuid = uuid4()
+        self._setup_request_jwt(enterprise_customer_uuid=completely_different_customer_uuid)
         response = self.api_client.post(self.revoke_license_url, {'user_email': 'foo@bar.com'})
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
