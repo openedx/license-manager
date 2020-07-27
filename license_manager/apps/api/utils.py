@@ -27,20 +27,15 @@ def get_subscription_plan_from_enterprise(request):
     )
 
 
-def get_activation_key_from_request(request, email_from_jwt=None):
+def get_activation_key_from_request(request):
     """
     Helper function to get an ``activation_key``, in the form of a UUID4, from a
     request's query params.
 
     Params:
         ``request`` - A DRF Request object.
-        ``email_from_jwt`` (optional, str) - An email that has already been found in the request's JWT.
     Returns: An activation_key UUID.
     """
-    if not email_from_jwt:
-        decoded_jwt = get_decoded_jwt(request)
-        email_from_jwt = get_key_from_jwt(decoded_jwt, 'email')
-
     try:
         return uuid.UUID(request.query_params['activation_key'])
     except KeyError:
@@ -60,6 +55,14 @@ def get_key_from_jwt(decoded_jwt, key):
     return value
 
 
+def get_email_from_request(request):
+    """
+    Helper to get the ``email`` value provided in a request's JWT.
+    """
+    decoded_jwt = get_decoded_jwt(request)
+    return get_key_from_jwt(decoded_jwt, 'email')
+
+
 def get_subscription_plan_by_activation_key(request):
     """
     Helper function to return the active subscription plan associated
@@ -70,15 +73,10 @@ def get_subscription_plan_by_activation_key(request):
         ``request`` - A DRF Request object.
     Returns: A ``SubscriptionPlan`` object.
     """
-    activation_key = get_activation_key_from_request(request)
-
-    decoded_jwt = get_decoded_jwt(request)
-    email_from_jwt = get_key_from_jwt(decoded_jwt, 'email')
-
     user_license = get_object_or_404(
         License,
-        activation_key=activation_key,
-        user_email=email_from_jwt,
+        activation_key=get_activation_key_from_request(request),
+        user_email=get_email_from_request(request),
         subscription_plan__is_active=True,
     )
     return user_license.subscription_plan

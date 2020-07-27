@@ -13,7 +13,6 @@ from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
 from rest_framework import filters, permissions, status, viewsets
-from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -37,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 class SubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
     """ Viewset for read operations on SubscriptionPlans."""
-    authentication_classes = [JwtAuthentication, SessionAuthentication]
+    authentication_classes = [JwtAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     lookup_field = 'uuid'
@@ -83,7 +82,7 @@ class SubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMo
 
 class LicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
     """ Viewset for read operations on Licenses."""
-    authentication_classes = [JwtAuthentication, SessionAuthentication]
+    authentication_classes = [JwtAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     lookup_field = 'uuid'
@@ -440,7 +439,7 @@ class LicenseActivationView(LicenseBaseView):
                  or ``activated``, we do nothing and return a 422 with a message indicating that the license
                  cannot be activated.
         """
-        activation_key_uuid = utils.get_activation_key_from_request(request, email_from_jwt=self.user_email)
+        activation_key_uuid = utils.get_activation_key_from_request(request)
         try:
             user_license = License.objects.get(
                 activation_key=activation_key_uuid,
