@@ -52,19 +52,30 @@ class NestedSimpleRouter(NestedMixin, routers.SimpleRouter):
 
 router = routers.SimpleRouter()
 router.register(
-    prefix=r'subscriptions',
+    prefix=r'learner-subscriptions',
+    viewset=views.LearnerSubscriptionViewSet,
+    basename='learner-subscriptions',
+)
+router.register(
+    prefix=r'(?<!learner-)subscriptions',
     viewset=views.SubscriptionViewSet,
     basename='subscriptions',
 )
 
 subscription_router = NestedSimpleRouter(
     parent_router=router,
-    parent_prefix=r'subscriptions',
+    parent_prefix=r'(?<!learner-)subscriptions',
 )
 subscription_router.register(
     r'licenses',
     views.LicenseViewSet,
     basename='licenses',
+)
+
+subscription_router.register(
+    r'license(?![^\/])',
+    views.LearnerLicenseViewSet,
+    basename='license',
 )
 
 urlpatterns = [
