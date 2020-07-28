@@ -9,13 +9,31 @@
 # linking to it here is good.
 
 celery==3.1.26.post2
+
 Django>=2.2,<2.3
+
 edx-rest-api-client==1.9.2
-inflect<4.0.0                  # Inflect 4.0.0 requires python>=3.6
-mock<4.0.0                     # mock >=4.0.0 drops support for python 3.5
+
+# Inflect 4.0.0 requires python>=3.6
+inflect<4.0.0
+
+# mock >=4.0.0 drops support for python 3.5
+mock<4.0.0
+
+# path 13.2.0 drops support for Python 3.5
+path<13.2.0
+
 PyYAML>=5.1
+
 redis==2.8
-social-auth-core==3.2.0        # Upgrade to 3.3.0 triggered users to lose superuser status; see ARCHBOM-1078 for details
-social-auth-app-django==3.1.0  # social-auth-app-django>=3.2.0 requires social-auth-core>=3.3.0
-stevedore<2.0.0                # stevedore>=2.0.0 requires python>=3.6
+
+# Upgrade to 3.3.0 triggered users to lose superuser status; see ARCHBOM-1078 for details
+social-auth-core==3.2.0
+
+# social-auth-app-django>=3.2.0 requires social-auth-core>=3.3.0
+social-auth-app-django==3.1.0
+
+# stevedore>=2.0.0 requires python>=3.6
+stevedore<2.0.0
+
 zipp<2.0
