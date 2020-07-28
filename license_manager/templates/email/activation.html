@@ -23,6 +23,12 @@
         {% trans "Expiration Date: " %}{{ EXPIRATION_DATE }}
     </p>
     <p>
+        {% trans "You can bookmark the following link to easily access your learning portal in the future." %}
+    </p>
+    <p>
+        <a href="{{ LEARNER_PORTAL_LINK }}">{% trans "Access your learning portal" %}</a>
+    </p>
+    <p>
         {% filter force_escape %}
             {{ TEMPLATE_CLOSING }}
         {% endfilter %}

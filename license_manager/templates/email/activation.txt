@@ -11,6 +11,8 @@
 {% trans "edX Login: " %}{{ USER_EMAIL }}
 {% trans "Expiration Date: " %}{{ EXPIRATION_DATE }}
 
+{% trans "You can bookmark the following link to easily access your learning portal in the future: " %}{{ LEARNER_PORTAL_LINK }}
+
 {{ TEMPLATE_CLOSING }}
 
 {% trans "Unsubscribe: " %}{{ UNSUBSCRIBE_LINK }}
