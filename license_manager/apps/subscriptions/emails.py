@@ -72,6 +72,7 @@ def _send_email_with_activation(
     for email_address in email_recipient_list:
         # Construct user specific context for each message
         context.update({
+            'LEARNER_PORTAL_LINK': _learner_portal_link(enterprise_slug),
             'LICENSE_ACTIVATION_LINK': _generate_license_activation_link(
                 enterprise_slug,
                 email_activation_key_map.get(email_address)
@@ -93,8 +94,20 @@ def _generate_license_activation_link(enterprise_slug, activation_key):
     """
     Returns the activation link displayed in the activation email sent to a learner
     """
-    return settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL + '/' + enterprise_slug + '/licenses/' +\
-        activation_key + '/activate'
+    return '/'.join((
+        _learner_portal_link(enterprise_slug),
+        'licenses',
+        activation_key,
+        'activate'
+    ))
+
+
+def _learner_portal_link(enterprise_slug):
+    """
+    Returns the link to the learner portal, given an enterprise slug.
+    Does not contain a trailing slash.
+    """
+    return settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL + '/' + enterprise_slug
 
 
 def _get_rendered_template_content(template_name, extension, context):
