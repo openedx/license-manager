@@ -238,18 +238,16 @@ class LicenseViewSet(LearnerLicenseViewSet):
             ).format(num_user_emails, num_potential_unassigned_licenses)
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
-        # Make sure none of the provided emails have already been associated with a non-deactivated license in the
-        # subscription.
+        # Find any emails that have already been associated with a non-deactivated license in the subscription
+        #   and remove from user_emails list
         already_associated_licenses = subscription_plan.licenses.filter(
             user_email__in=user_emails,
             status__in=[constants.ASSIGNED, constants.ACTIVATED],
         )
         if already_associated_licenses:
             already_associated_emails = list(already_associated_licenses.values_list('user_email', flat=True))
-            msg = 'The following user emails are already associated with a pending or activated license: {}'.format(
-                already_associated_emails,
-            )
-            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+            for email in already_associated_emails:
+                user_emails.remove(email)
 
         # Flip all deactivated licenses that were associated with emails that we are assigning to unassigned, and clear
         # all the old data on the license.
@@ -283,7 +281,14 @@ class LicenseViewSet(LearnerLicenseViewSet):
             subscription_uuid,
         )
 
-        return Response(status=status.HTTP_200_OK)
+        success_msg = (
+            '{num_already_associated} email addresses were previously assigned. '
+            '{num_successful_assignments} email addresses were successfully added.'
+        ).format(
+            num_successful_assignments=len(user_emails),
+            num_already_associated=len(already_associated_licenses)
+        )
+        return Response(success_msg, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
     def remind(self, request, subscription_uuid=None):
