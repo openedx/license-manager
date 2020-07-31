@@ -183,7 +183,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
         For non-list actions, this is what's returned by `get_queryset()`.
         For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
         """
-        return License.objects.filter(subscription_plan=self._get_subscription_plan()).order_by('-activation_date')
+        return License.objects.filter(subscription_plan=self._get_subscription_plan()).order_by('status', 'user_email')
 
     def _get_custom_text(self, data):
         """
