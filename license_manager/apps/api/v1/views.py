@@ -218,6 +218,18 @@ class LicenseViewSet(LearnerLicenseViewSet):
         user_emails = list(set(request.data.get('user_emails', [])))
 
         subscription_plan = self._get_subscription_plan()
+
+        # Find any emails that have already been associated with a non-deactivated license in the subscription
+        #   and remove from user_emails list
+        already_associated_licenses = subscription_plan.licenses.filter(
+            user_email__in=user_emails,
+            status__in=[constants.ASSIGNED, constants.ACTIVATED],
+        )
+        if already_associated_licenses:
+            already_associated_emails = list(already_associated_licenses.values_list('user_email', flat=True))
+            for email in already_associated_emails:
+                user_emails.remove(email)
+
         # Get the deactivated licenses that are attempting to be assigned to
         deactivated_licenses_for_assignment = subscription_plan.licenses.filter(
             status=constants.DEACTIVATED,
@@ -237,17 +249,6 @@ class LicenseViewSet(LearnerLicenseViewSet):
                 'You attempted to assign {} licenses, but there are only {} potentially available.'
             ).format(num_user_emails, num_potential_unassigned_licenses)
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)
-
-        # Find any emails that have already been associated with a non-deactivated license in the subscription
-        #   and remove from user_emails list
-        already_associated_licenses = subscription_plan.licenses.filter(
-            user_email__in=user_emails,
-            status__in=[constants.ASSIGNED, constants.ACTIVATED],
-        )
-        if already_associated_licenses:
-            already_associated_emails = list(already_associated_licenses.values_list('user_email', flat=True))
-            for email in already_associated_emails:
-                user_emails.remove(email)
 
         # Flip all deactivated licenses that were associated with emails that we are assigning to unassigned, and clear
         # all the old data on the license.
