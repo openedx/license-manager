@@ -220,7 +220,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
         subscription_plan = self._get_subscription_plan()
 
         # Find any emails that have already been associated with a non-deactivated license in the subscription
-        #   and remove from user_emails list
+        # and remove from user_emails list
         already_associated_licenses = subscription_plan.licenses.filter(
             user_email__in=user_emails,
             status__in=[constants.ASSIGNED, constants.ACTIVATED],
