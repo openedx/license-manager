@@ -703,17 +703,17 @@ class LicenseViewSetActionTests(TestCase):
     @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
     def test_assign_already_associated_email(self, mock_activation_task):
         """
-        Verify the assign endpoint returns a 400 if there is already a license associated with a provided email.
+        Verify the assign endpoint returns a 200 if there is already a license associated with a provided email.
 
-        Also checks that the conflict email is listed in the response.
+        Verify the activation data returned in the response is correct and the new email is successfully assigned.
         """
         self._create_available_licenses()
         assigned_license = LicenseFactory.create(user_email=self.test_email, status=constants.ASSIGNED)
         self.subscription_plan.licenses.set([assigned_license])
         response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email, 'unassigned@example.com']})
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert self.test_email in response.data
-        mock_activation_task.assert_not_called()
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['num_successful_assignments'] == 1
+        assert response.data['num_already_associated'] == 1
 
     @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
     @ddt.data(True, False)
