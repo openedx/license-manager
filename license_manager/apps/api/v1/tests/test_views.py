@@ -584,6 +584,8 @@ class LicenseViewSetActionTests(TestCase):
         cls.user = UserFactory()
         cls.super_user = UserFactory(is_staff=True, is_superuser=True)
         cls.test_email = 'test@example.com'
+        cls.greeting = 'Hello'
+        cls.closing = 'Goodbye'
 
         # Routes setup
         cls.subscription_plan = SubscriptionPlanFactory()
@@ -703,17 +705,26 @@ class LicenseViewSetActionTests(TestCase):
     @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
     def test_assign_already_associated_email(self, mock_activation_task):
         """
-        Verify the assign endpoint returns a 400 if there is already a license associated with a provided email.
+        Verify the assign endpoint returns a 200 if there is already a license associated with a provided email.
 
-        Also checks that the conflict email is listed in the response.
+        Verify the activation data returned in the response is correct and the new email is successfully assigned.
         """
         self._create_available_licenses()
         assigned_license = LicenseFactory.create(user_email=self.test_email, status=constants.ASSIGNED)
         self.subscription_plan.licenses.set([assigned_license])
-        response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email, 'unassigned@example.com']})
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert self.test_email in response.data
-        mock_activation_task.assert_not_called()
+        user_emails = [self.test_email, 'unassigned@example.com']
+        response = self.api_client.post(
+            self.assign_url,
+            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['num_successful_assignments'] == 1
+        assert response.data['num_already_associated'] == 1
+        mock_activation_task.assert_called_with(
+            {'greeting': self.greeting, 'closing': self.closing},
+            ['unassigned@example.com'],
+            str(self.subscription_plan.uuid),
+        )
 
     @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
     @ddt.data(True, False)
@@ -726,11 +737,9 @@ class LicenseViewSetActionTests(TestCase):
         self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
         self._create_available_licenses()
         user_emails = ['bb8@mit.edu', self.test_email]
-        greeting = 'hello'
-        closing = 'goodbye'
         response = self.api_client.post(
             self.assign_url,
-            {'greeting': greeting, 'closing': closing, 'user_emails': user_emails},
+            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails},
         )
         assert response.status_code == status.HTTP_200_OK
         self._assert_licenses_assigned(user_emails)
@@ -740,8 +749,8 @@ class LicenseViewSetActionTests(TestCase):
         actual_template_text, actual_emails, actual_subscription_uuid = task_args
         assert ['bb8@mit.edu', self.test_email] == sorted(actual_emails)
         assert str(self.subscription_plan.uuid) == actual_subscription_uuid
-        assert greeting == actual_template_text['greeting']
-        assert closing == actual_template_text['closing']
+        assert self.greeting == actual_template_text['greeting']
+        assert self.closing == actual_template_text['closing']
 
     @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
     def test_assign_dedupe_input(self, mock_activation_task):
@@ -750,16 +759,14 @@ class LicenseViewSetActionTests(TestCase):
         """
         self._create_available_licenses()
         user_emails = [self.test_email, self.test_email]
-        greeting = 'hello'
-        closing = 'goodbye'
         response = self.api_client.post(
             self.assign_url,
-            {'greeting': greeting, 'closing': closing, 'user_emails': user_emails},
+            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails},
         )
         assert response.status_code == status.HTTP_200_OK
         self._assert_licenses_assigned([self.test_email])
         mock_activation_task.assert_called_with(
-            {'greeting': greeting, 'closing': closing},
+            {'greeting': self.greeting, 'closing': self.closing},
             [self.test_email],
             str(self.subscription_plan.uuid),
         )
@@ -861,15 +868,13 @@ class LicenseViewSetActionTests(TestCase):
         pending_license = LicenseFactory.create(user_email=self.test_email, status=constants.ASSIGNED)
         self.subscription_plan.licenses.set([pending_license])
 
-        greeting = 'Hello'
-        closing = 'Goodbye'
         response = self.api_client.post(
             self.remind_url,
-            {'user_email': self.test_email, 'greeting': greeting, 'closing': closing},
+            {'user_email': self.test_email, 'greeting': self.greeting, 'closing': self.closing},
         )
         assert response.status_code == status.HTTP_200_OK
         mock_send_reminder_emails_task.assert_called_with(
-            {'greeting': greeting, 'closing': closing},
+            {'greeting': self.greeting, 'closing': self.closing},
             [self.test_email],
             str(self.subscription_plan.uuid),
         )
@@ -897,14 +902,12 @@ class LicenseViewSetActionTests(TestCase):
         pending_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
         self.subscription_plan.licenses.set(unassigned_licenses + pending_licenses)
 
-        greeting = 'Hello'
-        closing = 'Goodbye'
-        response = self.api_client.post(self.remind_all_url, {'greeting': greeting, 'closing': closing})
+        response = self.api_client.post(self.remind_all_url, {'greeting': self.greeting, 'closing': self.closing})
         assert response.status_code == status.HTTP_200_OK
 
         # Verify emails sent to only the pending licenses
         mock_send_reminder_emails_task.assert_called_with(
-            {'greeting': greeting, 'closing': closing},
+            {'greeting': self.greeting, 'closing': self.closing},
             [license.user_email for license in pending_licenses],
             str(self.subscription_plan.uuid),
         )
@@ -982,11 +985,9 @@ class LicenseViewSetActionTests(TestCase):
 
         self._create_available_licenses()
         user_emails = ['bb8@mit.edu', self.test_email]
-        greeting = 'hello'
-        closing = 'goodbye'
         response = self.api_client.post(
             self.assign_url,
-            {'greeting': greeting, 'closing': closing, 'user_emails': user_emails},
+            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails},
         )
         assert response.status_code == status.HTTP_200_OK
         self._assert_licenses_assigned(user_emails)
@@ -996,8 +997,8 @@ class LicenseViewSetActionTests(TestCase):
         actual_template_text, actual_emails, actual_subscription_uuid = task_args
         assert ['bb8@mit.edu', self.test_email] == sorted(actual_emails)
         assert str(self.subscription_plan.uuid) == actual_subscription_uuid
-        assert greeting == actual_template_text['greeting']
-        assert closing == actual_template_text['closing']
+        assert self.greeting == actual_template_text['greeting']
+        assert self.closing == actual_template_text['closing']
 
     def test_revoke_total_and_allocated_count(self):
         """
