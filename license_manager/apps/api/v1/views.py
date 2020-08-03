@@ -281,14 +281,12 @@ class LicenseViewSet(LearnerLicenseViewSet):
             subscription_uuid,
         )
 
-        success_msg = (
-            '{num_already_associated} email addresses were previously assigned. '
-            '{num_successful_assignments} email addresses were successfully added.'
-        ).format(
-            num_successful_assignments=len(user_emails),
-            num_already_associated=len(already_associated_licenses)
-        )
-        return Response(success_msg, status=status.HTTP_200_OK)
+        # Pass email assignment data back to frontend for display
+        response_data = {
+            'num_successful_assignments': len(user_emails),
+            'num_already_associated': len(already_associated_licenses)
+        }
+        return Response(data=response_data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
     def remind(self, request, subscription_uuid=None):
