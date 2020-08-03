@@ -714,6 +714,7 @@ class LicenseViewSetActionTests(TestCase):
         assert response.status_code == status.HTTP_200_OK
         assert response.data['num_successful_assignments'] == 1
         assert response.data['num_already_associated'] == 1
+        mock_activation_task.assert_called_once()
 
     @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
     @ddt.data(True, False)
