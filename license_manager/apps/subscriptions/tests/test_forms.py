@@ -1,4 +1,3 @@
-from datetime import date, timedelta
 from unittest import TestCase
 
 import ddt
@@ -29,17 +28,4 @@ class TestSubscriptionPlanForm(TestCase):
         Test to check validation conditions for the num_licenses field
         """
         form = make_bound_subscription_form(num_licenses=num_licenses)
-        assert form.is_valid() is is_valid
-
-    @ddt.data(
-        (date.today() - timedelta(days=1), False),  # Validation fails when expiration is before start_date
-        (date.today(), False),                      # Validation fails when expiration_date is start_date
-        (date.today() + timedelta(days=365), True)  # Validation passes when expiration_date is 1 year after start_date
-    )
-    @ddt.unpack
-    def test_expiration_date(self, expiration_date, is_valid):
-        """
-        Test to check validation conditions for the expiration_date field
-        """
-        form = make_bound_subscription_form(expiration_date=expiration_date)
         assert form.is_valid() is is_valid

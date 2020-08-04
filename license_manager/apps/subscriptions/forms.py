@@ -1,8 +1,6 @@
 """
 Forms to be used in the subscriptions django app.
 """
-import datetime as dt
-
 from django import forms
 
 from license_manager.apps.subscriptions.models import SubscriptionPlan
@@ -25,14 +23,6 @@ class SubscriptionPlanForm(forms.ModelForm):
         if self.cleaned_data.get('num_licenses', 0) < self.instance.num_licenses:
             self.add_error('num_licenses', 'Number of Licenses cannot be decreased.')
             return False
-
-        # Ensure the expiration date is at least one year after start date if has been submitted
-        expiration_date = self.cleaned_data.get('expiration_date')
-        start_date = self.cleaned_data.get('start_date')
-        if expiration_date and start_date:
-            if expiration_date < start_date + dt.timedelta(days=365):
-                self.add_error('expiration_date', 'Expiration Date must be at least a year after the Start Date.')
-                return False
 
         return True
 
