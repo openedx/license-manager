@@ -69,3 +69,16 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
         return
 
     License.set_last_remind_date_to_now(pending_licenses)
+
+
+@shared_task(base=LoggedTask)
+def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
+    """
+    Sends revoking the user's enterprise licensed course enrollments asynchronously
+
+    Arguments:
+        user_id (str): The ID of the user who had an enterprise license revoked
+        enterprise_id (str): The ID of the enterprise to revoke course enrollments for
+    """
+    enterprise_api_client = EnterpriseApiClient()
+    enterprise_api_client.revoke_course_enrollments_for_user(user_id=user_id, enterprise_id=enterprise_id)
