@@ -15,6 +15,7 @@ class EnterpriseApiClient(BaseOAuthClient):
     api_base_url = settings.LMS_URL + '/enterprise/api/v1/'
     enterprise_customer_endpoint = api_base_url + 'enterprise-customer/'
     pending_enterprise_learner_endpoint = api_base_url + 'pending-enterprise-learner/'
+    license_revoke_endpoint = api_base_url + 'licensed-enterprise-course-enrollment/license_revoke/'
 
     def get_enterprise_slug(self, enterprise_customer_uuid):
         """
@@ -47,5 +48,29 @@ class EnterpriseApiClient(BaseOAuthClient):
             msg = (
                 'Failed to create a pending enterprise user for enterprise with uuid: {uuid}. '
                 'Response: {response}'.format(uuid=enterprise_customer_uuid, response=response.json())
+            )
+            logger.error(msg)
+
+    def update_course_enrollment_mode_for_user(self, user_id, mode):
+        """
+        Call the enrollment API to update a user's course enrollment to the specified mode, e.g. "audit".
+
+        Args:
+            user_id (int): The user_id for the user
+            mode (str): The string value of the course mode, e.g. "audit"
+
+        Returns:
+            dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
+        """
+        data = {'user_id': user_id, 'mode': mode}
+        response = self.client.post(self.license_revoke_endpoint, json=data)
+        if response.status_code >= 400:
+            msg = (
+                'Failed to update enrollment mode to "{mode}" for user "{user_id}". '
+                'Response: {response}'.format(
+                    mode=mode,
+                    user_id=user_id,
+                    response=response.content,
+                )
             )
             logger.error(msg)

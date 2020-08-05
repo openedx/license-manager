@@ -23,6 +23,8 @@ from license_manager.apps.api.tasks import (
     activation_task,
     send_reminder_email_task,
 )
+from license_manager.apps.api_client.enterprise import EnterpriseApiClient
+from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
     License,
@@ -354,6 +356,14 @@ class LicenseViewSet(LearnerLicenseViewSet):
         user_email = request.data.get('user_email')
         subscription_plan = self._get_subscription_plan()
         try:
+            user = User.objects.get(email=user_email)
+        except ObjectDoesNotExist:
+            msg = 'Could not find a user with the email: {}'.format(
+                user_email,
+            )
+            return Response(msg, status=status.HTTP_404_NOT_FOUND)
+
+        try:
             user_license = subscription_plan.licenses.get(
                 user_email=user_email,
                 status__in=[constants.ACTIVATED, constants.ASSIGNED]
@@ -369,6 +379,14 @@ class LicenseViewSet(LearnerLicenseViewSet):
         user_license.save()
         # Create new license to add to the unassigned license pool
         subscription_plan.increase_num_licenses(1)
+
+        # Change user's licensed enrollments to "audit" mode
+        enterprise_api_client = EnterpriseApiClient()
+        enterprise_api_client.update_course_enrollment_mode_for_user(
+            user_id=user.id,
+            mode=constants.AUDIT_COURSE_MODE,
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
