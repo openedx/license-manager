@@ -1,5 +1,12 @@
+import bleach
 from rest_framework import serializers
 
+from license_manager.apps.email_templates.constants import (
+    EMAIL_TEMPLATE_BODY_MAP,
+    OFFER_ASSIGNMENT_EMAIL_SUBJECT_LIMIT,
+    OFFER_ASSIGNMENT_EMAIL_TEMPLATE_FIELD_LIMIT,
+)
+from license_manager.apps.email_templates.models import EmailTemplate
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 
 
@@ -119,3 +126,57 @@ class CustomTextWithMultipleEmailsSerializer(MultipleEmailsSerializer, CustomTex
     """
     class Meta:
         fields = MultipleEmailsSerializer.Meta.fields + CustomTextSerializer.Meta.fields
+
+
+class EmailTemplateSerializer(serializers.ModelSerializer):
+    enterprise_customer = serializers.UUIDField(read_only=True)
+    email_body = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailTemplate
+        fields = '__all__'
+
+    def validate_email_greeting(self, value):
+        if len(value) > OFFER_ASSIGNMENT_EMAIL_TEMPLATE_FIELD_LIMIT:
+            raise serializers.ValidationError(
+                'Email greeting must be {} characters or less'.format(OFFER_ASSIGNMENT_EMAIL_TEMPLATE_FIELD_LIMIT)
+            )
+        return value
+
+    def validate_email_closing(self, value):
+        if len(value) > OFFER_ASSIGNMENT_EMAIL_TEMPLATE_FIELD_LIMIT:
+            raise serializers.ValidationError(
+                'Email closing must be {} characters or less'.format(OFFER_ASSIGNMENT_EMAIL_TEMPLATE_FIELD_LIMIT)
+            )
+        return value
+
+    def validate_email_subject(self, value):
+        if len(value) > OFFER_ASSIGNMENT_EMAIL_SUBJECT_LIMIT:
+            raise serializers.ValidationError(
+                'Email subject must be {} characters or less'.format(OFFER_ASSIGNMENT_EMAIL_SUBJECT_LIMIT)
+            )
+        return value
+
+    def create(self, validated_data):
+        enterprise_customer = self.context['view'].kwargs.get('enterprise_customer')
+        email_type = validated_data['email_type']
+
+        instance = EmailTemplate.objects.create(
+            name=validated_data['name'],
+            enterprise_customer=enterprise_customer,
+            email_type=email_type,
+            email_subject=bleach.clean(validated_data['email_subject']),
+            email_greeting=bleach.clean(validated_data.get('email_greeting', '')),
+            email_closing=bleach.clean(validated_data.get('email_closing', '')),
+        )
+
+        # deactivate old templates for enterprise for this specific email type
+        EmailTemplate.objects.filter(
+            enterprise_customer=enterprise_customer,
+            email_type=email_type,
+        ).exclude(pk=instance.pk).update(active=False)
+
+        return instance
+
+    def get_email_body(self, obj):
+        return EMAIL_TEMPLATE_BODY_MAP[obj.email_type]

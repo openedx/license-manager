@@ -11,6 +11,7 @@ from django.conf.urls import url
 from rest_framework_nested import routers
 
 from license_manager.apps.api.v1 import views
+from license_manager.apps.subscriptions.constants import UUID_REGEX_PATTERN
 
 
 app_name = 'v1'
@@ -60,6 +61,12 @@ router.register(
     prefix=r'(?<!learner-)subscriptions',
     viewset=views.SubscriptionViewSet,
     basename='subscriptions',
+)
+
+router.register(
+    r'email-template/(?P<enterprise_customer>{})'.format(UUID_REGEX_PATTERN),
+    views.EmailTemplateViewSet,
+    basename='email-templates',
 )
 
 subscription_router = NestedSimpleRouter(

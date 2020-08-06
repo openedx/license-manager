@@ -34,3 +34,5 @@ LICENSE_DISCOUNT_VALUE = 100  # Represents a 100% off value
 
 # Salesforce constants
 SALESFORCE_ID_LENGTH = 18  # The salesforce_opportunity_id must be exactly 18 characters
+
+UUID_REGEX_PATTERN = r'[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?4[0-9a-fA-F]{3}-?[89abAB][0-9a-fA-F]{3}-?[0-9a-fA-F]{12}'

@@ -23,6 +23,7 @@ from rest_framework.test import APIClient
 
 from license_manager.apps.api.utils import localized_utcnow
 from license_manager.apps.core.models import User
+from license_manager.apps.email_templates.models import EmailTemplate
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
     License,
@@ -1442,3 +1443,115 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         assert constants.DEACTIVATED == deactivated_license.status
         assert self.lms_user_id == deactivated_license.lms_user_id
         assert self.NOW == deactivated_license.activation_date
+
+
+class EmailTemplateViewTests(LicenseViewTestMixin, TestCase):
+    """
+    Tests for the email template view.
+    """
+    def setUp(self):
+        """
+        Setup API Client instance and test data.
+        """
+        super().setUp()
+
+        self.data = {
+            'name': 'Test Email Template',
+            'email_type': EmailTemplate.ASSIGN,
+            'email_subject': 'SUBJECT',
+            'email_greeting': 'GREETING',
+            'email_closing': 'CLOSING',
+        }
+
+    def _post_request(self, data):
+        """
+        Helper to make the POST request to the email template endpoint.
+        """
+        url = reverse('api:v1:email-templates-list', kwargs={'enterprise_customer': self.enterprise_customer_uuid})
+        return self.api_client.post(url, data)
+
+    def test_email_template_no_auth(self):
+        """
+        Unauthenticated requests should result in a 401.
+        """
+        # Create a new client with no authentication present.
+        self.api_client = APIClient()
+
+        response = self._post_request(self.data)
+
+        assert status.HTTP_401_UNAUTHORIZED == response.status_code
+
+    def test_email_template_no_jwt_roles(self):
+        """
+        JWT Authenticated requests without the appropriate role should result in a 403.
+        """
+        _assign_role_via_jwt_or_db(
+            self.api_client,
+            self.user,
+            self.enterprise_customer_uuid,
+            assign_via_jwt=True,
+            system_role=None,
+        )
+        response = self._post_request(self.data)
+
+        assert status.HTTP_403_FORBIDDEN == response.status_code
+
+    def test_email_template_auth_no_subscription(self):
+        """
+        Validate that API returns 403 if enterprise customer making the request has no subscription.
+        """
+        _assign_role_via_jwt_or_db(
+            self.api_client,
+            self.user,
+            self.enterprise_customer_uuid,
+            assign_via_jwt=True,
+            jwt_payload_extra={},
+        )
+
+        # Delete the subscription.
+        self.active_subscription_for_customer.delete()
+        response = self._post_request(self.data)
+
+        assert status.HTTP_403_FORBIDDEN == response.status_code
+
+    @mock.patch('license_manager.apps.api.v1.views.logger', return_value=mock.MagicMock())
+    def test_email_template_auth_multiple_subscription(self, mock_logger):
+        """
+        Validate that API returns 403 if enterprise customer making the request has no subscription.
+        """
+        _assign_role_via_jwt_or_db(
+            self.api_client,
+            self.user,
+            self.enterprise_customer_uuid,
+            assign_via_jwt=True,
+            jwt_payload_extra={},
+        )
+
+        # Create another subscription.
+        SubscriptionPlanFactory.create(
+            enterprise_customer_uuid=self.enterprise_customer_uuid,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            is_active=True,
+        )
+        response = self._post_request(self.data)
+
+        assert status.HTTP_403_FORBIDDEN == response.status_code
+        mock_logger.exception.assert_called_once()
+
+    def test_email_template_create(self):
+        """
+        Validate that API creates the record if all data is provided.
+        """
+        _assign_role_via_jwt_or_db(
+            self.api_client,
+            self.user,
+            self.enterprise_customer_uuid,
+            assign_via_jwt=True,
+            jwt_payload_extra={
+                'user_id': self.lms_user_id,
+                'email': self.user.email,
+            },
+        )
+
+        response = self._post_request(self.data)
+        assert status.HTTP_201_CREATED == response.status_code

@@ -8,7 +8,10 @@ from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
-from edx_rbac.mixins import PermissionRequiredForListingMixin
+from edx_rbac.mixins import (
+    PermissionRequiredForListingMixin,
+    PermissionRequiredMixin,
+)
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
@@ -16,6 +19,7 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseStatusFilter
@@ -23,6 +27,7 @@ from license_manager.apps.api.tasks import (
     activation_task,
     send_reminder_email_task,
 )
+from license_manager.apps.email_templates.models import EmailTemplate
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
     License,
@@ -510,3 +515,38 @@ class LicenseActivationView(LicenseBaseView):
             user_license.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class EmailTemplateViewSet(PermissionRequiredMixin, ModelViewSet):
+    """
+    View Set to perform CRUD operations on email templates.
+    """
+    serializer_class = serializers.EmailTemplateSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
+    filter_backends = (DjangoFilterBackend, )
+    filter_fields = ('email_type', 'active')
+
+    http_method_names = ['get', 'head', 'options', 'post', 'put', 'delete']
+
+    def _get_subscription_plan(self):
+        """
+        Helper that returns the subscription plan associated with the given enterprise customer.
+        """
+        enterprise_customer = self.kwargs.get('enterprise_customer')
+
+        try:
+            return SubscriptionPlan.objects.get(enterprise_customer_uuid=enterprise_customer)
+        except SubscriptionPlan.DoesNotExist:
+            return None
+        except SubscriptionPlan.MultipleObjectsReturned:
+            logger.exception('Multiple subscriptions returned for enterprise customer "%s"', enterprise_customer)
+            return None
+
+    def get_permission_object(self):
+        return self._get_subscription_plan()
+
+    def get_queryset(self):
+        return EmailTemplate.objects.filter(
+            enterprise_customer=self.kwargs.get('enterprise_customer')
+        )

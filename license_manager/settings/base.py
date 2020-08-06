@@ -52,6 +52,7 @@ PROJECT_APPS = (
     'license_manager.apps.core',
     'license_manager.apps.api',
     'license_manager.apps.subscriptions',
+    'license_manager.apps.email_templates',
 )
 
 INSTALLED_APPS += THIRD_PARTY_APPS

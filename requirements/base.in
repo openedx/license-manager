@@ -26,3 +26,4 @@ pytz
 redis==2.8
 rules
 zipp
+bleach
