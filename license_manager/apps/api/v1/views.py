@@ -381,7 +381,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
         if original_license_status == constants.ACTIVATED:
             revoke_course_enrollments_for_user_task.delay(
                 user_id=user_license.lms_user_id,
-                enterprise_id=subscription_plan.enterprise_customer_uuid,
+                enterprise_id=str(subscription_plan.enterprise_customer_uuid),
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
