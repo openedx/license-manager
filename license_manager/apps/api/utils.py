@@ -80,3 +80,15 @@ def get_subscription_plan_by_activation_key(request):
         subscription_plan__is_active=True,
     )
     return user_license.subscription_plan
+
+
+def set_last_remind_date_to_now(licenses):
+    """
+    Helper function to bulk set the `last_remind_date` on a group of licenses to now.
+
+    Args:
+        licenses (iterable): The licenses to set the `last_remind_date` on.
+    """
+    for subscription_license in licenses:
+        subscription_license.last_remind_date = localized_utcnow()
+    License.objects.bulk_update(licenses, ['last_remind_date'])
