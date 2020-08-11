@@ -2,6 +2,7 @@ import logging
 from collections import OrderedDict
 from uuid import uuid4
 
+import bleach
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
@@ -192,8 +193,8 @@ class LicenseViewSet(LearnerLicenseViewSet):
         Returns a dictionary with the custom text given in the POST data.
         """
         return {
-            'greeting': data.get('greeting', ''),
-            'closing': data.get('closing', ''),
+            'greeting': bleach.clean(data.get('greeting', '')),
+            'closing': bleach.clean(data.get('closing', '')),
         }
 
     def _validate_data(self, data):
