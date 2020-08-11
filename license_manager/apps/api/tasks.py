@@ -6,7 +6,7 @@ from celery_utils.logged_task import LoggedTask
 from license_manager.apps.api.utils import set_last_remind_date_to_now
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.emails import send_activation_emails
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.models import SubscriptionPlan
 
 
 logger = logging.getLogger(__name__)
