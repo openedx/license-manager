@@ -15,6 +15,7 @@ class EnterpriseApiClient(BaseOAuthClient):
     api_base_url = settings.LMS_URL + '/enterprise/api/v1/'
     enterprise_customer_endpoint = api_base_url + 'enterprise-customer/'
     pending_enterprise_learner_endpoint = api_base_url + 'pending-enterprise-learner/'
+    course_enrollments_revoke_endpoint = api_base_url + 'licensed-enterprise-course-enrollment/license_revoke/'
 
     def get_enterprise_slug(self, enterprise_customer_uuid):
         """
@@ -47,5 +48,29 @@ class EnterpriseApiClient(BaseOAuthClient):
             msg = (
                 'Failed to create a pending enterprise user for enterprise with uuid: {uuid}. '
                 'Response: {response}'.format(uuid=enterprise_customer_uuid, response=response.json())
+            )
+            logger.error(msg)
+
+    def revoke_course_enrollments_for_user(self, user_id, enterprise_id):
+        """
+        Calls the Enterprise API Client to revoke the user's enterprise licensed course enrollments
+
+        Arguments:
+            user_id (str): The ID of the user who had an enterprise license revoked
+            enterprise_id (str): The ID of the enterprise to revoke course enrollments for
+        """
+        data = {
+            'user_id': user_id,
+            'enterprise_id': enterprise_id,
+        }
+        response = self.client.post(self.course_enrollments_revoke_endpoint, json=data)
+        if response.status_code >= 400:
+            msg = (
+                'Failed to revoke course enrollments for user "{user_id}" and enterprise "{enterprise_id}". '
+                'Response: {response}'.format(
+                    user_id=user_id,
+                    enterprise_id=enterprise_id,
+                    response=response.content,
+                )
             )
             logger.error(msg)
