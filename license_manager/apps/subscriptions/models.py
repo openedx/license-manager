@@ -19,6 +19,7 @@ from license_manager.apps.subscriptions.constants import (
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 class SubscriptionPlan(TimeStampedModel):
@@ -266,6 +267,18 @@ class License(TimeStampedModel):
                 subscription_plan_uuid=self.subscription_plan.uuid,
             )
         )
+
+    @staticmethod
+    def set_last_remind_date_to_now(licenses):
+        """
+        Helper function to bulk set the `last_remind_date` on a group of licenses to now.
+
+        Args:
+            licenses (iterable): The licenses to set the `last_remind_date` on.
+        """
+        for subscription_license in licenses:
+            subscription_license.last_remind_date = localized_utcnow()
+        License.objects.bulk_update(licenses, ['last_remind_date'])
 
 
 class SubscriptionsFeatureRole(UserRole):

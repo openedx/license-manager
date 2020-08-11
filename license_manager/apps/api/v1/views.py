@@ -29,6 +29,7 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionsRoleAssignment,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 logger = logging.getLogger(__name__)
@@ -505,7 +506,7 @@ class LicenseActivationView(LicenseBaseView):
 
         if user_license.status == constants.ASSIGNED:
             user_license.status = constants.ACTIVATED
-            user_license.activation_date = utils.localized_utcnow()
+            user_license.activation_date = localized_utcnow()
             user_license.lms_user_id = self.lms_user_id
             user_license.save()
 

@@ -3,7 +3,6 @@ import logging
 from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 
-from license_manager.apps.api.utils import localized_utcnow
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.emails import send_activation_emails
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
@@ -30,6 +29,7 @@ def activation_task(custom_template_text, email_recipient_list, subscription_uui
     enterprise_api_client = EnterpriseApiClient()
     enterprise_slug = enterprise_api_client.get_enterprise_slug(subscription_plan.enterprise_customer_uuid)
     send_activation_emails(custom_template_text, pending_licenses, subscription_plan, enterprise_slug)
+    License.set_last_remind_date_to_now(pending_licenses)
 
     for email_recipient in email_recipient_list:
         enterprise_api_client.create_pending_enterprise_user(
@@ -68,7 +68,4 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
         # Return without updating the last_remind_date for licenses
         return
 
-    # Set last remind date to now for all pending licenses
-    for pending_license in pending_licenses:
-        pending_license.last_remind_date = localized_utcnow()
-    License.objects.bulk_update(pending_licenses, ['last_remind_date'])
+    License.set_last_remind_date_to_now(pending_licenses)

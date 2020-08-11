@@ -50,6 +50,9 @@ class LicenseManagerCeleryTaskTests(TestCase):
                 recipient,
             )
 
+        # Verify the 'last_remind_date' of all licenses have been updated
+        assert_last_remind_date_correct(send_email_args[1], True)
+
     @mock.patch('license_manager.apps.api.tasks.send_activation_emails')
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     def test_send_reminder_email_task(self, mock_enterprise_client, mock_send_emails):

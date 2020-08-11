@@ -21,7 +21,6 @@ from freezegun import freeze_time
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from license_manager.apps.api.utils import localized_utcnow
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
@@ -34,6 +33,7 @@ from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
     UserFactory,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 def _jwt_payload_from_role_context_pairs(user, role_context_pairs):

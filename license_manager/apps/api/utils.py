@@ -1,18 +1,11 @@
 """ Utility functions. """
 import uuid
-from datetime import datetime
 
 from django.shortcuts import get_object_or_404
 from edx_rbac.utils import get_decoded_jwt
-from pytz import UTC
 from rest_framework.exceptions import ParseError
 
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
-
-
-def localized_utcnow():
-    """Helper function to return localized utcnow()."""
-    return UTC.localize(datetime.utcnow())  # pylint: disable=no-value-for-parameter
 
 
 def get_subscription_plan_from_enterprise(request):
