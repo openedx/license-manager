@@ -1,4 +1,5 @@
 import logging
+import uuid
 from collections import OrderedDict
 from uuid import uuid4
 
@@ -14,6 +15,7 @@ from edx_rest_framework_extensions.auth.jwt.authentication import (
 )
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -53,7 +55,13 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
 
     @property
     def requested_enterprise_uuid(self):
-        return self.request.query_params.get('enterprise_customer_uuid')
+        enterprise_customer_uuid = self.request.query_params.get('enterprise_customer_uuid')
+        if not enterprise_customer_uuid:
+            return None
+        try:
+            return uuid.UUID(enterprise_customer_uuid)
+        except ValueError:
+            raise ParseError('{} is not a valid uuid.'.format(enterprise_customer_uuid))
 
     @property
     def requested_subscription_uuid(self):

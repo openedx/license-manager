@@ -328,6 +328,16 @@ def test_subscription_plan_list_superuser_200(api_client, superuser):
 
 
 @pytest.mark.django_db
+def test_subscription_plan_list_bad_enterprise_uuid_400(api_client, superuser):
+    """
+    Verify that th subscription list view returns a 400 error for malformed enterprise customer uuids.
+    """
+    response = _subscriptions_list_request(api_client, superuser, enterprise_customer_uuid='bad')
+    assert status.HTTP_400_BAD_REQUEST == response.status_code
+    assert 'bad is not a valid uuid' in str(response.content)
+
+
+@pytest.mark.django_db
 def test_non_staff_user_learner_subscriptions_endpoint(api_client, non_staff_user):
     """
     Verify that an enterprise learner can view the active subscriptions their enterprise has
