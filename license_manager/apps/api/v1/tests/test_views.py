@@ -330,7 +330,7 @@ def test_subscription_plan_list_superuser_200(api_client, superuser):
 @pytest.mark.django_db
 def test_subscription_plan_list_bad_enterprise_uuid_400(api_client, superuser):
     """
-    Verify that th subscription list view returns a 400 error for malformed enterprise customer uuids.
+    Verify that the subscription list view returns a 400 error for malformed enterprise customer uuids.
     """
     response = _subscriptions_list_request(api_client, superuser, enterprise_customer_uuid='bad')
     assert status.HTTP_400_BAD_REQUEST == response.status_code
