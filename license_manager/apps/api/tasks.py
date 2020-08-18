@@ -29,7 +29,7 @@ def activation_task(custom_template_text, email_recipient_list, subscription_uui
     enterprise_api_client = EnterpriseApiClient()
     enterprise_slug = enterprise_api_client.get_enterprise_slug(subscription_plan.enterprise_customer_uuid)
     send_activation_emails(custom_template_text, pending_licenses, subscription_plan, enterprise_slug)
-    License.set_last_remind_date_to_now(pending_licenses)
+    License.set_date_fields_to_now(pending_licenses, ['last_remind_date', 'assigned_date'])
 
     for email_recipient in email_recipient_list:
         enterprise_api_client.create_pending_enterprise_user(
@@ -68,7 +68,7 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
         # Return without updating the last_remind_date for licenses
         return
 
-    License.set_last_remind_date_to_now(pending_licenses)
+    License.set_date_fields_to_now(pending_licenses, ['last_remind_date'])
 
 
 @shared_task(base=LoggedTask)

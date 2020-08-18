@@ -33,6 +33,9 @@ from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
     UserFactory,
 )
+from license_manager.apps.subscriptions.tests.utils import (
+    assert_date_fields_correct,
+)
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
@@ -792,7 +795,10 @@ class LicenseViewSetActionTests(TestCase):
             lms_user_id=1,
             last_remind_date=localized_utcnow(),
             activation_date=localized_utcnow(),
+            assigned_date=localized_utcnow(),
+            revoked_date=localized_utcnow(),
         )
+        original_activation_key = deactivated_license.activation_key
         self.subscription_plan.licenses.set([deactivated_license])
 
         response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
@@ -804,6 +810,10 @@ class LicenseViewSetActionTests(TestCase):
         assert deactivated_license.lms_user_id is None
         assert deactivated_license.last_remind_date is None
         assert deactivated_license.activation_date is None
+        # Verify the activation key has been switched
+        assert deactivated_license.activation_key is not original_activation_key
+        assert deactivated_license.assigned_date is None
+        assert deactivated_license.revoked_date is None
         mock_activation_task.assert_called_with(
             {'greeting': '', 'closing': ''},
             [self.test_email],
@@ -943,12 +953,42 @@ class LicenseViewSetActionTests(TestCase):
         assert expected_response == actual_response
 
     @ddt.data(
-        {'license_state': constants.ACTIVATED, 'expected_status': status.HTTP_204_NO_CONTENT, 'use_superuser': True},
-        {'license_state': constants.ACTIVATED, 'expected_status': status.HTTP_204_NO_CONTENT, 'use_superuser': False},
-        {'license_state': constants.ASSIGNED, 'expected_status': status.HTTP_204_NO_CONTENT, 'use_superuser': True},
-        {'license_state': constants.ASSIGNED, 'expected_status': status.HTTP_204_NO_CONTENT, 'use_superuser': False},
-        {'license_state': constants.DEACTIVATED, 'expected_status': status.HTTP_404_NOT_FOUND, 'use_superuser': True},
-        {'license_state': constants.DEACTIVATED, 'expected_status': status.HTTP_404_NOT_FOUND, 'use_superuser': False},
+        {
+            'license_state': constants.ACTIVATED,
+            'expected_status': status.HTTP_204_NO_CONTENT,
+            'use_superuser': True,
+            'revoked_date_should_update': True,
+        },
+        {
+            'license_state': constants.ACTIVATED,
+            'expected_status': status.HTTP_204_NO_CONTENT,
+            'use_superuser': False,
+            'revoked_date_should_update': True,
+        },
+        {
+            'license_state': constants.ASSIGNED,
+            'expected_status': status.HTTP_204_NO_CONTENT,
+            'use_superuser': True,
+            'revoked_date_should_update': True,
+        },
+        {
+            'license_state': constants.ASSIGNED,
+            'expected_status': status.HTTP_204_NO_CONTENT,
+            'use_superuser': False,
+            'revoked_date_should_update': True,
+        },
+        {
+            'license_state': constants.DEACTIVATED,
+            'expected_status': status.HTTP_404_NOT_FOUND,
+            'use_superuser': True,
+            'revoked_date_should_update': False,
+        },
+        {
+            'license_state': constants.DEACTIVATED,
+            'expected_status': status.HTTP_404_NOT_FOUND,
+            'use_superuser': False,
+            'revoked_date_should_update': False,
+        },
     )
     @ddt.unpack
     @mock.patch('license_manager.apps.api.v1.views.revoke_course_enrollments_for_user_task.delay')
@@ -957,7 +997,8 @@ class LicenseViewSetActionTests(TestCase):
         mock_revoke_course_enrollments_for_user_task,
         license_state,
         expected_status,
-        use_superuser
+        use_superuser,
+        revoked_date_should_update,
     ):
         """
         Test that revoking a license behaves correctly for different initial license states
@@ -974,6 +1015,9 @@ class LicenseViewSetActionTests(TestCase):
             mock_revoke_course_enrollments_for_user_task.assert_called()
         else:
             mock_revoke_course_enrollments_for_user_task.assert_not_called()
+
+        # Verify the revoked date is updated if the license was deactivated
+        assert_date_fields_correct([deactivated_license], ['revoked_date'], revoked_date_should_update)
 
     def test_revoke_no_license(self):
         """

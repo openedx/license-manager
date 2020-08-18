@@ -9,7 +9,7 @@ from django.test import TestCase
 from license_manager.apps.api import tasks
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.tests.utils import (
-    assert_last_remind_date_correct,
+    assert_date_fields_correct,
     make_test_email_data,
 )
 
@@ -50,8 +50,8 @@ class LicenseManagerCeleryTaskTests(TestCase):
                 recipient,
             )
 
-        # Verify the 'last_remind_date' of all licenses have been updated
-        assert_last_remind_date_correct(send_email_args[1], True)
+        # Verify the 'last_remind_date' and 'assigned_date' of all licenses have been updated
+        assert_date_fields_correct(send_email_args[1], ['last_remind_date', 'assigned_date'], True)
 
     @mock.patch('license_manager.apps.api.tasks.send_activation_emails')
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
@@ -72,7 +72,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
             self.subscription_plan.enterprise_customer_uuid
         )
         # Verify the 'last_remind_date' of all licenses have been updated
-        assert_last_remind_date_correct(send_email_args[1], True)
+        assert_date_fields_correct(send_email_args[1], ['last_remind_date'], True)
 
     @mock.patch('license_manager.apps.api.tasks.send_activation_emails', side_effect=SMTPException)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
@@ -88,7 +88,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
                 str(self.subscription_plan.uuid)
             )
             send_email_args, _ = mock_send_emails.call_args
-            assert_last_remind_date_correct(send_email_args[1], False)
+            assert_date_fields_correct(send_email_args[1], ['last_remind_date'], False)
 
     def _verify_mock_send_email_arguments(self, send_email_args):
         """
