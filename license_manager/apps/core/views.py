@@ -8,6 +8,7 @@ from django.db import DatabaseError, connection, transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.views.generic import View
+from edx_django_utils.monitoring import ignore_transaction
 
 from license_manager.apps.core.constants import Status
 
@@ -33,6 +34,8 @@ def health(_):
         >>> response.content
         '{"overall_status": "OK", "detailed_status": {"database_status": "OK", "lms_status": "OK"}}'
     """
+    # Ignores health check in performance monitoring so as to not artifically inflate our response time metrics
+    ignore_transaction()
 
     try:
         cursor = connection.cursor()

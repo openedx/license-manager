@@ -24,7 +24,7 @@ def get_random_salesforce_id():
                    for _ in range(SALESFORCE_ID_LENGTH))
 
 
-class SubscriptionPlanFactory(factory.DjangoModelFactory):
+class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     """
     Test factory for the `SubscriptionPlan` model.
 
@@ -45,7 +45,7 @@ class SubscriptionPlanFactory(factory.DjangoModelFactory):
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
 
 
-class LicenseFactory(factory.DjangoModelFactory):
+class LicenseFactory(factory.django.DjangoModelFactory):
     """
     Test factory for the `License` model.
 
@@ -60,7 +60,7 @@ class LicenseFactory(factory.DjangoModelFactory):
     subscription_plan = factory.SubFactory(SubscriptionPlanFactory)
 
 
-class UserFactory(factory.DjangoModelFactory):
+class UserFactory(factory.django.DjangoModelFactory):
     """
     Test factory for the `User` model.
     """
