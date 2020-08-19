@@ -82,15 +82,17 @@ def make_test_email_data():
     }
 
 
-def assert_last_remind_date_correct(licenses, should_be_updated):
+def assert_date_fields_correct(licenses, date_field_names, should_be_updated):
     """
-    Helper that verifies that all of the given licenses have had their last_remind_date updated if applicable.
+    Helper that verifies that all of the given licenses have had the given date fields updated if applicable.
 
-    If they should not have been updated, then it checks that last_remind_date is still None.
+    If they should not have been updated, then it checks that the fields given by `date_field_names` is still None.
     """
     for license_obj in licenses:
         license_obj.refresh_from_db()
         if should_be_updated:
-            assert license_obj.last_remind_date.date() == date.today()
+            for field_name in date_field_names:
+                assert getattr(license_obj, field_name).date() == date.today()
         else:
-            assert license_obj.last_remind_date is None
+            for field_name in date_field_names:
+                assert getattr(license_obj, field_name) is None

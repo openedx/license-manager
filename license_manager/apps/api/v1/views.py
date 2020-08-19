@@ -269,9 +269,20 @@ class LicenseViewSet(LearnerLicenseViewSet):
             deactivated_license.last_remind_date = None
             deactivated_license.activation_date = None
             deactivated_license.activation_key = None
+            deactivated_license.assigned_date = None
+            deactivated_license.revoked_date = None
         License.objects.bulk_update(
             deactivated_licenses_for_assignment,
-            ['status', 'user_email', 'lms_user_id', 'last_remind_date', 'activation_date'],
+            [
+                'status',
+                'user_email',
+                'lms_user_id',
+                'last_remind_date',
+                'activation_date',
+                'activation_key',
+                'assigned_date',
+                'revoked_date',
+            ],
         )
 
         # Get a queryset of only the number of licenses we need to assign
@@ -381,6 +392,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
         # Deactivate the license being revoked
         original_license_status = user_license.status
         user_license.status = constants.DEACTIVATED
+        License.set_date_fields_to_now([user_license], ['revoked_date'])
         user_license.save()
         # Create new license to add to the unassigned license pool
         subscription_plan.increase_num_licenses(1)

@@ -214,6 +214,11 @@ class License(TimeStampedModel):
         )
     )
 
+    assigned_date = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
     activation_date = models.DateTimeField(
         blank=True,
         null=True,
@@ -227,6 +232,11 @@ class License(TimeStampedModel):
     )
 
     last_remind_date = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
+    revoked_date = models.DateTimeField(
         blank=True,
         null=True,
     )
@@ -269,16 +279,18 @@ class License(TimeStampedModel):
         )
 
     @staticmethod
-    def set_last_remind_date_to_now(licenses):
+    def set_date_fields_to_now(licenses, date_field_names):
         """
-        Helper function to bulk set the `last_remind_date` on a group of licenses to now.
+        Helper function to bulk set the field given by `date_field_name` on a group of licenses to now.
 
         Args:
-            licenses (iterable): The licenses to set the `last_remind_date` on.
+            licenses (iterable): The licenses to set the field to now on.
+            date_field_name (list of str): The names of the date field to set to now.
         """
         for subscription_license in licenses:
-            subscription_license.last_remind_date = localized_utcnow()
-        License.objects.bulk_update(licenses, ['last_remind_date'])
+            for field_name in date_field_names:
+                setattr(subscription_license, field_name, localized_utcnow())
+        License.objects.bulk_update(licenses, date_field_names)
 
 
 class SubscriptionsFeatureRole(UserRole):
