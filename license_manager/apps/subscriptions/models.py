@@ -278,6 +278,22 @@ class License(TimeStampedModel):
             )
         )
 
+    def reset_to_unassigned(self):
+        """
+        Resets a license to unassigned and clears the previously set fields on it that no longer apply.
+
+        Note that this does NOT save the license. If you want the changes to persist you need to either explicitly save
+        the license after calling this, or use something like bulk_update which saves each object as part of its updates
+        """
+        self.status = UNASSIGNED
+        self.user_email = None
+        self.lms_user_id = None
+        self.last_remind_date = None
+        self.activation_date = None
+        self.activation_key = None
+        self.assigned_date = None
+        self.revoked_date = None
+
     @staticmethod
     def set_date_fields_to_now(licenses, date_field_names):
         """
