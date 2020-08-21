@@ -1,0 +1,158 @@
+from datetime import datetime, timedelta
+
+from django.core.management import call_command
+from django.test import TestCase
+from faker import Factory as FakerFactory
+
+from license_manager.apps.subscriptions.constants import (
+    ACTIVATED,
+    ASSIGNED,
+    DAYS_TO_RETIRE,
+    DEACTIVATED,
+    UNASSIGNED,
+)
+from license_manager.apps.subscriptions.tests.factories import (
+    LicenseFactory,
+    SubscriptionPlanFactory,
+)
+from license_manager.apps.subscriptions.tests.utils import (
+    assert_date_fields_correct,
+    assert_license_fields_cleared,
+)
+
+
+faker = FakerFactory.create()
+
+
+class RetireOldLicensesCommandTests(TestCase):
+    command_name = 'retire_old_licenses'
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        subscription_plan = SubscriptionPlanFactory()
+        day_before_retirement_deadline = datetime.today().date() - timedelta(DAYS_TO_RETIRE + 1)
+        cls.expired_subscription_plan = SubscriptionPlanFactory(expiration_date=day_before_retirement_deadline)
+
+        # Set up a bunch of licenses that should not be retired
+        LicenseFactory.create_batch(3, status=ACTIVATED, subscription_plan=subscription_plan)
+        LicenseFactory.create_batch(4, status=DEACTIVATED, subscription_plan=subscription_plan)
+        LicenseFactory.create_batch(
+            5,
+            status=DEACTIVATED,
+            subscription_plan=subscription_plan,
+            revoked_date=datetime.now(),
+        )
+        LicenseFactory.create_batch(
+            5,
+            status=DEACTIVATED,
+            subscription_plan=subscription_plan,
+            revoked_date=day_before_retirement_deadline,
+            user_email=None,  # The user_email is None to represent already retired licenses
+        )
+        LicenseFactory.create_batch(
+            2,
+            status=ASSIGNED,
+            subscription_plan=subscription_plan,
+            assigned_date=datetime.now(),
+        )
+
+        # Set up licenses that should be retired as either there subscription plan has been expired for long enough
+        # for retirement, or they were assigned/revoked a day before the current date to retire.
+        cls.num_revoked_licenses_to_retire = 6
+        cls.revoked_licenses_ready_for_retirement = LicenseFactory.create_batch(
+            cls.num_revoked_licenses_to_retire,
+            status=DEACTIVATED,
+            subscription_plan=subscription_plan,
+            revoked_date=day_before_retirement_deadline,
+        )
+        for revoked_license in cls.revoked_licenses_ready_for_retirement:
+            revoked_license.lms_user_id = faker.random_int()
+            revoked_license.user_email = faker.email()
+            revoked_license.save()
+
+        cls.num_assigned_licenses_to_retire = 7
+        cls.assigned_licenses_ready_for_retirement = LicenseFactory.create_batch(
+            cls.num_assigned_licenses_to_retire,
+            status=ASSIGNED,
+            subscription_plan=subscription_plan,
+            assigned_date=day_before_retirement_deadline,
+        )
+        for assigned_license in cls.assigned_licenses_ready_for_retirement:
+            assigned_license.lms_user_id = faker.random_int()
+            assigned_license.user_email = faker.email()
+            assigned_license.save()
+
+        # Create licenses of different statuses that should be retired from association with an old expired subscription
+        LicenseFactory.create(
+            status=ACTIVATED,
+            subscription_plan=cls.expired_subscription_plan,
+            lms_user_id=faker.random_int(),
+            user_email=faker.email(),
+        )
+        LicenseFactory.create(
+            status=ASSIGNED,
+            subscription_plan=cls.expired_subscription_plan,
+            lms_user_id=faker.random_int(),
+            user_email=faker.email(),
+        )
+        LicenseFactory.create(
+            status=DEACTIVATED,
+            lms_user_id=faker.random_int(),
+            user_email=faker.email(),
+            subscription_plan=cls.expired_subscription_plan,
+        )
+
+    def _assert_historical_pii_cleared(self, license_obj):
+        for history_record in license_obj.history.all():
+            assert history_record.user_email is None
+            assert history_record.lms_user_id is None
+
+    def test_retire_old_licenses(self):
+        """
+        Verify that the command retires the correct licenses appropriately and logs messages about the retirement.
+        """
+        with self.assertLogs(level='INFO') as log:
+            call_command(self.command_name)
+
+            # Verify all expired licenses that were ready for retirement have been retired correctly
+            expired_licenses = self.expired_subscription_plan.licenses.all()
+            assert_date_fields_correct(expired_licenses, ['revoked_date'], True)
+            for expired_license in expired_licenses:
+                expired_license.refresh_from_db()
+                assert expired_license.user_email is None
+                assert expired_license.lms_user_id is None
+                assert expired_license.status == DEACTIVATED
+                self._assert_historical_pii_cleared(expired_license)
+            message = 'Retired {} expired licenses with uuids: {}'.format(
+                expired_licenses.count(),
+                sorted([expired_license.uuid for expired_license in expired_licenses]),
+            )
+            assert message in log.output[0]
+
+            # Verify all revoked licenses that were ready for retirement have been retired correctly
+            for revoked_license in self.revoked_licenses_ready_for_retirement:
+                revoked_license.refresh_from_db()
+                assert revoked_license.user_email is None
+                assert revoked_license.lms_user_id is None
+                self._assert_historical_pii_cleared(revoked_license)
+            message = 'Retired {} revoked licenses with uuids: {}'.format(
+                self.num_revoked_licenses_to_retire,
+                sorted([revoked_license.uuid for revoked_license in self.revoked_licenses_ready_for_retirement]),
+            )
+            assert message in log.output[1]
+
+            # Verify all assigned licenses that were ready for retirement have been retired correctly
+            for assigned_license in self.assigned_licenses_ready_for_retirement:
+                assigned_license.refresh_from_db()
+                assert_license_fields_cleared(assigned_license)
+                assert assigned_license.user_email is None
+                assert assigned_license.activation_key is None
+                assert assigned_license.status == UNASSIGNED
+                self._assert_historical_pii_cleared(assigned_license)
+            message = 'Retired {} previously assigned licenses with uuids: {}'.format(
+                self.num_assigned_licenses_to_retire,
+                sorted([assigned_license.uuid for assigned_license in self.assigned_licenses_ready_for_retirement]),
+            )
+            assert message in log.output[2]

@@ -96,3 +96,17 @@ def assert_date_fields_correct(licenses, date_field_names, should_be_updated):
         else:
             for field_name in date_field_names:
                 assert getattr(license_obj, field_name) is None
+
+
+def assert_license_fields_cleared(license_obj):
+    """
+    Helper function to verify that the appropriate fields on a license have been cleared out to None.
+
+    Does not check that the `user_email` or `activation_key` is None as some workflows reset these for reassignment.
+    """
+    license_obj.refresh_from_db()
+    assert license_obj.lms_user_id is None
+    assert license_obj.last_remind_date is None
+    assert license_obj.activation_date is None
+    assert license_obj.assigned_date is None
+    assert license_obj.revoked_date is None

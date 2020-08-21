@@ -35,6 +35,7 @@ from license_manager.apps.subscriptions.tests.factories import (
 )
 from license_manager.apps.subscriptions.tests.utils import (
     assert_date_fields_correct,
+    assert_license_fields_cleared,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
@@ -807,13 +808,9 @@ class LicenseViewSetActionTests(TestCase):
         # Verify all the attributes on the formerly deactivated license are correct
         deactivated_license.refresh_from_db()
         self._assert_licenses_assigned([self.test_email])
-        assert deactivated_license.lms_user_id is None
-        assert deactivated_license.last_remind_date is None
-        assert deactivated_license.activation_date is None
+        assert_license_fields_cleared(deactivated_license)
         # Verify the activation key has been switched
         assert deactivated_license.activation_key is not original_activation_key
-        assert deactivated_license.assigned_date is None
-        assert deactivated_license.revoked_date is None
         mock_activation_task.assert_called_with(
             {'greeting': '', 'closing': ''},
             [self.test_email],

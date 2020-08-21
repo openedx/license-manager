@@ -263,14 +263,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
         # Flip all deactivated licenses that were associated with emails that we are assigning to unassigned, and clear
         # all the old data on the license.
         for deactivated_license in deactivated_licenses_for_assignment:
-            deactivated_license.status = constants.UNASSIGNED
-            deactivated_license.user_email = None
-            deactivated_license.lms_user_id = None
-            deactivated_license.last_remind_date = None
-            deactivated_license.activation_date = None
-            deactivated_license.activation_key = None
-            deactivated_license.assigned_date = None
-            deactivated_license.revoked_date = None
+            deactivated_license.reset_to_unassigned()
         License.objects.bulk_update(
             deactivated_licenses_for_assignment,
             [
