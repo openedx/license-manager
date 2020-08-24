@@ -27,7 +27,8 @@ def make_bound_subscription_form(
     netsuite_product_id=faker.random_int(),
     salesforce_opportunity_id=get_random_salesforce_id(),
     num_licenses=0,
-    is_active=False
+    is_active=False,
+    for_internal_use_only=False,
 ):
     """
     Builds a bound SubscriptionPlanForm
@@ -43,6 +44,7 @@ def make_bound_subscription_form(
         'salesforce_opportunity_id': salesforce_opportunity_id,
         'num_licenses': num_licenses,
         'is_active': is_active,
+        'for_internal_use_only': for_internal_use_only,
     }
     return SubscriptionPlanForm(form_data)
 

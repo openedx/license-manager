@@ -37,3 +37,6 @@ SALESFORCE_ID_LENGTH = 18  # The salesforce_opportunity_id must be exactly 18 ch
 
 # User retirements constants
 DAYS_TO_RETIRE = 90
+
+# Subscription validation constants
+MAX_NUM_LICENSES = 1000
