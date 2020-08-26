@@ -15,6 +15,7 @@ from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
     DEACTIVATED,
+    LICENSE_BULK_OPERATION_BATCH_SIZE,
     LICENSE_STATUS_CHOICES,
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
@@ -131,7 +132,7 @@ class SubscriptionPlan(TimeStampedModel):
         Method to increase the number of licenses associated with an instance of SubscriptionPlan by num_new_licenses.
         """
         new_licenses = [License(subscription_plan=self) for _ in range(num_new_licenses)]
-        License.objects.bulk_create(new_licenses)
+        License.objects.bulk_create(new_licenses, batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE)
 
     def contains_content(self, content_ids):
         """
@@ -306,7 +307,7 @@ class License(TimeStampedModel):
         for subscription_license in licenses:
             for field_name in date_field_names:
                 setattr(subscription_license, field_name, localized_utcnow())
-        License.objects.bulk_update(licenses, date_field_names)
+        License.objects.bulk_update(licenses, date_field_names, batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE)
 
 
 class SubscriptionsFeatureRole(UserRole):

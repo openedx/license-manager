@@ -40,3 +40,6 @@ DAYS_TO_RETIRE = 90
 
 # Subscription validation constants
 MAX_NUM_LICENSES = 1000
+
+# SQL bulk operation constants
+LICENSE_BULK_OPERATION_BATCH_SIZE = 100

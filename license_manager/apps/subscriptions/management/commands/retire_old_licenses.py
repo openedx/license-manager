@@ -7,6 +7,7 @@ from license_manager.apps.subscriptions.constants import (
     ASSIGNED,
     DAYS_TO_RETIRE,
     DEACTIVATED,
+    LICENSE_BULK_OPERATION_BATCH_SIZE,
     UNASSIGNED,
 )
 from license_manager.apps.subscriptions.models import License
@@ -46,6 +47,7 @@ class Command(BaseCommand):
         License.objects.bulk_update(
             expired_licenses_for_retirement,
             ['user_email', 'lms_user_id', 'status', 'revoked_date'],
+            batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE,
         )
         expired_license_uuids = sorted([expired_license.uuid for expired_license in expired_licenses_for_retirement])
         message = 'Retired {} expired licenses with uuids: {}'.format(len(expired_license_uuids), expired_license_uuids)
@@ -63,7 +65,11 @@ class Command(BaseCommand):
             revoked_license.user_email = None
             revoked_license.lms_user_id = None
             self._clear_historical_pii(revoked_license)
-        License.objects.bulk_update(revoked_licenses_for_retirement, ['user_email', 'lms_user_id'])
+        License.objects.bulk_update(
+            revoked_licenses_for_retirement,
+            ['user_email', 'lms_user_id'],
+            batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE,
+        )
         revoked_license_uuids = sorted([revoked_license.uuid for revoked_license in revoked_licenses_for_retirement])
         message = 'Retired {} revoked licenses with uuids: {}'.format(len(revoked_license_uuids), revoked_license_uuids)
         logger.info(message)
@@ -90,6 +96,7 @@ class Command(BaseCommand):
                 'assigned_date',
                 'revoked_date',
             ],
+            batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE,
         )
         assigned_license_uuids = sorted(
             [assigned_license.uuid for assigned_license in assigned_licenses_for_retirement],
