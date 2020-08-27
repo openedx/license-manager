@@ -276,6 +276,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
                 'assigned_date',
                 'revoked_date',
             ],
+            batch_size=constants.LICENSE_BULK_OPERATION_BATCH_SIZE,
         )
 
         # Get a queryset of only the number of licenses we need to assign
@@ -287,7 +288,11 @@ class LicenseViewSet(LearnerLicenseViewSet):
             activation_key = str(uuid4())
             unassigned_license.activation_key = activation_key
         # Efficiently update the licenses in bulk
-        License.objects.bulk_update(unassigned_licenses, ['user_email', 'status', 'activation_key'])
+        License.objects.bulk_update(
+            unassigned_licenses,
+            ['user_email', 'status', 'activation_key'],
+            batch_size=constants.LICENSE_BULK_OPERATION_BATCH_SIZE,
+        )
 
         # Send activation emails
         activation_task.delay(
