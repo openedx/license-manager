@@ -14,9 +14,9 @@ from license_manager.apps.api_client.enterprise_catalog import (
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
-    DEACTIVATED,
     LICENSE_BULK_OPERATION_BATCH_SIZE,
     LICENSE_STATUS_CHOICES,
+    REVOKED,
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
 )
@@ -101,25 +101,25 @@ class SubscriptionPlan(TimeStampedModel):
     @property
     def num_licenses(self):
         """
-        Gets the number of licenses associated with the subscription excluding deactivated licenses.
+        Gets the number of licenses associated with the subscription excluding revoked licenses.
 
-        We exclude deactivated licenses from this "total" license count as a new, unassigned license is created
-        whenever a license is deactivated. Excluding deactivated licenses thus makes sure that the total count of
-        licenses remains the same when one is deactivated (and the deactivated one no longer factors into the
+        We exclude revoked licenses from this "total" license count as a new, unassigned license is created
+        whenever a license is revoked. Excluding revoked licenses thus makes sure that the total count of
+        licenses remains the same when one is revoked (and the revoked one no longer factors into the
         allocated) count.
 
         Returns:
             int
         """
-        return self.licenses.exclude(status=DEACTIVATED).count()
+        return self.licenses.exclude(status=REVOKED).count()
 
     @property
     def num_allocated_licenses(self):
         """
         Gets the number of allocated licenses associated with the subscription. A license is defined as allocated if it
-        has either been activated by a user, or assigned to a user. We exclude deactivated licenses from our definition
-        of allocated as we in practice allow allocating more licenses to make up for the deactivated one. This is done
-        by the creation of a new, unassigned license whenever a license is deactivated.
+        has either been activated by a user, or assigned to a user. We exclude revoked licenses from our definition
+        of allocated as we in practice allow allocating more licenses to make up for the revoked one. This is done
+        by the creation of a new, unassigned license whenever a license is revoked.
 
         Returns:
         int: The count of how many licenses that are associated with the subscription plan are
@@ -210,7 +210,7 @@ class License(TimeStampedModel):
             "\nAssigned: A license which has been created and assigned to a learner, but which has not yet been"
             " activated by that learner."
             "\nUnassigned: A license which has been created but does not have a learner assigned to it."
-            "\nDeactivated: A license which has been created but is no longer active (intentionally made inactive or"
+            "\nRevoked: A license which has been created but is no longer active (intentionally revoked or"
             " has expired). A license in this state may or may not have a learner assigned."
         )
     )

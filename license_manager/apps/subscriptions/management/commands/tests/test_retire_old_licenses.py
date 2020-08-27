@@ -8,7 +8,7 @@ from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
     DAYS_TO_RETIRE,
-    DEACTIVATED,
+    REVOKED,
     UNASSIGNED,
 )
 from license_manager.apps.subscriptions.tests.factories import (
@@ -37,16 +37,16 @@ class RetireOldLicensesCommandTests(TestCase):
 
         # Set up a bunch of licenses that should not be retired
         LicenseFactory.create_batch(3, status=ACTIVATED, subscription_plan=subscription_plan)
-        LicenseFactory.create_batch(4, status=DEACTIVATED, subscription_plan=subscription_plan)
+        LicenseFactory.create_batch(4, status=REVOKED, subscription_plan=subscription_plan)
         LicenseFactory.create_batch(
             5,
-            status=DEACTIVATED,
+            status=REVOKED,
             subscription_plan=subscription_plan,
             revoked_date=datetime.now(),
         )
         LicenseFactory.create_batch(
             5,
-            status=DEACTIVATED,
+            status=REVOKED,
             subscription_plan=subscription_plan,
             revoked_date=day_before_retirement_deadline,
             user_email=None,  # The user_email is None to represent already retired licenses
@@ -63,7 +63,7 @@ class RetireOldLicensesCommandTests(TestCase):
         cls.num_revoked_licenses_to_retire = 6
         cls.revoked_licenses_ready_for_retirement = LicenseFactory.create_batch(
             cls.num_revoked_licenses_to_retire,
-            status=DEACTIVATED,
+            status=REVOKED,
             subscription_plan=subscription_plan,
             revoked_date=day_before_retirement_deadline,
         )
@@ -98,7 +98,7 @@ class RetireOldLicensesCommandTests(TestCase):
             user_email=faker.email(),
         )
         LicenseFactory.create(
-            status=DEACTIVATED,
+            status=REVOKED,
             lms_user_id=faker.random_int(),
             user_email=faker.email(),
             subscription_plan=cls.expired_subscription_plan,
@@ -123,7 +123,7 @@ class RetireOldLicensesCommandTests(TestCase):
                 expired_license.refresh_from_db()
                 assert expired_license.user_email is None
                 assert expired_license.lms_user_id is None
-                assert expired_license.status == DEACTIVATED
+                assert expired_license.status == REVOKED
                 self._assert_historical_pii_cleared(expired_license)
             message = 'Retired {} expired licenses with uuids: {}'.format(
                 expired_licenses.count(),
