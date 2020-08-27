@@ -1,21 +1,148 @@
 {% load i18n %}
+
 {% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
+
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}">
+<html lang="{{ LANGUAGE_CODE|default:"en" }}" dir="{{ LANGUAGE_BIDI|yesno:"rtl,ltr" }}">
+
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="initial-scale=1.0">    <!-- So that mobile webkit will display zoomed in -->
     <meta name="format-detection" content="telephone=no"> <!-- disable auto telephone linking in iOS -->
+    <!-- Hack for outlook 2010, which wants to render everything in Times New Roman -->
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;}
+    </style>
+    <![endif]-->
 </head>
-<body style="font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:14px;line-height:150%;margin:auto">
 
-<table border="0" width="100%" height="100%" cellpadding="0" cellspacing="0" style="padding: 5px;">
+<body>
+<div bgcolor="#f5f5f5" style="margin: 0; padding: 0; min-width: 100%;">
+    <!--[if (gte mso 9)|(IE)]>
+    <table role="presentation" width="600" align="center" cellpadding="0" cellspacing="0" border="0">
     <tr>
-        <td align="" valign="top">
-            {% block body %}
-            {% endblock body %}
-        </td>
+    <td>
+    <![endif]-->
+
+    <!-- CONTENT -->
+    <table class="content" role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" bgcolor="#f5f5f5" width="100%" style="
+        font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-size: 1em;
+        line-height: 1.5;
+        max-width: 600px;
+        padding: 0 20px 0 20px;
+    ">
+        <tr>
+            <!-- HEADER -->
+            <td class="header" style="
+                padding: 20px;
+            ">
+                {% block header %}
+                <table role="presentation" width="100%" align="left" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td width="70">
+                            <img src="https://media.sailthru.com/595/1k1/8/o/599f355101b3f.png" width="70" height="30"/>
+                        </td>
+                    </tr>
+                </table>
+                {% endblock %}
+            </td>
+        </tr>
+
+        <tr>
+            <!-- MAIN -->
+            <td class="main" bgcolor="#ffffff" style="
+                padding: 30px 20px;
+                box-shadow: 0 1px 5px rgba(0,0,0,0.25);
+            ">
+                {% block body %}
+                {% endblock body %}
+            </td>
+        </tr>
+
+        <tr>
+            <!-- FOOTER -->
+            <td class="footer" style="padding: 20px;">
+                <table role="presentation" width="100%" align="left" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="padding-bottom: 20px;">
+                            <!-- SOCIAL -->
+                            <table role="presentation" align="{{ LANGUAGE_BIDI|yesno:"right,left" }}" border="0" border="0" cellpadding="0" cellspacing="0" width="210">
+                                <tr>
+                                    {% if SOCIAL_MEDIA_FOOTER_URLS.linkedin %}
+                                        <td height="32" width="42">
+                                            <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.linkedin|safe }}">
+                                                <img src="https://media.sailthru.com/595/1k1/8/o/599f354ec70cb.png"
+                                                     width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}LinkedIn{% endblocktrans %}{% endfilter %}"/>
+                                            </a>
+                                        </td>
+                                    {% endif %}
+                                    {% if SOCIAL_MEDIA_FOOTER_URLS.twitter %}
+                                        <td height="32" width="42">
+                                            <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.twitter|safe }}">
+                                                <img src="https://media.sailthru.com/595/1k1/8/o/599f354d9c26e.png"
+                                                     width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}Twitter{% endblocktrans %}{% endfilter %}"/>
+                                            </a>
+                                        </td>
+                                    {% endif %}
+                                    {% if SOCIAL_MEDIA_FOOTER_URLS.facebook %}
+                                        <td height="32" width="42">
+                                            <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.facebook|safe }}">
+                                                <img src="https://media.sailthru.com/595/1k1/8/o/599f355052c8e.png"
+                                                     width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}Facebook{% endblocktrans %}{% endfilter %}"/>
+                                            </a>
+                                        </td>
+                                    {% endif %}
+                                    {% if SOCIAL_MEDIA_FOOTER_URLS.reddit %}
+                                        <td height="32" width="42">
+                                            <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.reddit|safe }}">
+                                                <img src="https://media.sailthru.com/595/1k1/8/o/599f354e326b9.png"
+                                                     width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}Reddit{% endblocktrans %}{% endfilter %}"/>
+                                            </a>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!-- APP BUTTONS -->
+                        <td style="padding-bottom: 20px;">
+                            {% if MOBILE_STORE_URLS.apple %}
+                                <a href="{{ MOBILE_STORE_URLS.apple|safe }}" style="text-decoration: none">
+                                    <img src="https://media.sailthru.com/595/1k1/6/2/5931cfbba391b.png"
+                                         alt="{% trans "Download the iOS app on the Apple Store" as tmsg %}{{ tmsg | force_escape }}"
+                                         width="136" height="50" style="margin-{{ LANGUAGE_BIDI|yesno:"left,right" }}: 10px"/>
+                                </a>
+                            {% endif %}
+                            {% if MOBILE_STORE_URLS.google %}
+                                <a href="{{ MOBILE_STORE_URLS.google|safe }}" style="text-decoration: none">
+                                    <img src="https://media.sailthru.com/595/1k1/6/2/5931cf879a033.png"
+                                         alt="{% trans "Download the Android app on the Google Play Store" as tmsg %}{{ tmsg | force_escape }}"
+                                         width="136" height="50"/>
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <!-- COPYRIGHT -->
+                        <td>
+                            &copy; {% now "Y" %} edX, {% trans "All rights reserved" as tmsg %}{{ tmsg | force_escape }}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!--[if (gte mso 9)|(IE)]>
+    </td>
     </tr>
-</table>
+    </table>
+    <![endif]-->
+
+</div>
 </body>
 </html>

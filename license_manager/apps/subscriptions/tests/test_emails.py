@@ -32,13 +32,11 @@ class EmailTests(TestCase):
 
         # ...and the HTML
         actual_html = message.alternatives[0][0]
-        expected_learner_portal_anchor = '<a href="{}/mock-enterprise">Access your learning portal</a>'.format(
+        expected_learner_portal_anchor = '<a href="{}/mock-enterprise"'.format(
             settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
         )
         expected_bookmark_paragraph = (
-            '<p>\n        '
-            'You can bookmark the following link to easily access your learning portal in the future.'
-            '\n    </p>'
+            'You can bookmark the following link to easily access your learning portal in the future:'
         )
         self.assertIn(expected_learner_portal_anchor, actual_html)
         self.assertIn(expected_bookmark_paragraph, actual_html)

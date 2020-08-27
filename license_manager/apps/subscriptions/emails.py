@@ -78,6 +78,8 @@ def _send_email_with_activation(
                 email_activation_key_map.get(email_address)
             ),
             'USER_EMAIL': email_address,
+            'SOCIAL_MEDIA_FOOTER_URLS': settings.SOCIAL_MEDIA_FOOTER_URLS,
+            'MOBILE_STORE_URLS': settings.MOBILE_STORE_URLS,
         })
         emails.append(_message_from_context_and_template(
             context,
