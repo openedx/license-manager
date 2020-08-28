@@ -43,21 +43,26 @@ def _later(**timedelta_kwargs):
 
 
 class Cache:
+    class Keys:
+        REQUEST_JWT = '__request_jwt'
+        REGISTERED_USERS = '__registered_users'
+        USER_JWT_TEMPLATE = '__jwt_for_user_{}'
+
     def __init__(self):
         self._data = {}
         self._expiry = {}
 
-    def get(self, key):
+    def get(self, key, default=None):
         value = self._data.get(key)
         if not value:
-            return None
+            return None or default
 
         expiry = self._expiry.get(key)
         if expiry and (_now() > expiry):
             self.evict(key)
-            return None
+            return None or default
 
-        return value
+        return value or default
             
     def set(self, key, value, expiry=None):
         self._data[key] = value
@@ -80,12 +85,30 @@ class Cache:
         instance._expiry = _dict['_expiry']
         return instance
 
+    def current_request_jwt(self):
+        return self.get(self.Keys.REQUEST_JWT)
+
+    def set_current_request_jwt(self, jwt):
+        self.set(self.Keys.REQUEST_JWT, jwt, expiry=_later())
+
+    def registered_usernames(self):
+        return self.get(self.Keys.REGISTERED_USERS, set())
+
+    def add_registered_username(self, username):
+        usernames = self.registered_usernames()
+        usernames.add(username)
+        self.set(self.Keys.REGISTERED_USERS, usernames)
+
+    def set_jwt_for_username(self, username, jwt):
+        key = self.Keys.USER_JWT_TEMPLATE.format(username)
+        self.set(key, jwt, expiry=_later())
+
 
 CACHE = Cache()
 
 def _get_jwt():
-    if CACHE.get('jwt'):
-        return CACHE.get('jwt')
+    if CACHE.current_request_jwt():
+        return CACHE.current_request_jwt()
 
     payload = {
         'client_id': OAUTH2_CLIENT_ID,
@@ -97,9 +120,9 @@ def _get_jwt():
         ACCESS_TOKEN_ENDPOINT,
         data=payload,
     )
-    jwt = response.json().get('access_token')
-    CACHE.set('jwt', jwt, _later(hours=1))
-    return jwt
+    jwt_token = response.json().get('access_token')
+    CACHE.set_current_request_jwt(jwt_token)
+    return jwt_token
 
 
 def _make_request(url, *args, delay_seconds=0.1):
@@ -138,9 +161,37 @@ def _load_cache():
         CACHE = Cache()
 
 
+def register_user(username, name, email, password='password123'):
+    url = LMS_BASE_URL + '/user_api/v2/account/registration/'
+    data = {
+        'email': email,
+        'name': name,
+        'username': username,
+        'password': password,
+        'country': 'US',
+        'honor_code': 'true',
+    }
+    import pdb; pdb.set_trace()
+    response = requests.post(url, data=data)
+    if response.status_code == 200:
+        jwt_header = response.cookies.get('edx-jwt-cookie-header-payload')
+        jwt_signature = response.cookies.get('edx-jwt-cookie-signature')
+        jwt_token = jwt_header + '.' + jwt_signature
+        CACHE.add_registered_username(data['username'])
+        CACHE.set_jwt_for_username(data['username'], jwt_token)
+    return response
+
+
 def main():
     _load_cache()
     _get_jwt()
+
+    register_user(
+        email='alex-test-4@example.com',
+        name='Alex Test 4',
+        username='alex-test-4',
+    )
+
     _dump_cache()
 
 
