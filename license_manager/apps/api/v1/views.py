@@ -3,6 +3,7 @@ import uuid
 from collections import OrderedDict
 from uuid import uuid4
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
@@ -21,6 +22,7 @@ from rest_framework.views import APIView
 
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseStatusFilter
+from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_task,
     revoke_course_enrollments_for_user_task,
@@ -387,7 +389,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
             )
             return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
-        # Deactivate the license being revoked
+        # Revoke the license
         original_license_status = user_license.status
         user_license.status = constants.REVOKED
         License.set_date_fields_to_now([user_license], ['revoked_date'])
@@ -537,5 +539,78 @@ class LicenseActivationView(LicenseBaseView):
             user_license.activation_date = localized_utcnow()
             user_license.lms_user_id = self.lms_user_id
             user_license.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserRetirementView(APIView):
+    """
+    View for retiring users and their license data upon account deletion. Note that User data is deleted.
+    """
+    LMS_USER_ID = 'lms_user_id'
+    ORIGINAL_USERNAME = 'original_username'
+
+    authentication_classes = [JwtAuthentication]
+    permission_classes = [permissions.IsAuthenticated, CanRetireUser]
+
+    def _get_required_field(self, field_name):
+        """
+        Helper to get a required field from the POST data and return a 400 if it can't be found.
+        """
+        field_value = self.request.data.get(field_name)
+        if not field_value:
+            message = 'Required field "{}" missing or missing value in retirement request"'.format(field_name)
+            logger.error('{}. Returning 400 BAD REQUEST'.format(message))
+            raise ParseError(message)
+
+        return field_value
+
+    def post(self, request):
+        """
+        Retires a user and their associated licenses.
+
+        Returns:
+            * 400 Bad Request - if the `lms_user_id` or `original_username` data is missing from the POST request.
+            * 401 Unauthorized - if the requesting user is not authenticated.
+            * 403 Forbidden - if the requesting user does not have retirement permissions.
+            * 404 Not Found - if no User object could be found with a username given by `original_username`. Note that
+                associated licenses may still have been retired even if there was no associated User object. One
+                instance where this can happen is if a user was assigned a license but never activated or used it.
+            * 204 No Content - if the associated licenses and User object are wiped and deleted respectively.
+        """
+        lms_user_id = self._get_required_field(self.LMS_USER_ID)
+        original_username = self._get_required_field(self.ORIGINAL_USERNAME)
+
+        # Scrub all pii on licenses associated with the user
+        associated_licenses = License.objects.filter(lms_user_id=lms_user_id)
+        for associated_license in associated_licenses:
+            # Clear historical pii for all associated licenses
+            associated_license.clear_historical_pii()
+            # Scrub all pii on the revoked licenses, but they should stay revoked and keep their other info as we
+            # currently add an unassigned license to the subscription's license pool whenever one is revoked.
+            if associated_license.status == constants.REVOKED:
+                associated_license.clear_pii()
+            else:
+                # For all other types of licenses, we can just reset them to unassigned (which clears all fields)
+                associated_license.reset_to_unassigned()
+            associated_license.save()
+        associated_licenses_uuids = [license.uuid for license in associated_licenses]
+        message = 'Retired {} licenses with uuids: {} for user with lms_user_id {}'.format(
+            len(associated_licenses_uuids),
+            sorted(associated_licenses_uuids),
+            lms_user_id,
+        )
+        logger.info(message)
+
+        try:
+            User = get_user_model()
+            user = User.objects.get(username=original_username)
+            logger.info('Retiring user with id {} and lms_user_id {}'.format(user.id, lms_user_id))
+            user.delete()
+        except ObjectDoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.exception('500 error retiring user with lms_user_id {}. Error: {}'.format(lms_user_id, exc))
+            return Response('Error retiring user', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
