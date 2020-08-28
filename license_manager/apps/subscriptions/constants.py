@@ -2,12 +2,13 @@
 ACTIVATED = 'activated'
 ASSIGNED = 'assigned'
 UNASSIGNED = 'unassigned'
-DEACTIVATED = 'deactivated'
+REVOKED = 'revoked'
+DEACTIVATED = 'deactivated'  # Deprecated for REVOKED
 LICENSE_STATUS_CHOICES = (
     (ACTIVATED, 'Activated'),
     (ASSIGNED, 'Assigned'),
     (UNASSIGNED, 'Unassigned'),
-    (DEACTIVATED, 'Deactivated'),
+    (REVOKED, 'Revoked'),
 )
 
 # Subject lines used for emails

@@ -493,13 +493,13 @@ def test_license_detail_non_staff_user_with_no_assigned_license_200(api_client, 
 
 
 @pytest.mark.django_db
-def test_license_detail_non_staff_user_with_deactivated_license_200(api_client, non_staff_user):
+def test_license_detail_non_staff_user_with_revoked_license_200(api_client, non_staff_user):
     """
     Verify that a learner can not view their revoked license
     """
     subscription = SubscriptionPlanFactory.create()
     # Assign the non_staff user a revoked license associated with the subscription
-    subscription_license = LicenseFactory.create(status=constants.DEACTIVATED, user_email=non_staff_user.email)
+    subscription_license = LicenseFactory.create(status=constants.REVOKED, user_email=non_staff_user.email)
     subscription.licenses.set([subscription_license])
     _assign_role_via_jwt_or_db(
         api_client,
@@ -705,13 +705,13 @@ class LicenseViewSetActionTests(TestCase):
         mock_activation_task.assert_not_called()
 
     @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
-    def test_assign_insufficient_licenses_deactivated(self, mock_activation_task):
+    def test_assign_insufficient_licenses_revoked(self, mock_activation_task):
         """
-        Verify the endpoint returns a 400 if there are not enough licenses to assign to considering deactivated licenses
+        Verify the endpoint returns a 400 if there are not enough licenses to assign to considering revoked licenses
         """
-        # Create a deactivated license that is not being assigned to
-        deactivated_license = LicenseFactory.create(status=constants.DEACTIVATED, user_email='deactivated@example.com')
-        self.subscription_plan.licenses.set([deactivated_license])
+        # Create a revoked license that is not being assigned to
+        revoked_license = LicenseFactory.create(status=constants.REVOKED, user_email='revoked@example.com')
+        self.subscription_plan.licenses.set([revoked_license])
         response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         mock_activation_task.assert_not_called()
@@ -786,31 +786,31 @@ class LicenseViewSetActionTests(TestCase):
         )
 
     @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
-    def test_assign_to_deactivated_user(self, mock_activation_task):
+    def test_assign_to_revoked_user(self, mock_activation_task):
         """
         Verify that the assign endpoint allows assigning a license to a user who previously had a license revoked.
         """
-        deactivated_license = LicenseFactory.create(
+        revoked_license = LicenseFactory.create(
             user_email=self.test_email,
-            status=constants.DEACTIVATED,
+            status=constants.REVOKED,
             lms_user_id=1,
             last_remind_date=localized_utcnow(),
             activation_date=localized_utcnow(),
             assigned_date=localized_utcnow(),
             revoked_date=localized_utcnow(),
         )
-        original_activation_key = deactivated_license.activation_key
-        self.subscription_plan.licenses.set([deactivated_license])
+        original_activation_key = revoked_license.activation_key
+        self.subscription_plan.licenses.set([revoked_license])
 
         response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
         assert response.status_code == status.HTTP_200_OK
 
-        # Verify all the attributes on the formerly deactivated license are correct
-        deactivated_license.refresh_from_db()
+        # Verify all the attributes on the formerly revoked license are correct
+        revoked_license.refresh_from_db()
         self._assert_licenses_assigned([self.test_email])
-        assert_license_fields_cleared(deactivated_license)
+        assert_license_fields_cleared(revoked_license)
         # Verify the activation key has been switched
-        assert deactivated_license.activation_key is not original_activation_key
+        assert revoked_license.activation_key is not original_activation_key
         mock_activation_task.assert_called_with(
             {'greeting': '', 'closing': ''},
             [self.test_email],
@@ -935,8 +935,8 @@ class LicenseViewSetActionTests(TestCase):
         """
         unassigned_licenses = LicenseFactory.create_batch(5, status=constants.UNASSIGNED)
         pending_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
-        deactivated_licenses = LicenseFactory.create_batch(1, status=constants.DEACTIVATED)
-        self.subscription_plan.licenses.set(unassigned_licenses + pending_licenses + deactivated_licenses)
+        revoked_licenses = LicenseFactory.create_batch(1, status=constants.REVOKED)
+        self.subscription_plan.licenses.set(unassigned_licenses + pending_licenses + revoked_licenses)
 
         response = self.api_client.get(self.license_overview_url)
         assert response.status_code == status.HTTP_200_OK
@@ -944,7 +944,7 @@ class LicenseViewSetActionTests(TestCase):
         expected_response = [
             {'status': constants.UNASSIGNED, 'count': len(unassigned_licenses)},
             {'status': constants.ASSIGNED, 'count': len(pending_licenses)},
-            {'status': constants.DEACTIVATED, 'count': len(deactivated_licenses)},
+            {'status': constants.REVOKED, 'count': len(revoked_licenses)},
         ]
         actual_response = response.data
         assert expected_response == actual_response
@@ -975,13 +975,13 @@ class LicenseViewSetActionTests(TestCase):
             'revoked_date_should_update': True,
         },
         {
-            'license_state': constants.DEACTIVATED,
+            'license_state': constants.REVOKED,
             'expected_status': status.HTTP_404_NOT_FOUND,
             'use_superuser': True,
             'revoked_date_should_update': False,
         },
         {
-            'license_state': constants.DEACTIVATED,
+            'license_state': constants.REVOKED,
             'expected_status': status.HTTP_404_NOT_FOUND,
             'use_superuser': False,
             'revoked_date_should_update': False,
@@ -1006,15 +1006,15 @@ class LicenseViewSetActionTests(TestCase):
 
         response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
         assert response.status_code == expected_status
-        deactivated_license = self.subscription_plan.licenses.get(uuid=original_license.uuid)
-        assert deactivated_license.status == constants.DEACTIVATED
+        revoked_license = self.subscription_plan.licenses.get(uuid=original_license.uuid)
+        assert revoked_license.status == constants.REVOKED
         if license_state == constants.ACTIVATED:
             mock_revoke_course_enrollments_for_user_task.assert_called()
         else:
             mock_revoke_course_enrollments_for_user_task.assert_not_called()
 
-        # Verify the revoked date is updated if the license was deactivated
-        assert_date_fields_correct([deactivated_license], ['revoked_date'], revoked_date_should_update)
+        # Verify the revoked date is updated if the license was revoked
+        assert_date_fields_correct([revoked_license], ['revoked_date'], revoked_date_should_update)
 
     def test_revoke_no_license(self):
         """
@@ -1489,22 +1489,22 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         assert self.lms_user_id == already_activated_license.lms_user_id
         assert self.NOW == already_activated_license.activation_date
 
-    def test_activating_deactivated_license_returns_422(self):
+    def test_activating_revoked_license_returns_422(self):
         self._assign_learner_roles(
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
             }
         )
-        deactivated_license = self._create_license(
-            status=constants.DEACTIVATED,
+        revoked_license = self._create_license(
+            status=constants.REVOKED,
             activation_date=self.NOW,
         )
 
         response = self._post_request(str(self.ACTIVATION_KEY))
 
         assert status.HTTP_422_UNPROCESSABLE_ENTITY == response.status_code
-        deactivated_license.refresh_from_db()
-        assert constants.DEACTIVATED == deactivated_license.status
-        assert self.lms_user_id == deactivated_license.lms_user_id
-        assert self.NOW == deactivated_license.activation_date
+        revoked_license.refresh_from_db()
+        assert constants.REVOKED == revoked_license.status
+        assert self.lms_user_id == revoked_license.lms_user_id
+        assert self.NOW == revoked_license.activation_date

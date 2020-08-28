@@ -6,8 +6,8 @@ from django.core.management.base import BaseCommand
 from license_manager.apps.subscriptions.constants import (
     ASSIGNED,
     DAYS_TO_RETIRE,
-    DEACTIVATED,
     LICENSE_BULK_OPERATION_BATCH_SIZE,
+    REVOKED,
     UNASSIGNED,
 )
 from license_manager.apps.subscriptions.models import License
@@ -41,7 +41,7 @@ class Command(BaseCommand):
         for expired_license in expired_licenses_for_retirement:
             expired_license.user_email = None
             expired_license.lms_user_id = None
-            expired_license.status = DEACTIVATED
+            expired_license.status = REVOKED
             expired_license.revoked_date = datetime.now()
             self._clear_historical_pii(expired_license)
         License.objects.bulk_update(
@@ -54,7 +54,7 @@ class Command(BaseCommand):
         logger.info(message)
 
         revoked_licenses_for_retirement = License.objects.filter(
-            status=DEACTIVATED,
+            status=REVOKED,
             user_email__isnull=False,
             revoked_date__isnull=False,
             revoked_date__date__lt=ready_for_retirement_date,
