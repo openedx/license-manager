@@ -23,6 +23,6 @@ edx-rbac
 edx-rest-api-client
 mysqlclient
 pytz
-redis==2.8
+redis
 rules
 zipp
