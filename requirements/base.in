@@ -16,13 +16,13 @@ django-waffle
 djangorestframework
 drf-nested-routers
 edx-auth-backends
-edx-celeryutils
 edx-django-utils
 edx-drf-extensions
 edx-rbac
 edx-rest-api-client
 mysqlclient
 pytz
-redis==2.8
+redis
 rules
 zipp
+-e git+https://github.com/edx/edx-celeryutils.git@7ec43c5a9f5611b03d9b64b163a5c76165191162#egg=edx-celeryutils==0.5.2   # celery-utils has upgrade celery version and it can break other services
