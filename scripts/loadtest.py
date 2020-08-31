@@ -7,6 +7,7 @@ requirements you must pip install these before using: requests
 from collections import defaultdict
 from datetime import datetime, timedelta
 from multiprocessing import Pool
+from contextlib import contextmanager
 import json
 import os
 from pprint import pprint
@@ -28,7 +29,7 @@ LMS_BASE_URL = os.environ.get('LMS_BASE_URL', 'http://localhost:18000')
 ACCESS_TOKEN_ENDPOINT = LMS_BASE_URL + '/oauth2/access_token/'
 
 # the license-manager root URL, you can change the env var to set this to stage
-LICENSE_MANAGER_BASE_URL = os.environ.get('LICENSE_MANAGER_BASE_URL', 'http://localhost:18734')
+LICENSE_MANAGER_BASE_URL = os.environ.get('LICENSE_MANAGER_BASE_URL', 'http://localhost:18170')
 
 LEARNER_NAME_TEMPLATE = 'Subscription Learner {}'
 LEARNER_USERNAME_TEMPLATE = 'subsc-learner-{}'
@@ -74,6 +75,7 @@ class Cache:
         REQUEST_JWT = '__request_jwt'
         REGISTERED_USERS = '__registered_users'
         USER_JWT_TEMPLATE = '__jwt_for_user_{}'
+        ALL_SUBSCRIPTION_PLANS = '__subscription_plans'
 
     def __init__(self):
         self._data = {}
@@ -118,6 +120,9 @@ class Cache:
     def set_current_request_jwt(self, jwt):
         self.set(self.Keys.REQUEST_JWT, jwt, expiry=_later())
 
+    def clear_current_request_jwt(self):
+        self.evict(self.Keys.REQUEST_JWT)
+
     def registered_users(self):
         return self.get(self.Keys.REGISTERED_USERS, dict())
 
@@ -130,47 +135,20 @@ class Cache:
         key = self.Keys.USER_JWT_TEMPLATE.format(email)
         self.set(key, jwt, expiry=_later())
 
+    def get_jwt_for_email(self, email):
+        key = self.Keys.USER_JWT_TEMPLATE.format(email)
+        return self.get(key)
+
+    def subscription_plans(self):
+        return self.get(self.Keys.ALL_SUBSCRIPTION_PLANS, dict())
+
+    def add_subscription_plan(self, subsc_data):
+        all_plans = self.subscription_plans()
+        all_plans[subsc_data['uuid']] = subsc_data
+        self.set(self.Keys.ALL_SUBSCRIPTION_PLANS, all_plans)
+
 
 CACHE = Cache()
-
-def _get_jwt():
-    if CACHE.current_request_jwt():
-        return CACHE.current_request_jwt()
-
-    payload = {
-        'client_id': OAUTH2_CLIENT_ID,
-        'client_secret': OAUTH2_CLIENT_SECRET,
-        'grant_type': 'client_credentials',
-        'token_type': 'jwt',
-    }
-    response = requests.post(
-        ACCESS_TOKEN_ENDPOINT,
-        data=payload,
-    )
-    jwt_token = response.json().get('access_token')
-    CACHE.set_current_request_jwt(jwt_token)
-    return jwt_token
-
-
-def _make_request(url, *args, delay_seconds=0.1):
-    headers = {
-        "Authorization": "JWT {}".format(_get_jwt),
-    }
-    start = time.time()
-    response = requests.get(
-        url.format(*args),
-        headers=_headers(),
-    )
-    elapsed = time.time() - start
-
-    if response.status_code != 200:
-        print(response.status_code)
-        print(response.content)
-        raise Exception('Got non-200 status_code')
-
-    time.sleep(delay_seconds)
-
-    return response.content, elapsed
 
 
 def _dump_cache():
@@ -190,6 +168,34 @@ def _load_cache():
     # for the sake of convenience, try to get the cached request JWT
     # so that it's evicted if already expired
     CACHE.current_request_jwt()
+
+
+@contextmanager
+def _load_cache_and_dump_when_done():
+    try:
+        _load_cache()
+        yield
+    finally:
+        _dump_cache()
+
+
+def _get_admin_jwt():
+    if CACHE.current_request_jwt():
+        return CACHE.current_request_jwt()
+
+    payload = {
+        'client_id': OAUTH2_CLIENT_ID,
+        'client_secret': OAUTH2_CLIENT_SECRET,
+        'grant_type': 'client_credentials',
+        'token_type': 'jwt',
+    }
+    response = requests.post(
+        ACCESS_TOKEN_ENDPOINT,
+        data=payload,
+    )
+    jwt_token = response.json().get('access_token')
+    CACHE.set_current_request_jwt(jwt_token)
+    return jwt_token
 
 
 def _get_jwt_from_response_and_add_to_cache(response, user_data=None):
@@ -238,20 +244,80 @@ def _login_session(email, password):
     return response, None
 
 
+def _make_request(url, *args, delay_seconds=0.1, jwt=None):
+    """
+    Makes an authenticated request to a given URL,
+    returning the response content and the elapsed time.
+    Will use the admin Authorization token by default.
+    """
+    headers = {
+        "Authorization": "JWT {}".format(jwt or _get_admin_jwt()),
+    }
+    start = time.time()
+    response = requests.get(
+        url.format(*args),
+        headers=headers,
+    )
+    elapsed = time.time() - start
+
+    if response.status_code != 200:
+        print(response.status_code)
+        print(response.content)
+        raise Exception('Got non-200 status_code')
+
+    if delay_seconds:
+        time.sleep(delay_seconds)
+
+    return response, elapsed
+
+
+def fetch_all_subscription_plans(*args, **kwargs):
+    """
+    Fetch data on all subscription plans and cache it.
+    """
+    def _process_results(data):
+        for subscription in data:
+            print('Updating subscription plan {} ({}) in cache.'.format(subscription['uuid'], subscription['title']))
+            CACHE.add_subscription_plan(subscription)
+
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions'
+
+    import pdb; pdb.set_trace()
+    while url:
+        response, _ = _make_request(url, delay_seconds=None)
+        response_data = response.json()
+        _process_results(response_data['results'])
+        url = response_data['next']
+
+
 def main():
-    _load_cache()
+    with _load_cache_and_dump_when_done():
+        # Forces us to always fetch a fresh JWT for the worker/admin user.
+        CACHE.clear_current_request_jwt()
 
-    # Run this to generate 10 new users
-    # register_users(n=10)
+        fetch_all_subscription_plans()
 
-    # Run this to verify that we have retained their data and can log
-    # each of them in.
-    # _login_session('verified@example.com', 'edx')
+
+## Functions to test that things work ##
+
+
+def _test_register():
+    """
+    Run this to generate 10 new users.
+    """
+    register_users(n=10)
+
+
+def _test_login():
+    """
+    Run this to verify that we have retained data when registering users
+    and can log each of them in.
+    """
     for user_email, user_data in CACHE.registered_users().items():
         password = user_data['password']
         _login_session(user_email, password)
 
-    _dump_cache()
+## End all testing functions ###
 
 
 if __name__ == '__main__':
