@@ -1520,7 +1520,6 @@ class UserRetirementViewTests(TestCase):
     """
     Tests for the user retirement view.
     """
-    NOW = localized_utcnow()
 
     def setUp(self):
         super().setUp()

@@ -584,8 +584,6 @@ class UserRetirementView(APIView):
         # Scrub all pii on licenses associated with the user
         associated_licenses = License.objects.filter(lms_user_id=lms_user_id)
         for associated_license in associated_licenses:
-            # Clear historical pii for all associated licenses
-            associated_license.clear_historical_pii()
             # Scrub all pii on the revoked licenses, but they should stay revoked and keep their other info as we
             # currently add an unassigned license to the subscription's license pool whenever one is revoked.
             if associated_license.status == constants.REVOKED:
@@ -594,6 +592,8 @@ class UserRetirementView(APIView):
                 # For all other types of licenses, we can just reset them to unassigned (which clears all fields)
                 associated_license.reset_to_unassigned()
             associated_license.save()
+            # Clear historical pii after removing pii from the license itself
+            associated_license.clear_historical_pii()
         associated_licenses_uuids = [license.uuid for license in associated_licenses]
         message = 'Retired {} licenses with uuids: {} for user with lms_user_id {}'.format(
             len(associated_licenses_uuids),
