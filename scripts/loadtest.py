@@ -244,7 +244,7 @@ def _login_session(email, password):
     return response, None
 
 
-def _make_request(url, *args, delay_seconds=0.1, jwt=None):
+def _make_request(url, delay_seconds=None, jwt=None, request_method=requests.get, **kwargs):
     """
     Makes an authenticated request to a given URL,
     returning the response content and the elapsed time.
@@ -254,9 +254,10 @@ def _make_request(url, *args, delay_seconds=0.1, jwt=None):
         "Authorization": "JWT {}".format(jwt or _get_admin_jwt()),
     }
     start = time.time()
-    response = requests.get(
-        url.format(*args),
+    response = request_method(
+        url,
         headers=headers,
+        **kwargs
     )
     elapsed = time.time() - start
 
@@ -280,14 +281,32 @@ def fetch_all_subscription_plans(*args, **kwargs):
             print('Updating subscription plan {} ({}) in cache.'.format(subscription['uuid'], subscription['title']))
             CACHE.add_subscription_plan(subscription)
 
-    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions'
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/'
 
-    import pdb; pdb.set_trace()
     while url:
-        response, _ = _make_request(url, delay_seconds=None)
+        response, _ = _make_request(url)
         response_data = response.json()
         _process_results(response_data['results'])
         url = response_data['next']
+
+
+def fetch_one_subscription_plan(plan_uuid, user_email=None):
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/'.format(plan_uuid)
+    if not user_email:
+        jwt = _get_admin_jwt()
+    else:
+        jwt = CACHE.get_jwt_for_email(user_email)
+    response = _make_request(url, jwt=jwt)
+    return response.json()
+
+
+def assign_licenses(plan_uuid, user_emails):
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/assign/'.format(plan_uuid)
+    data = {
+        'user_emails': user_emails,
+    }
+    response, elapsed = _make_request(url, data=data, request_method=requests.post)
+    return response.json()
 
 
 def main():
@@ -295,7 +314,7 @@ def main():
         # Forces us to always fetch a fresh JWT for the worker/admin user.
         CACHE.clear_current_request_jwt()
 
-        fetch_all_subscription_plans()
+        _test_assign_licenses()
 
 
 ## Functions to test that things work ##
@@ -316,6 +335,17 @@ def _test_login():
     for user_email, user_data in CACHE.registered_users().items():
         password = user_data['password']
         _login_session(user_email, password)
+
+
+def test_fetch_subscription_plans():
+    fetch_all_subscription_plans()
+
+
+def _test_assign_licenses():
+    plan_uuid = list(CACHE.subscription_plans().keys())[0]
+    user_emails = list(CACHE.registered_users().keys())[:3]
+    import pdb; pdb.set_trace()
+    assign_licenses(plan_uuid, user_emails)
 
 ## End all testing functions ###
 
