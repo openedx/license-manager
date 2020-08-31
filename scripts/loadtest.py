@@ -17,7 +17,6 @@ import uuid
 
 import requests
 
-
 # The local defaults should all "just work" against devstack.
 
 # used to fetch a JWT for the license_manager_worker
@@ -34,7 +33,7 @@ LICENSE_MANAGER_BASE_URL = os.environ.get('LICENSE_MANAGER_BASE_URL', 'http://lo
 LEARNER_NAME_TEMPLATE = 'Subscription Learner {}'
 LEARNER_USERNAME_TEMPLATE = 'subsc-learner-{}'
 LEARNER_EMAIL_TEMPLATE = '{}@example.com'.format(LEARNER_USERNAME_TEMPLATE)
-LEARNER_PASSWORD_TEMPLATE = '{}-password'.format(LEARNER_USERNAME_TEMPLATE)
+LEARNER_PASSWORD_TEMPLATE = 'random-password-{}'
 
 
 def _now():
@@ -54,13 +53,17 @@ def _random_hex_string(a=0, b=1e6):
     return hex(random.randint(a, b)).lstrip('0x')
 
 
+def _random_password(**kwargs):
+    return LEARNER_PASSWORD_TEMPLATE.format(_random_hex_string(**kwargs))
+
+
 def _random_user_data():
     hex_str = _random_hex_string()
-    data = {
-        'email': LEARNER_EMAIL_TEMPALTE.format(hex_str),
+    return {
+        'email': LEARNER_EMAIL_TEMPLATE.format(hex_str),
         'name': LEARNER_NAME_TEMPLATE.format(hex_str),
         'username': LEARNER_USERNAME_TEMPLATE.format(hex_str),
-        'password': LEARNER_PASSWORD_TEMPLATE.format(hex_str),
+        'password': _random_password(),
         'country': 'US',
         'honor_code': 'true',
     }
@@ -203,6 +206,7 @@ def _register_user(**kwargs):
     user_data = _random_user_data()
     response = requests.post(url, data=user_data)
     if response.status_code == 200:
+        print('Successfully created new account for {}'.format(user_data['email']))
         jwt = _get_jwt_from_response_and_add_to_cache(response, user_data)
         return response, jwt
     return response, None
@@ -227,8 +231,8 @@ def _login_session(email, password):
     }
     url = LMS_BASE_URL + '/user_api/v1/account/login_session/'
     response = requests.post(url, headers=request_headers, cookies=request_cookies, data=user_data)
-    import pdb; pdb.set_trace()
     if response.status_code == 200:
+        print('Successfully logged in {}'.format(user_data['email']))
         jwt = _get_jwt_from_response_and_add_to_cache(response, user_data)
         return response, jwt
     return response, None
@@ -236,10 +240,16 @@ def _login_session(email, password):
 
 def main():
     _load_cache()
-    # _get_jwt()
 
-    # register_users()
-    _login_session('verified@example.com', 'edx')
+    # Run this to generate 10 new users
+    # register_users(n=10)
+
+    # Run this to verify that we have retained their data and can log
+    # each of them in.
+    # _login_session('verified@example.com', 'edx')
+    for user_email, user_data in CACHE.registered_users().items():
+        password = user_data['password']
+        _login_session(user_email, password)
 
     _dump_cache()
 
