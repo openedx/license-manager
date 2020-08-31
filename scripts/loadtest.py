@@ -31,6 +31,11 @@ ACCESS_TOKEN_ENDPOINT = LMS_BASE_URL + '/oauth2/access_token/'
 # the license-manager root URL, you can change the env var to set this to stage
 LICENSE_MANAGER_BASE_URL = os.environ.get('LICENSE_MANAGER_BASE_URL', 'http://localhost:18734')
 
+LEARNER_NAME_TEMPLATE = 'Subscription Learner {}'
+LEARNER_USERNAME_TEMPLATE = 'subsc-learner-{}'
+LEARNER_EMAIL_TEMPLATE = '{}@example.com'.format(LEARNER_USERNAME_TEMPLATE)
+LEARNER_PASSWORD_TEMPLATE = '{}-password'.format(LEARNER_USERNAME_TEMPLATE)
+
 
 def _now():
     return datetime.utcnow().timestamp()
@@ -40,6 +45,25 @@ def _later(**timedelta_kwargs):
     defaults = {'hours': 1}
     later = datetime.utcnow() + timedelta(**timedelta_kwargs or defaults)
     return later.timestamp()
+
+
+def _random_hex_string(a=0, b=1e6):
+    """
+    Return a random hex string, default range between 0 and 1 million.
+    """
+    return hex(random.randint(a, b)).lstrip('0x')
+
+
+def _random_user_data():
+    hex_str = _random_hex_string()
+    data = {
+        'email': LEARNER_EMAIL_TEMPALTE.format(hex_str),
+        'name': LEARNER_NAME_TEMPLATE.format(hex_str),
+        'username': LEARNER_USERNAME_TEMPLATE.format(hex_str),
+        'password': LEARNER_PASSWORD_TEMPLATE.format(hex_str),
+        'country': 'US',
+        'honor_code': 'true',
+    }
 
 
 class Cache:
@@ -63,7 +87,7 @@ class Cache:
             return None or default
 
         return value or default
-            
+
     def set(self, key, value, expiry=None):
         self._data[key] = value
         self._expiry[key] = expiry
@@ -91,16 +115,16 @@ class Cache:
     def set_current_request_jwt(self, jwt):
         self.set(self.Keys.REQUEST_JWT, jwt, expiry=_later())
 
-    def registered_usernames(self):
-        return self.get(self.Keys.REGISTERED_USERS, set())
+    def registered_users(self):
+        return self.get(self.Keys.REGISTERED_USERS, dict())
 
-    def add_registered_username(self, username):
-        usernames = self.registered_usernames()
-        usernames.add(username)
-        self.set(self.Keys.REGISTERED_USERS, usernames)
+    def add_registered_user(self, user_data):
+        users = self.registered_users()
+        users[user_data['email']] = user_data
+        self.set(self.Keys.REGISTERED_USERS, users)
 
-    def set_jwt_for_username(self, username, jwt):
-        key = self.Keys.USER_JWT_TEMPLATE.format(username)
+    def set_jwt_for_email(self, email, jwt):
+        key = self.Keys.USER_JWT_TEMPLATE.format(email)
         self.set(key, jwt, expiry=_later())
 
 
@@ -160,37 +184,62 @@ def _load_cache():
     except FileNotFoundError:
         CACHE = Cache()
 
+    # for the sake of convenience, try to get the cached request JWT
+    # so that it's evicted if already expired
+    CACHE.current_request_jwt()
 
-def register_user(username, name, email, password='password123'):
+
+def _get_jwt_from_response_and_add_to_cache(response, user_data=None):
+    jwt_header = response.cookies.get('edx-jwt-cookie-header-payload')
+    jwt_signature = response.cookies.get('edx-jwt-cookie-signature')
+    jwt = jwt_header + '.' + jwt_signature
+    CACHE.add_registered_user(user_data)
+    CACHE.set_jwt_for_email(user_data['email'], jwt)
+    return jwt
+
+
+def _register_user(**kwargs):
     url = LMS_BASE_URL + '/user_api/v2/account/registration/'
-    data = {
-        'email': email,
-        'name': name,
-        'username': username,
-        'password': password,
-        'country': 'US',
-        'honor_code': 'true',
-    }
-    import pdb; pdb.set_trace()
-    response = requests.post(url, data=data)
+    user_data = _random_user_data()
+    response = requests.post(url, data=user_data)
     if response.status_code == 200:
-        jwt_header = response.cookies.get('edx-jwt-cookie-header-payload')
-        jwt_signature = response.cookies.get('edx-jwt-cookie-signature')
-        jwt_token = jwt_header + '.' + jwt_signature
-        CACHE.add_registered_username(data['username'])
-        CACHE.set_jwt_for_username(data['username'], jwt_token)
-    return response
+        jwt = _get_jwt_from_response_and_add_to_cache(response, user_data)
+        return response, jwt
+    return response, None
+
+
+def register_users(n=1):
+    for _ in range(n):
+        _register_user()
+
+
+def _login_session(email, password):
+    request_headers = {
+        'use-jwt-cookie': 'true',
+        'X-CSRFToken': 'b2m2Szrpqk5mcGxdImCL0nvqq7hTJJWIUQvriT6NnphlNVtEGz0xwaB6JfiXkkNj',
+    }
+    request_cookies = {
+        'csrftoken': 'b2m2Szrpqk5mcGxdImCL0nvqq7hTJJWIUQvriT6NnphlNVtEGz0xwaB6JfiXkkNj',
+    }
+    user_data = {
+        'email': email,
+        'password': password,
+    }
+    url = LMS_BASE_URL + '/user_api/v1/account/login_session/'
+    response = requests.post(url, headers=request_headers, cookies=request_cookies, data=user_data)
+    import pdb; pdb.set_trace()
+    if response.status_code == 200:
+        jwt = _get_jwt_from_response_and_add_to_cache(response, user_data)
+        return response, jwt
+    return response, None
 
 
 def main():
     _load_cache()
-    _get_jwt()
+    # _get_jwt()
 
-    register_user(
-        email='alex-test-4@example.com',
-        name='Alex Test 4',
-        username='alex-test-4',
-    )
+    # register_users()
+    _login_session('verified@example.com', 'edx')
 
     _dump_cache()
 
