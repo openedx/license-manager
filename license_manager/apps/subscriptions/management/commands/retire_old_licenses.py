@@ -6,7 +6,6 @@ from django.core.management.base import BaseCommand
 from license_manager.apps.subscriptions.constants import (
     ASSIGNED,
     DAYS_TO_RETIRE,
-    LICENSE_BULK_OPERATION_BATCH_SIZE,
     REVOKED,
     UNASSIGNED,
 )
@@ -36,13 +35,8 @@ class Command(BaseCommand):
             expired_license.clear_pii()
             expired_license.status = REVOKED
             expired_license.revoked_date = datetime.now()
-        License.objects.bulk_update(
-            expired_licenses_for_retirement,
-            ['user_email', 'lms_user_id', 'status', 'revoked_date'],
-            batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE,
-        )
-        # Clear historical pii after removing pii from the license itself
-        for expired_license in expired_licenses_for_retirement:
+            expired_license.save()
+            # Clear historical pii after removing pii from the license itself
             expired_license.clear_historical_pii()
         expired_license_uuids = sorted([expired_license.uuid for expired_license in expired_licenses_for_retirement])
         message = 'Retired {} expired licenses with uuids: {}'.format(len(expired_license_uuids), expired_license_uuids)
@@ -58,13 +52,8 @@ class Command(BaseCommand):
         # add an unassigned license to the subscription's license pool whenever one is revoked.
         for revoked_license in revoked_licenses_for_retirement:
             revoked_license.clear_pii()
-        License.objects.bulk_update(
-            revoked_licenses_for_retirement,
-            ['user_email', 'lms_user_id'],
-            batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE,
-        )
-        # Clear historical pii after removing pii from the license itself
-        for revoked_license in revoked_licenses_for_retirement:
+            revoked_license.save()
+            # Clear historical pii after removing pii from the license itself
             revoked_license.clear_historical_pii()
         revoked_license_uuids = sorted([revoked_license.uuid for revoked_license in revoked_licenses_for_retirement])
         message = 'Retired {} revoked licenses with uuids: {}'.format(len(revoked_license_uuids), revoked_license_uuids)
@@ -79,22 +68,8 @@ class Command(BaseCommand):
         # all data on them.
         for assigned_license in assigned_licenses_for_retirement:
             assigned_license.reset_to_unassigned()
-        License.objects.bulk_update(
-            assigned_licenses_for_retirement,
-            [
-                'status',
-                'user_email',
-                'lms_user_id',
-                'last_remind_date',
-                'activation_date',
-                'activation_key',
-                'assigned_date',
-                'revoked_date',
-            ],
-            batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE,
-        )
-        # Clear historical pii after removing pii from the license itself
-        for assigned_license in assigned_licenses_for_retirement:
+            assigned_license.save()
+            # Clear historical pii after removing pii from the license itself
             assigned_license.clear_historical_pii()
         assigned_license_uuids = sorted(
             [assigned_license.uuid for assigned_license in assigned_licenses_for_retirement],
