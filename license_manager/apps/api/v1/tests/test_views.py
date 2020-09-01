@@ -7,7 +7,10 @@ from uuid import uuid4
 import ddt
 import mock
 import pytest
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.test import TestCase
 from django.urls import reverse
@@ -35,7 +38,9 @@ from license_manager.apps.subscriptions.tests.factories import (
 )
 from license_manager.apps.subscriptions.tests.utils import (
     assert_date_fields_correct,
+    assert_historical_pii_cleared,
     assert_license_fields_cleared,
+    assert_pii_cleared,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
@@ -1508,3 +1513,159 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         assert constants.REVOKED == revoked_license.status
         assert self.lms_user_id == revoked_license.lms_user_id
         assert self.NOW == revoked_license.activation_date
+
+
+@ddt.ddt
+class UserRetirementViewTests(TestCase):
+    """
+    Tests for the user retirement view.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.api_client = APIClient()
+        self.retirement_user = UserFactory(username=settings.RETIREMENT_SERVICE_WORKER_USERNAME)
+        self.api_client.force_authenticate(user=self.retirement_user)
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.lms_user_id = 1
+        cls.original_username = 'edxBob'
+        cls.user_email = 'edxBob@example.com'
+        cls.user_to_retire = UserFactory(username=cls.original_username)
+
+        # Create some licenses associated with the user being retired
+        cls.revoked_license = cls._create_associated_license(constants.REVOKED)
+        cls.assigned_license = cls._create_associated_license(constants.ASSIGNED)
+        cls.activated_license = cls._create_associated_license(constants.ACTIVATED)
+
+    @classmethod
+    def _create_associated_license(cls, status):
+        """
+        Helper to create a license of the given status associated with the user being retired.
+        """
+        return LicenseFactory.create(
+            status=status,
+            lms_user_id=cls.lms_user_id,
+            user_email=cls.user_email,
+        )
+
+    def _post_request(self, lms_user_id, original_username):
+        """
+        Helper to make the POST request to the license activation endpoint.
+
+        Will update the test client's cookies to contain an lms_user_id and email,
+        which can be overridden from those defined in the class ``setUpTestData()``
+        method with the optional params provided here.
+        """
+        data = {
+            'lms_user_id': lms_user_id,
+            'original_username': original_username,
+        }
+        url = reverse('api:v1:user-retirement')
+        return self.api_client.post(url, data)
+
+    def test_retirement_no_auth(self):
+        """
+        Unauthenticated requests should result in a 401.
+        """
+        # Create a new client with no authentication present.
+        self.api_client = APIClient()
+
+        response = self._post_request(self.lms_user_id, self.original_username)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_retirement_missing_permission(self):
+        """
+        Requests from non-superusers that aren't the retirement worker should result in a 403.
+        """
+        user = UserFactory()
+        self.api_client = APIClient()
+        self.api_client.force_authenticate(user=user)
+
+        response = self._post_request(self.lms_user_id, self.original_username)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @ddt.data(
+        {'lms_user_id': None, 'original_username': None},
+        {'lms_user_id': 1, 'original_username': None},
+        {'lms_user_id': None, 'original_username': 'edxBob'},
+    )
+    @ddt.unpack
+    def test_retirement_missing_data(self, lms_user_id, original_username):
+        """
+        Requests that don't provide the lms_user_id or original_username should result in a 400.
+        """
+        response = self._post_request(lms_user_id, original_username)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_retirement_missing_user(self):
+        """
+        The endpoint should 404 if we attempt to retire a user who doesn't exist in license-manager.
+        """
+        response = self._post_request(1000, 'fake-username')
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @mock.patch('license_manager.apps.api.v1.views.get_user_model')
+    def test_retirement_500_error(self, mock_get_user_model):
+        """
+        The endpoint should log an error message if we get an unexpected error retiring the user.
+        """
+        exception_message = 'blah'
+        mock_get_user_model.side_effect = Exception(exception_message)
+        with self.assertLogs(level='ERROR') as log:
+            response = self._post_request(self.lms_user_id, self.original_username)
+            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+            message = '500 error retiring user with lms_user_id {}. Error: {}'.format(
+                self.lms_user_id,
+                exception_message,
+            )
+            assert message in log.output[0]
+
+    def test_retirement(self):
+        """
+        All licenses associated with the user being retired should have pii scrubbed, and the user should be deleted.
+        """
+        # Verify the request succeeds with the correct status and logs the appropriate messages
+        with self.assertLogs(level='INFO') as log:
+            response = self._post_request(self.lms_user_id, self.original_username)
+            assert response.status_code == status.HTTP_204_NO_CONTENT
+
+            license_message = 'Retired 3 licenses with uuids: {} for user with lms_user_id {}'.format(
+                sorted([self.revoked_license.uuid, self.assigned_license.uuid, self.activated_license.uuid]),
+                self.lms_user_id,
+            )
+            assert license_message in log.output[0]
+
+            user_retirement_message = 'Retiring user with id {} and lms_user_id {}'.format(
+                self.user_to_retire.id,
+                self.lms_user_id,
+            )
+            assert user_retirement_message in log.output[1]
+
+        # Verify the revoked license was cleared correctly
+        self.revoked_license.refresh_from_db()
+        assert_pii_cleared(self.revoked_license)
+        assert_historical_pii_cleared(self.revoked_license)
+        assert self.revoked_license.status == constants.REVOKED
+
+        # Verify the assigned & activated licenses were cleared correctly
+        self.assigned_license.refresh_from_db()
+        assert_pii_cleared(self.assigned_license)
+        assert_historical_pii_cleared(self.assigned_license)
+        assert_license_fields_cleared(self.assigned_license)
+        assert self.assigned_license.status == constants.UNASSIGNED
+
+        self.activated_license.refresh_from_db()
+        assert_pii_cleared(self.activated_license)
+        assert_historical_pii_cleared(self.activated_license)
+        assert_license_fields_cleared(self.activated_license)
+        assert self.activated_license.status == constants.UNASSIGNED
+
+        # Verify the user for retirement has been deleted
+        User = get_user_model()
+        with self.assertRaises(ObjectDoesNotExist):
+            User.objects.get(username=self.original_username)

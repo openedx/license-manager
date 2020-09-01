@@ -17,7 +17,9 @@ from license_manager.apps.subscriptions.tests.factories import (
 )
 from license_manager.apps.subscriptions.tests.utils import (
     assert_date_fields_correct,
+    assert_historical_pii_cleared,
     assert_license_fields_cleared,
+    assert_pii_cleared,
 )
 
 
@@ -104,11 +106,6 @@ class RetireOldLicensesCommandTests(TestCase):
             subscription_plan=cls.expired_subscription_plan,
         )
 
-    def _assert_historical_pii_cleared(self, license_obj):
-        for history_record in license_obj.history.all():
-            assert history_record.user_email is None
-            assert history_record.lms_user_id is None
-
     def test_retire_old_licenses(self):
         """
         Verify that the command retires the correct licenses appropriately and logs messages about the retirement.
@@ -121,10 +118,9 @@ class RetireOldLicensesCommandTests(TestCase):
             assert_date_fields_correct(expired_licenses, ['revoked_date'], True)
             for expired_license in expired_licenses:
                 expired_license.refresh_from_db()
-                assert expired_license.user_email is None
-                assert expired_license.lms_user_id is None
+                assert_pii_cleared(expired_license)
                 assert expired_license.status == REVOKED
-                self._assert_historical_pii_cleared(expired_license)
+                assert_historical_pii_cleared(expired_license)
             message = 'Retired {} expired licenses with uuids: {}'.format(
                 expired_licenses.count(),
                 sorted([expired_license.uuid for expired_license in expired_licenses]),
@@ -134,9 +130,8 @@ class RetireOldLicensesCommandTests(TestCase):
             # Verify all revoked licenses that were ready for retirement have been retired correctly
             for revoked_license in self.revoked_licenses_ready_for_retirement:
                 revoked_license.refresh_from_db()
-                assert revoked_license.user_email is None
-                assert revoked_license.lms_user_id is None
-                self._assert_historical_pii_cleared(revoked_license)
+                assert_pii_cleared(revoked_license)
+                assert_historical_pii_cleared(revoked_license)
             message = 'Retired {} revoked licenses with uuids: {}'.format(
                 self.num_revoked_licenses_to_retire,
                 sorted([revoked_license.uuid for revoked_license in self.revoked_licenses_ready_for_retirement]),
@@ -147,10 +142,10 @@ class RetireOldLicensesCommandTests(TestCase):
             for assigned_license in self.assigned_licenses_ready_for_retirement:
                 assigned_license.refresh_from_db()
                 assert_license_fields_cleared(assigned_license)
-                assert assigned_license.user_email is None
+                assert_pii_cleared(assigned_license)
+                assert_historical_pii_cleared(assigned_license)
                 assert assigned_license.activation_key is None
                 assert assigned_license.status == UNASSIGNED
-                self._assert_historical_pii_cleared(assigned_license)
             message = 'Retired {} previously assigned licenses with uuids: {}'.format(
                 self.num_assigned_licenses_to_retire,
                 sorted([assigned_license.uuid for assigned_license in self.assigned_licenses_ready_for_retirement]),

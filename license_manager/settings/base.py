@@ -353,3 +353,6 @@ SYSTEM_TO_FEATURE_ROLE_MAPPING = {
 
 SOCIAL_MEDIA_FOOTER_URLS = os.environ.get('SOCIAL_MEDIA_FOOTER_URLS', '')
 MOBILE_STORE_URLS = os.environ.get('MOBILE_STORE_URLS', '')
+
+# User retirement settings
+RETIREMENT_SERVICE_WORKER_USERNAME = "replace with valid username"

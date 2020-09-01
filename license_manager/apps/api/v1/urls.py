@@ -89,5 +89,10 @@ urlpatterns = [
         views.LicenseActivationView.as_view(),
         name='license-activation',
     ),
+    url(
+        r'retire-user',
+        views.UserRetirementView.as_view(),
+        name='user-retirement',
+    )
 ]
 urlpatterns += router.urls + subscription_router.urls
