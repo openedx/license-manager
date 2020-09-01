@@ -173,12 +173,17 @@ dev.stats: ## Get per-container CPU and memory utilization data.
 	docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 
 docker_build:
-	docker build . -f Dockerfile -t openedx/license-manager
-	docker build . -f Dockerfile -t openedx/license-manager.worker
+	docker build . -f Dockerfile --target app -t openedx/license-manager
+	docker build . -f Dockerfile --target devstack -t openedx/license-manager:latest-devstack
+
+	docker build . -f Dockerfile --target app -t openedx/license-manager.worker
+	docker build . -f Dockerfile --target devstack -t openedx/license-manager.worker:latest-devstack
+
 	docker build . -f Dockerfile --target newrelic -t openedx/license-manager:latest-newrelic
 
 docker_tag: docker_build
 	docker tag openedx/license-manager openedx/license-manager:$$GITHUB_SHA
+	docker tag openedx/license-manager:latest-devstack openedx/license-manager:$$GITHUB_SHA-devstack
 	docker tag openedx/license-manager:latest-newrelic openedx/license-manager:$$GITHUB_SHA-newrelic
 
 docker_auth:
@@ -187,5 +192,7 @@ docker_auth:
 docker_push: docker_tag docker_auth ## push to docker hub
 	docker push 'openedx/license-manager:latest'
 	docker push "openedx/license-manager:$$GITHUB_SHA"
+	docker push 'openedx/license-manager:latest-devstack'
+	docker push "openedx/license-manager:$$GITHUB_SHA-devstack"
 	docker push 'openedx/license-manager:latest-newrelic'
 	docker push "openedx/license-manager:$$GITHUB_SHA-newrelic"

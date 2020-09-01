@@ -23,12 +23,16 @@ MAINTAINER devops@edx.org
 # unzip to unzip a watchman binary archive
 
 # If you add a package here please include a comment above describing what it is used for
-RUN apt-get update && apt-get upgrade -qy && apt-get install language-pack-en locales git python3.5 python3-pip libmysqlclient-dev libssl-dev python3-dev wget unzip -qy && \
-pip3 install --upgrade pip setuptools && \
+RUN apt-get update && \
+apt-get install -y software-properties-common && \
+apt-add-repository -y ppa:deadsnakes/ppa && apt-get update && \
+apt-get upgrade -qy && apt-get install language-pack-en locales git \
+python3.8-dev python3.8-venv libmysqlclient-dev libssl-dev build-essential wget unzip -qy && \
 rm -rf /var/lib/apt/lists/*
 
-RUN ln -s /usr/bin/pip3 /usr/bin/pip
-RUN ln -s /usr/bin/python3 /usr/bin/python
+ENV VIRTUAL_ENV=/edx/app/license-manager/venvs/license-manager
+RUN python3.8 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
@@ -55,9 +59,11 @@ WORKDIR /edx/app/license_manager
 # Copy the requirements explicitly even though we copy everything below
 # this prevents the image cache from busting unless the dependencies have changed.
 COPY requirements/production.txt /edx/app/license_manager/requirements/production.txt
+COPY requirements/pip.txt /edx/app/license_manager/requirements/pip.txt
 
 # Dependencies are installed as root so they cannot be modified by the application user.
-RUN pip3 install -r requirements/production.txt
+RUN pip install -r requirements/pip.txt
+RUN pip install -r requirements/production.txt
 
 RUN mkdir -p /edx/var/log
 
@@ -76,7 +82,15 @@ FROM app as newrelic
 RUN pip install newrelic
 CMD newrelic-admin run-program gunicorn --workers=2 --name license_manager -c /edx/app/license_manager/license_manager/docker_gunicorn_configuration.py --log-file - --max-requests=1000 license_manager.wsgi:application
 
-FROM app as devapp
+
+FROM app as devstack
+USER root
+RUN pip install -r /edx/app/license_manager/requirements/dev.txt
+USER app
+CMD gunicorn --reload --workers=2 --name license_manager -c /edx/app/license_manager/license_manager/docker_gunicorn_configuration.py --log-file - --max-requests=1000 license_manager.wsgi:application
+
+
+FROM app as legacy_devapp
 # Dev ports
 EXPOSE 18170
 EXPOSE 18171
