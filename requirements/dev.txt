@@ -30,7 +30,7 @@ django-dynamic-fixture==3.1.0  # via -r requirements/validation.txt
 django-extensions==2.2.9  # via -r requirements/validation.txt
 django-rest-swagger==2.2.0  # via -r requirements/validation.txt
 django-waffle==0.20.0     # via -r requirements/validation.txt, edx-django-utils, edx-drf-extensions
-django==2.2.15            # via -r requirements/validation.txt, code-annotations, django-cors-headers, django-debug-toolbar, djangorestframework, drf-jwt, edx-auth-backends, edx-django-utils, edx-drf-extensions, edx-i18n-tools, rest-condition
+django==2.2.16            # via -r requirements/validation.txt, code-annotations, django-cors-headers, django-debug-toolbar, djangorestframework, drf-jwt, edx-auth-backends, edx-django-utils, edx-drf-extensions, edx-i18n-tools, rest-condition
 djangorestframework==3.11.0  # via -r requirements/validation.txt, django-rest-swagger, drf-jwt, edx-drf-extensions, rest-condition
 drf-jwt==1.14.0           # via -r requirements/validation.txt, edx-drf-extensions
 edx-auth-backends==3.1.0  # via -r requirements/validation.txt

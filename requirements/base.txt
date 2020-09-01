@@ -17,7 +17,7 @@ django-cors-headers==3.2.1  # via -r requirements/base.in
 django-extensions==2.2.9  # via -r requirements/base.in
 django-rest-swagger==2.2.0  # via -r requirements/base.in
 django-waffle==0.20.0     # via -r requirements/base.in, edx-django-utils, edx-drf-extensions
-django==2.2.15            # via -r requirements/base.in, django-cors-headers, djangorestframework, drf-jwt, edx-auth-backends, edx-django-utils, edx-drf-extensions, rest-condition
+django==2.2.16            # via -r requirements/base.in, django-cors-headers, djangorestframework, drf-jwt, edx-auth-backends, edx-django-utils, edx-drf-extensions, rest-condition
 djangorestframework==3.11.0  # via -r requirements/base.in, django-rest-swagger, drf-jwt, edx-drf-extensions, rest-condition
 drf-jwt==1.14.0           # via edx-drf-extensions
 edx-auth-backends==3.1.0  # via -r requirements/base.in
