@@ -305,8 +305,15 @@ def assign_licenses(plan_uuid, user_emails):
     data = {
         'user_emails': user_emails,
     }
-    response, elapsed = _make_request(url, data=data, request_method=requests.post)
+    # It's important to use json=data here, and not data=data
+    # "Using the json parameter in the request will change the Content-Type in the header to application/json."
+    # https://requests.readthedocs.io/en/master/user/quickstart/#more-complicated-post-requests
+    response, elapsed = _make_request(url, json=data, request_method=requests.post)
     return response.json()
+
+
+def fetch_licenses(plan_uuid, status=None):
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/'.format(plan_uuid)
 
 
 def main():
