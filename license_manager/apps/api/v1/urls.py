@@ -90,7 +90,7 @@ urlpatterns = [
         name='license-activation',
     ),
     url(
-        r'retire-user',
+        r'retire_user',
         views.UserRetirementView.as_view(),
         name='user-retirement',
     )
