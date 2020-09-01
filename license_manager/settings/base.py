@@ -321,6 +321,10 @@ BROKER_URL = '{0}://{1}:{2}@{3}/{4}'.format(
 CELERY_TASK_SOFT_TIME_LIMIT = 240
 CELERY_TASK_TIME_LIMIT = 300
 
+BROKER_TRANSPORT_OPTIONS = {
+    'fanout_patterns': True,
+    'fanout_prefix': True,
+}
 """############################# END CELERY CONFIG ##################################"""
 
 # Email configuration settings
