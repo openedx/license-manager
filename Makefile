@@ -166,6 +166,12 @@ dev.stop: # Stops containers so they can be restarted
 %-attach:
 	docker attach license_manager.$*
 
+app-restart-devserver: ## Kill the license-manager development server. Watcher should restart it.
+	docker-compose exec app bash -c 'kill $$(ps aux | egrep "manage.py ?\w* runserver" | egrep -v "while|grep" | awk "{print \$$2}")'
+
+dev.stats: ## Get per-container CPU and memory utilization data.
+	docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+
 docker_build:
 	docker build . -f Dockerfile -t openedx/license-manager
 	docker build . -f Dockerfile -t openedx/license-manager.worker
