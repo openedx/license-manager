@@ -8,6 +8,32 @@ from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 class LicenseAdmin(admin.ModelAdmin):
     readonly_fields = ['activation_key']
     exclude = ['history']
+    list_display = (
+        'uuid',
+        'status',
+        'assigned_date',
+        'activation_date',
+        'user_email',
+    )
+    ordering = (
+        'assigned_date',
+        'status',
+        'user_email',
+    )
+    sortable_by = (
+        'assigned_date',
+        'status',
+        'user_email',
+    )
+    list_filter = (
+        'status',
+    )
+    search_fields = (
+        'user_email',
+        'subscription_plan__title',
+        'subscription_plan__uuid',
+        'subscription_plan__enterprise_customer_uuid',
+    )
 
 
 @admin.register(SubscriptionPlan)

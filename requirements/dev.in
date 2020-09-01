@@ -10,3 +10,4 @@ diff-cover                # Changeset diff test coverage
 django-debug-toolbar      # For debugging Django
 gunicorn
 inflect
+pywatchman                # More effecient checking for runserver reload trigger events

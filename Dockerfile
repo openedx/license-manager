@@ -18,8 +18,12 @@ MAINTAINER devops@edx.org
 # libmysqlclient-dev; to install header files needed to use native C implementation for
 # MySQL-python for performance gains.
 
+# wget to download a watchman binary archive
+
+# unzip to unzip a watchman binary archive
+
 # If you add a package here please include a comment above describing what it is used for
-RUN apt-get update && apt-get upgrade -qy && apt-get install language-pack-en locales git python3.5 python3-pip libmysqlclient-dev libssl-dev python3-dev -qy && \
+RUN apt-get update && apt-get upgrade -qy && apt-get install language-pack-en locales git python3.5 python3-pip libmysqlclient-dev libssl-dev python3-dev wget unzip -qy && \
 pip3 install --upgrade pip setuptools && \
 rm -rf /var/lib/apt/lists/*
 
@@ -36,6 +40,16 @@ EXPOSE 18170
 EXPOSE 18171
 RUN useradd -m --shell /bin/false app
 
+# Install watchman
+RUN wget https://github.com/facebook/watchman/releases/download/v2020.08.17.00/watchman-v2020.08.17.00-linux.zip
+RUN unzip watchman-v2020.08.17.00-linux.zip
+RUN mkdir -p /usr/local/{bin,lib} /usr/local/var/run/watchman
+RUN cp watchman-v2020.08.17.00-linux/bin/* /usr/local/bin
+RUN cp watchman-v2020.08.17.00-linux/lib/* /usr/local/lib
+RUN chmod 755 /usr/local/bin/watchman
+RUN chmod 2777 /usr/local/var/run/watchman
+
+# Now install license-manager
 WORKDIR /edx/app/license_manager
 
 # Copy the requirements explicitly even though we copy everything below
@@ -57,7 +71,6 @@ CMD gunicorn --workers=2 --name license_manager -c /edx/app/license_manager/lice
 # This line is after the requirements so that changes to the code will not
 # bust the image cache
 COPY . /edx/app/license_manager
-
 
 FROM app as newrelic
 RUN pip install newrelic
