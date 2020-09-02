@@ -44,3 +44,6 @@ MAX_NUM_LICENSES = 1000
 
 # SQL bulk operation constants
 LICENSE_BULK_OPERATION_BATCH_SIZE = 100
+
+# Feature Toggles
+EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API = 'expose_license_activation_key_over_api'

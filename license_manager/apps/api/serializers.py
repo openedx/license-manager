@@ -1,5 +1,9 @@
+from django.conf import settings
 from rest_framework import serializers
 
+from license_manager.apps.subscriptions.constants import (
+    EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API,
+)
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 
 
@@ -43,6 +47,8 @@ class LicenseSerializer(serializers.ModelSerializer):
             'activation_date',
             'last_remind_date',
         ]
+        if settings.FEATURES[EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API]:
+            fields.append('activation_key')
 
 
 class SingleEmailSerializer(serializers.Serializer):  # pylint: disable=abstract-method

@@ -65,6 +65,9 @@ ENTERPRISE_LEARNER_PORTAL_BASE_URL = 'http://localhost:8734'
 ENTERPRISE_CATALOG_URL = 'http://enterprise.catalog.app:18160'
 LMS_URL = 'http://edx.devstack.lms:18000'
 
+# Feature Toggles
+FEATURES[EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API] = True
+
 # Make some loggers less noisy (useful during test failure)
 import logging
 

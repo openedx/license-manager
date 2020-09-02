@@ -4,6 +4,7 @@ from os.path import abspath, dirname, join
 from corsheaders.defaults import default_headers as corsheaders_default_headers
 
 from license_manager.apps.subscriptions.constants import (
+    EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API,
     SUBSCRIPTIONS_ADMIN_ROLE,
     SUBSCRIPTIONS_LEARNER_ROLE,
     SYSTEM_ENTERPRISE_ADMIN_ROLE,
@@ -356,3 +357,8 @@ MOBILE_STORE_URLS = os.environ.get('MOBILE_STORE_URLS', '')
 
 # User retirement settings
 RETIREMENT_SERVICE_WORKER_USERNAME = "replace with valid username"
+
+# Feature Toggles
+FEATURES = {
+    EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API: False,
+}
