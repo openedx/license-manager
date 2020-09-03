@@ -231,6 +231,20 @@ def register_users(n=1):
         _register_user()
 
 
+def _get_learner_jwt(email):
+    jwt = CACHE.get_jwt_for_email(email)
+    if not jwt:
+        password = CACHE.registered_users().get(email, {}).get('password')
+        if not password:
+            print('Cannot get JWT for {}, no password'.format(email))
+            return
+
+        # this will actually put a new JWT in the cache for the given email
+        _login_session(email, password)
+        jwt = CACHE.get_jwt_for_email(email)
+    return jwt
+
+
 def _login_session(email, password):
     request_headers = {
         'use-jwt-cookie': 'true',
@@ -293,13 +307,21 @@ def fetch_all_subscription_plans(*args, **kwargs):
         url = response_data['next']
 
 
-def fetch_one_subscription_plan(plan_uuid, user_email=None):
-    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/'.format(plan_uuid)
+def fetch_one_subscription_plan(plan_uuid, user_email=None, fetch_as_learner=True):
+    import pdb; pdb.set_trace()
+    if fetch_as_learner:
+        subscription_data = CACHE.subscription_plans().get(plan_uuid, {})
+        enterprise_customer_uuid = subscription_data.get('enterprise_customer_uuid')
+        url = LICENSE_MANAGER_BASE_URL + '/api/v1/learner-subscriptions/?enterprise_customer_uuid={}'.format(enterprise_customer_uuid)
+    else:
+        url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/'.format(plan_uuid)
+
     if not user_email:
         jwt = _get_admin_jwt()
     else:
-        jwt = CACHE.get_jwt_for_email(user_email)
-    response = _make_request(url, jwt=jwt)
+        jwt = _get_learner_jwt(user_email)
+
+    response, _ = _make_request(url, jwt=jwt)
     return response.json()
 
 
@@ -378,19 +400,29 @@ def main():
         # Forces us to always fetch a fresh JWT for the worker/admin user.
         CACHE.clear_current_request_jwt()
 
-        # As an admin, assign some licenses to users we have cached data about.
-        _test_assign_licenses(num_to_assign=10)
-
-        # As an admin, list all of the assigned licenses, and then associate
-        # license data with the user to whom the license belongs.
-        fetch_licenses(SUBSCRIPTION_PLAN_UUID, status='assigned')
-
-        # Once we have license activation keys associated with users,
-        # we can make a call for each user with a license to the activation endpoint.
-        _test_activate_licenses()
+        _prereqs()
 
 
 ## Functions to test that things work ##
+
+def _prereqs():
+    # Have subscription plan and set KELLIE_SUBSCRIPTION_PLAN_UUID to its UUID
+    _test_register() # register 10 users and cache their details
+    _test_assign_and_activate_licenses() # assign and activate licenses for all 10
+
+
+def _learner_subscription_requests():
+    pass
+    # TODO
+    # Use this, once for each learner:
+    # fetch_one_subscription_plan(
+    #     SUBSCRIPTION_PLAN_UUID,
+    #     user_email='subsc-learner-3a8e@example.com',
+    # )
+
+    # record the response times
+
+    # get an average of the response times and spit it out.
 
 
 def _test_register():
@@ -424,6 +456,20 @@ def _test_activate_licenses():
     for user_email, user_data in CACHE.registered_users().items():
         if user_data.get('license'):
             activate_license(user_email)
+
+
+def _test_assign_and_activate_licenses():
+    # As an admin, assign some licenses to users we have cached data about.
+    _test_assign_licenses(num_to_assign=10)
+
+    # As an admin, list all of the assigned licenses, and then associate
+    # license data with the user to whom the license belongs.
+    fetch_licenses(SUBSCRIPTION_PLAN_UUID, status='assigned')
+
+    # Once we have license activation keys associated with users,
+    # we can make a call for each user with a license to the activation endpoint.
+    _test_activate_licenses()
+
 
 ## End all testing functions ###
 
