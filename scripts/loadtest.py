@@ -36,6 +36,8 @@ LEARNER_USERNAME_TEMPLATE = 'subsc-learner-{}'
 LEARNER_EMAIL_TEMPLATE = '{}@example.com'.format(LEARNER_USERNAME_TEMPLATE)
 LEARNER_PASSWORD_TEMPLATE = 'random-password-{}'
 
+SUBSCRIPTION_PLAN_UUID = '068e4d94-6d98-40fa-a674-99a1175c64ae'
+
 
 def _now():
     return datetime.utcnow().timestamp()
@@ -128,8 +130,8 @@ class Cache:
 
     def add_registered_user(self, user_data):
         users = self.registered_users()
-        users[user_data['email']] = user_data
-        self.set(self.Keys.REGISTERED_USERS, users)
+        if user_data['email'] not in users:
+            users[user_data['email']] = user_data
 
     def set_jwt_for_email(self, email, jwt):
         key = self.Keys.USER_JWT_TEMPLATE.format(email)
@@ -145,7 +147,13 @@ class Cache:
     def add_subscription_plan(self, subsc_data):
         all_plans = self.subscription_plans()
         all_plans[subsc_data['uuid']] = subsc_data
-        self.set(self.Keys.ALL_SUBSCRIPTION_PLANS, all_plans)
+
+    def set_license_for_email(self, email_address, license_data):
+        users = self.registered_users()
+        if email_address not in users:
+            return
+        user_data = users[email_address]
+        user_data['license'] = license_data
 
 
 CACHE = Cache()
@@ -261,11 +269,6 @@ def _make_request(url, delay_seconds=None, jwt=None, request_method=requests.get
     )
     elapsed = time.time() - start
 
-    if response.status_code != 200:
-        print(response.status_code)
-        print(response.content)
-        raise Exception('Got non-200 status_code')
-
     if delay_seconds:
         time.sleep(delay_seconds)
 
@@ -313,15 +316,78 @@ def assign_licenses(plan_uuid, user_emails):
 
 
 def fetch_licenses(plan_uuid, status=None):
-    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/'.format(plan_uuid)
+    """
+    Fetch all licenses for a given subscription plan.  Optionally filter by a license status.
+    Will associate licenses with cached users as appropriate.
+    """
+    def _process_results(data):
+        for license_data in data:
+            user_email = license_data.pop('user_email')
+            if user_email:
+                CACHE.set_license_for_email(user_email, license_data)
 
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/'.format(plan_uuid)
+    if status:
+        url += '?status={}'.format(status)
+
+    while url:
+        response, _ = _make_request(url)
+        response_data = response.json()
+        _process_results(response_data['results'])
+        url = response_data['next']
+
+
+def activate_license(user_email):
+    user_data = CACHE.registered_users().get(user_email)
+    if not user_data:
+        print('No user record for {}'.format(user_email))
+
+    license_data = user_data.get('license')
+    if not license_data:
+        print('No license data for user {}'.format(user_email))
+        return
+
+    if license_data.get('status') == 'activated':
+        print('License for user {} already activated'.format(user_email))
+        return
+
+    activation_key = license_data.get('activation_key')
+    if not activation_key:
+        print('No activation_key for licensed-user {}'.format(user_email))
+        return
+
+    # get a new JWT for the user, this is important because
+    # the activation endpoint matches the JWT email against the assigned license
+    _login_session(user_email, user_data['password'])
+
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/license-activation?activation_key={}'.format(activation_key)
+    response, _ = _make_request(
+        url,
+        request_method=requests.post,
+        jwt=CACHE.get_jwt_for_email(user_email),
+    )
+    if response.status_code >= 400:
+        print('Error activating license: {}'.format(response))
+    else:
+        license_data['status'] = 'activated'
+        print('License successfully activated for {}'.format(user_email))
+    return response
 
 def main():
     with _load_cache_and_dump_when_done():
         # Forces us to always fetch a fresh JWT for the worker/admin user.
         CACHE.clear_current_request_jwt()
 
-        _test_assign_licenses()
+        # As an admin, assign some licenses to users we have cached data about.
+        _test_assign_licenses(num_to_assign=10)
+
+        # As an admin, list all of the assigned licenses, and then associate
+        # license data with the user to whom the license belongs.
+        fetch_licenses(SUBSCRIPTION_PLAN_UUID, status='assigned')
+
+        # Once we have license activation keys associated with users,
+        # we can make a call for each user with a license to the activation endpoint.
+        _test_activate_licenses()
 
 
 ## Functions to test that things work ##
@@ -348,11 +414,16 @@ def test_fetch_subscription_plans():
     fetch_all_subscription_plans()
 
 
-def _test_assign_licenses():
-    plan_uuid = list(CACHE.subscription_plans().keys())[0]
-    user_emails = list(CACHE.registered_users().keys())[:3]
-    import pdb; pdb.set_trace()
+def _test_assign_licenses(num_to_assign=1):
+    plan_uuid = SUBSCRIPTION_PLAN_UUID
+    user_emails = list(CACHE.registered_users().keys())[:num_to_assign]
     assign_licenses(plan_uuid, user_emails)
+
+
+def _test_activate_licenses():
+    for user_email, user_data in CACHE.registered_users().items():
+        if user_data.get('license'):
+            activate_license(user_email)
 
 ## End all testing functions ###
 
