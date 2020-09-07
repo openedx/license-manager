@@ -36,8 +36,11 @@ LEARNER_USERNAME_TEMPLATE = 'subsc-learner-{}'
 LEARNER_EMAIL_TEMPLATE = '{}@example.com'.format(LEARNER_USERNAME_TEMPLATE)
 LEARNER_PASSWORD_TEMPLATE = 'random-password-{}'
 
-SUBSCRIPTION_PLAN_UUID = '068e4d94-6d98-40fa-a674-99a1175c64ae'
+TIME_MEASUREMENTS = {}
 
+# TODO Make these be a command line args
+NUM_USERS = 1
+SUBSCRIPTION_PLAN_UUID = '9d81c494-fb47-46a1-a596-58e5bca037e1'
 
 def _now():
     return datetime.utcnow().timestamp()
@@ -132,6 +135,7 @@ class Cache:
         users = self.registered_users()
         if user_data['email'] not in users:
             users[user_data['email']] = user_data
+        self.set(self.Keys.REGISTERED_USERS, users)
 
     def set_jwt_for_email(self, email, jwt):
         key = self.Keys.USER_JWT_TEMPLATE.format(email)
@@ -147,6 +151,7 @@ class Cache:
     def add_subscription_plan(self, subsc_data):
         all_plans = self.subscription_plans()
         all_plans[subsc_data['uuid']] = subsc_data
+        self.set(self.Keys.ALL_SUBSCRIPTION_PLANS, all_plans)
 
     def set_license_for_email(self, email_address, license_data):
         users = self.registered_users()
@@ -154,6 +159,12 @@ class Cache:
             return
         user_data = users[email_address]
         user_data['license'] = license_data
+        users[email_address] = user_data
+        self.set(self.Keys.REGISTERED_USERS, users)
+
+    def get_license_uuids(self):
+        users = self.registered_users()
+        return [users[user_uuid]['license']['uuid'] for user_uuid in users.keys()]
 
 
 CACHE = Cache()
@@ -226,8 +237,8 @@ def _register_user(**kwargs):
     return response, None
 
 
-def register_users(n=1):
-    for _ in range(n):
+def register_users():
+    for _ in range(NUM_USERS):
         _register_user()
 
 
@@ -268,25 +279,22 @@ def _login_session(email, password):
 
 def _make_request(url, delay_seconds=None, jwt=None, request_method=requests.get, **kwargs):
     """
-    Makes an authenticated request to a given URL,
-    returning the response content and the elapsed time.
+    Makes an authenticated request to a given URL
     Will use the admin Authorization token by default.
     """
     headers = {
         "Authorization": "JWT {}".format(jwt or _get_admin_jwt()),
     }
-    start = time.time()
     response = request_method(
         url,
         headers=headers,
         **kwargs
     )
-    elapsed = time.time() - start
 
     if delay_seconds:
         time.sleep(delay_seconds)
 
-    return response, elapsed
+    return response
 
 
 def fetch_all_subscription_plans(*args, **kwargs):
@@ -301,15 +309,14 @@ def fetch_all_subscription_plans(*args, **kwargs):
     url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/'
 
     while url:
-        response, _ = _make_request(url)
+        response = _make_request(url)
         response_data = response.json()
         _process_results(response_data['results'])
         url = response_data['next']
 
 
-def fetch_one_subscription_plan(plan_uuid, user_email=None, fetch_as_learner=True):
-    import pdb; pdb.set_trace()
-    if fetch_as_learner:
+def fetch_one_subscription_plan(plan_uuid, user_email=None):
+    if user_email:
         subscription_data = CACHE.subscription_plans().get(plan_uuid, {})
         enterprise_customer_uuid = subscription_data.get('enterprise_customer_uuid')
         url = LICENSE_MANAGER_BASE_URL + '/api/v1/learner-subscriptions/?enterprise_customer_uuid={}'.format(enterprise_customer_uuid)
@@ -321,7 +328,9 @@ def fetch_one_subscription_plan(plan_uuid, user_email=None, fetch_as_learner=Tru
     else:
         jwt = _get_learner_jwt(user_email)
 
-    response, _ = _make_request(url, jwt=jwt)
+    response = _make_request(url, jwt=jwt)
+    if response.status_code != 200:
+        print("Encountered an error while fetching a subscription plan: {}".format(response))
     return response.json()
 
 
@@ -333,8 +342,30 @@ def assign_licenses(plan_uuid, user_emails):
     # It's important to use json=data here, and not data=data
     # "Using the json parameter in the request will change the Content-Type in the header to application/json."
     # https://requests.readthedocs.io/en/master/user/quickstart/#more-complicated-post-requests
-    response, elapsed = _make_request(url, json=data, request_method=requests.post)
+    response = _make_request(url, json=data, request_method=requests.post)
     return response.json()
+
+
+def remind(plan_uuid, user_email=None):
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/remind/'.format(plan_uuid)
+    data = {
+        'user_email': user_email,
+    }
+    # It's important to use json=data here, and not data=data
+    # "Using the json parameter in the request will change the Content-Type in the header to application/json."
+    # https://requests.readthedocs.io/en/master/user/quickstart/#more-complicated-post-requests
+    response = _make_request(url, json=data, request_method=requests.post)
+    if response.status_code != 200:
+        print("Encountered an error while reminding: {}".format(response))
+    return response
+
+
+def remind_all(plan_uuid):
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/remind-all/'.format(plan_uuid)
+    response = _make_request(url, request_method=requests.post)
+    if response.status_code != 200:
+        print("Encountered an error while reminding all learners: {}".format(response))
+    return response
 
 
 def fetch_licenses(plan_uuid, status=None):
@@ -353,10 +384,48 @@ def fetch_licenses(plan_uuid, status=None):
         url += '?status={}'.format(status)
 
     while url:
-        response, _ = _make_request(url)
+        response = _make_request(url)
         response_data = response.json()
         _process_results(response_data['results'])
         url = response_data['next']
+
+
+def fetch_individual_licenses(plan_uuid, license_uuids):
+    for license_uuid in license_uuids:
+        url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/{}/'.format(plan_uuid, license_uuid)
+        response = _make_request(url, request_method=requests.get)
+        if response.status_code != 200:
+            print("Encountered an error while fetching an individual license: {}".format(response))
+
+
+def fetch_learner_license(plan_uuid, user_email):
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/license'.format(plan_uuid)
+    response = _make_request(url, jwt=_get_learner_jwt(user_email), request_method=requests.get)
+    if response.status_code != 200:
+        print("Encountered an error while a learner tried fetching their own license: {}".format(response))
+    return response
+
+
+def fetch_license_overview(plan_uuid):
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/overview/'.format(plan_uuid)
+    response = _make_request(url, request_method=requests.get)
+    if response.status_code != 200:
+        print("Encountered an error while fetching the license overview: {}".format(response))
+    return response
+
+
+def revoke_license(plan_uuid, user_email):
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/revoke/'.format(plan_uuid)
+    data = {
+        'user_email': user_email,
+    }
+    # It's important to use json=data here, and not data=data
+    # "Using the json parameter in the request will change the Content-Type in the header to application/json."
+    # https://requests.readthedocs.io/en/master/user/quickstart/#more-complicated-post-requests
+    response = _make_request(url, jwt=_get_admin_jwt(), json=data, request_method=requests.post)
+    if response.status_code != 204:
+        print("Encountered an error while fetching revoking a license: {}".format(response))
+    return response
 
 
 def activate_license(user_email):
@@ -378,12 +447,8 @@ def activate_license(user_email):
         print('No activation_key for licensed-user {}'.format(user_email))
         return
 
-    # get a new JWT for the user, this is important because
-    # the activation endpoint matches the JWT email against the assigned license
-    _login_session(user_email, user_data['password'])
-
     url = LICENSE_MANAGER_BASE_URL + '/api/v1/license-activation?activation_key={}'.format(activation_key)
-    response, _ = _make_request(
+    response = _make_request(
         url,
         request_method=requests.post,
         jwt=CACHE.get_jwt_for_email(user_email),
@@ -399,37 +464,78 @@ def main():
     with _load_cache_and_dump_when_done():
         # Forces us to always fetch a fresh JWT for the worker/admin user.
         CACHE.clear_current_request_jwt()
+        _test_register()
 
-        _prereqs()
+        # Tests for the license-manager endpoints
+        _enterprise_subscription_requests()
+        _learner_subscription_requests()
+
+        # Test revoking licenses
+        _test_revoke_licenses()
+
+        pprint(TIME_MEASUREMENTS)
+
+        # TODO Test this script out for larger magnitudes of licenses on subscriptions
+        # TODO see if creating a subscription + unassigned licenses on it can be done without manually doing so in django admin
 
 
 ## Functions to test that things work ##
+def _enterprise_subscription_requests():
+    # As an admin, test assigning licenses to users
+    _test_assign_licenses()
 
-def _prereqs():
-    # Have subscription plan and set KELLIE_SUBSCRIPTION_PLAN_UUID to its UUID
-    _test_register() # register 10 users and cache their details
-    _test_assign_and_activate_licenses() # assign and activate licenses for all 10
+    # As an admin, test reminding learners about their licenses
+    _test_remind()
+
+    # As an admin, test loading subscriptions
+    _test_load_subscriptions()
+
+    # As an admin, test loading licenses
+    _test_load_licenses()
 
 
 def _learner_subscription_requests():
-    pass
-    # TODO
-    # Use this, once for each learner:
-    # fetch_one_subscription_plan(
-    #     SUBSCRIPTION_PLAN_UUID,
-    #     user_email='subsc-learner-3a8e@example.com',
-    # )
+    activate_accumulated_time = 0
+    load_subscription_accumulated_time = 0
+    load_license_accumulated_time = 0
 
-    # record the response times
+    for user_email, user_data in CACHE.registered_users().items():
+        if user_data.get('license'):
+            # get a new JWT for the user, this is important because
+            # the activation endpoint matches the JWT email against the assigned license
+            _login_session(user_email, user_data['password'])
 
-    # get an average of the response times and spit it out.
+            # As a learner test how long it takes to activate licenses
+            start = time.time()
+            activate_license(user_email)
+            activate_accumulated_time += time.time() - start
+
+            # As each learner test how long it takes on average to load my subscription plan info
+            start = time.time()
+            fetch_one_subscription_plan(
+                SUBSCRIPTION_PLAN_UUID,
+                user_email=user_email,
+            )
+            load_subscription_accumulated_time += time.time() - start
+
+            # As each learner test how long it takes on average to load my license info
+            start = time.time()
+            fetch_learner_license(
+                SUBSCRIPTION_PLAN_UUID,
+                user_email=user_email
+            )
+            load_license_accumulated_time += time.time() - start
+
+    TIME_MEASUREMENTS['Average Activate License Time'] = activate_accumulated_time / NUM_USERS
+    TIME_MEASUREMENTS['Average Learner Load Subscription Time'] = load_subscription_accumulated_time / NUM_USERS
+    TIME_MEASUREMENTS['Average Learner Load License Time'] = load_license_accumulated_time / NUM_USERS
 
 
 def _test_register():
     """
-    Run this to generate 10 new users.
+    Run this to generate NUM_USERS number of new users.
     """
-    register_users(n=10)
+    register_users()
 
 
 def _test_login():
@@ -442,34 +548,68 @@ def _test_login():
         _login_session(user_email, password)
 
 
-def test_fetch_subscription_plans():
-    fetch_all_subscription_plans()
-
-
-def _test_assign_licenses(num_to_assign=1):
+def _test_assign_licenses():
     plan_uuid = SUBSCRIPTION_PLAN_UUID
-    user_emails = list(CACHE.registered_users().keys())[:num_to_assign]
+    user_emails = list(CACHE.registered_users().keys())
+
+    start = time.time()
     assign_licenses(plan_uuid, user_emails)
+    TIME_MEASUREMENTS['Assign Licenses Time'] = time.time() - start
 
 
-def _test_activate_licenses():
-    for user_email, user_data in CACHE.registered_users().items():
-        if user_data.get('license'):
-            activate_license(user_email)
+def _test_remind():
+    plan_uuid = SUBSCRIPTION_PLAN_UUID
+    user_emails = list(CACHE.registered_users().keys())
+    # Test reminding users to activate their license
+    start = time.time()
+    for user_email in user_emails:
+        remind(plan_uuid=plan_uuid, user_email=user_email)
+    TIME_MEASUREMENTS['Average Remind Single User Time'] = (time.time() - start) / NUM_USERS
+
+    # Test reminding all users to activate their license
+    start = time.time()
+    remind_all(plan_uuid=plan_uuid)
+    TIME_MEASUREMENTS['Remind All Users Time'] = time.time() - start
 
 
-def _test_assign_and_activate_licenses():
-    # As an admin, assign some licenses to users we have cached data about.
-    _test_assign_licenses(num_to_assign=10)
+def _test_load_subscriptions():
+    # Test loading all subscriptions
+    start = time.time()
+    fetch_all_subscription_plans()
+    TIME_MEASUREMENTS['Load All Subscriptions Time'] = time.time() - start
 
-    # As an admin, list all of the assigned licenses, and then associate
-    # license data with the user to whom the license belongs.
-    fetch_licenses(SUBSCRIPTION_PLAN_UUID, status='assigned')
+    # Test loading individual subscription info
+    start = time.time()
+    fetch_one_subscription_plan(SUBSCRIPTION_PLAN_UUID)
+    TIME_MEASUREMENTS['Average Load Single Subscription Time'] = time.time() - start
 
-    # Once we have license activation keys associated with users,
-    # we can make a call for each user with a license to the activation endpoint.
-    _test_activate_licenses()
 
+def _test_load_licenses():
+    # Test fetching all licenses
+    start = time.time()
+    fetch_licenses(SUBSCRIPTION_PLAN_UUID)
+    TIME_MEASUREMENTS['Fetch All Licenses Time'] = time.time() - start
+
+    # Fetch and cache the licenses in the subscription
+    license_uuids = CACHE.get_license_uuids()
+    start = time.time()
+    fetch_individual_licenses(SUBSCRIPTION_PLAN_UUID, license_uuids)
+    TIME_MEASUREMENTS['Average Time Fetching Individual License'] = (time.time() - start) / NUM_USERS
+
+    # Test fetching the license overview for the subscription
+    start = time.time()
+    fetch_license_overview(SUBSCRIPTION_PLAN_UUID)
+    TIME_MEASUREMENTS['Fetch Licenses Overview Time'] = time.time() - start
+
+
+def _test_revoke_licenses():
+    # Test revoking all licenses
+    user_emails = list(CACHE.registered_users().keys())
+    # Test reminding users to activate their license
+    start = time.time()
+    for user_email in user_emails:
+        revoke_license(SUBSCRIPTION_PLAN_UUID, user_email)
+    TIME_MEASUREMENTS['Average Revoke License Time'] = (time.time() - start) / NUM_USERS
 
 ## End all testing functions ###
 
