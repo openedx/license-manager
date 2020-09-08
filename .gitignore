@@ -90,3 +90,4 @@ docs/_build/
 
 # cached data
 loadtest-cache.json
+scripts/loadtest.env.development

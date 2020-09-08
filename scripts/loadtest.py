@@ -2,6 +2,8 @@
 Script for load-testing the license-manager service
 
 requirements you must pip install these before using: requests
+
+To source env variables, consider `source scripts/loadtest.env.development`.
 """
 
 from collections import defaultdict
@@ -40,7 +42,7 @@ TIME_MEASUREMENTS = {}
 
 # TODO Make these be a command line args
 NUM_USERS = 1
-SUBSCRIPTION_PLAN_UUID = '9d81c494-fb47-46a1-a596-58e5bca037e1'
+SUBSCRIPTION_PLAN_UUID = os.environ.get('SUBSCRIPTION_PLAN_UUID', '9d81c494-fb47-46a1-a596-58e5bca037e1')
 
 def _now():
     return datetime.utcnow().timestamp()
@@ -164,7 +166,12 @@ class Cache:
 
     def get_license_uuids(self):
         users = self.registered_users()
-        return [users[user_uuid]['license']['uuid'] for user_uuid in users.keys()]
+        license_uuids = []
+        for user_uuid, user_data in users.items():
+            license_data = user_data.get('license', {})
+            if license_data:
+                license_uuids.append(license_data.get('uuid'))
+        return license_uuids
 
 
 CACHE = Cache()
