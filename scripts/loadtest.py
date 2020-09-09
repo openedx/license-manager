@@ -41,7 +41,7 @@ LEARNER_PASSWORD_TEMPLATE = 'random-password-{}'
 TIME_MEASUREMENTS = {}
 
 # TODO Make these be a command line args
-NUM_USERS = 1
+NUM_USERS = int(os.environ.get('NUM_USERS', 10))
 SUBSCRIPTION_PLAN_UUID = os.environ.get('SUBSCRIPTION_PLAN_UUID', '9d81c494-fb47-46a1-a596-58e5bca037e1')
 
 def _now():
@@ -167,23 +167,28 @@ class Cache:
     def get_license_uuids(self):
         users = self.registered_users()
         license_uuids = []
-        for user_uuid, user_data in users.items():
+        for user_data in users.values():
             license_data = user_data.get('license', {})
             if license_data:
                 license_uuids.append(license_data.get('uuid'))
         return license_uuids
 
+    @property
+    def license_uuids_by_status(self):
+        license_data_by_status = defaultdict(dict)
+        for email, user_data in self.registered_users().items():
+            license_data = user_data.get('license', {})
+            status = license_data.get('status', 'unassigned')
+            license_data_by_status[status][email] = license_data
+        return license_data_by_status
+
     def print_user_license_data(self):
-        users = self.registered_users()
-        counts = Counter()
-        for user_data in users.values():
-            counts['total_users'] += 1
-            license_data = user_data.get('license')
-            if not license_data:
-                counts['no_license'] += 1
-                continue
-            counts[license_data.get('status')] += 1
-        pprint(counts)
+        print('Currently cached user count by status:')
+        pprint({
+            status: len(user_license_data)
+            for status, user_license_data
+            in self.license_uuids_by_status.items()
+        })
 
 
 CACHE = Cache()
@@ -250,15 +255,19 @@ def _register_user(**kwargs):
     user_data = _random_user_data()
     response = requests.post(url, data=user_data)
     if response.status_code == 200:
-        print('Successfully created new account for {}'.format(user_data['email']))
+        # print('Successfully created new account for {}'.format(user_data['email']))
         jwt = _get_jwt_from_response_and_add_to_cache(response, user_data)
         return response, jwt
+    else:
+        print('Failed to create new account for {}!'.format(user_data['email']))
+        raise
     return response, None
 
 
 def register_users():
     for _ in range(NUM_USERS):
         _register_user()
+    print('Successfully created {} new users.\n'.format(NUM_USERS))
 
 
 def _get_learner_jwt(email):
@@ -355,6 +364,7 @@ def fetch_one_subscription_plan(plan_uuid, user_email=None):
 
 def assign_licenses(plan_uuid, user_emails):
     url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/assign/'.format(plan_uuid)
+    print('Attempting to assign licenses for {} emails...'.format(len(user_emails)))
     data = {
         'user_emails': user_emails,
     }
@@ -362,7 +372,9 @@ def assign_licenses(plan_uuid, user_emails):
     # "Using the json parameter in the request will change the Content-Type in the header to application/json."
     # https://requests.readthedocs.io/en/master/user/quickstart/#more-complicated-post-requests
     response = _make_request(url, json=data, request_method=requests.post)
-    return response.json()
+    response_data = response.json()
+    print('Result of license assignment: {}\n'.format(response_data))
+    return response_data
 
 
 def remind(plan_uuid, user_email=None):
@@ -496,7 +508,13 @@ def main():
         # Test revoking licenses
         # _test_revoke_licenses()
 
-        pprint(TIME_MEASUREMENTS)
+        pretty_timings = {
+            key: '{} ms'.format(round(value, 3) * 1000)
+            for key, value in TIME_MEASUREMENTS.items()
+        }
+        print('***Results***')
+        for key, value in pretty_timings.items():
+            print('{}: {}'.format(key, value))
 
         # TODO Test this script out for larger magnitudes of licenses on subscriptions
         # TODO see if creating a subscription + unassigned licenses on it can be done without manually doing so in django admin
@@ -507,14 +525,14 @@ def _enterprise_subscription_requests():
     # As an admin, test assigning licenses to users
     _test_assign_licenses()
 
-    # As an admin, test reminding learners about their licenses
-    _test_remind()
+    # # As an admin, test reminding learners about their licenses
+    # _test_remind()
 
-    # As an admin, test loading subscriptions
-    _test_load_subscriptions()
+    # # As an admin, test loading subscriptions
+    # _test_load_subscriptions()
 
-    # As an admin, test loading licenses
-    _test_load_licenses()
+    # # As an admin, test loading licenses
+    # _test_load_licenses()
 
 
 def _learner_subscription_requests():
@@ -573,11 +591,15 @@ def _test_login():
 
 def _test_assign_licenses():
     plan_uuid = SUBSCRIPTION_PLAN_UUID
-    user_emails = list(CACHE.registered_users().keys())
+    unassigned_emails = list(CACHE.license_uuids_by_status.get('unassigned').keys())
 
     start = time.time()
-    assign_licenses(plan_uuid, user_emails)
-    TIME_MEASUREMENTS['Assign Licenses Time'] = time.time() - start
+    assign_licenses(plan_uuid, unassigned_emails)
+    TIME_MEASUREMENTS['Assign Licenses Time (N = {})'.format(len(unassigned_emails))] = time.time() - start
+
+    # assure that cached user-license data is updated
+    fetch_licenses(SUBSCRIPTION_PLAN_UUID)
+
 
 
 def _test_remind():
