@@ -6,7 +6,7 @@ requirements you must pip install these before using: requests
 To source env variables, consider `source scripts/loadtest.env.development`.
 """
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from multiprocessing import Pool
 from contextlib import contextmanager
@@ -172,6 +172,18 @@ class Cache:
             if license_data:
                 license_uuids.append(license_data.get('uuid'))
         return license_uuids
+
+    def print_user_license_data(self):
+        users = self.registered_users()
+        counts = Counter()
+        for user_data in users.values():
+            counts['total_users'] += 1
+            license_data = user_data.get('license')
+            if not license_data:
+                counts['no_license'] += 1
+                continue
+            counts[license_data.get('status')] += 1
+        pprint(counts)
 
 
 CACHE = Cache()
@@ -396,6 +408,9 @@ def fetch_licenses(plan_uuid, status=None):
         _process_results(response_data['results'])
         url = response_data['next']
 
+    # Return how many licenses exist for this subscription (optionally with the given status)
+    return response_data['count']
+
 
 def fetch_individual_licenses(plan_uuid, license_uuids):
     for license_uuid in license_uuids:
@@ -469,16 +484,17 @@ def activate_license(user_email):
 
 def main():
     with _load_cache_and_dump_when_done():
+        CACHE.print_user_license_data()
         # Forces us to always fetch a fresh JWT for the worker/admin user.
         CACHE.clear_current_request_jwt()
         _test_register()
 
         # Tests for the license-manager endpoints
         _enterprise_subscription_requests()
-        _learner_subscription_requests()
+        # _learner_subscription_requests()
 
         # Test revoking licenses
-        _test_revoke_licenses()
+        # _test_revoke_licenses()
 
         pprint(TIME_MEASUREMENTS)
 
@@ -571,7 +587,8 @@ def _test_remind():
     start = time.time()
     for user_email in user_emails:
         remind(plan_uuid=plan_uuid, user_email=user_email)
-    TIME_MEASUREMENTS['Average Remind Single User Time'] = (time.time() - start) / NUM_USERS
+    num_emails = len(user_emails)
+    TIME_MEASUREMENTS['Average Remind Single User Time (N = {})'.format(num_emails)] = (time.time() - start) / num_emails
 
     # Test reminding all users to activate their license
     start = time.time()
@@ -594,14 +611,16 @@ def _test_load_subscriptions():
 def _test_load_licenses():
     # Test fetching all licenses
     start = time.time()
-    fetch_licenses(SUBSCRIPTION_PLAN_UUID)
-    TIME_MEASUREMENTS['Fetch All Licenses Time'] = time.time() - start
+    license_count = fetch_licenses(SUBSCRIPTION_PLAN_UUID)
+    TIME_MEASUREMENTS['Fetch All Licenses Time (N = {})'.format(license_count)] = time.time() - start
 
     # Fetch and cache the licenses in the subscription
     license_uuids = CACHE.get_license_uuids()
     start = time.time()
     fetch_individual_licenses(SUBSCRIPTION_PLAN_UUID, license_uuids)
-    TIME_MEASUREMENTS['Average Time Fetching Individual License'] = (time.time() - start) / NUM_USERS
+    num_licenses = len(license_uuids)
+    avg_license_time = (time.time() - start) / num_licenses
+    TIME_MEASUREMENTS['Average Time Fetching Individual License (N = {})'.format(num_licenses)] = avg_license_time
 
     # Test fetching the license overview for the subscription
     start = time.time()
