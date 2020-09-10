@@ -178,8 +178,8 @@ docker_build:
 	docker build . -f Dockerfile --target newrelic -t openedx/license-manager:latest-newrelic
 
 docker_tag: docker_build
-	docker tag 257477529851.dkr.ecr.us-east-1.amazonaws.com/license-manager 257477529851.dkr.ecr.us-east-1.amazonaws.com/license-manager:$$GITHUB_SHA
-	docker tag 257477529851.dkr.ecr.us-east-1.amazonaws.com/license-manager:latest-newrelic 257477529851.dkr.ecr.us-east-1.amazonaws.com/license-manager:$$GITHUB_SHA-newrelic
+	docker tag openedx/license-manager openedx/license-manager:$$GITHUB_SHA
+	docker tag openedx/license-manager:latest-newrelic openedx/license-manager:$$GITHUB_SHA-newrelic
 
 docker_push: docker_tag docker_auth ## push to docker hub
 	docker push 'openedx/license-manager:latest'
