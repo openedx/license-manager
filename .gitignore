@@ -89,5 +89,5 @@ private.py
 docs/_build/
 
 # cached data
-loadtest-cache.json
-scripts/loadtest.env.development
+loadtest-cache.*
+scripts/loadtest.env*

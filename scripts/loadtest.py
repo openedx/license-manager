@@ -22,6 +22,8 @@ import requests
 
 # The local defaults should all "just work" against devstack.
 
+CACHE_FILENAME = os.environ.get('CACHE_FILENAME', 'loadtest-cache.json')
+
 # used to fetch a JWT for the license_manager_worker
 OAUTH2_CLIENT_ID = os.environ.get('OAUTH2_CLIENT_ID', 'license_manager-backend-service-key')
 OAUTH2_CLIENT_SECRET = os.environ.get('OAUTH2_CLIENT_SECRET', 'license_manager-backend-service-secret')
@@ -195,17 +197,17 @@ CACHE = Cache()
 
 
 def _dump_cache():
-    with open('loadtest-cache.json', 'w') as file_out:
+    with open(CACHE_FILENAME, 'w') as file_out:
         file_out.write(json.dumps(CACHE.to_dict()))
 
 
 def _load_cache():
     global CACHE
     try:
-        with open('loadtest-cache.json', 'r') as file_in:
+        with open(CACHE_FILENAME, 'r') as file_in:
             json_data = json.loads(file_in.read())
             CACHE = Cache.from_dict(json_data)
-    except FileNotFoundError:
+    except:
         CACHE = Cache()
 
     # for the sake of convenience, try to get the cached request JWT
@@ -242,8 +244,13 @@ def _get_admin_jwt():
 
 
 def _get_jwt_from_response_and_add_to_cache(response, user_data=None):
-    jwt_header = response.cookies.get('edx-jwt-cookie-header-payload')
-    jwt_signature = response.cookies.get('edx-jwt-cookie-signature')
+    # The cookie name is prefixed with "stage" in the staging environment
+    prefix = ''
+    if 'stage' in CACHE_FILENAME.lower():
+        prefix = 'stage-'
+
+    jwt_header = response.cookies.get(prefix + 'edx-jwt-cookie-header-payload')
+    jwt_signature = response.cookies.get(prefix + 'edx-jwt-cookie-signature')
     jwt = jwt_header + '.' + jwt_signature
     CACHE.add_registered_user(user_data)
     CACHE.set_jwt_for_email(user_data['email'], jwt)
@@ -410,9 +417,9 @@ def fetch_licenses(plan_uuid, status=None):
             if user_email:
                 CACHE.set_license_for_email(user_email, license_data)
 
-    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/'.format(plan_uuid)
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/?page_size=100'.format(plan_uuid)
     if status:
-        url += '?status={}'.format(status)
+        url += '&status={}'.format(status)
 
     while url:
         response = _make_request(url)
@@ -495,6 +502,7 @@ def activate_license(user_email):
     return response
 
 def main():
+    print('Using cache filename: {}'.format(CACHE_FILENAME))
     with _load_cache_and_dump_when_done():
         CACHE.print_user_license_data()
         # Forces us to always fetch a fresh JWT for the worker/admin user.
@@ -590,15 +598,16 @@ def _test_login():
 
 
 def _test_assign_licenses():
-    plan_uuid = SUBSCRIPTION_PLAN_UUID
     unassigned_emails = list(CACHE.license_uuids_by_status.get('unassigned').keys())
 
     start = time.time()
-    assign_licenses(plan_uuid, unassigned_emails)
+    assign_licenses(SUBSCRIPTION_PLAN_UUID, unassigned_emails)
     TIME_MEASUREMENTS['Assign Licenses Time (N = {})'.format(len(unassigned_emails))] = time.time() - start
 
     # assure that cached user-license data is updated
-    fetch_licenses(SUBSCRIPTION_PLAN_UUID)
+    start = time.time()
+    license_count = fetch_licenses(SUBSCRIPTION_PLAN_UUID, status='assigned')
+    TIME_MEASUREMENTS['Fetch Assigned Licenses Time (N = {})'.format(license_count)] = time.time() - start
 
 
 
