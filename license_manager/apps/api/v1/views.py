@@ -17,6 +17,7 @@ from edx_rest_framework_extensions.auth.jwt.authentication import (
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -180,6 +181,14 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
             return None
 
 
+class LicensePagination(PageNumberPagination):
+    """
+    A PageNumber paginator that allows the client to specify the page size, up to some maximum.
+    """
+    page_size_query_param = 'page_size'
+    max_page_size = 500
+
+
 class LicenseViewSet(LearnerLicenseViewSet):
     """ Viewset for Admin read operations on Licenses."""
     lookup_field = 'uuid'
@@ -187,6 +196,8 @@ class LicenseViewSet(LearnerLicenseViewSet):
 
     permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
+
+    pagination_class = LicensePagination
 
     @property
     def base_queryset(self):

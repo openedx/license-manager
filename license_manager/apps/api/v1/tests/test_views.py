@@ -158,12 +158,13 @@ def _subscriptions_detail_request(api_client, user, subscription_uuid):
     return api_client.get(url)
 
 
-def _licenses_list_request(api_client, user, subscription_uuid):
+def _licenses_list_request(api_client, subscription_uuid, page_size=None):
     """
     Helper method that requests a list of licenses for a given subscription_uuid.
     """
-    api_client.force_authenticate(user=user)
     url = reverse('api:v1:licenses-list', kwargs={'subscription_uuid': subscription_uuid})
+    if page_size:
+        url += '?page_size={}'.format(page_size)
     return api_client.get(url)
 
 
@@ -248,12 +249,12 @@ def test_subscription_plan_retrieve_unauthenticated_user_403(api_client):
 
 
 @pytest.mark.django_db
-def test_license_list_unauthenticated_user_403(api_client):
+def test_license_list_unauthenticated_user_401(api_client):
     """
-    Verify that unauthenticated users receive a 403 from the license list endpoint.
+    Verify that unauthenticated users receive a 401 from the license list endpoint.
     """
-    response = _licenses_list_request(api_client, AnonymousUser(), uuid4())
-    assert status.HTTP_403_FORBIDDEN == response.status_code
+    response = _licenses_list_request(api_client, uuid4())
+    assert status.HTTP_401_UNAUTHORIZED == response.status_code
 
 
 @pytest.mark.django_db
@@ -279,7 +280,9 @@ def test_subscription_plan_detail_non_staff_user_403(api_client, non_staff_user)
 
 @pytest.mark.django_db
 def test_licenses_list_non_staff_user_403(api_client, non_staff_user):
-    response = _licenses_list_request(api_client, non_staff_user, uuid4())
+    # init a JWT cookie (so the user is authenticated) but don't provide any roles
+    init_jwt_cookie(api_client, non_staff_user)
+    response = _licenses_list_request(api_client, uuid4())
     assert status.HTTP_403_FORBIDDEN == response.status_code
 
 
@@ -428,13 +431,28 @@ def test_license_list_staff_user_200(api_client, staff_user, boolean_toggle):
     subscription, assigned_license, unassigned_license = _subscription_and_licenses()
     _assign_role_via_jwt_or_db(api_client, staff_user, subscription.enterprise_customer_uuid, boolean_toggle)
 
-    response = _licenses_list_request(api_client, staff_user, subscription.uuid)
+    response = _licenses_list_request(api_client, subscription.uuid)
 
     assert status.HTTP_200_OK == response.status_code
     results_by_uuid = {item['uuid']: item for item in response.data['results']}
     assert len(results_by_uuid) == 2
     _assert_license_response_correct(results_by_uuid[str(unassigned_license.uuid)], unassigned_license)
     _assert_license_response_correct(results_by_uuid[str(assigned_license.uuid)], assigned_license)
+
+
+@pytest.mark.django_db
+def test_license_list_staff_user_200_custom_page_size(api_client, staff_user):
+    subscription, _, _ = _subscription_and_licenses()
+    _assign_role_via_jwt_or_db(api_client, staff_user, subscription.enterprise_customer_uuid, True)
+
+    response = _licenses_list_request(api_client, subscription.uuid, page_size=1)
+
+    assert status.HTTP_200_OK == response.status_code
+    results_by_uuid = {item['uuid']: item for item in response.data['results']}
+    # We test for content in the test above, we're just worried about the number of pages here
+    assert len(results_by_uuid) == 1
+    assert 2 == response.data['count']
+    assert response.data['next'] is not None
 
 
 @pytest.mark.django_db
@@ -542,6 +560,9 @@ def _assign_role_via_jwt_or_db(
             jwt_payload_extra,
         )
     else:
+        # We still provide a JWT cookie, with no roles, so the user is authenticated
+        init_jwt_cookie(client, user)
+
         # Assign a feature role to the user via database record.
         SubscriptionsRoleAssignment.objects.create(
             enterprise_customer_uuid=enterprise_customer_uuid,
