@@ -181,6 +181,9 @@ docker_tag: docker_build
 	docker tag openedx/license-manager openedx/license-manager:$$GITHUB_SHA
 	docker tag openedx/license-manager:latest-newrelic openedx/license-manager:$$GITHUB_SHA-newrelic
 
+docker_auth:
+	echo "$$DOCKERHUB_PASSWORD" | docker login -u "$$DOCKERHUB_USERNAME" --password-stdin
+
 docker_push: docker_tag docker_auth ## push to docker hub
 	docker push 'openedx/license-manager:latest'
 	docker push "openedx/license-manager:$$GITHUB_SHA"
