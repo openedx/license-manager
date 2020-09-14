@@ -44,8 +44,6 @@ class SubscriptionPlan(TimeStampedModel):
         editable=False
     )
 
-    purchase_date = models.DateField()
-
     start_date = models.DateField()
 
     expiration_date = models.DateField()

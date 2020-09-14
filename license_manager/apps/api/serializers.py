@@ -18,7 +18,6 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
         fields = [
             'title',
             'uuid',
-            'purchase_date',
             'start_date',
             'expiration_date',
             'enterprise_customer_uuid',

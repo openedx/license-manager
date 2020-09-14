@@ -208,7 +208,6 @@ def _assert_subscription_response_correct(response, subscription):
     """
     assert response['enterprise_customer_uuid'] == str(subscription.enterprise_customer_uuid)
     assert response['uuid'] == str(subscription.uuid)
-    assert response['purchase_date'] == _get_date_string(subscription.purchase_date)
     assert response['start_date'] == _get_date_string(subscription.start_date)
     assert response['expiration_date'] == _get_date_string(subscription.expiration_date)
     assert response['enterprise_catalog_uuid'] == str(subscription.enterprise_catalog_uuid)
