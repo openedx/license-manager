@@ -35,4 +35,6 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.findPr.outputs.pr }}
           PR_TITLE: ${{ steps.findPr.outputs.title }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           GH_ACCESS_TOKEN: ${{ secrets.EDX_DEPLOYMENT_GH_TOKEN }}
