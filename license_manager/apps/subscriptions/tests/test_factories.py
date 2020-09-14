@@ -26,7 +26,6 @@ class SubscriptionsModelFactoryTests(TestCase):
         Verify an unexpired subscription plan is created by default.
         """
         subscription = SubscriptionPlanFactory()
-        self.assertTrue(subscription.purchase_date < subscription.expiration_date)
         self.assertTrue(subscription.start_date < subscription.expiration_date)
 
     def test_subscription_factory_licenses(self):

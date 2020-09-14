@@ -35,7 +35,6 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
 
     title = factory.Faker('word')
     uuid = factory.LazyFunction(uuid4)
-    purchase_date = date.today()
     start_date = date.today()
     # Make the subscription expire in roughly a year and a day
     expiration_date = date.today() + timedelta(days=366)

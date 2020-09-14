@@ -19,7 +19,6 @@ faker = FakerFactory.create()
 
 def make_bound_subscription_form(
     title=faker.pystr(min_chars=1, max_chars=127),
-    purchase_date=date.today(),
     start_date=date.today(),
     expiration_date=date.today() + timedelta(days=366),
     enterprise_customer_uuid=faker.uuid4(),
@@ -35,7 +34,6 @@ def make_bound_subscription_form(
     """
     form_data = {
         'title': title,
-        'purchase_date': purchase_date,
         'start_date': start_date,
         'expiration_date': expiration_date,
         'enterprise_customer_uuid': enterprise_customer_uuid,
