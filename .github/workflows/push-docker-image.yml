@@ -18,17 +18,6 @@ jobs:
         with:
           github-token: ${{ secrets.EDX_DEPLOYMENT_GH_TOKEN }}
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.TOOLS_EDX_ECR_USER_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.TOOLS_EDX_ECR_USER_AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
       - name: Build and Push docker image
         run : ./.github/workflows/deployment_prs.sh
         if: success() && steps.findPr.outputs.number
