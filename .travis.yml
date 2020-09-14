@@ -2,13 +2,6 @@ language: python
 python:
 - 3.5
 - 3.8
-env:
-  global:
-  - DOCKER_USERNAME=edxbuilder
-    # encrypted DOCKER_PASSWORD
-  - secure: oDKPudHf8dghflhwwOGoBcP01WTC2bwxwiKxqqIMtt9QAPb7yLboSeqspNcMGPl53l1Ftsoo7iSYhgBH0E0oVf+NVujp7P5eNDp0pAdj8iipfoNCv+DGCULcAf7V2fxFbSkcwnteMgWQ2WrK7mx1grih7Xq/hfNs++Le4kvTGO6PBmDDq2SY4Hviamk2rSu07uO4Ms5oWS3pDfoXykqkafN1FOhEq8ExHF8Uf16olGR/zhBmIe29VyA5vcSqPv0KYzRoJ/iWQLFWYPs5ChI/mCiyFZIkX8bfNVDF38J/IT81Or6JkbzSeEinWyxPSRevHaQRlWigWiuiyIjpmQjXOC5Di1WVuEVhC4BMnnmCvmk8g34XBbl4yaqJfKOEnOI2WLyVOK98FFZGd/xvJEUv+JTVjyQ5kKo4ZtCl7T7urWr1nJG0rrjKpVv4zTmucqZu2/7rchDzKj1JKO8yM7ic71r5jkUG/9VKBda81oQh66np+sg9ajP3vQm++Y/WWDS/iKw5lI4R5FP3ZXXpEQsaIkIjTPN+UxB9Kk/Y+n4ic/LEEj9T/cBWKk+vfTn6WUt7BtJwscsC6+j6pG/n+/KKoSZiDqG+XSdeEebU7KqP7DOjIH4lOGy4VtXYVaXeJgwkg7AIt1hqgwJ7VueSe8mXDB3bePon9KrtD0kfZNU2XZY=
-    # encrypted GITHUB_ACCESS_TOKEN
-  - secure: EoOlM/xF3qGE/65+VUJ5kRKvHIrnmnFeZ0TRsVECmzBKZvRtSeHDTybosFvuh1BB4kIn06aXtCaGgeqNsupVHWhxKCeSN6bW+bkpyI4/fi5bTCm6mH9yol3faGgB8vwskbhnkElxa+Wa79pahiSG9EsdKC8WqZj4h6C3pPP7EIwSsJ99lmntjjJDScfRo2OyyHiUFR3NYT+wUjLWYLb/HHCeMP8ROQ01SD/u3goDFskEpQ2oMAv6d5HW5pmg/XtetUKQfZT181CCEUnw99a1jPDM0+W62Gm9ooY2C7A+q9lcuBe6LJTqLa0ZXbhXbQ0yOA114qRqDfFATVIwk6iI/7BY9F9MENeA+86Bg+p1OAPkEtc7tqSlh/0HKa9BfnAPqJxt4M2Vbs1IZjQv4CoCL9JL8j1QguKzqjiBodxKTXy2pSPQR7juGDJGFodaQfxAa4X+34SOEMYvwZsEspsrpd8Op6vF/DJTv6wqIhydtzc2uKmeGQC3TFjMEwBucG3OAQQdluNgIiVIMlRiSw/NusdbdLW5fnkJmYKvYfKxGGPHwBiPyjjC6uO/0VZ/1WwmotUpeIiP5L/wByXLtvla0lBw5dIAOz8Ko2fxe+aPuUdeXN+5YBCVY3YV/x0IlbvjpJDJzsMbVfWf4M2dOADCI+nDxrkD49kibxqLheGGkgs=
 sudo: false
 cache: pip
 install:
@@ -19,9 +12,3 @@ script:
 - make validate
 after_success:
 - codecov
-deploy:
-- provider: script
-  script: ".travis/deployment_prs.sh"
-  on:
-    branch: master
-    python: 3.5
