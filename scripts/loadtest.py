@@ -406,7 +406,7 @@ def remind_all(plan_uuid):
     return response
 
 
-def fetch_licenses(plan_uuid, status=None):
+def fetch_licenses(plan_uuid, status=None, page_size=10):
     """
     Fetch all licenses for a given subscription plan.  Optionally filter by a license status.
     Will associate licenses with cached users as appropriate.
@@ -417,7 +417,7 @@ def fetch_licenses(plan_uuid, status=None):
             if user_email:
                 CACHE.set_license_for_email(user_email, license_data)
 
-    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/?page_size=100'.format(plan_uuid)
+    url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/?page_size={}'.format(plan_uuid, page_size)
     if status:
         url += '&status={}'.format(status)
 
