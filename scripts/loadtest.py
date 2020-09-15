@@ -10,6 +10,8 @@ from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from multiprocessing import Pool
 from contextlib import contextmanager
+from statistics import mean
+import argparse
 import json
 import os
 from pprint import pprint
@@ -17,6 +19,7 @@ import random
 import sys
 import time
 import uuid
+import numpy as np
 
 import requests
 
@@ -36,15 +39,19 @@ ACCESS_TOKEN_ENDPOINT = LMS_BASE_URL + '/oauth2/access_token/'
 LICENSE_MANAGER_BASE_URL = os.environ.get('LICENSE_MANAGER_BASE_URL', 'http://localhost:18170')
 
 LEARNER_NAME_TEMPLATE = 'Subscription Learner {}'
-LEARNER_USERNAME_TEMPLATE = 'subsc-learner-{}'
+LEARNER_USERNAME_TEMPLATE = 'subz-learner-{}'
 LEARNER_EMAIL_TEMPLATE = '{}@example.com'.format(LEARNER_USERNAME_TEMPLATE)
 LEARNER_PASSWORD_TEMPLATE = 'random-password-{}'
 
-TIME_MEASUREMENTS = {}
+parser = argparse.ArgumentParser(description='Specify loadtest arguments.')
+parser.add_argument('-c', '--clearcache', action='store_true', default=True, help='Whether to run the script with a cleaned cache, default is true')
+parser.add_argument('--admin', action='store_true', default=True, help='Whether to run the admin only endpoints, default is true')
+parser.add_argument('--learner', action='store_true', default=True, help='Whether to run the learner only endpoints, default is true')
+parser.add_argument('--newusers', action='store_true', default=True, help='Whether to generate new learner accounts to use with the subscription')
+args = parser.parse_args()
 
-# TODO Make these be a command line args
-NUM_USERS = int(os.environ.get('NUM_USERS', 10))
-SUBSCRIPTION_PLAN_UUID = os.environ.get('SUBSCRIPTION_PLAN_UUID', '9d81c494-fb47-46a1-a596-58e5bca037e1')
+NUM_USERS = 100
+SUBSCRIPTION_PLAN_UUID = '7c374cdd-cc1c-4c8c-b3cf-8f85c062ce71'
 
 def _now():
     return datetime.utcnow().timestamp()
@@ -195,6 +202,25 @@ class Cache:
 
 CACHE = Cache()
 
+class Metric:
+    def __init__(self, endpoint):
+        self.endpoint = endpoint
+        self.values = []
+        self.failure_count = 0
+
+
+    def print_metrics(self):
+        pprint('{}:'.format(self.endpoint))
+        if self.values:
+            pprint('Average time: {} ms'.format(round(mean(self.values), 3) * 1000))
+            pprint('Max time: {} ms'.format(round(max(self.values), 3) * 1000))
+            pprint('Min time: {} ms'.format(round(min(self.values), 3) * 1000))
+            pprint('95th Percentile: {} ms'.format(round(np.percentile(self.values, 95), 3) * 1000))
+            pprint('90th Percentile: {} ms'.format(round(np.percentile(self.values, 90), 3) * 1000))
+        pprint('Number of errors: ' + str(self.failure_count))
+        pprint('Failure Percentage: {}%'.format((self.failure_count / (len(self.values) + self.failure_count)) * 100))
+
+METRICS = []
 
 def _dump_cache():
     with open(CACHE_FILENAME, 'w') as file_out:
@@ -213,7 +239,6 @@ def _load_cache():
     # for the sake of convenience, try to get the cached request JWT
     # so that it's evicted if already expired
     CACHE.current_request_jwt()
-
 
 @contextmanager
 def _load_cache_and_dump_when_done():
@@ -262,7 +287,7 @@ def _register_user(**kwargs):
     user_data = _random_user_data()
     response = requests.post(url, data=user_data)
     if response.status_code == 200:
-        # print('Successfully created new account for {}'.format(user_data['email']))
+        print('Successfully created new account for {}'.format(user_data['email']))
         jwt = _get_jwt_from_response_and_add_to_cache(response, user_data)
         return response, jwt
     else:
@@ -341,13 +366,20 @@ def fetch_all_subscription_plans(*args, **kwargs):
             print('Updating subscription plan {} ({}) in cache.'.format(subscription['uuid'], subscription['title']))
             CACHE.add_subscription_plan(subscription)
 
+    fetch_all_subscriptions_metric = Metric('Load All Subscriptions {} API call(s)')
     url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/'
 
     while url:
+        start = time.time()
         response = _make_request(url)
+        fetch_all_subscriptions_metric.values.append(time.time() - start)
         response_data = response.json()
         _process_results(response_data['results'])
         url = response_data['next']
+
+    fetch_all_subscriptions_metric.endpoint = fetch_all_subscriptions_metric.endpoint.format(len(fetch_all_subscriptions_metric.values))
+    METRICS.append(fetch_all_subscriptions_metric)
+
 
 
 def fetch_one_subscription_plan(plan_uuid, user_email=None):
@@ -366,7 +398,8 @@ def fetch_one_subscription_plan(plan_uuid, user_email=None):
     response = _make_request(url, jwt=jwt)
     if response.status_code != 200:
         print("Encountered an error while fetching a subscription plan: {}".format(response))
-    return response.json()
+        return response.json(), 1
+    return response.json(), 0
 
 
 def assign_licenses(plan_uuid, user_emails):
@@ -381,7 +414,9 @@ def assign_licenses(plan_uuid, user_emails):
     response = _make_request(url, json=data, request_method=requests.post)
     response_data = response.json()
     print('Result of license assignment: {}\n'.format(response_data))
-    return response_data
+    if response.status_code > 400:
+        return response, 1
+    return response_data, 0
 
 
 def remind(plan_uuid, user_email=None):
@@ -395,7 +430,8 @@ def remind(plan_uuid, user_email=None):
     response = _make_request(url, json=data, request_method=requests.post)
     if response.status_code != 200:
         print("Encountered an error while reminding: {}".format(response))
-    return response
+        return response, 1
+    return response, 0
 
 
 def remind_all(plan_uuid):
@@ -403,7 +439,8 @@ def remind_all(plan_uuid):
     response = _make_request(url, request_method=requests.post)
     if response.status_code != 200:
         print("Encountered an error while reminding all learners: {}".format(response))
-    return response
+        return response, 1
+    return response, 0
 
 
 def fetch_licenses(plan_uuid, status=None, page_size=10):
@@ -418,25 +455,42 @@ def fetch_licenses(plan_uuid, status=None, page_size=10):
                 CACHE.set_license_for_email(user_email, license_data)
 
     url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/?page_size={}'.format(plan_uuid, page_size)
+    fetch_all_licenses_metric = Metric('Admin fetch all licenses {} API call(s)')
     if status:
         url += '&status={}'.format(status)
 
+    num_loops = 0
     while url:
+        start = time.time()
         response = _make_request(url)
+        if response.status_code != 200:
+            fetch_all_licenses_metric.failure_count = fetch_all_licenses_metric.failure_count + 1
+        else:
+            fetch_all_licenses_metric.values.append(time.time() - start)
         response_data = response.json()
         _process_results(response_data['results'])
         url = response_data['next']
+        num_loops = num_loops + 1
+
+    fetch_all_licenses_metric.endpoint = fetch_all_licenses_metric.endpoint.format(num_loops)
+    METRICS.append(fetch_all_licenses_metric)
 
     # Return how many licenses exist for this subscription (optionally with the given status)
     return response_data['count']
 
 
 def fetch_individual_licenses(plan_uuid, license_uuids):
+    fetch_license_metric = Metric('Fetch Individual Licenses (N={})'.format(len(license_uuids)))
     for license_uuid in license_uuids:
+        start = time.time()
         url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/{}/'.format(plan_uuid, license_uuid)
         response = _make_request(url, request_method=requests.get)
         if response.status_code != 200:
+            fetch_license_metric.failure_count = fetch_license_metric.failure_count + 1
             print("Encountered an error while fetching an individual license: {}".format(response))
+        else:
+            fetch_license_metric.values.append(time.time() - start)
+    METRICS.append(fetch_license_metric)
 
 
 def fetch_learner_license(plan_uuid, user_email):
@@ -444,14 +498,22 @@ def fetch_learner_license(plan_uuid, user_email):
     response = _make_request(url, jwt=_get_learner_jwt(user_email), request_method=requests.get)
     if response.status_code != 200:
         print("Encountered an error while a learner tried fetching their own license: {}".format(response))
-    return response
+        return response, 1
+    return response, 0
 
 
 def fetch_license_overview(plan_uuid):
     url = LICENSE_MANAGER_BASE_URL + '/api/v1/subscriptions/{}/licenses/overview/'.format(plan_uuid)
+    fetch_overview_metric = Metric('Fetch license overview 1 API call')
+    start = time.time()
     response = _make_request(url, request_method=requests.get)
     if response.status_code != 200:
         print("Encountered an error while fetching the license overview: {}".format(response))
+        fetch_overview_metric.failure_count = 1
+    else:
+        fetch_overview_metric.values.append(time.time() - start)
+
+    METRICS.append(fetch_overview_metric)
     return response
 
 
@@ -466,7 +528,8 @@ def revoke_license(plan_uuid, user_email):
     response = _make_request(url, jwt=_get_admin_jwt(), json=data, request_method=requests.post)
     if response.status_code != 204:
         print("Encountered an error while fetching revoking a license: {}".format(response))
-    return response
+        return response, 1
+    return response, 0
 
 
 def activate_license(user_email):
@@ -496,36 +559,38 @@ def activate_license(user_email):
     )
     if response.status_code >= 400:
         print('Error activating license: {}'.format(response))
+        return response, 1
     else:
         license_data['status'] = 'activated'
         print('License successfully activated for {}'.format(user_email))
-    return response
+    return response, 0
 
 def main():
     print('Using cache filename: {}'.format(CACHE_FILENAME))
     with _load_cache_and_dump_when_done():
-        CACHE.print_user_license_data()
+        if not args.clearcache:
+            CACHE.print_user_license_data()
+
         # Forces us to always fetch a fresh JWT for the worker/admin user.
         CACHE.clear_current_request_jwt()
-        _test_register()
+        if args.newusers:
+            _test_register()
 
         # Tests for the license-manager endpoints
-        _enterprise_subscription_requests()
-        # _learner_subscription_requests()
+        if args.admin:
+            _enterprise_subscription_requests()
+
+        if args.learner:
+            _learner_subscription_requests()
 
         # Test revoking licenses
-        # _test_revoke_licenses()
+        if args.admin:
+            _test_revoke_licenses()
 
-        pretty_timings = {
-            key: '{} ms'.format(round(value, 3) * 1000)
-            for key, value in TIME_MEASUREMENTS.items()
-        }
         print('***Results***')
-        for key, value in pretty_timings.items():
-            print('{}: {}'.format(key, value))
-
-        # TODO Test this script out for larger magnitudes of licenses on subscriptions
-        # TODO see if creating a subscription + unassigned licenses on it can be done without manually doing so in django admin
+        for metric in METRICS:
+            metric.print_metrics()
+            print('********************************')
 
 
 ## Functions to test that things work ##
@@ -533,22 +598,23 @@ def _enterprise_subscription_requests():
     # As an admin, test assigning licenses to users
     _test_assign_licenses()
 
-    # # As an admin, test reminding learners about their licenses
-    # _test_remind()
+    # As an admin, test reminding learners about their licenses
+    _test_remind()
 
-    # # As an admin, test loading subscriptions
-    # _test_load_subscriptions()
+    # As an admin, test loading subscriptions
+    _test_load_subscriptions()
 
-    # # As an admin, test loading licenses
-    # _test_load_licenses()
+    # As an admin, test loading licenses
+    _test_load_licenses()
 
 
 def _learner_subscription_requests():
-    activate_accumulated_time = 0
-    load_subscription_accumulated_time = 0
-    load_license_accumulated_time = 0
+    users = CACHE.registered_users().items()
+    activate_license_metric = Metric('Learner Activate License (N = {})'.format(len(users)))
+    load_subscription_metric = Metric('Learner Load Enterprises Subscriptions (N = {})'.format(len(users)))
+    load_license_metric = Metric('Learner Load Own License (N = {})'.format(len(users)))
 
-    for user_email, user_data in CACHE.registered_users().items():
+    for user_email, user_data in users:
         if user_data.get('license'):
             # get a new JWT for the user, this is important because
             # the activation endpoint matches the JWT email against the assigned license
@@ -556,28 +622,34 @@ def _learner_subscription_requests():
 
             # As a learner test how long it takes to activate licenses
             start = time.time()
-            activate_license(user_email)
-            activate_accumulated_time += time.time() - start
+            response, failure_count = activate_license(user_email)
+            if not failure_count:
+                activate_license_metric.values.append(time.time() - start)
+            activate_license_metric.failure_count = activate_license_metric.failure_count + failure_count
 
             # As each learner test how long it takes on average to load my subscription plan info
             start = time.time()
-            fetch_one_subscription_plan(
+            response, failure_count = fetch_one_subscription_plan(
                 SUBSCRIPTION_PLAN_UUID,
                 user_email=user_email,
             )
-            load_subscription_accumulated_time += time.time() - start
+            if not failure_count:
+                load_subscription_metric.values.append(time.time() - start)
+            load_subscription_metric.failure_count = load_subscription_metric.failure_count + failure_count
 
             # As each learner test how long it takes on average to load my license info
             start = time.time()
-            fetch_learner_license(
+            response, failure_count = fetch_learner_license(
                 SUBSCRIPTION_PLAN_UUID,
                 user_email=user_email
             )
-            load_license_accumulated_time += time.time() - start
+            if not failure_count:
+                load_license_metric.values.append(time.time() - start)
+            load_license_metric.failure_count = load_subscription_metric.failure_count + failure_count
 
-    TIME_MEASUREMENTS['Average Activate License Time'] = activate_accumulated_time / NUM_USERS
-    TIME_MEASUREMENTS['Average Learner Load Subscription Time'] = load_subscription_accumulated_time / NUM_USERS
-    TIME_MEASUREMENTS['Average Learner Load License Time'] = load_license_accumulated_time / NUM_USERS
+    METRICS.append(activate_license_metric)
+    METRICS.append(load_subscription_metric)
+    METRICS.append(load_license_metric)
 
 
 def _test_register():
@@ -601,8 +673,12 @@ def _test_assign_licenses():
     unassigned_emails = list(CACHE.license_uuids_by_status.get('unassigned').keys())
 
     start = time.time()
-    assign_licenses(SUBSCRIPTION_PLAN_UUID, unassigned_emails)
-    TIME_MEASUREMENTS['Assign Licenses Time (N = {})'.format(len(unassigned_emails))] = time.time() - start
+    response, failure_count = assign_licenses(SUBSCRIPTION_PLAN_UUID, unassigned_emails)
+    assign_metric = Metric('Assign {} Licenses, 1 API call'.format(NUM_USERS))
+    if not failure_count:
+        assign_metric.values.append(time.time() - start)
+    assign_metric.failure_count = failure_count
+    METRICS.append(assign_metric)
 
     # assure that cached user-license data is updated
     start = time.time()
@@ -610,63 +686,66 @@ def _test_assign_licenses():
     TIME_MEASUREMENTS['Fetch Assigned Licenses Time (N = {})'.format(license_count)] = time.time() - start
 
 
-
 def _test_remind():
     plan_uuid = SUBSCRIPTION_PLAN_UUID
     user_emails = list(CACHE.registered_users().keys())
     # Test reminding users to activate their license
-    start = time.time()
+    remind_metric = Metric('Remind Single Users N API calls (N = {})'.format(NUM_USERS))
     for user_email in user_emails:
-        remind(plan_uuid=plan_uuid, user_email=user_email)
-    num_emails = len(user_emails)
-    TIME_MEASUREMENTS['Average Remind Single User Time (N = {})'.format(num_emails)] = (time.time() - start) / num_emails
+        start = time.time()
+        response, failure_count = remind(plan_uuid=plan_uuid, user_email=user_email)
+        remind_metric.values.append(time.time() - start)
+        remind_metric.failure_count = remind_metric.failure_count + failure_count
+
+    METRICS.append(remind_metric)
 
     # Test reminding all users to activate their license
     start = time.time()
-    remind_all(plan_uuid=plan_uuid)
-    TIME_MEASUREMENTS['Remind All Users Time'] = time.time() - start
+    response, failure_count = remind_all(plan_uuid=plan_uuid)
+    remind_all_metric = Metric('Remind All - N Users 1 API call (N = {})'.format(NUM_USERS))
+    remind_all_metric.values.append(time.time() - start)
+    remind_all_metric.failure_count = failure_count
+    METRICS.append(remind_all_metric)
 
 
 def _test_load_subscriptions():
     # Test loading all subscriptions
-    start = time.time()
     fetch_all_subscription_plans()
-    TIME_MEASUREMENTS['Load All Subscriptions Time'] = time.time() - start
 
     # Test loading individual subscription info
     start = time.time()
-    fetch_one_subscription_plan(SUBSCRIPTION_PLAN_UUID)
-    TIME_MEASUREMENTS['Average Load Single Subscription Time'] = time.time() - start
+    json_response, failure_count = fetch_one_subscription_plan(SUBSCRIPTION_PLAN_UUID)
+    fetch_one_subscription_metric = Metric('Admin Load Single Subscription 1 API call')
+    if not failure_count:
+        fetch_one_subscription_metric.values.append(time.time() - start)
+    fetch_one_subscription_metric.failure_count = failure_count
+    METRICS.append(fetch_one_subscription_metric)
 
 
 def _test_load_licenses():
     # Test fetching all licenses
-    start = time.time()
-    license_count = fetch_licenses(SUBSCRIPTION_PLAN_UUID)
-    TIME_MEASUREMENTS['Fetch All Licenses Time (N = {})'.format(license_count)] = time.time() - start
+    fetch_licenses(SUBSCRIPTION_PLAN_UUID)
 
     # Fetch and cache the licenses in the subscription
     license_uuids = CACHE.get_license_uuids()
-    start = time.time()
     fetch_individual_licenses(SUBSCRIPTION_PLAN_UUID, license_uuids)
-    num_licenses = len(license_uuids)
-    avg_license_time = (time.time() - start) / num_licenses
-    TIME_MEASUREMENTS['Average Time Fetching Individual License (N = {})'.format(num_licenses)] = avg_license_time
 
     # Test fetching the license overview for the subscription
-    start = time.time()
     fetch_license_overview(SUBSCRIPTION_PLAN_UUID)
-    TIME_MEASUREMENTS['Fetch Licenses Overview Time'] = time.time() - start
 
 
 def _test_revoke_licenses():
     # Test revoking all licenses
     user_emails = list(CACHE.registered_users().keys())
     # Test reminding users to activate their license
-    start = time.time()
+    revoke_metric = Metric('Admin Revoke Licenses (N = {})'.format(len(user_emails)))
     for user_email in user_emails:
-        revoke_license(SUBSCRIPTION_PLAN_UUID, user_email)
-    TIME_MEASUREMENTS['Average Revoke License Time'] = (time.time() - start) / NUM_USERS
+        start = time.time()
+        response, failure_count = revoke_license(SUBSCRIPTION_PLAN_UUID, user_email)
+        if not failure_count:
+            revoke_metric.values.append(time.time() - start)
+        revoke_metric.failure_count = revoke_metric.failure_count + failure_count
+    METRICS.append(revoke_metric)
 
 ## End all testing functions ###
 
