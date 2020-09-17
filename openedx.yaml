@@ -3,11 +3,8 @@
 
 nick: licen
 oeps:
-  oep-2:  true  # Repository metadata
-  oep-7:  true  # Python 3
-  oep-30: true  # PII annotation
-  oep-0018: true  # Dependency management
+    oep-2: true # Repository metadata
+    oep-7: true # Python 3
+    oep-30: true # PII annotation
+    oep-0018: true # Dependency management
 openedx-release: {ref: master}
-owner: georgebabey
-supporting_teams:
-  - business-enterprise-team
