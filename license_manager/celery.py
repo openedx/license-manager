@@ -7,6 +7,7 @@ from django.conf import settings
 
 app = Celery('license_manager', )
 
+app.conf.task_protocol = 1
 # - namespace='CELERY' means all celery-related configuration keys
 #   should have a `CELERY_` prefix.
 app.conf.task_protocol = 1
