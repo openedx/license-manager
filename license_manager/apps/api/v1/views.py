@@ -26,6 +26,7 @@ from license_manager.apps.api.filters import LicenseStatusFilter
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_task,
+    on_revoke_course_enrollment_success_task,
     revoke_course_enrollments_for_user_task,
     send_reminder_email_task,
 )
@@ -400,22 +401,17 @@ class LicenseViewSet(LearnerLicenseViewSet):
             )
             return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
-        # Revoke the license
         original_license_status = user_license.status
-        user_license.status = constants.REVOKED
-        License.set_date_fields_to_now([user_license], ['revoked_date'])
-        user_license.save()
-        # Create new license to add to the unassigned license pool
-        subscription_plan.increase_num_licenses(1)
-
-        # Revoke existing user's licensed course enrollments
-        if original_license_status == constants.ACTIVATED:
-            revoke_course_enrollments_for_user_task.delay(
-                user_id=user_license.lms_user_id,
-                enterprise_id=str(subscription_plan.enterprise_customer_uuid),
+        revoke_course_enrollments_for_user_task.delay(
+            user_id=user_license.lms_user_id,
+            enterprise_id=str(subscription_plan.enterprise_customer_uuid),
+            original_license_status=original_license_status,
+            link=on_revoke_course_enrollment_success_task(
+                user_license=user_license,
+                subscription_plan=subscription_plan,
+                original_license_status=original_license_status,
             )
-            subscription_plan.increment_num_revocations()
-            subscription_plan.save()
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

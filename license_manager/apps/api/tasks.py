@@ -4,6 +4,7 @@ from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
+from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.emails import send_activation_emails
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 
@@ -72,7 +73,7 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
 
 
 @shared_task(base=LoggedTask)
-def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
+def revoke_course_enrollments_for_user_task(user_id, enterprise_id, original_license_status):
     """
     Sends revoking the user's enterprise licensed course enrollments asynchronously
 
@@ -80,5 +81,25 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
         user_id (str): The ID of the user who had an enterprise license revoked
         enterprise_id (str): The ID of the enterprise to revoke course enrollments for
     """
-    enterprise_api_client = EnterpriseApiClient()
-    enterprise_api_client.revoke_course_enrollments_for_user(user_id=user_id, enterprise_id=enterprise_id)
+    if original_license_status == constants.ACTIVATED:
+        enterprise_api_client = EnterpriseApiClient()
+        enterprise_api_client.revoke_course_enrollments_for_user(user_id=user_id, enterprise_id=enterprise_id)
+
+
+@shared_task(base=LoggedTask)
+def on_revoke_course_enrollment_success_task(user_license, subscription_plan, original_license_status):
+    """
+    Performs license revoke actions within license-manager.
+
+    To be used as a callback for revoke_course_enrollments_for_user_task
+    """
+    # Revoke the license
+    user_license.status = constants.REVOKED
+    License.set_date_fields_to_now([user_license], ['revoked_date'])
+    user_license.save()
+    # Create new license to add to the unassigned license pool
+    subscription_plan.increase_num_licenses(1)
+    # Track use of revocation feature
+    if original_license_status == constants.ACTIVATED:
+        subscription_plan.increment_num_revocations()
+        subscription_plan.save()
