@@ -414,6 +414,8 @@ class LicenseViewSet(LearnerLicenseViewSet):
                 user_id=user_license.lms_user_id,
                 enterprise_id=str(subscription_plan.enterprise_customer_uuid),
             )
+            subscription_plan.increment_num_revocations()
+            subscription_plan.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

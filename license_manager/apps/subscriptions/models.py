@@ -82,6 +82,12 @@ class SubscriptionPlan(TimeStampedModel):
         )
     )
 
+    def increment_num_revocations(self):
+        """
+        Increments the number of revocations applied to the SubscriptionPlan by 1.
+        """
+        self.num_revocations_applied += 1
+
     @property
     def num_revocations_remaining(self):
         """
