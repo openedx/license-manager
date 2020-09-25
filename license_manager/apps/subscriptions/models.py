@@ -65,21 +65,20 @@ class SubscriptionPlan(TimeStampedModel):
     )
 
     revoke_max_percentage = models.PositiveSmallIntegerField(
+        blank=True,
         default=5,
-        null=False,
         help_text=(
             "Percentage of Licenses that can be revoked for this SubscriptionPlan."
-        )
+        ),
     )
 
     # PositiveSmallIntegerField ranges from 0 to 32767
     # It is reasonable to expect any given SubscriptionPlan to have <655,340 Licenses. (32767 / .05)
     num_revocations_applied = models.PositiveSmallIntegerField(
+        blank=True,
         default=0,
-        null=False,
-        help_text=(
-            "Number of revocations applied to Licenses for this SubscriptionPlan."
-        )
+        verbose_name="Number of Revocations Applied",
+        help_text="Number of revocations applied to Licenses for this SubscriptionPlan.",
     )
 
     def increment_num_revocations(self):
@@ -95,6 +94,7 @@ class SubscriptionPlan(TimeStampedModel):
         """
         num_revocations_allowed = ceil(self.num_licenses * (self.revoke_max_percentage / 100))
         return num_revocations_allowed - self.num_revocations_applied
+    num_revocations_remaining.fget.short_description = "Number of Revocations Remaining"
 
     salesforce_opportunity_id = models.CharField(
         max_length=SALESFORCE_ID_LENGTH,

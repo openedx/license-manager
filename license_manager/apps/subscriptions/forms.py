@@ -11,6 +11,16 @@ class SubscriptionPlanForm(forms.ModelForm):
     # Extra form field to specify the number of licenses to be associated with the subscription plan
     num_licenses = forms.IntegerField(label="Number of Licenses", required=False)
 
+    # Hide revocation data from SubscriptionPlan creation form
+    num_revocations_applied = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+    num_revocations_remaining = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+
     def __init__(self, *args, **kwargs):
         super(SubscriptionPlanForm, self).__init__(*args, **kwargs)
         self.fields['num_licenses'].initial = self.instance.num_licenses
@@ -35,7 +45,7 @@ class SubscriptionPlanForm(forms.ModelForm):
             return False
 
         # Ensure the revoke max percentage is between 0 and 100
-        form_revoke_max_percentage = self.cleaned_data.get('revoke_max_percentage', 5)
+        form_revoke_max_percentage = self.instance.revoke_max_percentage
         if form_revoke_max_percentage > 100:
             self.add_error('revoke_max_percentage', 'Must be a valid percentage (0-100).')
             return False
