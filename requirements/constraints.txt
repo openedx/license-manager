@@ -35,8 +35,6 @@ stevedore<2.0.0
 
 zipp<2.0
 
-
-
-celery<4.3     # Python 3.8 isn't officially supported until 4.4. Its a first steps towards latest celery version upgrade.
-
-redis==3.2.0   # celery 4.2.2 is working fine with the version. Further upgrades will be done in next PR.
+# Celery 5.0 has some breaking changes, as python 3.8 is priority so,
+# we will look at it after python 3.8 deployment
+celery<5.0
