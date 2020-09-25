@@ -45,8 +45,7 @@ class SubscriptionPlanForm(forms.ModelForm):
             return False
 
         # Ensure the revoke max percentage is between 0 and 100
-        form_revoke_max_percentage = self.instance.revoke_max_percentage
-        if form_revoke_max_percentage > 100:
+        if self.instance.revoke_max_percentage > 100:
             self.add_error('revoke_max_percentage', 'Must be a valid percentage (0-100).')
             return False
 
