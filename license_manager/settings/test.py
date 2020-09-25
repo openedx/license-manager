@@ -1,6 +1,7 @@
 import os
 
 from license_manager.settings.base import *
+import tempfile
 
 
 # IN-MEMORY TEST DATABASE
@@ -18,6 +19,8 @@ DATABASES = {
 
 # BEGIN CELERY
 CELERY_ALWAYS_EAGER = True
+results_dir = tempfile.TemporaryDirectory()
+CELERY_RESULT_BACKEND = 'file://{}'.format(results_dir.name)
 # END CELERY
 
 # Make some loggers less noisy (useful during test failure)

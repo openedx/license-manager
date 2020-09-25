@@ -8,7 +8,6 @@
 # pin when possible.  Writing an issue against the offending project and
 # linking to it here is good.
 
-celery==3.1.26.post2
 
 Django>=2.2,<2.3
 
@@ -25,8 +24,6 @@ path<13.2.0
 
 PyYAML>=5.1
 
-redis==2.8
-
 # Upgrade to 3.3.0 triggered users to lose superuser status; see ARCHBOM-1078 for details
 social-auth-core==3.2.0
 
@@ -37,3 +34,9 @@ social-auth-app-django==3.1.0
 stevedore<2.0.0
 
 zipp<2.0
+
+
+
+celery<4.3     # Python 3.8 isn't officially supported until 4.4. Its a first steps towards latest celery version upgrade.
+
+redis==3.2.0   # celery 4.2.2 is working fine with the version. Further upgrades will be done in next PR.

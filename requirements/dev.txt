@@ -4,20 +4,19 @@
 #
 #    make upgrade
 #
-amqp==1.4.9               # via -r requirements/validation.txt, kombu
-anyjson==0.3.3            # via -r requirements/validation.txt, kombu
+amqp==2.6.1               # via -r requirements/validation.txt, kombu
 astroid==2.3.3            # via -r requirements/validation.txt, pylint, pylint-celery
 attrs==20.1.0             # via -r requirements/validation.txt, pytest
-billiard==3.3.0.23        # via -r requirements/validation.txt, celery
-boto3==1.14.52            # via -r requirements/validation.txt, django-ses
-botocore==1.17.52         # via -r requirements/validation.txt, boto3, s3transfer
-celery==3.1.26.post2      # via -c requirements/constraints.txt, -r requirements/validation.txt, edx-celeryutils
+billiard==3.5.0.5         # via -r requirements/validation.txt, celery
+boto3==1.14.55            # via -r requirements/validation.txt, django-ses
+botocore==1.17.55         # via -r requirements/validation.txt, boto3, s3transfer
+celery==4.2.2             # via -c requirements/constraints.txt, -r requirements/validation.txt, edx-celeryutils
 certifi==2020.6.20        # via -r requirements/validation.txt, requests
 cffi==1.14.2              # via -r requirements/validation.txt, cryptography
 chardet==3.0.4            # via -r requirements/validation.txt, requests
 click-log==0.3.2          # via -r requirements/validation.txt, edx-lint
 click==7.1.2              # via -r requirements/pip-tools.txt, -r requirements/validation.txt, click-log, code-annotations, edx-lint, pip-tools
-code-annotations==0.5.1   # via -r requirements/validation.txt
+code-annotations==0.6.0   # via -r requirements/validation.txt
 coreapi==2.3.3            # via -r requirements/validation.txt, django-rest-swagger, openapi-codec
 coreschema==0.0.4         # via -r requirements/validation.txt, coreapi
 coverage==5.2.1           # via -r requirements/validation.txt, pytest-cov
@@ -29,22 +28,22 @@ django-cors-headers==3.5.0  # via -r requirements/validation.txt
 django-crum==0.7.7        # via -r requirements/validation.txt, edx-rbac
 django-debug-toolbar==2.2  # via -r requirements/dev.in
 django-dynamic-fixture==3.1.0  # via -r requirements/validation.txt
-django-extensions==3.0.6  # via -r requirements/validation.txt
+django-extensions==3.0.7  # via -r requirements/validation.txt
 django-filter==2.3.0      # via -r requirements/validation.txt
 django-model-utils==4.0.0  # via -r requirements/validation.txt, edx-celeryutils, edx-rbac
 django-rest-swagger==2.2.0  # via -r requirements/validation.txt
 django-ses==1.0.2         # via -r requirements/validation.txt
 django-simple-history==2.11.0  # via -r requirements/validation.txt
-django-waffle==1.0.0      # via -r requirements/validation.txt, edx-django-utils, edx-drf-extensions
+django-waffle==2.0.0      # via -r requirements/validation.txt, edx-django-utils, edx-drf-extensions
 django==2.2.16            # via -c requirements/constraints.txt, -r requirements/validation.txt, code-annotations, django-cors-headers, django-crum, django-debug-toolbar, django-filter, django-model-utils, django-ses, djangorestframework, drf-jwt, drf-nested-routers, edx-auth-backends, edx-celeryutils, edx-django-utils, edx-drf-extensions, edx-i18n-tools, edx-rbac, jsonfield2, rest-condition
 djangorestframework==3.11.1  # via -r requirements/validation.txt, django-rest-swagger, drf-jwt, drf-nested-routers, edx-drf-extensions, rest-condition
 docutils==0.15.2          # via -r requirements/validation.txt, botocore
 drf-jwt==1.17.1           # via -r requirements/validation.txt, edx-drf-extensions
 drf-nested-routers==0.91  # via -r requirements/validation.txt
 edx-auth-backends==3.1.0  # via -r requirements/validation.txt
-edx-celeryutils==0.5.1    # via -r requirements/validation.txt
-edx-django-utils==3.7.3   # via -r requirements/validation.txt, edx-drf-extensions
-edx-drf-extensions==6.1.1  # via -r requirements/validation.txt, edx-rbac
+edx-celeryutils==0.5.2    # via -r requirements/validation.txt
+edx-django-utils==3.8.0   # via -r requirements/validation.txt, edx-drf-extensions
+edx-drf-extensions==6.1.2  # via -r requirements/validation.txt, edx-rbac
 edx-i18n-tools==0.5.3     # via -r requirements/validation.txt
 edx-lint==1.5.2           # via -r requirements/validation.txt
 edx-opaque-keys==2.1.1    # via -r requirements/validation.txt, edx-drf-extensions
@@ -65,7 +64,7 @@ jinja2-pluralize==0.3.0   # via diff-cover
 jinja2==2.11.2            # via -r requirements/validation.txt, code-annotations, coreschema, diff-cover, jinja2-pluralize
 jmespath==0.10.0          # via -r requirements/validation.txt, boto3, botocore
 jsonfield2==4.0.0.post0   # via -r requirements/validation.txt, edx-celeryutils
-kombu==3.0.37             # via -r requirements/validation.txt, celery
+kombu==4.3.0              # via -r requirements/validation.txt, celery
 lazy-object-proxy==1.4.3  # via -r requirements/validation.txt, astroid
 markupsafe==1.1.1         # via -r requirements/validation.txt, jinja2
 mccabe==0.6.1             # via -r requirements/validation.txt, pylint
@@ -79,7 +78,7 @@ packaging==20.4           # via -r requirements/validation.txt, pytest
 path.py==12.5.0           # via -r requirements/validation.txt, edx-i18n-tools
 path==13.1.0              # via -c requirements/constraints.txt, -r requirements/validation.txt, path.py
 pathlib2==2.3.5           # via -r requirements/validation.txt
-pbr==5.4.5                # via -r requirements/validation.txt, stevedore
+pbr==5.5.0                # via -r requirements/validation.txt, stevedore
 pip-tools==5.3.1          # via -r requirements/pip-tools.txt
 pluggy==0.13.1            # via -r requirements/validation.txt, diff-cover, pytest
 polib==1.1.0              # via -r requirements/validation.txt, edx-i18n-tools
@@ -107,7 +106,7 @@ python3-openid==3.2.0     # via -r requirements/validation.txt, social-auth-core
 pytz==2020.1              # via -r requirements/validation.txt, celery, django, django-ses
 pywatchman==1.4.1         # via -r requirements/dev.in
 pyyaml==5.3.1             # via -c requirements/constraints.txt, -r requirements/validation.txt, code-annotations, edx-i18n-tools
-redis==2.8                # via -c requirements/constraints.txt, -r requirements/validation.txt
+redis==3.2.0              # via -c requirements/constraints.txt, -r requirements/validation.txt
 requests-oauthlib==1.3.0  # via -r requirements/validation.txt, social-auth-core
 requests==2.24.0          # via -r requirements/validation.txt, coreapi, edx-drf-extensions, edx-rest-api-client, pyjwkest, requests-oauthlib, slumber, social-auth-core
 rest-condition==1.0.3     # via -r requirements/validation.txt, edx-drf-extensions
@@ -127,6 +126,7 @@ toml==0.10.1              # via -r requirements/validation.txt, pytest
 typed-ast==1.4.1          # via -r requirements/validation.txt, astroid
 uritemplate==3.0.1        # via -r requirements/validation.txt, coreapi
 urllib3==1.25.10          # via -r requirements/validation.txt, botocore, requests
+vine==1.3.0               # via -r requirements/validation.txt, amqp
 wrapt==1.11.2             # via -r requirements/validation.txt, astroid
 zipp==1.2.0               # via -c requirements/constraints.txt, -r requirements/validation.txt, importlib-metadata
 
