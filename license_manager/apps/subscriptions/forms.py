@@ -34,6 +34,12 @@ class SubscriptionPlanForm(forms.ModelForm):
             self.add_error('num_licenses', 'Number of Licenses cannot be decreased.')
             return False
 
+        # Ensure the revoke max percentage is between 0 and 100
+        form_revoke_max_percentage = self.cleaned_data.get('revoke_max_percentage', 5)
+        if form_revoke_max_percentage > 100:
+            self.add_error('revoke_max_percentage', 'Must be a valid percentage (0-100).')
+            return False
+
         return True
 
     class Meta:
