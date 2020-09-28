@@ -73,38 +73,36 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
 
 
 @shared_task(base=LoggedTask)
-def revoke_course_enrollments_for_user_task(user_id, enterprise_id, original_license_status):
+def revoke_course_enrollments_for_user_task(
+    user_id,
+    user_license,
+    enterprise_id,
+    subscription_plan,
+    original_license_status,
+):
     """
     Sends revoking the user's enterprise licensed course enrollments asynchronously
 
     Arguments:
         user_id (str): The ID of the user who had an enterprise license revoked
+        user_license (obj): License object to be revoked
         enterprise_id (str): The ID of the enterprise to revoke course enrollments for
+        subscription_plan (obj): SubscriptionPlan object associated with the License to be revoked
         original_license_status (str): The status of the License being revoked
     """
+    # We should only need to revoke enrollments if the License has an original
+    # status of ACTIVATED, pending users shouldn't have any enrollments.
     if original_license_status == constants.ACTIVATED:
         enterprise_api_client = EnterpriseApiClient()
         enterprise_api_client.revoke_course_enrollments_for_user(user_id=user_id, enterprise_id=enterprise_id)
 
-
-@shared_task(base=LoggedTask)
-def on_revoke_course_enrollment_success_task(user_license, subscription_plan, original_license_status):
-    """
-    Performs license revoke actions within license-manager.
-    Note: To be used as a callback for revoke_course_enrollments_for_user_task
-
-    Arguments:
-        user_license (obj): License object to be revoked
-        subscription_plan (obj): SubscriptionPlan object associated with the License to be revoked
-        original_license_status (str): The status of the License being revoked
-    """
     # Revoke the license
     user_license.status = constants.REVOKED
     License.set_date_fields_to_now([user_license], ['revoked_date'])
     user_license.save()
     # Create new license to add to the unassigned license pool
     subscription_plan.increase_num_licenses(1)
-    # Track use of revocation feature
+
+    # License revocation only counts against the plan limit when status is ACTIVATED
     if original_license_status == constants.ACTIVATED:
         subscription_plan.increment_num_revocations()
-        subscription_plan.save()

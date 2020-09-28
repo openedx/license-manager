@@ -26,7 +26,6 @@ from license_manager.apps.api.filters import LicenseStatusFilter
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_task,
-    on_revoke_course_enrollment_success_task,
     revoke_course_enrollments_for_user_task,
     send_reminder_email_task,
 )
@@ -401,19 +400,15 @@ class LicenseViewSet(LearnerLicenseViewSet):
             )
             return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
-        original_license_status = user_license.status
-        revoke_course_enrollments_for_user_task.apply_async(
-            (
-                user_license.lms_user_id,
-                str(subscription_plan.enterprise_customer_uuid),
-                original_license_status,
-            ),
-            link=on_revoke_course_enrollment_success_task(
+        if subscription_plan.num_revocations_remaining:
+            original_license_status = user_license.status
+            revoke_course_enrollments_for_user_task.delay(
+                user_id=user_license.lms_user_id,
                 user_license=user_license,
+                enterprise_id=str(subscription_plan.enterprise_customer_uuid),
                 subscription_plan=subscription_plan,
                 original_license_status=original_license_status,
             )
-        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

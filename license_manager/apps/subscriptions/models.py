@@ -86,11 +86,14 @@ class SubscriptionPlan(TimeStampedModel):
         Increments the number of revocations applied to the SubscriptionPlan by 1.
         """
         self.num_revocations_applied += 1
+        self.save()
 
     @property
     def num_revocations_remaining(self):
         """
         Gets the number of revocations that can still be made against this SubscriptionPlan.
+
+        Note: This value is rounded up.
         """
         num_revocations_allowed = ceil(self.num_licenses * (self.revoke_max_percentage / 100))
         return num_revocations_allowed - self.num_revocations_applied
