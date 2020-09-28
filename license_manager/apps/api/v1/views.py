@@ -409,6 +409,16 @@ class LicenseViewSet(LearnerLicenseViewSet):
                 subscription_plan=subscription_plan,
                 original_license_status=original_license_status,
             )
+        else:
+            logger.error(
+                "Attempted license revocation FAILED for SubscriptionPlan [{}]".format(
+                    subscription_plan.title,
+                )
+            )
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data="License revocation limit has been reached."
+            )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
