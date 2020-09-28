@@ -80,6 +80,7 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id, original_lic
     Arguments:
         user_id (str): The ID of the user who had an enterprise license revoked
         enterprise_id (str): The ID of the enterprise to revoke course enrollments for
+        original_license_status (str): The status of the License being revoked
     """
     if original_license_status == constants.ACTIVATED:
         enterprise_api_client = EnterpriseApiClient()
@@ -90,8 +91,12 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id, original_lic
 def on_revoke_course_enrollment_success_task(user_license, subscription_plan, original_license_status):
     """
     Performs license revoke actions within license-manager.
+    Note: To be used as a callback for revoke_course_enrollments_for_user_task
 
-    To be used as a callback for revoke_course_enrollments_for_user_task
+    Arguments:
+        user_license (obj): License object to be revoked
+        subscription_plan (obj): SubscriptionPlan object associated with the License to be revoked
+        original_license_status (str): The status of the License being revoked
     """
     # Revoke the license
     user_license.status = constants.REVOKED
