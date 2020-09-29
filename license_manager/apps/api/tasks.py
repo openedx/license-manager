@@ -91,4 +91,3 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
                 exc=exc,
             )
         )
-
