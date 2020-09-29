@@ -1011,6 +1011,12 @@ class LicenseViewSetActionTests(TestCase):
             'use_superuser': False,
             'revoked_date_should_update': False,
         },
+        {
+            'license_state': constants.ACTIVATED,
+            'expected_status': status.HTTP_400_BAD_REQUEST,
+            'use_superuser': False,
+            'revoked_date_should_update': False,
+        },
     )
     @ddt.unpack
     @mock.patch('license_manager.apps.api.v1.views.revoke_course_enrollments_for_user_task.delay')
@@ -1029,11 +1035,19 @@ class LicenseViewSetActionTests(TestCase):
         original_license = LicenseFactory.create(user_email=self.test_email, status=license_state)
         self.subscription_plan.licenses.set([original_license])
 
+        # Force a license revocation limit reached error
+        if expected_status == status.HTTP_400_BAD_REQUEST:
+            self.subscription_plan.revoke_max_percentage = 0
+            self.subscription_plan.save()
+
         response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
         assert response.status_code == expected_status
         revoked_license = self.subscription_plan.licenses.get(uuid=original_license.uuid)
-        assert revoked_license.status == constants.REVOKED
-        if license_state == constants.ACTIVATED:
+        if expected_status == status.HTTP_400_BAD_REQUEST:
+            assert revoked_license.status == constants.ACTIVATED
+        else:
+            assert revoked_license.status == constants.REVOKED
+        if license_state == constants.ACTIVATED and expected_status != status.HTTP_400_BAD_REQUEST:
             mock_revoke_course_enrollments_for_user_task.assert_called()
         else:
             mock_revoke_course_enrollments_for_user_task.assert_not_called()
@@ -1047,6 +1061,13 @@ class LicenseViewSetActionTests(TestCase):
         """
         response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+    def test_revoke_subscription_states(self):
+        """
+        Test that revoking a License behaves correctly for different SubscriptionPlan states
+        """
+
 
     @ddt.data(True, False)
     def test_revoke_non_admin_user(self, user_is_staff):
