@@ -18,7 +18,7 @@ DATABASES = {
 # END IN-MEMORY TEST DATABASE
 
 # BEGIN CELERY
-CELERY_ALWAYS_EAGER = True
+CELERY_TASK_ALWAYS_EAGER = True
 results_dir = tempfile.TemporaryDirectory()
 CELERY_RESULT_BACKEND = 'file://{}'.format(results_dir.name)
 # END CELERY
