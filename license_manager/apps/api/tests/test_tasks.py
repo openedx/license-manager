@@ -3,9 +3,7 @@ Tests for the license-manager API celery tasks
 """
 from smtplib import SMTPException
 from unittest import mock
-from uuid import uuid4
 
-import ddt
 from django.test import TestCase
 
 from license_manager.apps.api import tasks
@@ -16,7 +14,6 @@ from license_manager.apps.subscriptions.tests.utils import (
 )
 
 
-@ddt.ddt
 class LicenseManagerCeleryTaskTests(TestCase):
     def setUp(self):
         super().setUp()
@@ -92,31 +89,6 @@ class LicenseManagerCeleryTaskTests(TestCase):
             )
             send_email_args, _ = mock_send_emails.call_args
             assert_date_fields_correct(send_email_args[1], ['last_remind_date'], False)
-
-    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient')
-    @ddt.data(
-        constants.ASSIGNED,
-        constants.ACTIVATED,
-    )
-    def test_only_revoke_course_enrollments_when_activated(self, original_license_status, mock_api_client):
-        """
-        Tests that the EnterpriseApiClient is only used to revoke course enrollments when
-        the original license status is ACTIVATED.
-        """
-        user_id = str(uuid4())
-        enterprise_uuid = str(uuid4())
-        tasks.revoke_course_enrollments_for_user_task(
-            user_id,
-            enterprise_uuid,
-            original_license_status
-        )
-        if original_license_status == constants.ACTIVATED:
-            mock_api_client.return_value.revoke_course_enrollments_for_user.assert_called_with(
-                user_id=user_id,
-                enterprise_id=enterprise_uuid
-            )
-        else:
-            mock_api_client.return_value.revoke_course_enrollments_for_user.assert_not_called()
 
     def _verify_mock_send_email_arguments(self, send_email_args):
         """
