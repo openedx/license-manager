@@ -1062,13 +1062,6 @@ class LicenseViewSetActionTests(TestCase):
         response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-
-    def test_revoke_subscription_states(self):
-        """
-        Test that revoking a License behaves correctly for different SubscriptionPlan states
-        """
-
-
     @ddt.data(True, False)
     def test_revoke_non_admin_user(self, user_is_staff):
         """
