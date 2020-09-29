@@ -402,13 +402,25 @@ class LicenseViewSet(LearnerLicenseViewSet):
 
         if subscription_plan.num_revocations_remaining:
             original_license_status = user_license.status
-            revoke_course_enrollments_for_user_task.delay(
-                user_id=user_license.lms_user_id,
-                user_license=user_license,
-                enterprise_id=str(subscription_plan.enterprise_customer_uuid),
-                subscription_plan=subscription_plan,
-                original_license_status=original_license_status,
-            )
+            if original_license_status == constants.ACTIVATED:
+                # We should only need to revoke enrollments if the License has an original
+                # status of ACTIVATED, pending users shouldn't have any enrollments.
+                revoke_course_enrollments_for_user_task.delay(
+                    user_id=user_license.lms_user_id,
+                    user_license=user_license,
+                    enterprise_id=str(subscription_plan.enterprise_customer_uuid),
+                    subscription_plan=subscription_plan,
+                    original_license_status=original_license_status,
+                )
+                # License revocation only counts against the plan limit when status is ACTIVATED
+                subscription_plan.increment_num_revocations()
+
+            # Revoke the license
+            user_license.status = constants.REVOKED
+            License.set_date_fields_to_now([user_license], ['revoked_date'])
+            user_license.save()
+            # Create new license to add to the unassigned license pool
+            subscription_plan.increase_num_licenses(1)
         else:
             logger.error(
                 "Attempted license revocation FAILED for SubscriptionPlan [{}]".format(
