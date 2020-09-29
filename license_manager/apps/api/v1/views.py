@@ -400,17 +400,15 @@ class LicenseViewSet(LearnerLicenseViewSet):
             )
             return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
-        if subscription_plan.num_revocations_remaining:
+        # Number of revocations remaining can become negative if revoke max percentage is decreased
+        if subscription_plan.num_revocations_remaining > 0:
             original_license_status = user_license.status
             if original_license_status == constants.ACTIVATED:
                 # We should only need to revoke enrollments if the License has an original
                 # status of ACTIVATED, pending users shouldn't have any enrollments.
                 revoke_course_enrollments_for_user_task.delay(
                     user_id=user_license.lms_user_id,
-                    user_license=user_license,
                     enterprise_id=str(subscription_plan.enterprise_customer_uuid),
-                    subscription_plan=subscription_plan,
-                    original_license_status=original_license_status,
                 )
                 # License revocation only counts against the plan limit when status is ACTIVATED
                 subscription_plan.increment_num_revocations()

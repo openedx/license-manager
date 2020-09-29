@@ -11,13 +11,9 @@ class SubscriptionPlanForm(forms.ModelForm):
     # Extra form field to specify the number of licenses to be associated with the subscription plan
     num_licenses = forms.IntegerField(label="Number of Licenses", required=False)
 
-    # Using a HidenInput widget here allows us to hide the field
-    # on the creation form while still displaying the read-only
-    # properties as part of the SubscriptionPlan update form.
-    num_revocations_applied = forms.IntegerField(
-        required=False,
-        widget=forms.HiddenInput()
-    )
+    # Using a HidenInput widget here allows us to hide the property
+    # on the creation form while still displaying the property
+    # as read-only on the SubscriptionPlan update form.
     num_revocations_remaining = forms.IntegerField(
         required=False,
         widget=forms.HiddenInput()

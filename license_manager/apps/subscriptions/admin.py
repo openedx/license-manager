@@ -48,7 +48,6 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'enterprise_catalog_uuid',
         'salesforce_opportunity_id',
         'netsuite_product_id',
-        'num_revocations_applied',
         'num_revocations_remaining',
     )
     writable_fields = (
