@@ -26,10 +26,11 @@ from license_manager.apps.api.filters import LicenseStatusFilter
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_task,
-    revoke_course_enrollments_for_user_task,
     send_reminder_email_task,
 )
 from license_manager.apps.subscriptions import constants
+from license_manager.apps.subscriptions.api import revoke_license
+from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
     License,
     SubscriptionPlan,
@@ -400,31 +401,10 @@ class LicenseViewSet(LearnerLicenseViewSet):
             )
             return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
-        # Number of revocations remaining can become negative if revoke max percentage is decreased
-        if subscription_plan.num_revocations_remaining > 0:
-            original_license_status = user_license.status
-            if original_license_status == constants.ACTIVATED:
-                # We should only need to revoke enrollments if the License has an original
-                # status of ACTIVATED, pending users shouldn't have any enrollments.
-                revoke_course_enrollments_for_user_task.delay(
-                    user_id=user_license.lms_user_id,
-                    enterprise_id=str(subscription_plan.enterprise_customer_uuid),
-                )
-                # License revocation only counts against the plan limit when status is ACTIVATED
-                subscription_plan.increment_num_revocations()
-
-            # Revoke the license
-            user_license.status = constants.REVOKED
-            License.set_date_fields_to_now([user_license], ['revoked_date'])
-            user_license.save()
-            # Create new license to add to the unassigned license pool
-            subscription_plan.increase_num_licenses(1)
-        else:
-            logger.error(
-                "Attempted license revocation FAILED for SubscriptionPlan [{}]".format(
-                    subscription_plan.title,
-                )
-            )
+        try:
+            revoke_license(user_license)
+        except LicenseRevocationError as exc:
+            logger.error(exc)
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
                 data="License revocation limit has been reached."

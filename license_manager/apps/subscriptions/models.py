@@ -72,21 +72,12 @@ class SubscriptionPlan(TimeStampedModel):
         ),
     )
 
-    # PositiveSmallIntegerField ranges from 0 to 32767
-    # It is reasonable to expect any given SubscriptionPlan to have <655,340 Licenses. (32767 / .05)
-    num_revocations_applied = models.PositiveSmallIntegerField(
+    num_revocations_applied = models.PositiveIntegerField(
         blank=True,
         default=0,
         verbose_name="Number of Revocations Applied",
         help_text="Number of revocations applied to Licenses for this SubscriptionPlan.",
     )
-
-    def increment_num_revocations(self):
-        """
-        Increments the number of revocations applied to the SubscriptionPlan by 1.
-        """
-        self.num_revocations_applied += 1
-        self.save()
 
     @property
     def num_revocations_remaining(self):
@@ -344,6 +335,22 @@ class License(TimeStampedModel):
         self.activation_key = None
         self.assigned_date = None
         self.revoked_date = None
+
+    def revoke(self):
+        """
+        Performs all field updates required to revoke a License
+        """
+        if self.status == ACTIVATED:
+            # License revocation only counts against the plan limit when status is ACTIVATED
+            self.subscription_plan.num_revocations_applied += 1
+            self.subscription_plan.save()
+
+        # Revoke the license
+        self.status = REVOKED
+        License.set_date_fields_to_now([self], ['revoked_date'])
+        self.save()
+        # Create new license to add to the unassigned license pool
+        self.subscription_plan.increase_num_licenses(1)
 
     @staticmethod
     def set_date_fields_to_now(licenses, date_field_names):
