@@ -1019,7 +1019,7 @@ class LicenseViewSetActionTests(TestCase):
         },
     )
     @ddt.unpack
-    @mock.patch('license_manager.apps.api.v1.views.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
     def test_revoke_license_states(
         self,
         mock_revoke_course_enrollments_for_user_task,
@@ -1074,7 +1074,7 @@ class LicenseViewSetActionTests(TestCase):
         response = self.api_client.post(self.revoke_license_url, {'user_email': 'foo@bar.com'})
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    @mock.patch('license_manager.apps.api.v1.views.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
     @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
     def test_assign_after_license_revoke(self, mock_activation_task, mock_revoke_course_enrollments_for_user_task):
         """
@@ -1103,7 +1103,7 @@ class LicenseViewSetActionTests(TestCase):
         assert self.greeting == actual_template_text['greeting']
         assert self.closing == actual_template_text['closing']
 
-    @mock.patch('license_manager.apps.api.v1.views.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
     def test_revoke_total_and_allocated_count(self, mock_revoke_course_enrollments_for_user_task):
         """
         Verifies revoking a license keeps the `total` license count the same, and the `allocated` count decreases by 1.

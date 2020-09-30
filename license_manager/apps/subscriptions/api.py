@@ -1,10 +1,9 @@
 """
 Python APIs exposed by the Subscriptions app to other in-process apps.
 """
-from .exceptions import LicenseRevocationError
 from ..api.tasks import revoke_course_enrollments_for_user_task
 from .constants import ACTIVATED
-from .models import License
+from .exceptions import LicenseRevocationError
 
 
 def revoke_license(lic):
