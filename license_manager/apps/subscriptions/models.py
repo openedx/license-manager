@@ -340,17 +340,9 @@ class License(TimeStampedModel):
         """
         Performs all field updates required to revoke a License
         """
-        if self.status == ACTIVATED:
-            # License revocation only counts against the plan limit when status is ACTIVATED
-            self.subscription_plan.num_revocations_applied += 1
-            self.subscription_plan.save()
-
-        # Revoke the license
         self.status = REVOKED
-        License.set_date_fields_to_now([self], ['revoked_date'])
+        self.revoked_date = localized_utcnow()
         self.save()
-        # Create new license to add to the unassigned license pool
-        self.subscription_plan.increase_num_licenses(1)
 
     @staticmethod
     def set_date_fields_to_now(licenses, date_field_names):
