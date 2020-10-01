@@ -16,10 +16,19 @@ def revoke_license(user_license):
     # Number of revocations remaining can become negative if revoke max percentage is decreased
     revoke_limit_reached = user_license.subscription_plan.num_revocations_remaining <= 0
     # Revocation of ASSIGNED licenses is not limited
-    revoke_limit_reached &= user_license.status == ACTIVATED
+    if revoke_limit_reached and user_license.status == ACTIVATED:
+        raise LicenseRevocationError(
+            user_license.uuid,
+            "License revocation limit has been reached."
+        )
     # Only allow revocation for ASSIGNED and ACTIVATED licenses
-    if user_license.status not in [ACTIVATED, ASSIGNED] or revoke_limit_reached:
-        raise LicenseRevocationError(user_license.uuid)
+    if user_license.status not in [ACTIVATED, ASSIGNED]:
+        raise LicenseRevocationError(
+            user_license.uuid,
+            "License with status of {license_status} cannot be revoked.".format(
+                license_status=user_license.status
+            )
+        )
 
     if user_license.status == ACTIVATED:
         # We should only need to revoke enrollments if the License has an original

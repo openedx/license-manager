@@ -407,7 +407,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
             logger.error(exc)
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
-                data="License revocation limit has been reached."
+                data=exc.failure_reason,
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
