@@ -80,5 +80,14 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
         user_id (str): The ID of the user who had an enterprise license revoked
         enterprise_id (str): The ID of the enterprise to revoke course enrollments for
     """
-    enterprise_api_client = EnterpriseApiClient()
-    enterprise_api_client.revoke_course_enrollments_for_user(user_id=user_id, enterprise_id=enterprise_id)
+    try:
+        enterprise_api_client = EnterpriseApiClient()
+        enterprise_api_client.revoke_course_enrollments_for_user(user_id=user_id, enterprise_id=enterprise_id)
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.error(
+            "Revocation of course enrollments FAILED for user [{user_id}], enterprise [{enterprise_id}]: {exc}".format(
+                user_id=user_id,
+                enterprise_id=enterprise_id,
+                exc=exc,
+            )
+        )

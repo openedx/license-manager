@@ -12,6 +12,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
     Serializer for the `SubscriptionPlan` model.
     """
     licenses = serializers.SerializerMethodField()
+    revocations = serializers.SerializerMethodField()
 
     class Meta:
         model = SubscriptionPlan
@@ -24,12 +25,19 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'enterprise_catalog_uuid',
             'is_active',
             'licenses',
+            'revocations',
         ]
 
     def get_licenses(self, obj):
         return {
             'total': obj.num_licenses,
             'allocated': obj.num_allocated_licenses,
+        }
+
+    def get_revocations(self, obj):
+        return {
+            'applied': obj.num_revocations_applied,
+            'remaining': obj.num_revocations_remaining,
         }
 
 

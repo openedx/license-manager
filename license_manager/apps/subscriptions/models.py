@@ -1,3 +1,4 @@
+from math import ceil
 from uuid import uuid4
 
 from django.core.validators import MinLengthValidator
@@ -62,6 +63,32 @@ class SubscriptionPlan(TimeStampedModel):
     is_active = models.BooleanField(
         default=False
     )
+
+    revoke_max_percentage = models.PositiveSmallIntegerField(
+        blank=True,
+        default=5,
+        help_text=(
+            "Percentage of Licenses that can be revoked for this SubscriptionPlan."
+        ),
+    )
+
+    num_revocations_applied = models.PositiveIntegerField(
+        blank=True,
+        default=0,
+        verbose_name="Number of Revocations Applied",
+        help_text="Number of revocations applied to Licenses for this SubscriptionPlan.",
+    )
+
+    @property
+    def num_revocations_remaining(self):
+        """
+        Gets the number of revocations that can still be made against this SubscriptionPlan.
+
+        Note: This value is rounded up.
+        """
+        num_revocations_allowed = ceil(self.num_licenses * (self.revoke_max_percentage / 100))
+        return num_revocations_allowed - self.num_revocations_applied
+    num_revocations_remaining.fget.short_description = "Number of Revocations Remaining"
 
     salesforce_opportunity_id = models.CharField(
         max_length=SALESFORCE_ID_LENGTH,
@@ -308,6 +335,14 @@ class License(TimeStampedModel):
         self.activation_key = None
         self.assigned_date = None
         self.revoked_date = None
+
+    def revoke(self):
+        """
+        Performs all field updates required to revoke a License
+        """
+        self.status = REVOKED
+        self.revoked_date = localized_utcnow()
+        self.save()
 
     @staticmethod
     def set_date_fields_to_now(licenses, date_field_names):

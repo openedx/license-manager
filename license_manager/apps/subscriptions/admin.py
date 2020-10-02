@@ -48,8 +48,10 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'enterprise_catalog_uuid',
         'salesforce_opportunity_id',
         'netsuite_product_id',
+        'num_revocations_remaining',
     )
     writable_fields = (
+        'revoke_max_percentage',
         'num_licenses',
         'is_active',
         'for_internal_use_only',
