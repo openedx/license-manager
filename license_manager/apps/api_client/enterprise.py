@@ -1,5 +1,6 @@
 import logging
 
+import backoff
 from django.conf import settings
 
 from license_manager.apps.api_client.base_oauth import BaseOAuthClient
@@ -31,6 +32,14 @@ class EnterpriseApiClient(BaseOAuthClient):
         response = self.client.get(endpoint).json()
         return response.get('slug', None)
 
+    @backoff.on_predicate(
+        # Use an exponential backoff algorithm
+        backoff.expo,
+        # Backoff when a status code of 429 is returned, indicating rate limiting
+        lambda status_code: status_code == 429,
+        # Back off for a maximum of 600 seconds (10 minutes) before giving up. This might need to be adjusted
+        max_time=600,
+    )
     def create_pending_enterprise_user(self, enterprise_customer_uuid, user_email):
         """
         Creates a pending enterprise user for the specified user and enterprise.
@@ -38,18 +47,33 @@ class EnterpriseApiClient(BaseOAuthClient):
         Arguments:
             enterprise_customer_uuid (UUID): UUID of the enterprise customer associated with an enterprise
             user_email (str): The email to create the pending enterprise user entry for.
+        Returns:
+            int: The status code returned by the POST request to create the pending enterprise user. This is only used
+                for the purpose of backing off of requests for rate limiting.
         """
         data = {
             'enterprise_customer': enterprise_customer_uuid,
             'user_email': user_email,
         }
         response = self.client.post(self.pending_enterprise_learner_endpoint, data=data)
-        if response.status_code >= 400:
+        if response.status_code == 429:
+            msg = (
+                'Rate limited when trying to create a pending enterprise user for enterprise with uuid: {uuid}. '
+                'Response: {response}. '
+                'Backing off and trying request again shortly'.format(
+                    uuid=enterprise_customer_uuid,
+                    response=response.json(),
+                )
+            )
+            logger.error(msg)
+        elif response.status_code >= 400:
             msg = (
                 'Failed to create a pending enterprise user for enterprise with uuid: {uuid}. '
                 'Response: {response}'.format(uuid=enterprise_customer_uuid, response=response.json())
             )
             logger.error(msg)
+
+        return response.status_code
 
     def revoke_course_enrollments_for_user(self, user_id, enterprise_id):
         """
