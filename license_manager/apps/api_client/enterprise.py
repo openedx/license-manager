@@ -37,8 +37,8 @@ class EnterpriseApiClient(BaseOAuthClient):
         backoff.expo,
         # Backoff when a status code of 429 is returned, indicating rate limiting
         lambda status_code: status_code == 429,
-        # Back off for a maximum of 600 seconds (10 minutes) before giving up. This might need to be adjusted
-        max_time=600,
+        # Back off for a maximum of 120 seconds (2 minutes) before giving up. This might need to be adjusted
+        max_time=120,
     )
     def create_pending_enterprise_user(self, enterprise_customer_uuid, user_email):
         """
