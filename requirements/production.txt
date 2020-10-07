@@ -5,9 +5,10 @@
 #    make upgrade
 #
 amqp==2.6.1               # via -r requirements/base.txt, kombu
+backoff==1.10.0           # via -r requirements/base.txt
 billiard==3.6.3.0         # via -r requirements/base.txt, celery
-boto3==1.15.5             # via -r requirements/base.txt, django-ses
-botocore==1.18.5          # via -r requirements/base.txt, boto3, s3transfer
+boto3==1.15.12            # via -r requirements/base.txt, django-ses
+botocore==1.18.12         # via -r requirements/base.txt, boto3, s3transfer
 celery==4.4.7             # via -c requirements/constraints.txt, -r requirements/base.txt, edx-celeryutils
 certifi==2020.6.20        # via -r requirements/base.txt, requests
 cffi==1.14.3              # via -r requirements/base.txt, cryptography
@@ -19,14 +20,14 @@ defusedxml==0.6.0         # via -r requirements/base.txt, python3-openid, social
 django-cors-headers==3.5.0  # via -r requirements/base.txt
 django-crum==0.7.7        # via -r requirements/base.txt, edx-rbac
 django-extensions==3.0.9  # via -r requirements/base.txt
-django-filter==2.3.0      # via -r requirements/base.txt
+django-filter==2.4.0      # via -r requirements/base.txt
 django-model-utils==4.0.0  # via -r requirements/base.txt, edx-celeryutils, edx-rbac
 django-rest-swagger==2.2.0  # via -r requirements/base.txt
 django-ses==1.0.3         # via -r requirements/base.txt
 django-simple-history==2.11.0  # via -r requirements/base.txt
 django-waffle==2.0.0      # via -r requirements/base.txt, edx-django-utils, edx-drf-extensions
 django==2.2.16            # via -c requirements/constraints.txt, -r requirements/base.txt, django-cors-headers, django-crum, django-filter, django-model-utils, django-ses, djangorestframework, drf-jwt, drf-nested-routers, edx-auth-backends, edx-celeryutils, edx-django-utils, edx-drf-extensions, edx-rbac, jsonfield2, rest-condition
-djangorestframework==3.11.1  # via -r requirements/base.txt, django-rest-swagger, drf-jwt, drf-nested-routers, edx-drf-extensions, rest-condition
+djangorestframework==3.12.1  # via -r requirements/base.txt, django-rest-swagger, drf-jwt, drf-nested-routers, edx-drf-extensions, rest-condition
 drf-jwt==1.17.2           # via -r requirements/base.txt, edx-drf-extensions
 drf-nested-routers==0.91  # via -r requirements/base.txt
 edx-auth-backends==3.1.0  # via -r requirements/base.txt
@@ -34,7 +35,7 @@ edx-celeryutils==0.5.2    # via -r requirements/base.txt
 edx-django-utils==3.8.0   # via -r requirements/base.txt, edx-drf-extensions
 edx-drf-extensions==6.2.0  # via -r requirements/base.txt, edx-rbac
 edx-opaque-keys==2.1.1    # via -r requirements/base.txt, edx-drf-extensions
-edx-rbac==1.3.2           # via -r requirements/base.txt
+edx-rbac==1.3.3           # via -r requirements/base.txt
 edx-rest-api-client==1.9.2  # via -c requirements/constraints.txt, -r requirements/base.txt
 future==0.18.2            # via -r requirements/base.txt, django-ses, edx-celeryutils, pyjwkest
 gevent==20.9.0            # via -r requirements/production.in
@@ -83,7 +84,7 @@ urllib3==1.25.10          # via -r requirements/base.txt, botocore, requests
 vine==1.3.0               # via -r requirements/base.txt, amqp, celery
 zipp==1.2.0               # via -c requirements/constraints.txt, -r requirements/base.txt, importlib-metadata
 zope.event==4.5.0         # via gevent
-zope.interface==5.1.0     # via gevent
+zope.interface==5.1.2     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

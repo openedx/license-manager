@@ -37,6 +37,23 @@ class EnterpriseApiClientTests(TestCase):
         EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
         mock_logger.error.assert_called_once()
 
+    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
+    def test_create_pending_enterprise_user_rate_limited(self, mock_oauth_client):
+        """
+        Verify the ``create_pending_enterprise_user`` method retries on a 429 response code.
+        """
+        rate_limited_response = MockResponse({'detail': 'Rate limited'}, 429)
+        # Mock out a few rate-limited response and one good from the lms
+        mock_oauth_client().post.side_effect = [
+            rate_limited_response,
+            rate_limited_response,
+            rate_limited_response,
+            MockResponse({'detail': 'Good Request'}, 201),
+        ]
+
+        EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
+        assert mock_oauth_client().post.call_count == 4
+
     @mock.patch('license_manager.apps.api_client.enterprise.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
     def test_revoke_course_enrollments_for_user_with_error(self, mock_oauth_client, mock_logger):

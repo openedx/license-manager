@@ -2,6 +2,7 @@
 
 -c constraints.txt
 
+backoff
 celery
 Django
 django-cors-headers
