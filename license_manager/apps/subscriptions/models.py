@@ -88,7 +88,6 @@ class SubscriptionPlan(TimeStampedModel):
         """
         num_revocations_allowed = ceil(self.num_licenses * (self.revoke_max_percentage / 100))
         return num_revocations_allowed - self.num_revocations_applied
-    num_revocations_remaining.fget.short_description = "Number of Revocations Remaining"
 
     salesforce_opportunity_id = models.CharField(
         max_length=SALESFORCE_ID_LENGTH,
