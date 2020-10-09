@@ -2,8 +2,10 @@
 
 {% trans "Revocation Cap Reached" %}
 
+{% now "F j, Y, h:i a T" as revoke_limit_reached_date %}
 {% blocktrans trimmed %}
-As of October 9, 2020, {{ ENTERPRISE_NAME }} has used all allotted license revocations for their subscription plan: {{ SUBSCRIPTION_TITLE }}.
+As of {{ revoke_limit_reached_date }}, {{ ENTERPRISE_NAME }} has used all allotted license revocations
+for their subscription plan: {{ SUBSCRIPTION_TITLE }}.
 {% endblocktrans %}
 
 {% blocktrans trimmed %}

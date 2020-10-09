@@ -1,14 +1,16 @@
 {% extends "email/email_base.html" %}
 {% load i18n %}
+
 {% block body %}
     <!-- Message Body -->
     <h1>
         {% trans "Revocation Cap Reached" %}
     </h1>
     <p>
+        {% now "F j, Y, h:i a T" as revoke_limit_reached_date %}
         {% blocktrans trimmed %}
-        As of October 9, 2020, {{ ENTERPRISE_NAME }} has used all allotted license revocations for their 
-        subscription plan: {{ SUBSCRIPTION_TITLE }}.
+        As of {{ revoke_limit_reached_date }}, {{ ENTERPRISE_NAME }} has used all allotted license revocations
+        for their subscription plan: {{ SUBSCRIPTION_TITLE }}.
         {% endblocktrans %}
     </p>
     <p>

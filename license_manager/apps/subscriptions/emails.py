@@ -21,7 +21,7 @@ def send_revocation_cap_notification_email(subscription_plan, enterprise_name):
         'SUBSCRIPTION_TITLE': subscription_plan.title,
         'ENTERPRISE_NAME': enterprise_name,
         'NUM_REVOCATIONS_APPLIED': subscription_plan.num_revocations_applied,
-        'RECIPIENT_EMAIL': settings.CUSTOMER_SUCCESS_EMAIL,
+        'RECIPIENT_EMAIL': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
         'HIDE_EMAIL_FOOTER_MARKETING': True,
     }
     email = _message_from_context_and_template(context)

@@ -338,7 +338,7 @@ EMAIL_FILE_PATH = './emails'
 """
 EMAIL_UNSUBSCRIBE_LINK = 'https://www.edx.org'  # Dummy unsubscribe link for development use
 SUBSCRIPTIONS_FROM_EMAIL = 'from@example.com'  # Dummy from email address for development use
-CUSTOMER_SUCCESS_EMAIL = 'ecs@example.com'  # Dummy ECS email address for development use
+CUSTOMER_SUCCESS_EMAIL_ADDRESS = 'ecs@example.com'  # Dummy ECS email address for development use
 # End email configuration
 
 ENTERPRISE_CATALOG_URL = os.environ.get('ENTERPRISE_CATALOG_URL', '')
