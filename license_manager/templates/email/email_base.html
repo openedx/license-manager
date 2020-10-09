@@ -66,66 +66,68 @@
             <!-- FOOTER -->
             <td class="footer" style="padding: 20px;">
                 <table role="presentation" width="100%" align="left" border="0" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td style="padding-bottom: 20px;">
-                            <!-- SOCIAL -->
-                            <table role="presentation" align="{{ LANGUAGE_BIDI|yesno:"right,left" }}" border="0" border="0" cellpadding="0" cellspacing="0" width="210">
-                                <tr>
-                                    {% if SOCIAL_MEDIA_FOOTER_URLS.linkedin %}
-                                        <td height="32" width="42">
-                                            <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.linkedin|safe }}">
-                                                <img src="https://media.sailthru.com/595/1k1/8/o/599f354ec70cb.png"
-                                                     width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}LinkedIn{% endblocktrans %}{% endfilter %}"/>
-                                            </a>
-                                        </td>
-                                    {% endif %}
-                                    {% if SOCIAL_MEDIA_FOOTER_URLS.twitter %}
-                                        <td height="32" width="42">
-                                            <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.twitter|safe }}">
-                                                <img src="https://media.sailthru.com/595/1k1/8/o/599f354d9c26e.png"
-                                                     width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}Twitter{% endblocktrans %}{% endfilter %}"/>
-                                            </a>
-                                        </td>
-                                    {% endif %}
-                                    {% if SOCIAL_MEDIA_FOOTER_URLS.facebook %}
-                                        <td height="32" width="42">
-                                            <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.facebook|safe }}">
-                                                <img src="https://media.sailthru.com/595/1k1/8/o/599f355052c8e.png"
-                                                     width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}Facebook{% endblocktrans %}{% endfilter %}"/>
-                                            </a>
-                                        </td>
-                                    {% endif %}
-                                    {% if SOCIAL_MEDIA_FOOTER_URLS.reddit %}
-                                        <td height="32" width="42">
-                                            <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.reddit|safe }}">
-                                                <img src="https://media.sailthru.com/595/1k1/8/o/599f354e326b9.png"
-                                                     width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}Reddit{% endblocktrans %}{% endfilter %}"/>
-                                            </a>
-                                        </td>
-                                    {% endif %}
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <!-- APP BUTTONS -->
-                        <td style="padding-bottom: 20px;">
-                            {% if MOBILE_STORE_URLS.apple %}
-                                <a href="{{ MOBILE_STORE_URLS.apple|safe }}" style="text-decoration: none">
-                                    <img src="https://media.sailthru.com/595/1k1/6/2/5931cfbba391b.png"
-                                         alt="{% trans "Download the iOS app on the Apple Store" as tmsg %}{{ tmsg | force_escape }}"
-                                         width="136" height="50" style="margin-{{ LANGUAGE_BIDI|yesno:"left,right" }}: 10px"/>
-                                </a>
-                            {% endif %}
-                            {% if MOBILE_STORE_URLS.google %}
-                                <a href="{{ MOBILE_STORE_URLS.google|safe }}" style="text-decoration: none">
-                                    <img src="https://media.sailthru.com/595/1k1/6/2/5931cf879a033.png"
-                                         alt="{% trans "Download the Android app on the Google Play Store" as tmsg %}{{ tmsg | force_escape }}"
-                                         width="136" height="50"/>
-                                </a>
-                            {% endif %}
-                        </td>
-                    </tr>
+                    {% if not HIDE_EMAIL_FOOTER_MARKETING %}
+                        <tr>
+                            <td style="padding-bottom: 20px;">
+                                <!-- SOCIAL -->
+                                <table role="presentation" align="{{ LANGUAGE_BIDI|yesno:"right,left" }}" border="0" border="0" cellpadding="0" cellspacing="0" width="210">
+                                    <tr>
+                                        {% if SOCIAL_MEDIA_FOOTER_URLS.linkedin %}
+                                            <td height="32" width="42">
+                                                <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.linkedin|safe }}">
+                                                    <img src="https://media.sailthru.com/595/1k1/8/o/599f354ec70cb.png"
+                                                        width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}LinkedIn{% endblocktrans %}{% endfilter %}"/>
+                                                </a>
+                                            </td>
+                                        {% endif %}
+                                        {% if SOCIAL_MEDIA_FOOTER_URLS.twitter %}
+                                            <td height="32" width="42">
+                                                <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.twitter|safe }}">
+                                                    <img src="https://media.sailthru.com/595/1k1/8/o/599f354d9c26e.png"
+                                                        width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}Twitter{% endblocktrans %}{% endfilter %}"/>
+                                                </a>
+                                            </td>
+                                        {% endif %}
+                                        {% if SOCIAL_MEDIA_FOOTER_URLS.facebook %}
+                                            <td height="32" width="42">
+                                                <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.facebook|safe }}">
+                                                    <img src="https://media.sailthru.com/595/1k1/8/o/599f355052c8e.png"
+                                                        width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}Facebook{% endblocktrans %}{% endfilter %}"/>
+                                                </a>
+                                            </td>
+                                        {% endif %}
+                                        {% if SOCIAL_MEDIA_FOOTER_URLS.reddit %}
+                                            <td height="32" width="42">
+                                                <a href="{{ SOCIAL_MEDIA_FOOTER_URLS.reddit|safe }}">
+                                                    <img src="https://media.sailthru.com/595/1k1/8/o/599f354e326b9.png"
+                                                        width="32" height="32" alt="{% filter force_escape %}{% blocktrans %}Reddit{% endblocktrans %}{% endfilter %}"/>
+                                                </a>
+                                            </td>
+                                        {% endif %}
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <!-- APP BUTTONS -->
+                            <td style="padding-bottom: 20px;">
+                                {% if MOBILE_STORE_URLS.apple %}
+                                    <a href="{{ MOBILE_STORE_URLS.apple|safe }}" style="text-decoration: none">
+                                        <img src="https://media.sailthru.com/595/1k1/6/2/5931cfbba391b.png"
+                                            alt="{% trans "Download the iOS app on the Apple Store" as tmsg %}{{ tmsg | force_escape }}"
+                                            width="136" height="50" style="margin-{{ LANGUAGE_BIDI|yesno:"left,right" }}: 10px"/>
+                                    </a>
+                                {% endif %}
+                                {% if MOBILE_STORE_URLS.google %}
+                                    <a href="{{ MOBILE_STORE_URLS.google|safe }}" style="text-decoration: none">
+                                        <img src="https://media.sailthru.com/595/1k1/6/2/5931cf879a033.png"
+                                            alt="{% trans "Download the Android app on the Google Play Store" as tmsg %}{{ tmsg | force_escape }}"
+                                            width="136" height="50"/>
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
                     <tr>
                         <!-- COPYRIGHT -->
                         <td>
