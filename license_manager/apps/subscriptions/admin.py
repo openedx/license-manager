@@ -32,11 +32,12 @@ class LicenseAdmin(admin.ModelAdmin):
         'status',
     )
     search_fields = (
+        'uuid__startswith',
         'user_email',
         'subscription_plan__title',
-        'subscription_plan__uuid',
-        'subscription_plan__enterprise_customer_uuid',
-        'subscription_plan__enterprise_catalog_uuid',
+        'subscription_plan__uuid__startswith',
+        'subscription_plan__enterprise_customer_uuid__startswith',
+        'subscription_plan__enterprise_catalog_uuid__startswith',
     )
 
     def get_subscription_plan_title(self, obj):
@@ -82,10 +83,10 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'for_internal_use_only',
     )
     search_fields = (
-        'uuid',
+        'uuid__startswith',
         'title',
-        'enterprise_customer_uuid',
-        'enterprise_catalog_uuid',
+        'enterprise_customer_uuid__startswith',
+        'enterprise_catalog_uuid__startswith',
     )
     ordering = (
         'title',
