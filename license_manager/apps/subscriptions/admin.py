@@ -60,7 +60,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'enterprise_catalog_uuid',
         'salesforce_opportunity_id',
         'netsuite_product_id',
-        'get_num_revocations_remaining',
+        'num_revocations_remaining',
     )
     writable_fields = (
         'revoke_max_percentage',
@@ -98,10 +98,6 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'start_date',
         'expiration_date',
     )
-
-    def get_num_revocations_remaining(self, obj):
-        return obj.num_revocations_remaining
-    get_num_revocations_remaining.short_description = "Number of Revocations Remaining"
 
     def save_model(self, request, obj, form, change):
         # Create licenses to be associated with the subscription plan after creating the subscription plan
