@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+set -e
+
 export GITHUB_USER='edx-deployment'
 export GITHUB_TOKEN=$GH_ACCESS_TOKEN
 export REPO_NAME='license-manager'
