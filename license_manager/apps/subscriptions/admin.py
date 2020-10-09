@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
@@ -10,6 +12,7 @@ class LicenseAdmin(admin.ModelAdmin):
     exclude = ['history']
     list_display = (
         'uuid',
+        'get_subscription_plan_title',
         'status',
         'assigned_date',
         'activation_date',
@@ -29,11 +32,20 @@ class LicenseAdmin(admin.ModelAdmin):
         'status',
     )
     search_fields = (
+        'uuid__startswith',
         'user_email',
         'subscription_plan__title',
-        'subscription_plan__uuid',
-        'subscription_plan__enterprise_customer_uuid',
+        'subscription_plan__uuid__startswith',
+        'subscription_plan__enterprise_customer_uuid__startswith',
+        'subscription_plan__enterprise_catalog_uuid__startswith',
     )
+
+    def get_subscription_plan_title(self, obj):
+        return mark_safe('<a href="{}">{}</a>'.format(
+            reverse('admin:subscriptions_subscriptionplan_change', args=(obj.subscription_plan.uuid,)),
+            obj.subscription_plan.title,
+        ))
+    get_subscription_plan_title.short_description = 'Subscription Plan'
 
 
 @admin.register(SubscriptionPlan)
@@ -48,7 +60,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'enterprise_catalog_uuid',
         'salesforce_opportunity_id',
         'netsuite_product_id',
-        'num_revocations_remaining',
+        'get_num_revocations_remaining',
     )
     writable_fields = (
         'revoke_max_percentage',
@@ -57,6 +69,39 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'for_internal_use_only',
     )
     fields = read_only_fields + writable_fields
+    list_display = (
+        'title',
+        'is_active',
+        'start_date',
+        'expiration_date',
+        'enterprise_customer_uuid',
+        'enterprise_catalog_uuid',
+        'for_internal_use_only',
+    )
+    list_filter = (
+        'is_active',
+        'for_internal_use_only',
+    )
+    search_fields = (
+        'uuid__startswith',
+        'title',
+        'enterprise_customer_uuid__startswith',
+        'enterprise_catalog_uuid__startswith',
+    )
+    ordering = (
+        'title',
+        'start_date',
+        'expiration_date',
+    )
+    sortable_by = (
+        'title',
+        'start_date',
+        'expiration_date',
+    )
+
+    def get_num_revocations_remaining(self, obj):
+        return obj.num_revocations_remaining
+    get_num_revocations_remaining.short_description = "Number of Revocations Remaining"
 
     def save_model(self, request, obj, form, change):
         # Create licenses to be associated with the subscription plan after creating the subscription plan
