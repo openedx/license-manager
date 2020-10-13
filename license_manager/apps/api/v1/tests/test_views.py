@@ -5,6 +5,7 @@ Tests for the Subscription and License V1 API view sets.
 from uuid import uuid4
 
 import ddt
+import factory
 import mock
 import pytest
 from django.conf import settings
@@ -980,53 +981,63 @@ class LicenseViewSetActionTests(TestCase):
             'expected_status': status.HTTP_204_NO_CONTENT,
             'use_superuser': True,
             'revoked_date_should_update': True,
+            'should_reach_revocation_cap': True,
         },
         {
             'license_state': constants.ACTIVATED,
             'expected_status': status.HTTP_204_NO_CONTENT,
             'use_superuser': False,
             'revoked_date_should_update': True,
+            'should_reach_revocation_cap': False,
         },
         {
             'license_state': constants.ASSIGNED,
             'expected_status': status.HTTP_204_NO_CONTENT,
             'use_superuser': True,
             'revoked_date_should_update': True,
+            'should_reach_revocation_cap': False,
         },
         {
             'license_state': constants.ASSIGNED,
             'expected_status': status.HTTP_204_NO_CONTENT,
             'use_superuser': False,
             'revoked_date_should_update': True,
+            'should_reach_revocation_cap': False,
         },
         {
             'license_state': constants.REVOKED,
             'expected_status': status.HTTP_404_NOT_FOUND,
             'use_superuser': True,
             'revoked_date_should_update': False,
+            'should_reach_revocation_cap': False,
         },
         {
             'license_state': constants.REVOKED,
             'expected_status': status.HTTP_404_NOT_FOUND,
             'use_superuser': False,
             'revoked_date_should_update': False,
+            'should_reach_revocation_cap': False,
         },
         {
             'license_state': constants.ACTIVATED,
             'expected_status': status.HTTP_400_BAD_REQUEST,
             'use_superuser': False,
             'revoked_date_should_update': False,
+            'should_reach_revocation_cap': False,
         },
     )
     @ddt.unpack
     @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
     def test_revoke_license_states(
         self,
+        mock_send_revocation_cap_notification_email_task,
         mock_revoke_course_enrollments_for_user_task,
         license_state,
         expected_status,
         use_superuser,
         revoked_date_should_update,
+        should_reach_revocation_cap,
     ):
         """
         Test that revoking a license behaves correctly for different initial license states
@@ -1039,6 +1050,17 @@ class LicenseViewSetActionTests(TestCase):
         if expected_status == status.HTTP_400_BAD_REQUEST:
             self.subscription_plan.revoke_max_percentage = 0
             self.subscription_plan.save()
+        elif not should_reach_revocation_cap:
+            # Only one revoke is allowed by default on self.subscription_plan, so
+            # if we don't want to reach the revocation cap, more licenses must be added.
+            LicenseFactory.create_batch(
+                15,
+                user_email=factory.Faker('email'),
+                status=license_state,
+                subscription_plan=self.subscription_plan,
+            )
+            self.subscription_plan.revoke_max_percentage = 50
+            self.subscription_plan.save()
 
         response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
         assert response.status_code == expected_status
@@ -1047,10 +1069,19 @@ class LicenseViewSetActionTests(TestCase):
             assert revoked_license.status == constants.ACTIVATED
         else:
             assert revoked_license.status == constants.REVOKED
+
         if license_state == constants.ACTIVATED and expected_status != status.HTTP_400_BAD_REQUEST:
             mock_revoke_course_enrollments_for_user_task.assert_called()
+
+            if should_reach_revocation_cap:
+                mock_send_revocation_cap_notification_email_task.assert_called_with(
+                    subscription_uuid=self.subscription_plan.uuid,
+                )
+            else:
+                mock_send_revocation_cap_notification_email_task.assert_not_called()
         else:
             mock_revoke_course_enrollments_for_user_task.assert_not_called()
+            mock_send_revocation_cap_notification_email_task.assert_not_called()
 
         # Verify the revoked date is updated if the license was revoked
         assert_date_fields_correct([revoked_license], ['revoked_date'], revoked_date_should_update)
@@ -1075,8 +1106,14 @@ class LicenseViewSetActionTests(TestCase):
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
     @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
-    def test_assign_after_license_revoke(self, mock_activation_task, mock_revoke_course_enrollments_for_user_task):
+    def test_assign_after_license_revoke(
+        self,
+        mock_activation_task,
+        mock_send_revocation_cap_notification_email_task,
+        mock_revoke_course_enrollments_for_user_task,
+    ):
         """
         Verifies that assigning a license after revoking one works
         """
@@ -1085,6 +1122,9 @@ class LicenseViewSetActionTests(TestCase):
         response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
         assert response.status_code == status.HTTP_204_NO_CONTENT
         mock_revoke_course_enrollments_for_user_task.assert_called()
+        mock_send_revocation_cap_notification_email_task.assert_called_with(
+            subscription_uuid=self.subscription_plan.uuid,
+        )
 
         self._create_available_licenses()
         user_emails = ['bb8@mit.edu', self.test_email]
@@ -1104,7 +1144,12 @@ class LicenseViewSetActionTests(TestCase):
         assert self.closing == actual_template_text['closing']
 
     @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
-    def test_revoke_total_and_allocated_count(self, mock_revoke_course_enrollments_for_user_task):
+    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
+    def test_revoke_total_and_allocated_count(
+        self,
+        mock_send_revocation_cap_notification_email_task,
+        mock_revoke_course_enrollments_for_user_task,
+    ):
         """
         Verifies revoking a license keeps the `total` license count the same, and the `allocated` count decreases by 1.
         """
@@ -1128,6 +1173,9 @@ class LicenseViewSetActionTests(TestCase):
         revoke_response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
         assert revoke_response.status_code == status.HTTP_204_NO_CONTENT
         mock_revoke_course_enrollments_for_user_task.assert_called()
+        mock_send_revocation_cap_notification_email_task.assert_called_with(
+            subscription_uuid=self.subscription_plan.uuid,
+        )
         second_detail_response = _subscriptions_detail_request(
             self.api_client,
             self.super_user,
