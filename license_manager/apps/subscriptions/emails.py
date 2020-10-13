@@ -13,7 +13,8 @@ from license_manager.apps.subscriptions.constants import (
 
 def send_revocation_cap_notification_email(subscription_plan, enterprise_name):
     """
-    TODO:
+    Sends an email to inform ECS that a subscription plan for a customer has reached its
+    revocation cap, and that action may be necessary to help the customer add more licenses.
     """
     context = {
         'template_name': REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE,

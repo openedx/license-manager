@@ -44,7 +44,7 @@ def activation_task(custom_template_text, email_recipient_list, subscription_uui
 @shared_task(base=LoggedTask)
 def send_reminder_email_task(custom_template_text, email_recipient_list, subscription_uuid):
     """
-    Sends license activation reminder email(s) asynchronously
+    Sends license activation reminder email(s) asynchronously.
 
     Arguments:
         custom_template_text (dict): Dictionary containing `greeting` and `closing` keys to be used for customizing
@@ -98,7 +98,10 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
 @shared_task(base=LoggedTask)
 def send_revocation_cap_notification_email_task(subscription_uuid):
     """
-    TODO:
+    Sends revocation cap email notification to ECS asynchronously.
+
+    Arguments:
+        subscription_uuid (str): UUID (string representation) of the subscription that has reached its recovation cap.
     """
     subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
     enterprise_api_client = EnterpriseApiClient()
