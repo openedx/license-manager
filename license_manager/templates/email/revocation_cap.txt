@@ -11,7 +11,7 @@ for their subscription plan: {{ SUBSCRIPTION_TITLE }}.
 {% blocktrans trimmed %}
 Having now used {{ NUM_REVOCATIONS_APPLIED }} revocations, this enterprise will be unable to revoke additional activated
 licenses from learners, and this feature will be disabled within their administration portal. They will still be able to
-revoke and reassign pending licenses, which have never been previously activated.
+revoke and reassign pending licenses that have never been previously activated.
 {% endblocktrans %}
 
 {% blocktrans trimmed %}
