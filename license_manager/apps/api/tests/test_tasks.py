@@ -97,11 +97,9 @@ class LicenseManagerCeleryTaskTests(TestCase):
         (
             actual_template_text,
             actual_licenses,
-            actual_subscription_plan,
             actual_enterprise_slug,
         ) = send_email_args[:4]
 
         assert list(self.assigned_licenses) == list(actual_licenses)
-        assert self.subscription_plan == actual_subscription_plan
         assert self.custom_template_text == actual_template_text
         assert self.enterprise_slug == actual_enterprise_slug

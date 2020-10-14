@@ -48,7 +48,6 @@ class EmailTests(TestCase):
         emails.send_activation_emails(
             self.custom_template_text,
             [license for license in self.licenses if license.status == constants.ASSIGNED],
-            self.subscription_plan,
             self.enterprise_slug
         )
         self.assertEqual(
@@ -69,7 +68,6 @@ class EmailTests(TestCase):
         emails.send_activation_emails(
             self.custom_template_text,
             [lic],
-            lic.subscription_plan,
             self.enterprise_slug,
             True
         )

@@ -4,7 +4,10 @@ from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
-from license_manager.apps.subscriptions.emails import send_activation_emails
+from license_manager.apps.subscriptions.emails import (
+    send_activation_emails,
+    send_revocation_cap_notification_email,
+)
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 
 
@@ -28,7 +31,7 @@ def activation_task(custom_template_text, email_recipient_list, subscription_uui
     pending_licenses = subscription_plan.licenses.filter(user_email__in=email_recipient_list).order_by('uuid')
     enterprise_api_client = EnterpriseApiClient()
     enterprise_slug = enterprise_api_client.get_enterprise_slug(subscription_plan.enterprise_customer_uuid)
-    send_activation_emails(custom_template_text, pending_licenses, subscription_plan, enterprise_slug)
+    send_activation_emails(custom_template_text, pending_licenses, enterprise_slug)
     License.set_date_fields_to_now(pending_licenses, ['last_remind_date', 'assigned_date'])
 
     for email_recipient in email_recipient_list:
@@ -41,7 +44,7 @@ def activation_task(custom_template_text, email_recipient_list, subscription_uui
 @shared_task(base=LoggedTask)
 def send_reminder_email_task(custom_template_text, email_recipient_list, subscription_uuid):
     """
-    Sends license activation reminder email(s) asynchronously
+    Sends license activation reminder email(s) asynchronously.
 
     Arguments:
         custom_template_text (dict): Dictionary containing `greeting` and `closing` keys to be used for customizing
@@ -59,12 +62,11 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
         send_activation_emails(
             custom_template_text,
             pending_licenses,
-            subscription_plan,
             enterprise_slug,
             is_reminder=True
         )
     except Exception:  # pylint: disable=broad-except
-        logger.warning('License manager activation email sending received an exception.', exc_info=True)
+        logger.error('License manager activation email sending received an exception.', exc_info=True)
         # Return without updating the last_remind_date for licenses
         return
 
@@ -91,3 +93,24 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
                 exc=exc,
             )
         )
+
+
+@shared_task(base=LoggedTask)
+def send_revocation_cap_notification_email_task(subscription_uuid):
+    """
+    Sends revocation cap email notification to ECS asynchronously.
+
+    Arguments:
+        subscription_uuid (str): UUID (string representation) of the subscription that has reached its recovation cap.
+    """
+    subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
+    enterprise_api_client = EnterpriseApiClient()
+    enterprise_name = enterprise_api_client.get_enterprise_name(subscription_plan.enterprise_customer_uuid)
+
+    try:
+        send_revocation_cap_notification_email(
+            subscription_plan,
+            enterprise_name,
+        )
+    except Exception:  # pylint: disable=broad-except
+        logger.error('Revocation cap notification email sending received an exception.', exc_info=True)

@@ -32,6 +32,20 @@ class EnterpriseApiClient(BaseOAuthClient):
         response = self.client.get(endpoint).json()
         return response.get('slug', None)
 
+    def get_enterprise_name(self, enterprise_customer_uuid):
+        """
+        Gets the enterprise name for the enterprise associated with a customer.
+
+        Arguments:
+            enterprise_customer_uuid (UUID): UUID of the enterprise customer associated with an enterprise
+
+        Returns:
+            string: The enterprise_name for the enterprise
+        """
+        endpoint = self.enterprise_customer_endpoint + str(enterprise_customer_uuid) + '/'
+        response = self.client.get(endpoint).json()
+        return response.get('name', None)
+
     @backoff.on_predicate(
         # Use an exponential backoff algorithm
         backoff.expo,

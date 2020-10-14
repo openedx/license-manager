@@ -1,0 +1,31 @@
+{% extends "email/email_base.html" %}
+{% load i18n %}
+
+{% block body %}
+    <!-- Message Body -->
+    <h1>
+        {% trans "Revocation Cap Reached" %}
+    </h1>
+    <p>
+        {% now "F j, Y, h:i a T" as revoke_limit_reached_date %}
+        {% blocktrans trimmed %}
+        As of {{ revoke_limit_reached_date }}, {{ ENTERPRISE_NAME }} has used all allotted license revocations
+        for their subscription plan: {{ SUBSCRIPTION_TITLE }}.
+        {% endblocktrans %}
+    </p>
+    <p>
+        {% blocktrans trimmed %}
+        Having now used {{ NUM_REVOCATIONS_APPLIED }} revocations, this enterprise will be unable to
+        revoke additional activated licenses from learners, and this feature will be disabled within
+        their administration portal. They will still be able to revoke and reassign pending licenses
+        that have never been previously activated.
+        {% endblocktrans %}
+    </p>
+    <p>
+        {% blocktrans trimmed %}
+        Please alert Account Management (if applicable) and take appropriate steps to ensure the customer
+        continues to have a positive experience with edX.
+        {% endblocktrans %}
+    </p>
+    <!-- End Message Body -->
+{% endblock body %}

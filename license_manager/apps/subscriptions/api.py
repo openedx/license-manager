@@ -1,7 +1,10 @@
 """
 Python APIs exposed by the Subscriptions app to other in-process apps.
 """
-from ..api.tasks import revoke_course_enrollments_for_user_task
+from ..api.tasks import (
+    revoke_course_enrollments_for_user_task,
+    send_revocation_cap_notification_email_task,
+)
 from .constants import ACTIVATED, ASSIGNED
 from .exceptions import LicenseRevocationError
 
@@ -40,6 +43,12 @@ def revoke_license(user_license):
         # Revocation only counts against the limit for ACTIVATED licenses
         user_license.subscription_plan.num_revocations_applied += 1
         user_license.subscription_plan.save()
+
+    if user_license.subscription_plan.num_revocations_remaining <= 0:
+        # Send email notification to ECS that the Subscription Plan has reached its revocation cap
+        send_revocation_cap_notification_email_task.delay(
+            subscription_uuid=user_license.subscription_plan.uuid,
+        )
 
     # Revoke the license
     user_license.revoke()
