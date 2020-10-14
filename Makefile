@@ -60,7 +60,7 @@ django_shell: ## run Django shell
 	python manage.py shell
 
 test: clean ## run tests and generate coverage report
-	pytest
+	tox -e $(TOX_ENV)
 
 # To be run from CI context
 coverage: clean
@@ -103,6 +103,7 @@ upgrade: piptools ## update the requirements/*.txt files with the latest package
 	pip-compile --upgrade -o requirements/quality.txt requirements/quality.in
 	pip-compile --upgrade -o requirements/validation.txt requirements/validation.in
 	pip-compile --upgrade -o requirements/dev.txt requirements/dev.in
+	pip-compile --upgrade -o requirements/travis.txt requirements/travis.in
 	pip-compile --upgrade -o requirements/production.txt requirements/production.in
 	# Let tox control the Django version for tests
 	sed -i.tmp '/^django==/d' requirements/test.txt

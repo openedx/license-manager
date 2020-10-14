@@ -1,12 +1,15 @@
 language: python
 python:
-- 3.5
 - 3.8
+env:
+  - TOX_ENV=py38-django22
+  - TOX_ENV=py38-django30
 sudo: false
 cache: pip
 install:
 - make ci_requirements
-- pip install -U pip wheel codecov
+- pip install -U pip wheel
+- pip install -r requirements/travis.txt
 script:
 - make validate_translations
 - make validate

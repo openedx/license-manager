@@ -20,12 +20,12 @@ class SubscriptionPlanForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(SubscriptionPlanForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['num_licenses'].initial = self.instance.num_licenses
 
     def is_valid(self):
         # Perform original validation and return if false
-        if not super(SubscriptionPlanForm, self).is_valid():
+        if not super().is_valid():
             return False
 
         form_num_licenses = self.cleaned_data.get('num_licenses', 0)
@@ -33,7 +33,7 @@ class SubscriptionPlanForm(forms.ModelForm):
         if form_num_licenses > MAX_NUM_LICENSES and not self.instance.for_internal_use_only:
             self.add_error(
                 'num_licenses',
-                'Non-test subscriptions may not have more than {} licenses'.format(MAX_NUM_LICENSES),
+                f'Non-test subscriptions may not have more than {MAX_NUM_LICENSES} licenses',
             )
             return False
 

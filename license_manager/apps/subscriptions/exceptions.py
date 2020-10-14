@@ -11,7 +11,7 @@ class LicenseRevocationError(Exception):
             license_uuid (uuid4): the unique identifier for a license
             failure_reason (str): the reason for the license revocation error
         """
-        super(LicenseRevocationError, self).__init__()
+        super().__init__()
         self.license_uuid = license_uuid
         self.failure_reason = failure_reason
 

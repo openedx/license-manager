@@ -3,11 +3,11 @@
 Tests for the Subscription and License V1 API view sets.
 """
 import datetime
+from unittest import mock
 from uuid import uuid4
 
 import ddt
 import factory
-import mock
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -53,9 +53,9 @@ def _jwt_payload_from_role_context_pairs(user, role_context_pairs):
     """
     roles = []
     for role, context in role_context_pairs:
-        role_data = '{role}'.format(role=role)
+        role_data = f'{role}'
         if context is not None:
-            role_data += ':{context}'.format(context=context)
+            role_data += f':{context}'
         roles.append(role_data)
 
     payload = generate_unversioned_payload(user)
@@ -137,7 +137,7 @@ def _subscriptions_list_request(api_client, user, enterprise_customer_uuid=None)
     api_client.force_authenticate(user=user)
     url = reverse('api:v1:subscriptions-list')
     if enterprise_customer_uuid is not None:
-        url += '?enterprise_customer_uuid={uuid}'.format(uuid=enterprise_customer_uuid)
+        url += f'?enterprise_customer_uuid={enterprise_customer_uuid}'
     return api_client.get(url)
 
 
@@ -147,7 +147,7 @@ def _learner_subscriptions_list_request(api_client, enterprise_customer_uuid=Non
     """
     url = reverse('api:v1:learner-subscriptions-list')
     if enterprise_customer_uuid is not None:
-        url += '?enterprise_customer_uuid={uuid}'.format(uuid=enterprise_customer_uuid)
+        url += f'?enterprise_customer_uuid={enterprise_customer_uuid}'
     return api_client.get(url)
 
 
@@ -166,7 +166,7 @@ def _licenses_list_request(api_client, subscription_uuid, page_size=None):
     """
     url = reverse('api:v1:licenses-list', kwargs={'subscription_uuid': subscription_uuid})
     if page_size:
-        url += '?page_size={}'.format(page_size)
+        url += f'?page_size={page_size}'
     return api_client.get(url)
 
 

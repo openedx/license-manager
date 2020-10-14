@@ -1,6 +1,4 @@
-from uuid import uuid4
 
-import mock
 from django.conf import settings
 from django.core import mail
 from django.test import TestCase

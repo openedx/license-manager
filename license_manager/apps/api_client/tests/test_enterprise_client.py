@@ -1,8 +1,8 @@
-import logging
+
+from unittest import mock
 from uuid import uuid4
 
 import ddt
-import mock
 from django.test import TestCase
 
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
