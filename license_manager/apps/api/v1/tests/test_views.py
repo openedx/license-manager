@@ -2,6 +2,7 @@
 """
 Tests for the Subscription and License V1 API view sets.
 """
+import datetime
 from uuid import uuid4
 
 import ddt
@@ -217,6 +218,7 @@ def _assert_subscription_response_correct(response, subscription):
         'total': subscription.num_licenses,
         'allocated': subscription.num_allocated_licenses,
     }
+    assert response['days_until_expiration'] == (subscription.expiration_date - datetime.date.today()).days
 
 
 def _assert_license_response_correct(response, subscription_license):

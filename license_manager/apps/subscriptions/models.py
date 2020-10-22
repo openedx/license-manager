@@ -54,14 +54,12 @@ class SubscriptionPlan(TimeStampedModel):
     def days_until_expiration(self):
         """
         Returns the number of days remaining until a subscription expires.
+
+        Note: expiration_date is a required field so checking for None isn't needed.
         """
-        if self.expiration_date:
-            today = datetime.date.today()
-            diff = self.expiration_date - today
-            return diff.days
-        # Return 0 if expiration_date doesn't exist.
-        # This is just to be safe, it's a required field.
-        return 0
+        today = datetime.date.today()
+        diff = self.expiration_date - today
+        return diff.days
 
     enterprise_customer_uuid = models.UUIDField(
         blank=True,
