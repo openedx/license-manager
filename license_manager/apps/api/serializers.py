@@ -26,6 +26,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'is_active',
             'licenses',
             'revocations',
+            'days_until_expiration',
         ]
 
     def get_licenses(self, obj):

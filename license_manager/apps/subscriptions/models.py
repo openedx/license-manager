@@ -1,3 +1,4 @@
+import datetime
 from math import ceil
 from uuid import uuid4
 
@@ -48,6 +49,17 @@ class SubscriptionPlan(TimeStampedModel):
     start_date = models.DateField()
 
     expiration_date = models.DateField()
+
+    @property
+    def days_until_expiration(self):
+        """
+        Returns the number of days remaining until a subscription expires.
+
+        Note: expiration_date is a required field so checking for None isn't needed.
+        """
+        today = datetime.date.today()
+        diff = self.expiration_date - today
+        return diff.days
 
     enterprise_customer_uuid = models.UUIDField(
         blank=True,
