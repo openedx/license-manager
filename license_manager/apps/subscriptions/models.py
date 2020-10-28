@@ -216,6 +216,63 @@ class SubscriptionPlan(TimeStampedModel):
         )
 
 
+class SubscriptionPlanRenewal(TimeStampedModel):
+    """
+    TODO: Add docstring
+    TODO: Add job, task, etc. that handles the actual business logic behind renewing a subscription
+    """
+    subscription_plan = models.ForeignKey(
+        SubscriptionPlan,
+        related_name='renewals',
+        on_delete=models.CASCADE,
+    )
+
+    salesforce_opportunity_id = models.CharField(
+        max_length=SALESFORCE_ID_LENGTH,
+        validators=[MinLengthValidator(SALESFORCE_ID_LENGTH)],
+        blank=False,
+        null=False,
+        help_text=_(
+            "Locate the appropriate Salesforce Opportunity record and copy the Opportunity ID field (18 characters)."
+            " Note that this is not the same Salesforce Opportunity ID associated with the linked subscription."
+        )
+    )
+
+    number_of_licenses = models.PositiveIntegerField(
+        blank=False,
+        null=False,
+        help_text=_("Number of licenses to renew the linked subscription for."),
+    )
+
+    effective_date = models.DateField(
+        blank=False,
+        null=False,
+        help_text=_("The date that the subscription renewal will take place on."),
+    )
+
+    renewed_expiration_date = models.DateField(
+        blank=False,
+        null=False,
+        help_text=_("The date that the renewed subscription should expire on."),
+    )
+
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Subscription Plan Renewal")
+        verbose_name_plural = _("Subscription Plan Renewals")
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return (
+            "Renewal for subscription '{title}' effective on '{effective_date}'".format(
+                title=self.subscription_plan.title,
+                effective_date=self.effective_date,
+            )
+        )
+
 class License(TimeStampedModel):
     """
     Stores information related to an individual subscriptions license.

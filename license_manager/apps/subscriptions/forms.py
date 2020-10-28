@@ -4,9 +4,10 @@ Forms to be used in the subscriptions django app.
 from django import forms
 
 from license_manager.apps.subscriptions.constants import MAX_NUM_LICENSES
-from license_manager.apps.subscriptions.models import SubscriptionPlan
+from license_manager.apps.subscriptions.models import SubscriptionPlan, SubscriptionPlanRenewal
 
 
+# TODO: Add a "Renew" button to the subscription plan admin that links to creating a new SubscriptionPlanRenewal 
 class SubscriptionPlanForm(forms.ModelForm):
     # Extra form field to specify the number of licenses to be associated with the subscription plan
     num_licenses = forms.IntegerField(label="Number of Licenses", required=False)
@@ -51,4 +52,24 @@ class SubscriptionPlanForm(forms.ModelForm):
 
     class Meta:
         model = SubscriptionPlan
+        fields = '__all__'
+
+
+class SubscriptionPlanRenewalForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # TODO: Get initial values from the subscription that sent us here if possible? That might be too fancy though
+        # self.fields['number_of_licenses'].initial = self._get_initial_number_of_licenses()
+
+    def is_valid(self):
+        # Perform original validation and return if false
+        if not super().is_valid():
+            return False
+
+        # TODO: Add validation on dates, etc.
+
+        return True
+
+    class Meta:
+        model = SubscriptionPlanRenewal
         fields = '__all__'

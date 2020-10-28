@@ -2,8 +2,15 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.forms import (
+    SubscriptionPlanForm,
+    SubscriptionPlanRenewalForm,
+)
+from license_manager.apps.subscriptions.models import (
+    License,
+    SubscriptionPlan,
+    SubscriptionPlanRenewal,
+)
 
 
 @admin.register(License)
@@ -112,3 +119,51 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         if obj:
             return self.read_only_fields
         return ()
+
+
+@admin.register(SubscriptionPlanRenewal)
+class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
+    form = SubscriptionPlanRenewalForm
+    list_display = (
+        'get_subscription_plan_title',
+        'effective_date',
+        'renewed_expiration_date',
+        'get_subscription_plan_uuid',
+        'get_subscription_plan_enterprise_customer',
+        'get_subscription_plan_enterprise_catalog',
+    )
+    ordering = (
+        'subscription_plan__title',
+        'effective_date',
+    )
+    list_filter = (
+        'subscription_plan__title',
+        'subscription_plan__enterprise_customer_uuid',
+        'subscription_plan__enterprise_catalog_uuid',
+    )
+    search_fields = (
+        'subscription_plan__title',
+        'subscription_plan__uuid__startswith',
+        'subscription_plan__enterprise_customer_uuid__startswith',
+        'subscription_plan__enterprise_catalog_uuid__startswith',
+    )
+
+    def get_subscription_plan_title(self, obj):
+        return obj.subscription_plan.title
+    get_subscription_plan_title.short_description = 'Subscription Title'
+    get_subscription_plan_title.admin_order_field = 'subscription_plan__title'
+
+    def get_subscription_plan_uuid(self, obj):
+        return obj.subscription_plan.uuid
+    get_subscription_plan_uuid.short_description = 'Subscription UUID'
+    get_subscription_plan_uuid.admin_order_field = 'subscription_plan__uuid'
+
+    def get_subscription_plan_enterprise_customer(self, obj):
+        return obj.subscription_plan.enterprise_customer_uuid
+    get_subscription_plan_enterprise_customer.short_description = 'Enterprise Customer UUID'
+    get_subscription_plan_enterprise_customer.admin_order_field = 'subscription_plan__enterprise_customer_uuid'
+
+    def get_subscription_plan_enterprise_catalog(self, obj):
+        return obj.subscription_plan.enterprise_catalog_uuid
+    get_subscription_plan_enterprise_catalog.short_description = 'Enterprise Catalog UUID'
+    get_subscription_plan_enterprise_catalog.admin_order_field = 'subscription_plan__enterprise_catalog_uuid'
