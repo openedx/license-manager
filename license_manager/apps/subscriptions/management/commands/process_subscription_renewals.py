@@ -54,15 +54,16 @@ class Command(BaseCommand):
                 # or equal to the number of new licenses being added, we can just get rid of those unassigned licenses.
                 existing_unassigned_licenses = subscription_for_renewal.unassigned_licenses
                 if existing_unassigned_licenses.count() >= num_new_licenses:
-                    # Get rid of those unassigned licenses as that should have no impact on learners
                     # TODO: Is it ok to delete these licenses? Should they be detached from the subscription? What's the
                     # best thing from a data preservation standpoint?
-                    print('Enough unassigned licenses')
+                    # Best thing long term is probably soft-deleting the licenses.
+                    # See: https://medium.com/@adriennedomingus/soft-deletion-in-django-e4882581c340 or similar posts
+                    unassigned_licenses_to_delete = existing_unassigned_licenses[:num_new_licenses]
+                    unassigned_licenses_to_delete.delete()
                 else:
                     # TODO: Figure out logic on what to do if they are trying to renew but don't have enough unassigned
                     # to pick from.
                     print('Not enough unassigned licenses')
-                    pass
             else:
                 # Another easy situation, they're just adding more licenses
                 subscription_for_renewal.increase_num_licenses(num_new_licenses)
