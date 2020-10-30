@@ -260,12 +260,11 @@ class SubscriptionPlanRenewal(TimeStampedModel):
         help_text=_("The date that the renewed subscription should expire on."),
     )
 
-    # TODO: Is this needed? Used as an easy way of confirming that a subscription renewal was processed successfully
-    # but we probably need manual cleanup if something is ever not renewed on the day it was supposed to be
-    # renewal_processed = models.BooleanField(
-    #     default=False,
-    #     help_text=_("Whether the renewal has gone into effect for the linked subscription."),
-    # )
+    # Mainly used as an easy way to confirm that a renewal has been processed successfully
+    processed = models.BooleanField(
+        default=False,
+        help_text=_("Whether the renewal has been processed and gone into effect for the linked subscription."),
+    )
 
     history = HistoricalRecords()
 

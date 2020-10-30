@@ -44,7 +44,7 @@ class Command(BaseCommand):
                     subscription_for_renewal.start_date = renewal.effective_date
                     subscription_for_renewal.expiration_date = renewal.renewed_expiration_date
                     subscription_for_renewal.num_revocations_applied = 0
-                    # Do we need fancier logic around `is_active` here?
+                    # TODO: Do we need fancier logic around `is_active` here?
                     subscription_for_renewal.is_active = True
                     subscription_for_renewal.save()
 
@@ -85,6 +85,8 @@ class Command(BaseCommand):
                 mark_job_as_failed = True
                 continue
             num_renewals_processed += 1
+            renewal.processed = True
+            renewal.save()
             message = 'Successfully processed renewal: {renewal}'.format(renewal=renewal)
             logger.info(message)
 

@@ -128,6 +128,7 @@ class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
         'get_subscription_plan_title',
         'effective_date',
         'renewed_expiration_date',
+        'processed',
         'get_subscription_plan_uuid',
         'get_subscription_plan_enterprise_customer',
         'get_subscription_plan_enterprise_catalog',
@@ -138,6 +139,7 @@ class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
     )
     list_filter = (
         'subscription_plan__title',
+        'processed',
         'subscription_plan__enterprise_customer_uuid',
         'subscription_plan__enterprise_catalog_uuid',
     )
