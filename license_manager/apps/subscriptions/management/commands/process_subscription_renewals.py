@@ -22,10 +22,11 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        # Get all of the subscription renewals that should go into effect today, along with their linked subscriptions
-        # and licenses.
+        # Get all of the unprocessed subscription renewals that should go into effect today, along with their linked
+        # subscriptions and licenses.
         renewals_for_today = SubscriptionPlanRenewal.objects.filter(
             effective_date=datetime.today().date(),
+            processed=False,
         ).select_related(
             'subscription_plan',
         ).prefetch_related(
