@@ -218,8 +218,12 @@ class SubscriptionPlan(TimeStampedModel):
 
 class SubscriptionPlanRenewal(TimeStampedModel):
     """
-    TODO: Add docstring
-    TODO: Add job, task, etc. that handles the actual business logic behind renewing a subscription
+    Stores information related to a purchase that schedules the renewal of a SubscriptionPlan.
+
+    A subscription renewal may be for more, the same, or fewer licenses than the original Subscription.
+    A renewal can be scheduled to become effective on any day on or after the original Subscription expires.
+
+    .. no_pii: This model has no PII
     """
     subscription_plan = models.ForeignKey(
         SubscriptionPlan,
@@ -285,10 +289,7 @@ class License(TimeStampedModel):
     Stores information related to an individual subscriptions license.
 
     .. pii: Stores email address and user id (from the lms) for a user. The email could potentially
-    be for a customer who is not yet an edx user. Note: We are currently working on the plan of how
-    to retire this pii, but are proceeding for the moment as we have no user data in stage or
-    production. Marking as `local_api` for now as that is likely the retirement solution we will
-    take.
+    be for a customer who is not yet an edx user.
     .. pii_types: id,email_address
     .. pii_retirement: local_api
     """
