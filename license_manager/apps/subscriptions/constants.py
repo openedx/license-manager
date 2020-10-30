@@ -49,3 +49,16 @@ LICENSE_BULK_OPERATION_BATCH_SIZE = 100
 
 # Feature Toggles
 EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API = 'expose_license_activation_key_over_api'
+
+# Subscription Plan Types
+INITIAL_PLAN_TYPE = 'initial'
+RENEWAL_PLAN_TYPE = 'renewal'
+BATCHED_PLAN_TYPE = 'batched'
+ADDITION_PLAN_TYPE = 'addition'
+
+SUBSCRIPTION_PLAN_TYPES = {
+    INITIAL_PLAN_TYPE: 'Initial Subscription',
+    RENEWAL_PLAN_TYPE: 'Renewed Subscription',
+    BATCHED_PLAN_TYPE: 'Batched Subscription',
+    ADDITION_PLAN_TYPE: 'Subscription with Additional Licenses',
+}

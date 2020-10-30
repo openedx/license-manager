@@ -3,7 +3,29 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.models import (
+    CustomerSubscription,
+    License,
+    SubscriptionPlan,
+    SubscriptionPlanType,
+)
+
+
+@admin.register(CustomerSubscription)
+class CustomerSubscriptionAdmin(admin.ModelAdmin):
+    fields = (
+        'uuid',
+        'enterprise_customer_uuid',
+        'enterprise_customer_slug',
+        'default_enterprise_catalog_uuid',
+    )
+    list_display = fields
+
+
+@admin.register(SubscriptionPlanType)
+class SubscriptionPlanType(admin.ModelAdmin):
+    fields = ('slug', 'name')
+    list_display = fields
 
 
 @admin.register(License)
@@ -61,6 +83,8 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'salesforce_opportunity_id',
         'netsuite_product_id',
         'num_revocations_remaining',
+        'subscription_plan_type',
+        'customer_subscription',
     )
     writable_fields = (
         'revoke_max_percentage',
@@ -77,10 +101,12 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'enterprise_customer_uuid',
         'enterprise_catalog_uuid',
         'for_internal_use_only',
+        'subscription_plan_type',
     )
     list_filter = (
         'is_active',
         'for_internal_use_only',
+        'subscription_plan_type',
     )
     search_fields = (
         'uuid__startswith',

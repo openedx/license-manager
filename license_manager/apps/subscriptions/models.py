@@ -25,6 +25,71 @@ from license_manager.apps.subscriptions.constants import (
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
+class CustomerSubscription(TimeStampedModel):
+    """
+    Stores information about a customer who has one or more SubscriptionPlans.
+    """
+
+    class Meta:
+        verbose_name = _("Customer Subscription")
+        verbose_name_plural = _("Customer Subscriptions")
+        app_label = 'subscriptions'
+
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid4,
+        editable=False
+    )
+
+    enterprise_customer_uuid = models.UUIDField(
+        blank=False,
+        null=False,
+        db_index=True,
+        unique=True,
+    )
+
+    enterprise_customer_slug = models.CharField(
+        max_length=128,
+        blank=True,
+        null=True,
+    )
+
+    default_enterprise_catalog_uuid = models.UUIDField(
+        blank=True,
+        null=True,
+    )
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return (
+            "<CustomerSubscription for EnterpriseCustomer {identifier}".format(
+                identifier=self.enterprise_customer_slug or self.enterprise_customer_uuid
+            )
+        )
+
+
+class SubscriptionPlanType(TimeStampedModel):
+    """
+    Different types of Subscription Plans.
+    """
+    slug = models.CharField(
+        max_length=128,
+        blank=False,
+        null=False,
+        primary_key=True,
+    )
+    name = models.CharField(
+        max_length=128,
+        blank=False,
+        null=False,
+    )
+
+    def __str__(self):
+        return 'SubscriptionPlanType | {}: {}'.format(self.slug, self.name)
+
+
 class SubscriptionPlan(TimeStampedModel):
     """
     Stores top-level information related to a Subscriptions purchase.
@@ -44,6 +109,20 @@ class SubscriptionPlan(TimeStampedModel):
         primary_key=True,
         default=uuid4,
         editable=False
+    )
+
+    customer_subscription = models.ForeignKey(
+        CustomerSubscription,
+        related_name='subscription_plans',
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+
+    subscription_plan_type = models.ForeignKey(
+        SubscriptionPlanType,
+        related_name='subscription_plans',
+        on_delete=models.SET_NULL,
+        null=True,
     )
 
     start_date = models.DateField()
