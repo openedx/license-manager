@@ -30,24 +30,27 @@ class InsufficientLicensesForRenewalError(Exception):
     Example: A customer has a SubscriptionPlan with 100 licenses, 50 of which are unassigned on the renewal effective
     date. If they have a renewal being processed that calls for more than 50 licenses, this exception should be raised.
     """
-    def __init__(self, subscription_for_renewal, num_licenses_to_remove, num_existing_unassigned_licenses):
+    def __init__(self, renewal, num_licenses_to_remove, num_existing_unassigned_licenses):
         """
         Args:
-            subscription_for_renewal (SubscriptionPlan): The subscription that was unable to be renewed.
+            renewal (SubscriptionPlanRenewal): The renewal that was unable to be processed.
             num_licenses_to_remove (int): The number of licenses that need to be removed from the subscription to match
                 the number for renewal.
             num_existing_unassigned_licenses (int): How many unassigned licenses the subscription has prior to renewal.
         """
         super().__init__()
-        self.subscription_for_renewal = subscription_for_renewal
+        self.renewal = renewal
         self.num_licenses_to_remove = num_licenses_to_remove
         self.num_existing_unassigned_licenses = num_existing_unassigned_licenses
 
     def __str__(self):
-        message = ('Subscription Renewal failed for SubscriptionPlan with uuid: {}. The renewal calls for {} licenses'
-        ' to be removed, but the subscription only has {} unassigned licenses to remove.')
+        message = (
+            'Subscription Renewal {renewal} was unable to be processed. The renewal calls for {num_licenses_to_remove}'
+            ' licenses to be removed, but the subscription only has {num_existing_unassigned_licenses} unassigned'
+            ' licenses to remove.'
+        )
         return message.format(
-            self.subscription_for_renewal.uuid,
-            self.num_licenses_to_remove,
-            self.num_existing_unassigned_licenses,
+            renewal=self.renewal,
+            num_licenses_to_remove=self.num_licenses_to_remove,
+            num_existing_unassigned_licenses=self.num_existing_unassigned_licenses,
         )

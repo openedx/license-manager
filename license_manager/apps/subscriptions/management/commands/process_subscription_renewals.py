@@ -35,12 +35,9 @@ class Command(BaseCommand):
         mark_job_as_failed = False
 
         for renewal in renewals_for_today:
-            subscription_for_renewal = renewal.subscription_plan
-            message = 'Processing renewal with effective date: {} for subscription with uuid: {}'.format(
-                renewal.effective_date,
-                subscription_for_renewal.uuid,
-            )
+            message = 'Processing renewal: {renewal}'.format(renewal=renewal)
             logger.info(message)
+            subscription_for_renewal = renewal.subscription_plan
             # Process each renewal atomically so that a subscription is not changed if there is an error during renewal
             try:
                 with transaction.atomic():
@@ -51,8 +48,7 @@ class Command(BaseCommand):
                     subscription_for_renewal.is_active = True
                     subscription_for_renewal.save()
 
-                    # num_new_licenses = renewal.number_of_licenses - subscription_for_renewal.licenses.count()
-                    num_new_licenses = -10
+                    num_new_licenses = renewal.number_of_licenses - subscription_for_renewal.licenses.count()
                     if num_new_licenses == 0:
                         # If there is no change in licenses, great! Don't do anything
                         pass
@@ -76,7 +72,7 @@ class Command(BaseCommand):
                         else:
                             # TODO: Notify ECS. Likely needs a ticket for the full handling, email template, etc.
                             raise InsufficientLicensesForRenewalError(
-                                subscription_for_renewal,
+                                renewal,
                                 num_licenses_to_remove,
                                 existing_unassigned_licenses.count(),
                             )
@@ -89,19 +85,19 @@ class Command(BaseCommand):
                 mark_job_as_failed = True
                 continue
             num_renewals_processed += 1
-            message = 'Successfully renewed subscription with uuid: {}'.format(
-                subscription_for_renewal.uuid,
-            )
+            message = 'Successfully processed renewal: {renewal}'.format(renewal=renewal)
             logger.info(message)
 
-        message = 'Successfully processed {} out of {} subscription renewal(s)'.format(
-            num_renewals_processed,
-            renewals_for_today.count(),
+        message = (
+            'Successfully processed {num_renewals_processed} out of {total_renewals_for_today} subscription renewal(s)'
+        ).format(
+            num_renewals_processed=num_renewals_processed,
+            total_renewals_for_today=renewals_for_today.count(),
         )
         logger.info(message)
         if mark_job_as_failed:
             num_failed_renewals = renewals_for_today.count() - num_renewals_processed
-            error_message = '{} subscription renewal(s) were unable to be processed'.format(
-                num_failed_renewals,
+            error_message = '{num_failed_renewals} subscription renewal(s) were unable to be processed'.format(
+                num_failed_renewals=num_failed_renewals,
             )
             raise Exception(error_message)

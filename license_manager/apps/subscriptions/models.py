@@ -278,8 +278,12 @@ class SubscriptionPlanRenewal(TimeStampedModel):
         Return human-readable string representation.
         """
         return (
-            "Renewal for subscription '{title}' effective on '{effective_date}'".format(
+            "<SubscriptionPlanRenewal with id '{id}'"
+            " for subscription with title '{title}' and UUID '{uuid}'"
+            " effective on '{effective_date}'>".format(
+                id=self.id,
                 title=self.subscription_plan.title,
+                uuid=self.subscription_plan.uuid,
                 effective_date=self.effective_date,
             )
         )
