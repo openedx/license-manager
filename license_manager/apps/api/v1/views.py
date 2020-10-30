@@ -340,8 +340,6 @@ class LicenseViewSet(LearnerLicenseViewSet):
 
         This endpoint reminds users by sending an email to the given email address, if there is a license which has not
         yet been activated that is associated with that email address.
-
-        # TODO: Restrict to enterprise admins with edx-rbac implementation
         """
         # Validate the user_email and text sent in the data
         self._validate_data(request.data)

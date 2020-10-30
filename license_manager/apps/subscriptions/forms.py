@@ -1,6 +1,8 @@
 """
 Forms to be used in the subscriptions django app.
 """
+from datetime import datetime
+
 from django import forms
 
 from license_manager.apps.subscriptions.constants import MAX_NUM_LICENSES
@@ -66,7 +68,33 @@ class SubscriptionPlanRenewalForm(forms.ModelForm):
         if not super().is_valid():
             return False
 
-        # TODO: Add validation on dates, etc.
+        # Subscription dates should follow this ordering:
+        # subscription start date <= subscription expiration date <= subscription renewal effective date <=
+        # subscription renewal expiration date
+        form_effective_date = self.cleaned_data.get('effective_date')
+        form_renewed_expiration_date = self.cleaned_data.get('renewed_expiration_date')
+
+        if form_effective_date < datetime.today().date():
+            self.add_error(
+                'effective_date',
+                'A subscription renewal can not be scheduled to become effective in the past.',
+            )
+            return False
+
+        if form_renewed_expiration_date < form_effective_date:
+            self.add_error(
+                'renewed_expiration_date',
+                'A subscription renewal can not expire before it becomes effective.',
+            )
+            return False
+
+        subscription = self.instance.subscription_plan
+        if form_effective_date < subscription.expiration_date:
+            self.add_error(
+                'effective_date',
+                'A subscription renewal can not take effect before a subscription expires.',
+            )
+            return False
 
         return True
 

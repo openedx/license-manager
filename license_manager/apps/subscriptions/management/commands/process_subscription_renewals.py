@@ -31,6 +31,7 @@ class Command(BaseCommand):
         )
 
         for renewal in renewals_for_today:
+            # TODO: Atomic transactions for each one?
             subscription_for_renewal = renewal.subscription_plan
             message = 'Processing renewal with effective date: {} for subscription with uuid: {}'.format(
                 renewal.effective_date,

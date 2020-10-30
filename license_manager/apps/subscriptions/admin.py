@@ -167,3 +167,11 @@ class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
         return obj.subscription_plan.enterprise_catalog_uuid
     get_subscription_plan_enterprise_catalog.short_description = 'Enterprise Catalog UUID'
     get_subscription_plan_enterprise_catalog.admin_order_field = 'subscription_plan__enterprise_catalog_uuid'
+
+    def has_change_permission(self, request, obj=None):
+        """
+        If the subscription renewal has already been created, it should not be editable.
+        """
+        if obj:
+            return False
+        return True
