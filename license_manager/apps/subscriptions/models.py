@@ -129,17 +129,6 @@ class SubscriptionPlan(TimeStampedModel):
 
     expiration_date = models.DateField()
 
-    @property
-    def days_until_expiration(self):
-        """
-        Returns the number of days remaining until a subscription expires.
-
-        Note: expiration_date is a required field so checking for None isn't needed.
-        """
-        today = datetime.date.today()
-        diff = self.expiration_date - today
-        return diff.days
-
     enterprise_customer_uuid = models.UUIDField(
         blank=True,
         null=True,
@@ -169,6 +158,17 @@ class SubscriptionPlan(TimeStampedModel):
         verbose_name="Number of Revocations Applied",
         help_text="Number of revocations applied to Licenses for this SubscriptionPlan.",
     )
+
+    @property
+    def days_until_expiration(self):
+        """
+        Returns the number of days remaining until a subscription expires.
+
+        Note: expiration_date is a required field so checking for None isn't needed.
+        """
+        today = localized_utcnow().date()
+        diff = self.expiration_date - today
+        return diff.days
 
     @property
     def num_revocations_remaining(self):
@@ -242,6 +242,14 @@ class SubscriptionPlan(TimeStampedModel):
             already allocated.
         """
         return self.licenses.filter(status__in=(ACTIVATED, ASSIGNED)).count()
+
+    @property
+    def is_current(self):
+        return self.start_date <= localized_utcnow() <= self.end_date
+
+    @property
+    def is_usable(self):
+        return self.is_active and self.is_current
 
     def increase_num_licenses(self, num_new_licenses):
         """
@@ -426,6 +434,11 @@ class License(TimeStampedModel):
         self.activation_key = None
         self.assigned_date = None
         self.revoked_date = None
+
+    def activate(self, user_id):
+        self.status = ACTIVATED
+        self.activation_date = localized_utcnow()
+        self.lms_user_id = user_id
 
     def revoke(self):
         """

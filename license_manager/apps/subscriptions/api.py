@@ -7,6 +7,7 @@ from ..api.tasks import (
 )
 from .constants import ACTIVATED, ASSIGNED
 from .exceptions import LicenseRevocationError
+from .utils import localized_utcnow
 
 
 def revoke_license(user_license):
@@ -54,3 +55,12 @@ def revoke_license(user_license):
     user_license.revoke()
     # Create new license to add to the unassigned license pool
     user_license.subscription_plan.increase_num_licenses(1)
+
+
+def activate_license_for_user_id(user_license, user_id):
+    if user_license.status != constants.ASSIGNED:
+        return False
+
+    user_license.activate(user_id)
+    user_license.save()
+    return True
