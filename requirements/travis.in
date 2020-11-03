@@ -1,5 +1,5 @@
 # Requirements for running tests in Travis
 -c constraints.txt
 
-tox-travis
 codecov
+tox

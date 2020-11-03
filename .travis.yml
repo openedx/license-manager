@@ -8,7 +8,7 @@ sudo: false
 cache: pip
 install:
 - make ci_requirements
-- pip install -U pip wheel
+- pip install -r requirements/pip.txt
 - pip install -r requirements/travis.txt
 script:
 - make validate_translations
