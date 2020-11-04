@@ -381,7 +381,7 @@ class SubscriptionsFeatureRole(UserRole):
         """
         Return human-readable string representation.
         """
-        return "SubscriptionsFeatureRole(name={name})".format(name=self.name)
+        return f"SubscriptionsFeatureRole(name={self.name})"
 
     def __repr__(self):
         """

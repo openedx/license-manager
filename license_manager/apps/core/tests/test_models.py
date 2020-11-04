@@ -32,7 +32,7 @@ class UserTests(TestCase):
         first_name = 'Jerry'
         last_name = 'Seinfeld'
         user = G(User, full_name=None, first_name=first_name, last_name=last_name)
-        expected = '{first_name} {last_name}'.format(first_name=first_name, last_name=last_name)
+        expected = f'{first_name} {last_name}'
         self.assertEqual(user.get_full_name(), expected)
 
         user = G(User, full_name=full_name, first_name=first_name, last_name=last_name)

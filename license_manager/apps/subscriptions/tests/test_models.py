@@ -1,7 +1,6 @@
-from uuid import uuid4
+from unittest import mock
 
 import ddt
-import mock
 from django.test import TestCase
 
 from license_manager.apps.subscriptions.models import SubscriptionPlan

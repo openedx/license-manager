@@ -65,7 +65,7 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
         try:
             return uuid.UUID(enterprise_customer_uuid)
         except ValueError:
-            raise ParseError('{} is not a valid uuid.'.format(enterprise_customer_uuid))
+            raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.')
 
     @property
     def requested_subscription_uuid(self):
@@ -547,7 +547,7 @@ class LicenseActivationView(LicenseBaseView):
 
         if user_license.status not in (constants.ASSIGNED, constants.ACTIVATED):
             return Response(
-                'Cannot activate a license with a status of {}'.format(user_license.status),
+                f'Cannot activate a license with a status of {user_license.status}',
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
@@ -576,8 +576,8 @@ class UserRetirementView(APIView):
         """
         field_value = self.request.data.get(field_name)
         if not field_value:
-            message = 'Required field "{}" missing or missing value in retirement request"'.format(field_name)
-            logger.error('{}. Returning 400 BAD REQUEST'.format(message))
+            message = f'Required field "{field_name}" missing or missing value in retirement request"'
+            logger.error(f'{message}. Returning 400 BAD REQUEST')
             raise ParseError(message)
 
         return field_value
@@ -622,12 +622,12 @@ class UserRetirementView(APIView):
         try:
             User = get_user_model()
             user = User.objects.get(username=original_username)
-            logger.info('Retiring user with id {} and lms_user_id {}'.format(user.id, lms_user_id))
+            logger.info(f'Retiring user with id {user.id} and lms_user_id {lms_user_id}')
             user.delete()
         except ObjectDoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         except Exception as exc:  # pylint: disable=broad-except
-            logger.exception('500 error retiring user with lms_user_id {}. Error: {}'.format(lms_user_id, exc))
+            logger.exception(f'500 error retiring user with lms_user_id {lms_user_id}. Error: {exc}')
             return Response('Error retiring user', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(status=status.HTTP_204_NO_CONTENT)

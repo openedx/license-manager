@@ -43,7 +43,7 @@ def get_key_from_jwt(decoded_jwt, key):
     """
     value = decoded_jwt.get(key)
     if not value:
-        raise ParseError('`{key}` is required and could not be found in your jwt'.format(key=key))
+        raise ParseError(f'`{key}` is required and could not be found in your jwt')
 
     return value
 

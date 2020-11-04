@@ -20,7 +20,7 @@ DATABASES = {
 # BEGIN CELERY
 CELERY_TASK_ALWAYS_EAGER = True
 results_dir = tempfile.TemporaryDirectory()
-CELERY_RESULT_BACKEND = 'file://{}'.format(results_dir.name)
+CELERY_RESULT_BACKEND = f'file://{results_dir.name}'
 # END CELERY
 
 # Make some loggers less noisy (useful during test failure)
