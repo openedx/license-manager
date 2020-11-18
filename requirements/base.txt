@@ -7,10 +7,10 @@
 amqp==2.6.1               # via kombu
 backoff==1.10.0           # via -r requirements/base.in
 billiard==3.6.3.0         # via celery
-boto3==1.16.10            # via django-ses
-botocore==1.19.10         # via boto3, s3transfer
+boto3==1.16.17            # via django-ses
+botocore==1.19.17         # via boto3, s3transfer
 celery==4.4.7             # via -c requirements/constraints.txt, -r requirements/base.in, edx-celeryutils
-certifi==2020.6.20        # via requests
+certifi==2020.11.8        # via requests
 cffi==1.14.3              # via cryptography
 chardet==3.0.4            # via requests
 coreapi==2.3.3            # via django-rest-swagger, openapi-codec
@@ -18,7 +18,7 @@ coreschema==0.0.4         # via coreapi
 cryptography==3.2.1       # via pyjwt
 defusedxml==0.6.0         # via python3-openid, social-auth-core
 django-cors-headers==3.5.0  # via -r requirements/base.in
-django-crum==0.7.7        # via edx-django-utils, edx-rbac
+django-crum==0.7.9        # via edx-django-utils, edx-rbac
 django-extensions==3.0.9  # via -r requirements/base.in
 django-filter==2.4.0      # via -r requirements/base.in
 django-model-utils==4.0.0  # via -r requirements/base.in, edx-celeryutils, edx-rbac
@@ -27,7 +27,7 @@ django-ses==1.0.3         # via -r requirements/base.in
 django-simple-history==2.12.0  # via -r requirements/base.in
 django-waffle==2.0.0      # via -r requirements/base.in, edx-django-utils, edx-drf-extensions
 django==2.2.17            # via -c requirements/constraints.txt, -r requirements/base.in, django-cors-headers, django-crum, django-filter, django-model-utils, django-ses, djangorestframework, drf-jwt, drf-nested-routers, edx-auth-backends, edx-celeryutils, edx-django-utils, edx-drf-extensions, edx-rbac, jsonfield2, rest-condition
-djangorestframework==3.12.1  # via -r requirements/base.in, django-rest-swagger, drf-jwt, drf-nested-routers, edx-drf-extensions, rest-condition
+djangorestframework==3.12.2  # via -r requirements/base.in, django-rest-swagger, drf-jwt, drf-nested-routers, edx-drf-extensions, rest-condition
 drf-jwt==1.17.2           # via edx-drf-extensions
 drf-nested-routers==0.92.1  # via -r requirements/base.in
 edx-auth-backends==3.1.0  # via -r requirements/base.in
@@ -59,9 +59,10 @@ pymongo==3.11.0           # via edx-opaque-keys
 python-dateutil==2.8.1    # via botocore, edx-drf-extensions
 python3-openid==3.2.0     # via social-auth-core
 pytz==2020.4              # via -r requirements/base.in, celery, django, django-ses
+recurly==3.14.0           # via -r requirements/base.in
 redis==3.5.3              # via -r requirements/base.in
 requests-oauthlib==1.3.0  # via social-auth-core
-requests==2.24.0          # via coreapi, edx-drf-extensions, edx-rest-api-client, pyjwkest, requests-oauthlib, slumber, social-auth-core
+requests==2.25.0          # via coreapi, edx-drf-extensions, edx-rest-api-client, pyjwkest, requests-oauthlib, slumber, social-auth-core
 rest-condition==1.0.3     # via edx-drf-extensions
 rules==2.2                # via -r requirements/base.in
 s3transfer==0.3.3         # via boto3
@@ -74,6 +75,6 @@ social-auth-core==3.2.0   # via -c requirements/constraints.txt, edx-auth-backen
 sqlparse==0.4.1           # via django
 stevedore==3.2.2          # via edx-django-utils, edx-opaque-keys
 uritemplate==3.0.1        # via coreapi
-urllib3==1.25.11          # via botocore, requests
+urllib3==1.26.2           # via botocore, requests
 vine==1.3.0               # via amqp, celery
 zipp==1.2.0               # via -c requirements/constraints.txt, -r requirements/base.in

@@ -80,6 +80,11 @@ subscription_router.register(
 
 urlpatterns = [
     url(
+      r'subscription-payment',
+      views.SubscriptionPaymentView.as_view(),
+      name='subscription-payment',
+    ),
+    url(
         r'license-subsidy',
         views.LicenseSubidyView.as_view(),
         name='license-subsidy',
@@ -93,6 +98,6 @@ urlpatterns = [
         r'retire_user',
         views.UserRetirementView.as_view(),
         name='user-retirement',
-    )
+    ),
 ]
 urlpatterns += router.urls + subscription_router.urls

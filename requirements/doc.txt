@@ -7,20 +7,20 @@
 alabaster==0.7.12         # via sphinx
 amqp==2.6.1               # via -r requirements/test.txt, kombu
 astroid==2.3.3            # via -r requirements/test.txt, pylint, pylint-celery
-attrs==20.2.0             # via -r requirements/test.txt, pytest
-babel==2.8.0              # via sphinx
+attrs==20.3.0             # via -r requirements/test.txt, pytest
+babel==2.9.0              # via sphinx
 backoff==1.10.0           # via -r requirements/test.txt
 billiard==3.6.3.0         # via -r requirements/test.txt, celery
 bleach==3.2.1             # via readme-renderer
-boto3==1.16.10            # via -r requirements/test.txt, django-ses
-botocore==1.19.10         # via -r requirements/test.txt, boto3, s3transfer
+boto3==1.16.17            # via -r requirements/test.txt, django-ses
+botocore==1.19.17         # via -r requirements/test.txt, boto3, s3transfer
 celery==4.4.7             # via -c requirements/constraints.txt, -r requirements/test.txt, edx-celeryutils
-certifi==2020.6.20        # via -r requirements/test.txt, requests
+certifi==2020.11.8        # via -r requirements/test.txt, requests
 cffi==1.14.3              # via -r requirements/test.txt, cryptography
 chardet==3.0.4            # via -r requirements/test.txt, doc8, requests
 click-log==0.3.2          # via -r requirements/test.txt, edx-lint
 click==7.1.2              # via -r requirements/test.txt, click-log, code-annotations, edx-lint
-code-annotations==0.10.0  # via -r requirements/test.txt
+code-annotations==0.10.1  # via -r requirements/test.txt
 coreapi==2.3.3            # via -r requirements/test.txt, django-rest-swagger, openapi-codec
 coreschema==0.0.4         # via -r requirements/test.txt, coreapi
 coverage==5.3             # via -r requirements/test.txt, pytest-cov
@@ -28,7 +28,7 @@ cryptography==3.2.1       # via -r requirements/test.txt, pyjwt
 ddt==1.4.1                # via -r requirements/test.txt
 defusedxml==0.6.0         # via -r requirements/test.txt, python3-openid, social-auth-core
 django-cors-headers==3.5.0  # via -r requirements/test.txt
-django-crum==0.7.7        # via -r requirements/test.txt, edx-django-utils, edx-rbac
+django-crum==0.7.9        # via -r requirements/test.txt, edx-django-utils, edx-rbac
 django-dynamic-fixture==3.1.0  # via -r requirements/test.txt
 django-extensions==3.0.9  # via -r requirements/test.txt
 django-filter==2.4.0      # via -r requirements/test.txt
@@ -38,7 +38,7 @@ django-ses==1.0.3         # via -r requirements/test.txt
 django-simple-history==2.12.0  # via -r requirements/test.txt
 django-waffle==2.0.0      # via -r requirements/test.txt, edx-django-utils, edx-drf-extensions
 django==2.2.17            # via -c requirements/constraints.txt, -r requirements/test.txt, code-annotations, django-cors-headers, django-crum, django-filter, django-model-utils, django-ses, djangorestframework, drf-jwt, drf-nested-routers, edx-auth-backends, edx-celeryutils, edx-django-utils, edx-drf-extensions, edx-rbac, jsonfield2, rest-condition
-djangorestframework==3.12.1  # via -r requirements/test.txt, django-rest-swagger, drf-jwt, drf-nested-routers, edx-drf-extensions, rest-condition
+djangorestframework==3.12.2  # via -r requirements/test.txt, django-rest-swagger, drf-jwt, drf-nested-routers, edx-drf-extensions, rest-condition
 doc8==0.8.1               # via -r requirements/doc.in
 docutils==0.16            # via doc8, readme-renderer, restructuredtext-lint, sphinx
 drf-jwt==1.17.2           # via -r requirements/test.txt, edx-drf-extensions
@@ -53,7 +53,7 @@ edx-rbac==1.3.3           # via -r requirements/test.txt
 edx-rest-api-client==1.9.2  # via -c requirements/constraints.txt, -r requirements/test.txt
 edx-sphinx-theme==1.5.0   # via -r requirements/doc.in
 factory-boy==3.1.0        # via -r requirements/test.txt
-faker==4.14.0             # via -r requirements/test.txt, factory-boy
+faker==4.14.2             # via -r requirements/test.txt, factory-boy
 freezegun==1.0.0          # via -r requirements/test.txt
 future==0.18.2            # via -r requirements/test.txt, django-ses, edx-celeryutils, pyjwkest
 idna==2.10                # via -r requirements/test.txt, requests
@@ -97,9 +97,10 @@ python3-openid==3.2.0     # via -r requirements/test.txt, social-auth-core
 pytz==2020.4              # via -r requirements/test.txt, babel, celery, django, django-ses
 pyyaml==5.3.1             # via -c requirements/constraints.txt, -r requirements/test.txt, code-annotations
 readme-renderer==28.0     # via -r requirements/doc.in
+recurly==3.14.0           # via -r requirements/test.txt
 redis==3.5.3              # via -r requirements/test.txt
 requests-oauthlib==1.3.0  # via -r requirements/test.txt, social-auth-core
-requests==2.24.0          # via -r requirements/test.txt, coreapi, edx-drf-extensions, edx-rest-api-client, pyjwkest, requests-oauthlib, slumber, social-auth-core, sphinx
+requests==2.25.0          # via -r requirements/test.txt, coreapi, edx-drf-extensions, edx-rest-api-client, pyjwkest, requests-oauthlib, slumber, social-auth-core, sphinx
 rest-condition==1.0.3     # via -r requirements/test.txt, edx-drf-extensions
 restructuredtext-lint==1.3.1  # via doc8
 rules==2.2                # via -r requirements/test.txt
@@ -111,7 +112,7 @@ slumber==0.7.1            # via -r requirements/test.txt, edx-rest-api-client
 snowballstemmer==2.0.0    # via sphinx
 social-auth-app-django==3.1.0  # via -c requirements/constraints.txt, -r requirements/test.txt, edx-auth-backends
 social-auth-core==3.2.0   # via -c requirements/constraints.txt, -r requirements/test.txt, edx-auth-backends, social-auth-app-django
-sphinx==3.3.0             # via -r requirements/doc.in, edx-sphinx-theme
+sphinx==3.3.1             # via -r requirements/doc.in, edx-sphinx-theme
 sphinxcontrib-applehelp==1.0.2  # via sphinx
 sphinxcontrib-devhelp==1.0.2  # via sphinx
 sphinxcontrib-htmlhelp==1.0.3  # via sphinx
@@ -123,7 +124,7 @@ stevedore==3.2.2          # via -r requirements/test.txt, code-annotations, doc8
 text-unidecode==1.3       # via -r requirements/test.txt, faker, python-slugify
 toml==0.10.2              # via -r requirements/test.txt, pytest
 uritemplate==3.0.1        # via -r requirements/test.txt, coreapi
-urllib3==1.25.11          # via -r requirements/test.txt, botocore, requests
+urllib3==1.26.2           # via -r requirements/test.txt, botocore, requests
 vine==1.3.0               # via -r requirements/test.txt, amqp, celery
 webencodings==0.5.1       # via bleach
 wrapt==1.11.2             # via -r requirements/test.txt, astroid

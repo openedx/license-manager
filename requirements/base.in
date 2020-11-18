@@ -24,6 +24,7 @@ edx-rbac
 edx-rest-api-client
 mysqlclient
 pytz
+recurly
 redis
 rules
 zipp

@@ -1,8 +1,11 @@
+import recurly
 import logging
 import uuid
 from collections import OrderedDict
+from slugify import slugify
 from uuid import uuid4
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
@@ -14,7 +17,7 @@ from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets, generics
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError
 from rest_framework.pagination import PageNumberPagination
@@ -199,6 +202,84 @@ class LicensePagination(PageNumberPaginationWithCount):
     """
     page_size_query_param = 'page_size'
     max_page_size = 500
+
+
+class SubscriptionPaymentView(PermissionRequiredForListingMixin, generics.GenericAPIView):
+    """ TODO: """
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
+    allowed_roles = [constants.SUBSCRIPTIONS_LEARNER_ROLE, constants.SUBSCRIPTIONS_ADMIN_ROLE]
+
+    def post(self, request):
+        """
+        TODO:
+        """
+        plan_code = request.data.get('plan_code')
+        token_id = request.data.get('token_id')
+        first_name = request.data.get('first_name')
+        last_name = request.data.get('last_name')
+        company = request.data.get('company')
+        item_code = request.data.get('item_code')
+        quantity = request.data.get('quantity')
+
+        print('quantity', type(quantity), quantity)
+
+        account_code = slugify(company)
+        purchase = {
+            "currency": "USD",
+            "account": {
+                "code": account_code,
+                "first_name": first_name,
+                "last_name": last_name,
+                "billing_info": {"token_id": token_id},
+            },
+            "subscriptions": [
+                {
+                    "plan_code": plan_code,
+                    "add_ons": [
+                        {
+                            "code": item_code,
+                            "quantity": quantity,
+                        }
+                    ]
+                }
+            ],
+        }
+        client = recurly.Client(settings.RECURLY_PRIVATE_KEY)
+        invoice_collection = client.create_purchase(purchase)
+        invoice = invoice_collection.charge_invoice
+
+        if not invoice:
+            return Response(
+                {"error": "No invoice."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        line_items = invoice.line_items.data
+        line_item = [item for item in line_items if item.amount > 0].pop()
+
+        if not line_item:
+            return Response(
+                {"error": "No line item in invoice."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # create a new subscription plan!
+        subscription_plan, __ = SubscriptionPlan.objects.get_or_create(
+            title='{name} ({plan_code})'.format(
+                name=company,
+                plan_code=plan_code,
+            ),
+            start_date=line_item.start_date,
+            expiration_date=line_item.end_date,
+            is_active=True,
+            salesforce_opportunity_id="ABCDEFGHIJKLMNOPQR",
+            netsuite_product_id=1,
+            enterprise_customer_uuid=str(uuid4()),
+            enterprise_catalog_uuid=str(uuid4()),
+        )
+        # add licenses to plan!
+        subscription_plan.increase_num_licenses(quantity)
+        return Response(None, status=status.HTTP_204_NO_CONTENT)
 
 
 class LicenseViewSet(LearnerLicenseViewSet):
