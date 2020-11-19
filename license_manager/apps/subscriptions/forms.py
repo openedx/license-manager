@@ -1,10 +1,15 @@
 """
 Forms to be used in the subscriptions django app.
 """
+from datetime import datetime
+
 from django import forms
 
 from license_manager.apps.subscriptions.constants import MAX_NUM_LICENSES
-from license_manager.apps.subscriptions.models import SubscriptionPlan
+from license_manager.apps.subscriptions.models import (
+    SubscriptionPlan,
+    SubscriptionPlanRenewal,
+)
 
 
 class SubscriptionPlanForm(forms.ModelForm):
@@ -51,4 +56,56 @@ class SubscriptionPlanForm(forms.ModelForm):
 
     class Meta:
         model = SubscriptionPlan
+        fields = '__all__'
+
+
+class SubscriptionPlanRenewalForm(forms.ModelForm):
+    # Using a HidenInput widget here allows us to hide the property
+    # on the creation form while still displaying the property
+    # as read-only on the SubscriptionPlanRenewalForm update form.
+    renewed_subscription_plan = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def is_valid(self):
+        # Perform original validation and return if false
+        if not super().is_valid():
+            return False
+
+        # Subscription dates should follow this ordering:
+        # subscription start date <= subscription expiration date <= subscription renewal effective date <=
+        # subscription renewal expiration date
+        form_effective_date = self.cleaned_data.get('effective_date')
+        form_renewed_expiration_date = self.cleaned_data.get('renewed_expiration_date')
+
+        if form_effective_date < datetime.today().date():
+            self.add_error(
+                'effective_date',
+                'A subscription renewal can not be scheduled to become effective in the past.',
+            )
+            return False
+
+        if form_renewed_expiration_date < form_effective_date:
+            self.add_error(
+                'renewed_expiration_date',
+                'A subscription renewal can not expire before it becomes effective.',
+            )
+            return False
+
+        subscription = self.instance.prior_subscription_plan
+        if form_effective_date < subscription.expiration_date:
+            self.add_error(
+                'effective_date',
+                'A subscription renewal can not take effect before a subscription expires.',
+            )
+            return False
+
+        return True
+
+    class Meta:
+        model = SubscriptionPlanRenewal
         fields = '__all__'

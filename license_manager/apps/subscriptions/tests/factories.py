@@ -10,7 +10,12 @@ from license_manager.apps.subscriptions.constants import (
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
 )
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.models import (
+    CustomerAgreement,
+    License,
+    SubscriptionPlan,
+    SubscriptionPlanRenewal,
+)
 
 
 USER_PASSWORD = 'password'
@@ -22,6 +27,21 @@ def get_random_salesforce_id():
     """
     return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
                    for _ in range(SALESFORCE_ID_LENGTH))
+
+
+class CustomerAgreementFactory(factory.django.DjangoModelFactory):
+    """
+    Test factory for the `CustomerAgreement` model.
+
+    Creates a customer agreement with randomized data
+    """
+    class Meta:
+        model = CustomerAgreement
+
+    uuid = factory.LazyFunction(uuid4)
+    enterprise_customer_uuid = factory.LazyFunction(uuid4)
+    enterprise_customer_slug = factory.Faker('word')
+    default_enterprise_catalog_uuid = factory.LazyFunction(uuid4)
 
 
 class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
@@ -42,6 +62,23 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     enterprise_catalog_uuid = factory.LazyFunction(uuid4)
     netsuite_product_id = factory.Faker('random_int')
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
+
+
+class SubscriptionPlanRenewalFactory(factory.django.DjangoModelFactory):
+    """
+    Test factory for the `SubscriptionPlanRenewal` model.
+
+    Creates a subscription plan renewal with randomized data
+    """
+    class Meta:
+        model = SubscriptionPlanRenewal
+
+    prior_subscription_plan = factory.SubFactory(SubscriptionPlanFactory)
+    salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
+    number_of_licenses = 5
+    effective_date = date.today() + timedelta(days=366)
+    renewed_expiration_date = effective_date + timedelta(days=366)
+    processed = False
 
 
 class LicenseFactory(factory.django.DjangoModelFactory):

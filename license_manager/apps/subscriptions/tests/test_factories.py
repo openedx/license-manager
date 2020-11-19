@@ -1,9 +1,13 @@
+import pytest
+from django.db import IntegrityError
 from django.test import TestCase
 
 from license_manager.apps.subscriptions.constants import UNASSIGNED
 from license_manager.apps.subscriptions.tests.factories import (
+    CustomerAgreementFactory,
     LicenseFactory,
     SubscriptionPlanFactory,
+    SubscriptionPlanRenewalFactory,
 )
 
 
@@ -38,3 +42,23 @@ class SubscriptionsModelFactoryTests(TestCase):
         # Verify the subscription plan uuid is correctly set on the licenses
         license = subscription.licenses.first()
         self.assertEqual(subscription.uuid, license.subscription_plan.uuid)
+
+    def test_customer_agreement_factory(self):
+        with pytest.raises(IntegrityError):
+            """
+            Verify a customer agreement factory only creates unique customer agreement
+            """
+            customer_agreement = CustomerAgreementFactory()
+            self.assertTrue(customer_agreement)
+            customer_agreement_2 = CustomerAgreementFactory(
+                enterprise_customer_uuid=customer_agreement.enterprise_customer_uuid,
+                enterprise_customer_slug=customer_agreement.enterprise_customer_slug,
+            )
+            self.assertFalse(customer_agreement_2)
+
+    def test_subscription_plan_renewal_factory(self):
+        """
+        Verify an unexpired subscription plan renewal is created by default.
+        """
+        subscription_renewal = SubscriptionPlanRenewalFactory()
+        self.assertTrue(subscription_renewal.effective_date < subscription_renewal.renewed_expiration_date)

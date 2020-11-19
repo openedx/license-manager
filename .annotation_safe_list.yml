@@ -29,9 +29,13 @@ social_django.Partial:
   ".. no_pii:": "This model has no PII"
 social_django.UserSocialAuth:
   ".. no_pii:": "This model has no PII"
+subscriptions.HistoricalCustomerAgreement:
+  ".. no_pii:": "This model has no PII"
 subscriptions.HistoricalLicense:
   ".. no_pii:": "This model has no PII"
 subscriptions.HistoricalSubscriptionPlan:
+  ".. no_pii:": "This model has no PII"
+subscriptions.HistoricalSubscriptionPlanRenewal:
   ".. no_pii:": "This model has no PII"
 waffle.Flag:
   ".. no_pii:": "This model has no PII"
