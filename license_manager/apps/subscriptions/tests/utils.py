@@ -6,7 +6,10 @@ from datetime import date, timedelta
 from faker import Factory as FakerFactory
 
 from license_manager.apps.subscriptions.constants import ASSIGNED
-from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
+from license_manager.apps.subscriptions.forms import (
+    SubscriptionPlanForm,
+    SubscriptionPlanRenewalForm,
+)
 from license_manager.apps.subscriptions.tests.factories import (
     LicenseFactory,
     SubscriptionPlanFactory,
@@ -45,6 +48,27 @@ def make_bound_subscription_form(
         'for_internal_use_only': for_internal_use_only,
     }
     return SubscriptionPlanForm(form_data)
+
+
+def make_bound_subscription_plan_renewal_form(
+    prior_subscription_plan,
+    effective_date,
+    renewed_expiration_date,
+    processed=False,
+    salesforce_opportunity_id=get_random_salesforce_id(),
+):
+    """
+    Builds a bound SubscriptionPlanRenewalForm
+    """
+    form_data = {
+        'prior_subscription_plan': prior_subscription_plan.uuid,
+        'effective_date': effective_date,
+        'renewed_expiration_date': renewed_expiration_date,
+        'processed': processed,
+        'number_of_licenses': faker.random_int(),
+        'salesforce_opportunity_id': salesforce_opportunity_id,
+    }
+    return SubscriptionPlanRenewalForm(form_data)
 
 
 def make_test_email_data():

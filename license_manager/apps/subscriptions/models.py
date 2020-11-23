@@ -25,6 +25,58 @@ from license_manager.apps.subscriptions.constants import (
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
+class CustomerAgreement(TimeStampedModel):
+    """
+    Stores information related to an agreement for a specific customer
+    Allows for linking of an enterprise customer with all of their subscription plans
+
+    .. no_pii: This model has no PII
+    """
+
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid4,
+        editable=False,
+        unique=True,
+    )
+
+    enterprise_customer_uuid = models.UUIDField(
+        null=False,
+        blank=False,
+        unique=True,
+    )
+
+    enterprise_customer_slug = models.CharField(
+        max_length=128,
+        blank=False,
+        null=False,
+        unique=True,
+    )
+
+    default_enterprise_catalog_uuid = models.UUIDField(
+        blank=True,
+        null=True,
+    )
+
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Customer Agreement")
+        verbose_name_plural = _("Customer Agreements")
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return (
+            "<CustomerAgreement with UUID '{uuid}' "
+            "for Enterprise Customer with UUID '{enterprise_customer_uuid}'>".format(
+                uuid=self.uuid,
+                enterprise_customer_uuid=self.enterprise_customer_uuid,
+            )
+        )
+
+
 class SubscriptionPlan(TimeStampedModel):
     """
     Stores top-level information related to a Subscriptions purchase.
@@ -61,15 +113,29 @@ class SubscriptionPlan(TimeStampedModel):
         diff = self.expiration_date - today
         return diff.days
 
+    # TODO after migrating data so all existing subscriptions have a customer_agreement
+    #      we would want this field to be deleted and update current references to use customer_agreement's one instead
     enterprise_customer_uuid = models.UUIDField(
         blank=True,
         null=True,
         db_index=True,
+        help_text=_(
+            "The Enterprise Customer UUID should match the one in the Customer agreement if one is selected."
+        )
     )
 
     enterprise_catalog_uuid = models.UUIDField(
         blank=True,
         null=True,
+    )
+
+    # TODO after migrating data so all existing subscriptions have a customer_agreement change this to be non-nullable
+    customer_agreement = models.ForeignKey(
+        CustomerAgreement,
+        related_name='subscriptions',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
     )
 
     is_active = models.BooleanField(
@@ -212,6 +278,85 @@ class SubscriptionPlan(TimeStampedModel):
                 title=self.title,
                 enterprise_customer_uuid=self.enterprise_customer_uuid,
                 internal_use=' (for internal use only)' if self.for_internal_use_only else '',
+            )
+        )
+
+
+class SubscriptionPlanRenewal(TimeStampedModel):
+    """
+    Stores information related to a purchase that schedules the renewal of a SubscriptionPlan.
+    A subscription renewal may be for more, the same, or fewer licenses than the original Subscription.
+    A renewal can be scheduled to become effective on any day on or after the original Subscription expires.
+    .. no_pii: This model has no PII
+    """
+    prior_subscription_plan = models.OneToOneField(
+        SubscriptionPlan,
+        on_delete=models.CASCADE,
+        null=False,
+        related_name='renewal',
+        unique=True,
+    )
+
+    renewed_subscription_plan = models.OneToOneField(
+        SubscriptionPlan,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='origin_renewal',
+    )
+
+    salesforce_opportunity_id = models.CharField(
+        max_length=SALESFORCE_ID_LENGTH,
+        validators=[MinLengthValidator(SALESFORCE_ID_LENGTH)],
+        blank=False,
+        null=False,
+        help_text=_(
+            "Locate the appropriate Salesforce Opportunity record and copy the Opportunity ID field (18 characters)."
+            " Note that this is not the same Salesforce Opportunity ID associated with the linked subscription."
+        )
+    )
+
+    number_of_licenses = models.PositiveIntegerField(
+        blank=False,
+        null=False,
+        help_text=_("Number of licenses to renew the linked subscription for."),
+    )
+
+    effective_date = models.DateField(
+        blank=False,
+        null=False,
+        help_text=_("The date that the subscription renewal will take place on."),
+    )
+
+    renewed_expiration_date = models.DateField(
+        blank=False,
+        null=False,
+        help_text=_("The date that the renewed subscription should expire on."),
+    )
+
+    # Mainly used as an easy way to confirm that a renewal has been processed successfully
+    processed = models.BooleanField(
+        default=False,
+        help_text=_("Whether the renewal has been processed and gone into effect for the linked subscription."),
+    )
+
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Subscription Plan Renewal")
+        verbose_name_plural = _("Subscription Plan Renewals")
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return (
+            "<SubscriptionPlanRenewal with id '{id}'"
+            " for subscription with title '{title}' and UUID '{uuid}'"
+            " effective on '{effective_date}'>".format(
+                id=self.id,
+                title=self.prior_subscription_plan.title,
+                uuid=self.prior_subscription_plan.uuid,
+                effective_date=self.effective_date,
             )
         )
 

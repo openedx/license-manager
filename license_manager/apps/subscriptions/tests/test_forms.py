@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from unittest import TestCase
 
 import ddt
@@ -6,8 +7,12 @@ from pytest import mark
 from license_manager.apps.subscriptions.constants import MAX_NUM_LICENSES
 from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.models import SubscriptionPlan
+from license_manager.apps.subscriptions.tests.factories import (
+    SubscriptionPlanFactory,
+)
 from license_manager.apps.subscriptions.tests.utils import (
     make_bound_subscription_form,
+    make_bound_subscription_plan_renewal_form,
 )
 
 
@@ -33,3 +38,45 @@ class TestSubscriptionPlanForm(TestCase):
         """
         form = make_bound_subscription_form(num_licenses=num_licenses, for_internal_use_only=for_internal_use)
         assert form.is_valid() is is_valid
+
+
+@mark.django_db
+class TestSubscriptionPlanRenewalForm(TestCase):
+    """
+    Unit tests for the SubscriptionPlanRenewalForm
+    """
+    def test_valid_start_and_expiration_dates(self):
+        prior_subscription_plan = SubscriptionPlanFactory.create()
+        form = make_bound_subscription_plan_renewal_form(
+            prior_subscription_plan=prior_subscription_plan,
+            effective_date=prior_subscription_plan.expiration_date + timedelta(1),
+            renewed_expiration_date=prior_subscription_plan.expiration_date + timedelta(366),
+        )
+        assert form.is_valid()
+
+    def test_invalid_start_date_overlap_current_subscription(self):
+        prior_subscription_plan = SubscriptionPlanFactory.create()
+        form = make_bound_subscription_plan_renewal_form(
+            prior_subscription_plan=prior_subscription_plan,
+            effective_date=prior_subscription_plan.expiration_date - timedelta(1),
+            renewed_expiration_date=date.today() + timedelta(366),
+        )
+        assert not form.is_valid()
+
+    def test_invalid_expiration_date_before_start_date(self):
+        prior_subscription_plan = SubscriptionPlanFactory.create()
+        form = make_bound_subscription_plan_renewal_form(
+            prior_subscription_plan=prior_subscription_plan,
+            effective_date=prior_subscription_plan.expiration_date + timedelta(366),
+            renewed_expiration_date=prior_subscription_plan.expiration_date + timedelta(1),
+        )
+        assert not form.is_valid()
+
+    def test_invalid_start_date_before_today(self):
+        prior_subscription_plan = SubscriptionPlanFactory.create()
+        form = make_bound_subscription_plan_renewal_form(
+            prior_subscription_plan=prior_subscription_plan,
+            effective_date=date.today() - timedelta(1),
+            renewed_expiration_date=prior_subscription_plan.expiration_date + timedelta(366),
+        )
+        assert not form.is_valid()
