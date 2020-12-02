@@ -1,0 +1,32 @@
+name: Django CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ['py38']
+        django-version: ['django22', 'django30']
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: "3.8"
+        architecture: x64
+    - name: Start container
+      run: |
+        docker-compose -f .github/docker-compose-github.yml up -d
+    - name: Install test dependencies and run validation
+      run: |
+        docker exec -e TOXENV=${{ matrix.python-version }}-${{ matrix.django-version }} -u root license_manager.app /edx/app/license_manager/validate.sh
+    - name: Code Coverage
+      uses: codecov/codecov-action@v1
