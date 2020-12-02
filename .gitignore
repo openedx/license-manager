@@ -87,3 +87,5 @@ private.py
 *.trace
 
 docs/_build/
+
+scripts/

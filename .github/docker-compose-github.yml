@@ -1,0 +1,36 @@
+version: "2.1"
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: license_manager.mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: "license_manager"
+    volumes:
+      - license_manager_mysql:/var/lib/mysql
+
+  app:
+    image: openedx/license-manager
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: license_manager.app
+    volumes:
+      - ..:/edx/app/license_manager
+    # Use the Django devserver, so that we can hot-reload code changes
+    command: bash -c 'while true; do python /edx/app/license_manager/manage.py runserver 0.0.0.0:18170; sleep 2; done'
+    ports:
+      - "18170:18170"
+    depends_on:
+      - mysql
+    # Allows attachment to this container using 'docker attach <containerID>'.
+    stdin_open: true
+    tty: true
+    environment:
+      CELERY_ALWAYS_EAGER: 'true'
+      DJANGO_SETTINGS_MODULE: license_manager.settings.test
+
+volumes:
+  license_manager_mysql:
+    driver: local

@@ -60,7 +60,7 @@ django_shell: ## run Django shell
 	python manage.py shell
 
 test: clean ## run tests and generate coverage report
-	tox -e $(TOX_ENV)
+	tox -e $(TOXENV)
 
 # To be run from CI context
 coverage: clean
