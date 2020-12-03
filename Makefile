@@ -77,7 +77,7 @@ style: ## run Python style checker
 	pycodestyle license_manager *.py
 
 lint: ## run Python code linting
-	pylint --rcfile=pylintrc license_manager *.py
+	pylint --rcfile=pylintrc license_manager *.py -s no
 
 quality: style isort_check lint ## check code style and import sorting, then lint
 

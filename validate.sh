@@ -12,6 +12,7 @@ make validate_translations
 
 # Debug
 pip freeze | grep lint
+pip freeze | grep astroid
 which pylint
 which pip
 which python
