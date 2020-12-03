@@ -15,7 +15,7 @@ def get_subscription_plan_from_enterprise(request):
     enterprise_customer_uuid = request.query_params.get('enterprise_customer_uuid')
     return get_object_or_404(
         SubscriptionPlan,
-        enterprise_customer_uuid=enterprise_customer_uuid,
+        customer_agreement__enterprise_customer_uuid=enterprise_customer_uuid,
         is_active=True,
     )
 

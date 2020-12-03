@@ -44,7 +44,7 @@ class LicenseAdmin(admin.ModelAdmin):
         'user_email',
         'subscription_plan__title',
         'subscription_plan__uuid__startswith',
-        'subscription_plan__enterprise_customer_uuid__startswith',
+        'subscription_plan__customer_agreement__enterprise_customer_uuid__startswith',
         'subscription_plan__enterprise_catalog_uuid__startswith',
     )
 
@@ -65,21 +65,21 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'start_date',
         'expiration_date',
         'customer_agreement',
-        'enterprise_customer_uuid',
         'enterprise_catalog_uuid',
         'salesforce_opportunity_id',
         'netsuite_product_id',
         'num_revocations_remaining',
+        'num_licenses',
     )
     writable_fields = (
         'revoke_max_percentage',
-        'num_licenses',
         'is_active',
         'for_internal_use_only',
     )
     fields = read_only_fields + writable_fields
     list_display = (
         'title',
+        'uuid',
         'is_active',
         'start_date',
         'expiration_date',
@@ -95,7 +95,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     search_fields = (
         'uuid__startswith',
         'title',
-        'enterprise_customer_uuid__startswith',
+        'customer_agreement__enterprise_customer_uuid__startswith',
         'enterprise_catalog_uuid__startswith',
     )
     ordering = (
@@ -110,6 +110,10 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     )
 
     def save_model(self, request, obj, form, change):
+        # If a uuid is not specified on the subscription itself, use the default one for the CustomerAgreement
+        obj.enterprise_catalog_uuid = (obj.enterprise_catalog_uuid or
+                                       obj.customer_agreement.default_enterprise_catalog_uuid)
+
         # Create licenses to be associated with the subscription plan after creating the subscription plan
         num_new_licenses = form.cleaned_data.get('num_licenses', 0) - obj.num_licenses
         super().save_model(request, obj, form, change)
@@ -117,7 +121,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         """
-        If subscription already exists, make all fields but num_licenses and is_active read-only
+        Only allow a few certain fields to be writable if a subscription already exists
         """
         if obj:
             return self.read_only_fields
@@ -203,13 +207,13 @@ class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
     list_filter = (
         'prior_subscription_plan__title',
         'processed',
-        'prior_subscription_plan__enterprise_customer_uuid',
+        'prior_subscription_plan__customer_agreement__enterprise_customer_uuid',
         'prior_subscription_plan__enterprise_catalog_uuid',
     )
     search_fields = (
         'prior_subscription_plan__title',
         'prior_subscription_plan__uuid__startswith',
-        'prior_subscription_plan__enterprise_customer_uuid__startswith',
+        'prior_subscription_plan__customer_agreement__enterprise_customer_uuid__startswith',
         'prior_subscription_plan__enterprise_catalog_uuid__startswith',
     )
 

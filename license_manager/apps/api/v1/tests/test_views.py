@@ -34,6 +34,7 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionsRoleAssignment,
 )
 from license_manager.apps.subscriptions.tests.factories import (
+    CustomerAgreementFactory,
     LicenseFactory,
     SubscriptionPlanFactory,
     UserFactory,
@@ -208,7 +209,7 @@ def _assert_subscription_response_correct(response, subscription):
     """
     Helper for asserting that the response for a subscription matches the object's values.
     """
-    assert response['enterprise_customer_uuid'] == str(subscription.enterprise_customer_uuid)
+    assert response['enterprise_customer_uuid'] == subscription.enterprise_customer_uuid
     assert response['uuid'] == str(subscription.uuid)
     assert response['start_date'] == _get_date_string(subscription.start_date)
     assert response['expiration_date'] == _get_date_string(subscription.expiration_date)
@@ -357,14 +358,15 @@ def test_non_staff_user_learner_subscriptions_endpoint(api_client, non_staff_use
     Verify that an enterprise learner can view the active subscriptions their enterprise has
     """
     enterprise_customer_uuid = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
     active_subscriptions = SubscriptionPlanFactory.create_batch(
         2,
-        enterprise_customer_uuid=enterprise_customer_uuid,
+        customer_agreement=customer_agreement,
         is_active=True
     )
     inactive_subscriptions = SubscriptionPlanFactory.create_batch(
         2,
-        enterprise_customer_uuid=enterprise_customer_uuid,
+        customer_agreement=customer_agreement,
         is_active=False
     )
     subscriptions = active_subscriptions + inactive_subscriptions
@@ -421,7 +423,12 @@ def test_subscription_plan_detail_staff_user_200(api_client, staff_user, boolean
     assigned_licenses = LicenseFactory.create_batch(5, status=constants.ASSIGNED)
     subscription.licenses.set(unassigned_licenses + assigned_licenses)
 
-    _assign_role_via_jwt_or_db(api_client, staff_user, subscription.enterprise_customer_uuid, boolean_toggle)
+    _assign_role_via_jwt_or_db(
+        api_client,
+        staff_user,
+        subscription.enterprise_customer_uuid,
+        boolean_toggle,
+    )
 
     response = _subscriptions_detail_request(api_client, staff_user, subscription.uuid)
     assert status.HTTP_200_OK == response.status_code
@@ -431,7 +438,12 @@ def test_subscription_plan_detail_staff_user_200(api_client, staff_user, boolean
 @pytest.mark.django_db
 def test_license_list_staff_user_200(api_client, staff_user, boolean_toggle):
     subscription, assigned_license, unassigned_license = _subscription_and_licenses()
-    _assign_role_via_jwt_or_db(api_client, staff_user, subscription.enterprise_customer_uuid, boolean_toggle)
+    _assign_role_via_jwt_or_db(
+        api_client,
+        staff_user,
+        subscription.enterprise_customer_uuid,
+        boolean_toggle,
+    )
 
     response = _licenses_list_request(api_client, subscription.uuid)
 
@@ -445,7 +457,12 @@ def test_license_list_staff_user_200(api_client, staff_user, boolean_toggle):
 @pytest.mark.django_db
 def test_license_list_staff_user_200_custom_page_size(api_client, staff_user):
     subscription, _, _ = _subscription_and_licenses()
-    _assign_role_via_jwt_or_db(api_client, staff_user, subscription.enterprise_customer_uuid, True)
+    _assign_role_via_jwt_or_db(
+        api_client,
+        staff_user,
+        subscription.enterprise_customer_uuid,
+        True,
+    )
 
     response = _licenses_list_request(api_client, subscription.uuid, page_size=1)
 
@@ -465,7 +482,12 @@ def test_license_detail_staff_user_200(api_client, staff_user, boolean_toggle):
     subscription_license = LicenseFactory.create()
     subscription.licenses.set([subscription_license])
 
-    _assign_role_via_jwt_or_db(api_client, staff_user, subscription.enterprise_customer_uuid, boolean_toggle)
+    _assign_role_via_jwt_or_db(
+        api_client,
+        staff_user,
+        subscription.enterprise_customer_uuid,
+        boolean_toggle,
+    )
 
     response = _licenses_detail_request(api_client, staff_user, subscription.uuid, subscription_license.uuid)
     assert status.HTTP_200_OK == response.status_code
@@ -591,15 +613,16 @@ def _create_subscription_plans(enterprise_customer_uuid):
     """
     Helper method to create several plans.  Returns the plans.
     """
-    first_subscription = SubscriptionPlanFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
+    customer_agreement = CustomerAgreementFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
+    first_subscription = SubscriptionPlanFactory.create(customer_agreement=customer_agreement)
     # Associate some unassigned and assigned licenses to the first subscription
     unassigned_licenses = LicenseFactory.create_batch(5)
     assigned_licenses = LicenseFactory.create_batch(2, status=constants.ASSIGNED)
     first_subscription.licenses.set(unassigned_licenses + assigned_licenses)
     # Create one more subscription for the enterprise with no licenses
-    second_subscription = SubscriptionPlanFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
+    second_subscription = SubscriptionPlanFactory.create(customer_agreement=customer_agreement)
     # Create another subscription not associated with the enterprise that shouldn't show up
-    SubscriptionPlanFactory.create()
+    SubscriptionPlanFactory.create(customer_agreement=CustomerAgreementFactory())
     return first_subscription, second_subscription
 
 
@@ -1209,8 +1232,11 @@ class LicenseViewTestMixin:
         cls.course_key = 'testX'
         cls.lms_user_id = 1
 
-        cls.active_subscription_for_customer = SubscriptionPlanFactory.create(
+        customer_agreement = CustomerAgreementFactory(
             enterprise_customer_uuid=cls.enterprise_customer_uuid,
+        )
+        cls.active_subscription_for_customer = SubscriptionPlanFactory.create(
+            customer_agreement=customer_agreement,
             enterprise_catalog_uuid=cls.enterprise_catalog_uuid,
             is_active=True,
         )
@@ -1282,7 +1308,8 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
         """
         # Create another enterprise and subscription the user has access to
         other_enterprise_uuid = uuid4()
-        SubscriptionPlanFactory.create(enterprise_customer_uuid=other_enterprise_uuid, is_active=True)
+        customer_agreement = CustomerAgreementFactory.create(enterprise_customer_uuid=other_enterprise_uuid)
+        SubscriptionPlanFactory.create(customer_agreement=customer_agreement, is_active=True)
         _assign_role_via_jwt_or_db(
             self.api_client,
             self.user,
@@ -1345,7 +1372,8 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
         """
         mock_get_decoded_jwt.return_value = self._decoded_jwt
         other_enterprise_uuid = uuid4()
-        SubscriptionPlanFactory.create(enterprise_customer_uuid=other_enterprise_uuid, is_active=False)
+        customer_agreement = CustomerAgreementFactory.create(enterprise_customer_uuid=other_enterprise_uuid)
+        SubscriptionPlanFactory.create(customer_agreement=customer_agreement, is_active=False)
         self._assign_learner_roles(alternate_customer=other_enterprise_uuid)
         url = self._get_url_with_params(enterprise_customer_override=other_enterprise_uuid)
         response = self.api_client.get(url)

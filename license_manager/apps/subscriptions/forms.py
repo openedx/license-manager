@@ -5,7 +5,7 @@ from datetime import datetime
 
 from django import forms
 
-from license_manager.apps.subscriptions.constants import MAX_NUM_LICENSES
+from license_manager.apps.subscriptions.constants import MAX_NUM_LICENSES, MIN_NUM_LICENSES
 from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
@@ -14,7 +14,11 @@ from license_manager.apps.subscriptions.models import (
 
 class SubscriptionPlanForm(forms.ModelForm):
     # Extra form field to specify the number of licenses to be associated with the subscription plan
-    num_licenses = forms.IntegerField(label="Number of Licenses", required=False)
+    num_licenses = forms.IntegerField(
+        label="Number of Licenses",
+        required=True,
+        min_value=MIN_NUM_LICENSES,
+    )
 
     # Using a HidenInput widget here allows us to hide the property
     # on the creation form while still displaying the property
@@ -24,14 +28,22 @@ class SubscriptionPlanForm(forms.ModelForm):
         widget=forms.HiddenInput()
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['num_licenses'].initial = self.instance.num_licenses
-
     def is_valid(self):
         # Perform original validation and return if false
         if not super().is_valid():
             return False
+
+        # Ensure that we are getting an enterprise catalog uuid from the field itself or the linked customer agreement
+        # when the subscription is first created.
+        if 'customer_agreement' in self.changed_data:
+            form_customer_agreement = self.cleaned_data.get('customer_agreement')
+            form_enterprise_catalog_uuid = self.cleaned_data.get('enterprise_catalog_uuid')
+            if not form_customer_agreement.default_enterprise_catalog_uuid and not form_enterprise_catalog_uuid:
+                self.add_error(
+                    'enterprise_catalog_uuid',
+                    'The subscription must have an enterprise catalog uuid from itself or its customer agreement',
+                )
+                return False
 
         form_num_licenses = self.cleaned_data.get('num_licenses', 0)
         # Only internal use subscription plans to have more than the maximum number of licenses
@@ -40,11 +52,6 @@ class SubscriptionPlanForm(forms.ModelForm):
                 'num_licenses',
                 f'Non-test subscriptions may not have more than {MAX_NUM_LICENSES} licenses',
             )
-            return False
-
-        # Ensure the number of licenses is not being decreased
-        if form_num_licenses < self.instance.num_licenses:
-            self.add_error('num_licenses', 'Number of Licenses cannot be decreased.')
             return False
 
         # Ensure the revoke max percentage is between 0 and 100
@@ -67,9 +74,6 @@ class SubscriptionPlanRenewalForm(forms.ModelForm):
         required=False,
         widget=forms.HiddenInput()
     )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
     def is_valid(self):
         # Perform original validation and return if false

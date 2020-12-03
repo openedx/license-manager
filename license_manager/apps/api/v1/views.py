@@ -53,7 +53,7 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
     permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
 
     # fields that control permissions for 'list' actions
-    list_lookup_field = 'enterprise_customer_uuid'
+    list_lookup_field = 'customer_agreement__enterprise_customer_uuid'
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
 
@@ -92,7 +92,7 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
             return SubscriptionPlan.objects.none()
 
         return SubscriptionPlan.objects.filter(
-            enterprise_customer_uuid=self.requested_enterprise_uuid,
+            customer_agreement__enterprise_customer_uuid=self.requested_enterprise_uuid,
             is_active=True
         ).order_by('-start_date')
 
@@ -111,7 +111,9 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
         """
         queryset = SubscriptionPlan.objects.all()
         if self.requested_enterprise_uuid:
-            queryset = SubscriptionPlan.objects.filter(enterprise_customer_uuid=self.requested_enterprise_uuid)
+            queryset = SubscriptionPlan.objects.filter(
+                customer_agreement__enterprise_customer_uuid=self.requested_enterprise_uuid,
+            )
         return queryset.order_by('-start_date')
 
 
@@ -134,7 +136,7 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
     # The fields that control permissions for 'list' actions.
     # Roles are granted on specific enterprise identifiers, so we have to join
     # from this model to SubscriptionPlan to find the corresponding customer identifier.
-    list_lookup_field = 'subscription_plan__enterprise_customer_uuid'
+    list_lookup_field = 'subscription_plan__customer_agreement__enterprise_customer_uuid'
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
 
@@ -340,8 +342,6 @@ class LicenseViewSet(LearnerLicenseViewSet):
 
         This endpoint reminds users by sending an email to the given email address, if there is a license which has not
         yet been activated that is associated with that email address.
-
-        # TODO: Restrict to enterprise admins with edx-rbac implementation
         """
         # Validate the user_email and text sent in the data
         self._validate_data(request.data)
