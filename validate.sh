@@ -10,6 +10,12 @@ make ci_requirements
 
 make validate_translations
 
+# Debug
+pip freeze | grep lint
+which pylint
+which pip
+which python
+
 # TODO: enable pylint once we figure out mysterious AssignAttr attribute error.
 # When that's fixed, we can replace all of the below with `make validate`
 
