@@ -7,14 +7,17 @@ cd /edx/app/license_manager
 make ci_requirements
 pip install -r requirements/pip.txt
 pip install -r requirements/travis.txt
+make requirements
+pip freeze | grep 'astroid\|lint'
 
-make validate_translations
+make lint
+#make validate_translations
 
 # TODO: enable pylint once we figure out mysterious AssignAttr attribute error.
 # When that's fixed, we can replace all of the below with `make validate`
 
 # make validate
-make test
-make style
-make isort_check
-make pii_check
+# make test
+# make style
+# make isort_check
+# make pii_check
