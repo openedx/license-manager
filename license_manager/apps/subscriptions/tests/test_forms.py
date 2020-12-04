@@ -1,10 +1,14 @@
 from datetime import date, timedelta
-from unittest import TestCase
+from uuid import uuid4
 
 import ddt
+from django.test import TestCase
 from pytest import mark
 
-from license_manager.apps.subscriptions.constants import MAX_NUM_LICENSES
+from license_manager.apps.subscriptions.constants import (
+    MAX_NUM_LICENSES,
+    MIN_NUM_LICENSES,
+)
 from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.models import SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (
@@ -23,9 +27,10 @@ class TestSubscriptionPlanForm(TestCase):
     Unit tests for the SubscriptionPlanForm
     """
     @ddt.data(
-        {'num_licenses': 0, 'is_valid': True},  # Minimum valid value for num_licenses
+        {'num_licenses': MIN_NUM_LICENSES, 'is_valid': True},  # Minimum valid value for num_licenses
         {'num_licenses': MAX_NUM_LICENSES, 'is_valid': True},  # Maximum valid value for num_licenses
-        {'num_licenses': -1, 'is_valid': False},  # Validation fails when num_licenses is decreased
+        # Validation fails when num_licenses is less than the minimum
+        {'num_licenses': MIN_NUM_LICENSES - 1, 'is_valid': False},
         # Validation fails when num_licenses is greater than the maximum value for a non-test subscription
         {'num_licenses': MAX_NUM_LICENSES + 1, 'is_valid': False},
         # A subscription for internal testing passes validation even with more than the max number of licenses
@@ -37,6 +42,24 @@ class TestSubscriptionPlanForm(TestCase):
         Test to check validation conditions for the num_licenses field
         """
         form = make_bound_subscription_form(num_licenses=num_licenses, for_internal_use_only=for_internal_use)
+        assert form.is_valid() is is_valid
+
+    @ddt.data(
+        {'catalog_uuid': None, 'customer_agreement_has_default_catalog': False, 'is_valid': False},
+        {'catalog_uuid': uuid4(), 'customer_agreement_has_default_catalog': False, 'is_valid': True},
+        {'catalog_uuid': None, 'customer_agreement_has_default_catalog': True, 'is_valid': True},
+        {'catalog_uuid': uuid4(), 'customer_agreement_has_default_catalog': True, 'is_valid': True},
+    )
+    @ddt.unpack
+    def test_catalog_uuid(self, catalog_uuid, customer_agreement_has_default_catalog, is_valid):
+        """
+        Verify that a subscription form is invalid if it neither specifies a catalog_uuid nor has a customer agreement
+        with a default catalog.
+        """
+        form = make_bound_subscription_form(
+            enterprise_catalog_uuid=catalog_uuid,
+            customer_agreement_has_default_catalog=customer_agreement_has_default_catalog,
+        )
         assert form.is_valid() is is_valid
 
 
