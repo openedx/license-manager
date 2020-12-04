@@ -69,10 +69,8 @@ class CustomerAgreement(TimeStampedModel):
         Return human-readable string representation.
         """
         return (
-            "<CustomerAgreement with UUID '{uuid}' "
-            "for Enterprise Customer with UUID '{enterprise_customer_uuid}'>".format(
-                uuid=self.uuid,
-                enterprise_customer_uuid=self.enterprise_customer_uuid,
+            "<CustomerAgreement: '{slug}'>".format(
+                slug=self.enterprise_customer_slug,
             )
         )
 
