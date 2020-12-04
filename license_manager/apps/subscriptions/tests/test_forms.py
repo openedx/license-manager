@@ -1,11 +1,14 @@
 from datetime import date, timedelta
+from uuid import uuid4
 
 import ddt
 from django.test import TestCase
 from pytest import mark
-from uuid import uuid4
 
-from license_manager.apps.subscriptions.constants import MAX_NUM_LICENSES, MIN_NUM_LICENSES
+from license_manager.apps.subscriptions.constants import (
+    MAX_NUM_LICENSES,
+    MIN_NUM_LICENSES,
+)
 from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.models import SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (

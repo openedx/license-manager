@@ -5,7 +5,10 @@ from datetime import datetime
 
 from django import forms
 
-from license_manager.apps.subscriptions.constants import MAX_NUM_LICENSES, MIN_NUM_LICENSES
+from license_manager.apps.subscriptions.constants import (
+    MAX_NUM_LICENSES,
+    MIN_NUM_LICENSES,
+)
 from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
