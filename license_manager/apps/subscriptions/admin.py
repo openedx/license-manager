@@ -111,8 +111,8 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         # If a uuid is not specified on the subscription itself, use the default one for the CustomerAgreement
-        obj.enterprise_catalog_uuid = (obj.enterprise_catalog_uuid or
-                                       obj.customer_agreement.default_enterprise_catalog_uuid)
+        customer_agreement_catalog = obj.customer_agreement.default_enterprise_catalog_uuid
+        obj.enterprise_catalog_uuid = (obj.enterprise_catalog_uuid or customer_agreement_catalog)
 
         # Create licenses to be associated with the subscription plan after creating the subscription plan
         num_new_licenses = form.cleaned_data.get('num_licenses', 0) - obj.num_licenses

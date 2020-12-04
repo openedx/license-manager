@@ -40,7 +40,7 @@ def make_bound_subscription_form(
     if customer_agreement_has_default_catalog:
         customer_agreement = CustomerAgreementFactory()
     else:
-        customer_agreement = CustomerAgreementFactory(default_enterprise_catalog_uuid=None) 
+        customer_agreement = CustomerAgreementFactory(default_enterprise_catalog_uuid=None)
 
     form_data = {
         'title': title,
