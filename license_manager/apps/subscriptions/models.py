@@ -79,7 +79,10 @@ class CustomerAgreement(TimeStampedModel):
 
 class SubscriptionPlan(TimeStampedModel):
     """
-    Stores top-level information related to an enterprise Subscriptions purchase.
+    Stores top-level information related to a Subscriptions purchase.
+
+    We allow enterprise_customer_uuid and enterprise_catalog_uuid to be NULL to support the
+    potential future use of subscriptions for non-enterprise customers.
 
     .. no_pii: This model has no PII
     """
@@ -110,23 +113,29 @@ class SubscriptionPlan(TimeStampedModel):
         diff = self.expiration_date - today
         return diff.days
 
-    # TODO: Drop `enterprise_customer_uuid` column in separate PR
-
-    enterprise_catalog_uuid = models.UUIDField(
+    # TODO after migrating data so all existing subscriptions have a customer_agreement
+    #      we would want this field to be deleted and update current references to use customer_agreement's one instead
+    enterprise_customer_uuid = models.UUIDField(
         blank=True,
-        null=False,
+        null=True,
+        db_index=True,
         help_text=_(
-            "If you do not explicitly set an Enterprise Catalog UUID, it will be set from the Subscription's Customer "
-            "Agreement `default_enterprise_catalog_uuid`."
+            "The Enterprise Customer UUID should match the one in the Customer agreement if one is selected."
         )
     )
 
+    enterprise_catalog_uuid = models.UUIDField(
+        blank=True,
+        null=True,
+    )
+
+    # TODO after migrating data so all existing subscriptions have a customer_agreement change this to be non-nullable
     customer_agreement = models.ForeignKey(
         CustomerAgreement,
         related_name='subscriptions',
         on_delete=models.CASCADE,
-        null=False,
-        blank=False,
+        null=True,
+        blank=True
     )
 
     is_active = models.BooleanField(
@@ -181,16 +190,6 @@ class SubscriptionPlan(TimeStampedModel):
             "Whether this SubscriptionPlan is only for internal use (e.g. a test Subscription record)."
         )
     )
-
-    @property
-    def enterprise_customer_uuid(self):
-        """
-        A link to the customer on the subscription's customer agreement.
-
-        Returns:
-            UUID
-        """
-        return self.customer_agreement.enterprise_customer_uuid
 
     @property
     def unassigned_licenses(self):
@@ -265,7 +264,7 @@ class SubscriptionPlan(TimeStampedModel):
         verbose_name_plural = _("Subscription Plans")
         app_label = 'subscriptions'
         unique_together = (
-            ('title', 'customer_agreement'),
+            ('title', 'enterprise_customer_uuid'),
         )
 
     def __str__(self):

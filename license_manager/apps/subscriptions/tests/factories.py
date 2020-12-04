@@ -40,7 +40,7 @@ class CustomerAgreementFactory(factory.django.DjangoModelFactory):
 
     uuid = factory.LazyFunction(uuid4)
     enterprise_customer_uuid = factory.LazyFunction(uuid4)
-    enterprise_customer_slug = factory.Faker('slug')
+    enterprise_customer_slug = factory.Faker('word')
     default_enterprise_catalog_uuid = factory.LazyFunction(uuid4)
 
 
@@ -58,7 +58,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     start_date = date.today()
     # Make the subscription expire in roughly a year and a day
     expiration_date = date.today() + timedelta(days=366)
-    customer_agreement = factory.SubFactory(CustomerAgreementFactory)
+    enterprise_customer_uuid = factory.LazyFunction(uuid4)
     enterprise_catalog_uuid = factory.LazyFunction(uuid4)
     netsuite_product_id = factory.Faker('random_int')
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)

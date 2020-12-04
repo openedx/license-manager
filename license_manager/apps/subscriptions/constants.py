@@ -42,7 +42,6 @@ SALESFORCE_ID_LENGTH = 18  # The salesforce_opportunity_id must be exactly 18 ch
 DAYS_TO_RETIRE = 90
 
 # Subscription validation constants
-MIN_NUM_LICENSES = 0
 MAX_NUM_LICENSES = 5000
 
 # SQL bulk operation constants

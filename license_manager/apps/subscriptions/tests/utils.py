@@ -11,7 +11,6 @@ from license_manager.apps.subscriptions.forms import (
     SubscriptionPlanRenewalForm,
 )
 from license_manager.apps.subscriptions.tests.factories import (
-    CustomerAgreementFactory,
     LicenseFactory,
     SubscriptionPlanFactory,
     get_random_salesforce_id,
@@ -25,34 +24,28 @@ def make_bound_subscription_form(
     title=faker.pystr(min_chars=1, max_chars=127),
     start_date=date.today(),
     expiration_date=date.today() + timedelta(days=366),
+    enterprise_customer_uuid=faker.uuid4(),
     enterprise_catalog_uuid=faker.uuid4(),
     netsuite_product_id=faker.random_int(),
     salesforce_opportunity_id=get_random_salesforce_id(),
     num_licenses=0,
     is_active=False,
     for_internal_use_only=False,
-    has_customer_agreement=True,
-    customer_agreement_has_default_catalog=True,
 ):
     """
     Builds a bound SubscriptionPlanForm
     """
-    if customer_agreement_has_default_catalog:
-        customer_agreement = CustomerAgreementFactory()
-    else:
-        customer_agreement = CustomerAgreementFactory(default_enterprise_catalog_uuid=None)
-
     form_data = {
         'title': title,
         'start_date': start_date,
         'expiration_date': expiration_date,
+        'enterprise_customer_uuid': enterprise_customer_uuid,
         'enterprise_catalog_uuid': enterprise_catalog_uuid,
         'netsuite_product_id': netsuite_product_id,
         'salesforce_opportunity_id': salesforce_opportunity_id,
         'num_licenses': num_licenses,
         'is_active': is_active,
         'for_internal_use_only': for_internal_use_only,
-        'customer_agreement': str(customer_agreement.uuid) if has_customer_agreement else None,
     }
     return SubscriptionPlanForm(form_data)
 
