@@ -136,6 +136,11 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         return ''
     get_customer_agreement_link.short_description = 'Customer Agreement'
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'customer_agreement':
+            kwargs['queryset'] = CustomerAgreement.objects.filter().order_by('enterprise_customer_slug')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 @admin.register(CustomerAgreement)
 class CustomerAgreementAdmin(admin.ModelAdmin):
