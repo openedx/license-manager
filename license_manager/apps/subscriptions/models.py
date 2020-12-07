@@ -108,8 +108,6 @@ class SubscriptionPlan(TimeStampedModel):
         diff = self.expiration_date - today
         return diff.days
 
-    # TODO: Drop `enterprise_customer_uuid` column in separate PR
-
     enterprise_catalog_uuid = models.UUIDField(
         blank=True,
         null=False,
