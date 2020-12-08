@@ -158,6 +158,9 @@ dev.stop: # Stops containers so they can be restarted
 %-shell: # Run a shell, as root, on the specified service container
 	docker exec -u 0 -it license_manager.$* bash
 
+mysql-client-shell: # Will drop you directly into a mysql client shell.
+	docker exec -u 0 -it license_manager.mysql mysql license_manager
+
 %-logs: # View the logs of the specified service container
 	docker-compose logs -f --tail=500 $*
 
