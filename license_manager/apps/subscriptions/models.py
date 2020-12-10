@@ -9,6 +9,10 @@ from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rbac.utils import ALL_ACCESS_CONTEXT
 from model_utils.models import TimeStampedModel
 from simple_history.models import HistoricalRecords
+from simple_history.utils import (
+    bulk_create_with_history,
+    bulk_update_with_history,
+)
 
 from license_manager.apps.api_client.enterprise_catalog import (
     EnterpriseCatalogApiClient,
@@ -232,7 +236,7 @@ class SubscriptionPlan(TimeStampedModel):
         Method to increase the number of licenses associated with an instance of SubscriptionPlan by num_new_licenses.
         """
         new_licenses = [License(subscription_plan=self) for _ in range(num_new_licenses)]
-        License.objects.bulk_create(new_licenses, batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE)
+        License.bulk_create(new_licenses)
 
     def contains_content(self, content_ids):
         """
@@ -510,7 +514,31 @@ class License(TimeStampedModel):
         for subscription_license in licenses:
             for field_name in date_field_names:
                 setattr(subscription_license, field_name, localized_utcnow())
-        License.objects.bulk_update(licenses, date_field_names, batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE)
+        License.bulk_update(licenses, date_field_names)
+
+    @classmethod
+    def bulk_create(cls, license_objects, batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE):
+        """
+        django-simple-history functions by saving history using a post_save signal every time that
+        an object with history is saved. However, for certain bulk operations, such as bulk_create, bulk_update,
+        and queryset updates, signals are not sent, and the history is not saved automatically.
+        However, django-simple-history provides utility functions to work around this.
+
+        https://django-simple-history.readthedocs.io/en/2.12.0/common_issues.html#bulk-creating-and-queryset-updating
+        """
+        bulk_create_with_history(license_objects, cls, batch_size=batch_size)
+
+    @classmethod
+    def bulk_update(cls, license_objects, field_names, batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE):
+        """
+        django-simple-history functions by saving history using a post_save signal every time that
+        an object with history is saved. However, for certain bulk operations, such as bulk_create, bulk_update,
+        and queryset updates, signals are not sent, and the history is not saved automatically.
+        However, django-simple-history provides utility functions to work around this.
+
+        https://django-simple-history.readthedocs.io/en/2.12.0/common_issues.html#bulk-creating-and-queryset-updating
+        """
+        bulk_update_with_history(license_objects, cls, field_names, batch_size=batch_size)
 
 
 class SubscriptionsFeatureRole(UserRole):

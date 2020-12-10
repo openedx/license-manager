@@ -291,7 +291,8 @@ class LicenseViewSet(LearnerLicenseViewSet):
         # all the old data on the license.
         for revoked_license in revoked_licenses_for_assignment:
             revoked_license.reset_to_unassigned()
-        License.objects.bulk_update(
+
+        License.bulk_update(
             revoked_licenses_for_assignment,
             [
                 'status',
@@ -303,7 +304,6 @@ class LicenseViewSet(LearnerLicenseViewSet):
                 'assigned_date',
                 'revoked_date',
             ],
-            batch_size=constants.LICENSE_BULK_OPERATION_BATCH_SIZE,
         )
 
         # Get a queryset of only the number of licenses we need to assign
@@ -314,11 +314,10 @@ class LicenseViewSet(LearnerLicenseViewSet):
             unassigned_license.status = constants.ASSIGNED
             activation_key = str(uuid4())
             unassigned_license.activation_key = activation_key
-        # Efficiently update the licenses in bulk
-        License.objects.bulk_update(
+
+        License.bulk_update(
             unassigned_licenses,
             ['user_email', 'status', 'activation_key'],
-            batch_size=constants.LICENSE_BULK_OPERATION_BATCH_SIZE,
         )
 
         # Send activation emails
