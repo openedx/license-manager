@@ -8,6 +8,7 @@
 ddt                       # Data-driven tests
 diff-cover                # Changeset diff test coverage
 django-debug-toolbar      # For debugging Django
+django-extensions         # Custom dev extensions
 gunicorn
 inflect
 pywatchman                # More effecient checking for runserver reload trigger events
