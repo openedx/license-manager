@@ -35,6 +35,14 @@ Open the shell to the license manager container for manual commands
 
     $ make app-shell
 
+Once inside an application container, there's a particularly useful tool called `django-extensions_` that allows
+you to run ``./manage.py shell_plus``, which is superior to the built-in Django ``shell`` because it automatically
+imports all of the models from the app, along with some helpful Django imports.
+``django-extensions`` is only installed via dev requirements and will only work when run with the ``devstack.py``
+settings, because that's where it is installed into ``INSTALLED_APPS``.  The ``./manage.py show_urls`` is also helpful.
+
+.. _django-extensions: https://github.com/django-extensions/django-extensions#using-it
+
 
 Local/Private Settings
 ----------------------

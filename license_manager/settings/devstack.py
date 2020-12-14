@@ -68,6 +68,10 @@ LMS_URL = 'http://edx.devstack.lms:18000'
 # Feature Toggles
 FEATURES[EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API] = True
 
+# Install django-extensions for improved dev experiences
+# https://github.com/django-extensions/django-extensions#using-it
+INSTALLED_APPS += ('django_extensions',)
+
 # Make some loggers less noisy (useful during test failure)
 import logging
 

@@ -65,11 +65,14 @@ Consequences
 ============
 
 The most notable change is that a single customer, via a ``CustomerAgreement``, may now have multiple (active)
-``SubscriptionPlans`` at any time.  This supports the example use case of rolling "batches" of subscriptions.
+``SubscriptionPlans`` at any time.  This supports the example use case of rolling "batches" of subscriptions.  Notably,
+for determining the expiration experience for customer admins (as well as learners), we can determine
+the plan that is closest/furthest from expiration to guide in-application messaging about when a set of learners
+may lose access to a catalog.
 
 The Django Admin page for ``SubscriptionPlans`` will change:
 
 * A ``CustomerAgreement`` instance must now be created during the creation of a ``SubscriptionPlan``.  The ``uuid``
   and ``slug`` fields should be copied from the ``EnterpriseCustomer`` model (see edx-enterprise).
 * The ``enterprise_customer_uuid`` field is no longer directly accessible from this model.
-  An administrator of license-manager must now access it from plan's related ``CustomerAgreement``.
+  An administrator of license-manager must now access it from a plan's related ``CustomerAgreement``.

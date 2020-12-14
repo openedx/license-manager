@@ -14,7 +14,9 @@ their active subscription's expiration date.  For example, for a subscription wi
 a start date of 2021-01-01, and an end date of 2021-12-31, we'd like to allow the customer to renew that subscription
 for 150 on, say, 2021-06-17.  The renewed subscription would become active on 2022-01-01 and expire on 2022-12-31.
 Our data schema should support this business arrangement, and the data models should align closely with the
-different logical entities involved in this business arrangement.
+different logical entities involved in this business arrangement.  Lastly, the experience for learners and adminsistrators
+should remain consistent after a plan is renewed.  They shouldn't notice a change in the functioning of the application
+or their access to content, regardless of how data changes behind the curtain.
 
 Decision
 ========
@@ -62,7 +64,7 @@ of which will be placed in the associated renewals ``renewed_subscription_plan_i
 How is the renewal processed?
 -----------------------------
 
-The actual renewal process would should primarily be a scheduled daily job that looks at all renewals
+The actual renewal process will primarily be achieved by a scheduled daily job that looks at all renewals
 and determines if any renewed plans should be created at the time the job is run:
 
 * If there is 1 or fewer days between the current time and the ``effective_date`` of a renewal, the renewal should
@@ -86,7 +88,9 @@ What happens to the licenses?
 * We have merged code into license-manager that will ensure, going forward, bulk actions are recorded in the license
   history tables.
 * Additionally, we will backfill missing creation historical license records, based on the creation date of the license.
-  This needs to be done before we transfer any licenses to new subscription plans.
+  This needs to be done before we transfer any licenses to new subscription plans, so that, for any license,
+  we have a historical record of each subscription plan it was ever associated with, along with an understanding of `when`
+  it was associated with a given subscription plan.
 * Since we already have licenses in the wild without associated historical creation tracking, we'll
   introduce some defensive checking/snapshotting that should occur prior to the license transfer process.
   This can be as simple as assuring that a historical record reflecting the license's association with the original
@@ -138,7 +142,9 @@ What happens to the licensed enrollments?
 -----------------------------------------
 
 * We will introduce a new field, ``plan_at_time_of_enrollment``, on the ``LicensedEnterpriseEnrollment`` records.
-  This gives us an even faster way to tie enrollments to plans, plus, it give us a good way to reconcile history, if needed.
+  This gives us an even faster way to tie enrollments to plans, and it give us a good way to reconcile history, if needed.
+  This means that when a licensed enrollment record is created, we must record with it the UUID of the subscription
+  plan to which the license belongs.
 * We will backpopulate this field with each license record's current subscription plan UUID.  This is only permissible
   because we have not yet transferred any licenses between subscription plans.
 * After these two steps are completed, licensed enrollment records do not need to be changed during the license transfer,
@@ -173,7 +179,7 @@ How does this impact the subscription learner experience?
 
 * It shouldn't.
 * A user's existing license is transferred over to a new, active plan that should have the same catalog.
-* Ther license UUID doesn't change.
+* Their license UUID doesn't change.
 * Nothing about their enrollment state should change.
 * If we start tracking the subscription UUID at time of enrollment in the ``LicensedEnterpriseCourseEnrollment`` model,
   that won't change, and we'll have a good (and easy to access) source of truth about the learner's subscription state
@@ -202,7 +208,9 @@ while still representing the true state of the world.
 
 Misc. Open Questions
 --------------------
-* Can you renew with a different catalog product?  What happens to enrollment/revenue allocation if that action
-  occurs in the middle of a month?  Can we stipulate that all plans have to end at the end of a month, and that
-  renewals cannot begin in the middle of a month?
-* Can we make the product ID/catalog non-editable after licensed enrollments begin to occur?
+Can you renew with a different catalog product?  What happens to enrollment/revenue allocation if that action
+occurs in the middle of a month?  Can we stipulate that all plans have to end at the end of a month, and that
+renewals cannot begin in the middle of a month?
+
+* Our simplifying assumption for now is that a subscription plan renewal should be for the same catalog
+  as the original plan.  At the time of this writing, we don't plan to enforce this in the schema.
