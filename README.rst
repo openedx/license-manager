@@ -1,7 +1,7 @@
 License Manager  |Travis|_ |Codecov|_
 ===================================================
-.. |Travis| image:: https://travis-ci.org/edx/license-manager.svg?branch=master
-.. _Travis: https://travis-ci.org/edx/license-manager
+.. |Travis| image:: https://travis-ci.com/edx/license-manager.svg?branch=master
+.. _Travis: https://travis-ci.com/edx/license-manager
 
 .. |Codecov| image:: http://codecov.io/github/edx/license-manager/coverage.svg?branch=master
 .. _Codecov: http://codecov.io/github/edx/license-manager?branch=master
