@@ -26,6 +26,9 @@ from freezegun import freeze_time
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from license_manager.apps.api.v1.tests.constants import (
+    SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
+)
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
@@ -37,6 +40,7 @@ from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
     SubscriptionPlanFactory,
+    SubscriptionPlanRenewalFactory,
     UserFactory,
 )
 from license_manager.apps.subscriptions.tests.utils import (
@@ -205,7 +209,7 @@ def _get_date_string(date):
     return str(date)
 
 
-def _assert_subscription_response_correct(response, subscription):
+def _assert_subscription_response_correct(response, subscription, expected_days_until_renewal_expiration=None):
     """
     Helper for asserting that the response for a subscription matches the object's values.
     """
@@ -219,7 +223,11 @@ def _assert_subscription_response_correct(response, subscription):
         'total': subscription.num_licenses,
         'allocated': subscription.num_allocated_licenses,
     }
-    assert response['days_until_expiration'] == (subscription.expiration_date - datetime.date.today()).days
+    days_until_expiration = (subscription.expiration_date - datetime.date.today()).days
+    assert response['days_until_expiration'] == days_until_expiration
+    # If `expected_days_until_renewal_expiration` is None, there is no renewal
+    assert response['days_until_expiration_including_renewals'] == (
+        expected_days_until_renewal_expiration or days_until_expiration)
 
 
 def _assert_license_response_correct(response, subscription_license):
@@ -306,16 +314,22 @@ def test_subscription_plan_list_staff_user_200(api_client, staff_user, boolean_t
     """
     enterprise_customer_uuid = uuid4()
     first_subscription, second_subscription = _create_subscription_plans(enterprise_customer_uuid)
+    third_subscription = _create_subscription_with_renewal(enterprise_customer_uuid)
     _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, boolean_toggle)
 
     response = _subscriptions_list_request(api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid)
 
     assert status.HTTP_200_OK == response.status_code
     results_by_uuid = {item['uuid']: item for item in response.data['results']}
-    assert len(results_by_uuid) == 2
+    assert len(results_by_uuid) == 3
 
     _assert_subscription_response_correct(results_by_uuid[str(first_subscription.uuid)], first_subscription)
     _assert_subscription_response_correct(results_by_uuid[str(second_subscription.uuid)], second_subscription)
+    _assert_subscription_response_correct(
+        results_by_uuid[str(third_subscription.uuid)],
+        third_subscription,
+        expected_days_until_renewal_expiration=SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
+    )
 
 
 @pytest.mark.django_db
@@ -416,7 +430,8 @@ def test_subscription_plan_detail_staff_user_200(api_client, staff_user, boolean
     """
     Verify that the subscription detail view for staff gives the correct result.
     """
-    subscription = SubscriptionPlanFactory.create()
+    enterprise_customer_uuid = uuid4()
+    subscription = _create_subscription_with_renewal(enterprise_customer_uuid)
 
     # Associate some licenses with the subscription
     unassigned_licenses = LicenseFactory.create_batch(3)
@@ -426,13 +441,17 @@ def test_subscription_plan_detail_staff_user_200(api_client, staff_user, boolean
     _assign_role_via_jwt_or_db(
         api_client,
         staff_user,
-        subscription.enterprise_customer_uuid,
+        enterprise_customer_uuid,
         boolean_toggle,
     )
 
     response = _subscriptions_detail_request(api_client, staff_user, subscription.uuid)
     assert status.HTTP_200_OK == response.status_code
-    _assert_subscription_response_correct(response.data, subscription)
+    _assert_subscription_response_correct(
+        response.data,
+        subscription,
+        expected_days_until_renewal_expiration=SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
+    )
 
 
 @pytest.mark.django_db
@@ -624,6 +643,20 @@ def _create_subscription_plans(enterprise_customer_uuid):
     # Create another subscription not associated with the enterprise that shouldn't show up
     SubscriptionPlanFactory.create(customer_agreement=CustomerAgreementFactory())
     return first_subscription, second_subscription
+
+
+def _create_subscription_with_renewal(enterprise_customer_uuid):
+    """
+    Helper method to create a subscription with a renewal associated with it.
+    """
+    today = datetime.date.today()
+    customer_agreement = CustomerAgreementFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
+    subscription = SubscriptionPlanFactory.create(customer_agreement=customer_agreement, expiration_date=today)
+    SubscriptionPlanRenewalFactory.create(
+        prior_subscription_plan=subscription,
+        renewed_expiration_date=today + datetime.timedelta(SUBSCRIPTION_RENEWAL_DAYS_OFFSET),
+    )
+    return subscription
 
 
 @ddt.ddt
