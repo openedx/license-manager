@@ -24,6 +24,7 @@ from rest_framework.views import APIView
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseStatusFilter
 from license_manager.apps.api.permissions import CanRetireUser
+from license_manager.apps.api.serializers import CustomerAgreementSerializer
 from license_manager.apps.api.tasks import (
     activation_task,
     send_reminder_email_task,
@@ -35,11 +36,59 @@ from license_manager.apps.subscriptions.models import (
     License,
     SubscriptionPlan,
     SubscriptionsRoleAssignment,
+    CustomerAgreement,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 logger = logging.getLogger(__name__)
+
+
+class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
+    """ Viewset for read operations on  CustomerAgreements. """
+
+    authentication_classes = [JwtAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = CustomerAgreement.objects.all()
+
+    lookup_field = 'enterprise_customer_uuid'
+    lookup_url_kwarg = 'enterprise_customer_uuid'
+    serializer_class = serializers.CustomerAgreementSerializer
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
+
+    # fields that control permissions for 'list' actions
+    list_lookup_field = 'enterprise_customer_uuid'
+    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
+    role_assignment_class = SubscriptionsRoleAssignment
+
+    def retrieve(self, request, *args, **kwargs):
+        customer_agreement = get_object_or_404(self.queryset, *args, **kwargs)
+        serialized_customer_agreement = CustomerAgreementSerializer(customer_agreement)
+        return Response(serialized_customer_agreement.data)
+
+    @property
+    def requested_enterprise_uuid(self):
+        enterprise_customer_uuid = self.request.query_params.get('enterprise_customer_uuid')
+        if not enterprise_customer_uuid:
+            return None
+        try:
+            return uuid.UUID(enterprise_customer_uuid)
+        except ValueError:
+            raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.')
+
+    def get_permission_object(self):
+        """
+        Used for "retrieve" actions.  Determines which SubscriptionPlan instances
+        to check for role-based permissions against.
+        """
+        try:
+            return CustomerAgreement.objects.get(uuid=self.requested_enterprise_uuid)
+        except CustomerAgreement.DoesNotExist:
+            return None
+
+    @property
+    def base_queryset(self):
+        return CustomerAgreement.objects.filter(enterprise_customer_uuid=self.requested_enterprise_uuid)
 
 
 class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):

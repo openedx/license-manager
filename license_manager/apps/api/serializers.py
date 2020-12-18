@@ -4,7 +4,42 @@ from rest_framework import serializers
 from license_manager.apps.subscriptions.constants import (
     EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API,
 )
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.models import License, SubscriptionPlan, CustomerAgreement
+
+
+class CustomerAgreementSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the `CustomerAgreement` model.
+    """
+    ordered_subscription_plan_expirations = serializers.SerializerMethodField()
+    subscription_plans = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomerAgreement
+        fields = [
+            'uuid',
+            'enterprise_customer_uuid',
+            'enterprise_customer_slug',
+            'default_enterprise_catalog_uuid',
+            'ordered_subscription_plan_expirations',
+            'subscription_plans',
+        ]
+
+    def get_ordered_subscription_plan_expirations(self, obj):
+        subscriptions = SubscriptionPlan.objects.filter(
+            customer_agreement=obj,
+        ).order_by('-is_active')
+        serialized_subscriptions = list(map(lambda sub: SubscriptionPlanSerializer(sub).data, subscriptions))
+        ordered_subscription_plan_data = list(map(lambda subscription: {
+            'uuid': subscription['uuid'],
+            'days_until_expiration': subscription['days_until_expiration'],
+            'active': subscription['is_active'],
+        }, serialized_subscriptions))
+        return ordered_subscription_plan_data
+
+    def get_subscription_plans(self, obj):
+        subscriptions = SubscriptionPlan.objects.filter(customer_agreement=obj)
+        return list(map(lambda sub: SubscriptionPlanSerializer(sub).data, subscriptions))
 
 
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
