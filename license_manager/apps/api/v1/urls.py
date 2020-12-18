@@ -62,7 +62,7 @@ router.register(
     basename='subscriptions',
 )
 router.register(
-    prefix=r'customer-agreement(?![^\/])',
+    prefix=r'customer-agreement',
     viewset=views.CustomerAgreementViewSet,
     basename='customer-agreement',
 )

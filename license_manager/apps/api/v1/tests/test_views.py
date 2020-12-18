@@ -131,6 +131,16 @@ def superuser():
     return get_model_fixture(User, is_staff=True, is_superuser=True)
 
 
+def _customer_agreement_detail_request(api_client, user, enterprise_customer_uuid):
+    """
+    Helper method that requests details for a specific customer agreement.
+    """
+    api_client.force_authenticate(user=user)
+    url = reverse('api:v1:customer-agreement-list')
+    url += enterprise_customer_uuid + '/'
+    return api_client.get(url)
+
+
 def _subscriptions_list_request(api_client, user, enterprise_customer_uuid=None):
     """
     Helper method that requests a list of subscriptions entities for a given enterprise_customer_uuid.
@@ -205,6 +215,18 @@ def _get_date_string(date):
     return str(date)
 
 
+def _assert_customer_agreement_response_correct(response, customer_agreement):
+    """
+    Helper for asserting that the response for a customer agreement matches the object's values.
+    """
+    assert response['uuid'] == customer_agreement.uuid
+    assert response['enterprise_customer_uuid'] == customer_agreement.enterprise_customer_uuid
+    assert response['enterprise_customer_slug'] == customer_agreement.enterprise_customer_slug
+    assert response['default_enterprise_catalog_uuid'] == customer_agreement.default_enterprise_catalog_uuid
+    assert response['ordered_subscription_plan_expirations'] == customer_agreement.ordered_subscription_plan_expirations
+    assert response['subscription_plans'] == customer_agreement.subscription_plans
+
+
 def _assert_subscription_response_correct(response, subscription):
     """
     Helper for asserting that the response for a subscription matches the object's values.
@@ -231,6 +253,15 @@ def _assert_license_response_correct(response, subscription_license):
     assert response['user_email'] == subscription_license.user_email
     assert response['activation_date'] == _get_date_string(subscription_license.activation_date)
     assert response['last_remind_date'] == _get_date_string(subscription_license.last_remind_date)
+
+
+@pytest.mark.django_db
+def test_customer_agreement_detail_unauthenticated_user_403(api_client):
+    """
+    Verify that unauthenticated users receive a 403 from the customer agreement detail endpoint.
+    """
+    response = _customer_agreement_detail_request(api_client, AnonymousUser(), str(uuid4()))
+    assert status.HTTP_403_FORBIDDEN == response.status_code
 
 
 @pytest.mark.django_db
@@ -270,6 +301,12 @@ def test_license_retrieve_unauthenticated_user_403(api_client):
 
 
 @pytest.mark.django_db
+def test_customer_agreement_detail_non_staff_user_403(api_client, non_staff_user):
+    response = _customer_agreement_detail_request(api_client, non_staff_user, str(uuid4()))
+    assert status.HTTP_403_FORBIDDEN == response.status_code
+
+
+@pytest.mark.django_db
 def test_subscription_plan_list_non_staff_user_403(api_client, non_staff_user):
     response = _subscriptions_list_request(api_client, non_staff_user, enterprise_customer_uuid='foo')
     assert status.HTTP_403_FORBIDDEN == response.status_code
@@ -296,6 +333,23 @@ def test_license_detail_non_staff_user_403(api_client, non_staff_user):
 
 
 @pytest.mark.django_db
+def test_customer_agreement_detail_staff_user_200(api_client, staff_user):
+    """
+    Verify that the customer agreement detail endpoint for staff users gives the correct
+    response when the staff user is granted implicit permission to access the enterprise customer.
+    """
+    enterprise_customer_uuid = uuid4()
+    _, _, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
+    _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, True)
+
+    response = _customer_agreement_detail_request(api_client, staff_user, str(enterprise_customer_uuid))
+
+    assert status.HTTP_200_OK == response.status_code
+    response_customer_agreement = response.data['results']
+    _assert_customer_agreement_response_correct(response_customer_agreement, customer_agreement)
+
+
+@pytest.mark.django_db
 def test_subscription_plan_list_staff_user_200(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription list view for staff users gives the correct response
@@ -305,7 +359,7 @@ def test_subscription_plan_list_staff_user_200(api_client, staff_user, boolean_t
     specified by the query parameter.
     """
     enterprise_customer_uuid = uuid4()
-    first_subscription, second_subscription = _create_subscription_plans(enterprise_customer_uuid)
+    first_subscription, second_subscription, _ = _create_subscription_plans(enterprise_customer_uuid)
     _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, boolean_toggle)
 
     response = _subscriptions_list_request(api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid)
@@ -623,7 +677,7 @@ def _create_subscription_plans(enterprise_customer_uuid):
     second_subscription = SubscriptionPlanFactory.create(customer_agreement=customer_agreement)
     # Create another subscription not associated with the enterprise that shouldn't show up
     SubscriptionPlanFactory.create(customer_agreement=CustomerAgreementFactory())
-    return first_subscription, second_subscription
+    return first_subscription, second_subscription, customer_agreement
 
 
 @ddt.ddt
