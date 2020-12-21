@@ -33,10 +33,10 @@ from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.api import revoke_license
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
+    CustomerAgreement,
     License,
     SubscriptionPlan,
     SubscriptionsRoleAssignment,
-    CustomerAgreement,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
 

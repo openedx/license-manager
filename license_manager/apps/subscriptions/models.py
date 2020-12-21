@@ -64,6 +64,22 @@ class CustomerAgreement(TimeStampedModel):
 
     history = HistoricalRecords()
 
+    @property
+    def ordered_subscription_plan_expirations(self):
+        subscriptions = SubscriptionPlan.objects.filter(
+            customer_agreement=self,
+        ).order_by('-is_active', '-expiration_date')
+        ordered_subscription_plan_data = list(map(lambda subscription: {
+            'uuid': subscription.uuid,
+            'days_until_expiration': subscription.days_until_expiration,
+            'active': subscription.is_active,
+        }, subscriptions))
+        return ordered_subscription_plan_data
+
+    @property
+    def subscription_plans(self):
+        return list(SubscriptionPlan.objects.filter(customer_agreement=self))
+
     class Meta:
         verbose_name = _("Customer Agreement")
         verbose_name_plural = _("Customer Agreements")

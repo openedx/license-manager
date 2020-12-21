@@ -219,12 +219,16 @@ def _assert_customer_agreement_response_correct(response, customer_agreement):
     """
     Helper for asserting that the response for a customer agreement matches the object's values.
     """
-    assert response['uuid'] == customer_agreement.uuid
-    assert response['enterprise_customer_uuid'] == customer_agreement.enterprise_customer_uuid
+    assert response['uuid'] == str(customer_agreement.uuid)
+    assert response['enterprise_customer_uuid'] == str(customer_agreement.enterprise_customer_uuid)
     assert response['enterprise_customer_slug'] == customer_agreement.enterprise_customer_slug
-    assert response['default_enterprise_catalog_uuid'] == customer_agreement.default_enterprise_catalog_uuid
+    assert response['default_enterprise_catalog_uuid'] == str(customer_agreement.default_enterprise_catalog_uuid)
     assert response['ordered_subscription_plan_expirations'] == customer_agreement.ordered_subscription_plan_expirations
-    assert response['subscription_plans'] == customer_agreement.subscription_plans
+    for response_subscription, agreement_subscription in zip(
+        response['subscription_plans'],
+        customer_agreement.subscription_plans
+    ):
+        _assert_subscription_response_correct(response_subscription, agreement_subscription)
 
 
 def _assert_subscription_response_correct(response, subscription):
@@ -265,6 +269,35 @@ def test_customer_agreement_detail_unauthenticated_user_403(api_client):
 
 
 @pytest.mark.django_db
+def test_customer_agreement_detail_non_staff_user_403(api_client, non_staff_user):
+    """
+    Verify that unauthenticated users receive a 403 from the customer agreement detail endpoint.
+    """
+    response = _customer_agreement_detail_request(api_client, non_staff_user, str(uuid4()))
+    assert status.HTTP_403_FORBIDDEN == response.status_code
+
+
+@pytest.mark.django_db
+def test_customer_agreement_detail_staff_user_403(api_client, staff_user):
+    response = _customer_agreement_detail_request(api_client, staff_user, str(uuid4()))
+    assert status.HTTP_403_FORBIDDEN == response.status_code
+
+
+@pytest.mark.django_db
+def test_customer_agreement_detail_superuser_200(api_client, superuser):
+    """
+    Verify that the customer agreement detail endpoint gives the correct
+    response for superusers.
+    """
+    enterprise_customer_uuid = uuid4()
+    _, _, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
+    response = _customer_agreement_detail_request(api_client, superuser, str(enterprise_customer_uuid))
+
+    assert status.HTTP_200_OK == response.status_code
+    _assert_customer_agreement_response_correct(response.data, customer_agreement)
+
+
+@pytest.mark.django_db
 def test_subscription_plan_list_unauthenticated_user_403(api_client):
     """
     Verify that unauthenticated users receive a 403 from the subscription plan list endpoint.
@@ -301,12 +334,6 @@ def test_license_retrieve_unauthenticated_user_403(api_client):
 
 
 @pytest.mark.django_db
-def test_customer_agreement_detail_non_staff_user_403(api_client, non_staff_user):
-    response = _customer_agreement_detail_request(api_client, non_staff_user, str(uuid4()))
-    assert status.HTTP_403_FORBIDDEN == response.status_code
-
-
-@pytest.mark.django_db
 def test_subscription_plan_list_non_staff_user_403(api_client, non_staff_user):
     response = _subscriptions_list_request(api_client, non_staff_user, enterprise_customer_uuid='foo')
     assert status.HTTP_403_FORBIDDEN == response.status_code
@@ -330,23 +357,6 @@ def test_licenses_list_non_staff_user_403(api_client, non_staff_user):
 def test_license_detail_non_staff_user_403(api_client, non_staff_user):
     response = _licenses_detail_request(api_client, non_staff_user, uuid4(), uuid4())
     assert status.HTTP_403_FORBIDDEN == response.status_code
-
-
-@pytest.mark.django_db
-def test_customer_agreement_detail_staff_user_200(api_client, staff_user):
-    """
-    Verify that the customer agreement detail endpoint for staff users gives the correct
-    response when the staff user is granted implicit permission to access the enterprise customer.
-    """
-    enterprise_customer_uuid = uuid4()
-    _, _, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
-    _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, True)
-
-    response = _customer_agreement_detail_request(api_client, staff_user, str(enterprise_customer_uuid))
-
-    assert status.HTTP_200_OK == response.status_code
-    response_customer_agreement = response.data['results']
-    _assert_customer_agreement_response_correct(response_customer_agreement, customer_agreement)
 
 
 @pytest.mark.django_db
