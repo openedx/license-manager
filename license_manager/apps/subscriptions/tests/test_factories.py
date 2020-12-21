@@ -44,17 +44,16 @@ class SubscriptionsModelFactoryTests(TestCase):
         self.assertEqual(subscription.uuid, license.subscription_plan.uuid)
 
     def test_customer_agreement_factory(self):
-        with pytest.raises(IntegrityError):
-            """
-            Verify a customer agreement factory only creates unique customer agreement
-            """
-            customer_agreement = CustomerAgreementFactory()
-            self.assertTrue(customer_agreement)
-            customer_agreement_2 = CustomerAgreementFactory(
-                enterprise_customer_uuid=customer_agreement.enterprise_customer_uuid,
-                enterprise_customer_slug=customer_agreement.enterprise_customer_slug,
-            )
-            self.assertFalse(customer_agreement_2)
+        """
+        Verify the customer agreement factory performs a get_or_create when using the same unique identifiers
+        """
+        customer_agreement = CustomerAgreementFactory()
+        self.assertTrue(customer_agreement)
+        customer_agreement_2 = CustomerAgreementFactory(
+            enterprise_customer_uuid=customer_agreement.enterprise_customer_uuid,
+            enterprise_customer_slug=customer_agreement.enterprise_customer_slug,
+        )
+        assert customer_agreement == customer_agreement_2
 
     def test_subscription_plan_renewal_factory(self):
         """

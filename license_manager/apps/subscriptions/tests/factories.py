@@ -37,6 +37,8 @@ class CustomerAgreementFactory(factory.django.DjangoModelFactory):
     """
     class Meta:
         model = CustomerAgreement
+        # Perform a `get_or_create` when an agreement already exists with the same unique identifiers
+        django_get_or_create = ('enterprise_customer_uuid', 'enterprise_customer_slug',)
 
     uuid = factory.LazyFunction(uuid4)
     enterprise_customer_uuid = factory.LazyFunction(uuid4)

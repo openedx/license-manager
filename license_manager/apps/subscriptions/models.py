@@ -26,7 +26,10 @@ from license_manager.apps.subscriptions.constants import (
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
 )
-from license_manager.apps.subscriptions.utils import localized_utcnow
+from license_manager.apps.subscriptions.utils import (
+    days_until,
+    localized_utcnow,
+)
 
 
 class CustomerAgreement(TimeStampedModel):
@@ -124,9 +127,7 @@ class SubscriptionPlan(TimeStampedModel):
 
         Note: expiration_date is a required field so checking for None isn't needed.
         """
-        today = datetime.date.today()
-        diff = self.expiration_date - today
-        return diff.days
+        return days_until(self.expiration_date)
 
     enterprise_catalog_uuid = models.UUIDField(
         blank=True,
@@ -246,6 +247,48 @@ class SubscriptionPlan(TimeStampedModel):
             already allocated.
         """
         return self.licenses.filter(status__in=(ACTIVATED, ASSIGNED)).count()
+
+    @property
+    def future_renewals(self):
+        """
+        Returns all of the future renewals associated with a subscription.
+
+        The collected renewals are "future" renewals in that it does not return the renewal that might have created
+        this subscription or any renewals before that.
+        """
+        renewals = []
+        current_renewal = self.get_renewal()
+
+        # Traverse forwards through the renewals that are associated with this plan
+        while current_renewal:
+            renewals.append(current_renewal)
+            try:
+                current_renewal = current_renewal.renewed_subscription_plan.get_renewal()
+            except AttributeError:
+                current_renewal = None
+
+        return renewals
+
+    @property
+    def days_until_expiration_including_renewals(self):
+        """
+        Returns the number of days remaining until a subscription expires, accounting for its future renewals.
+        """
+        renewal_expiration_dates = [renewal.renewed_expiration_date for renewal in self.future_renewals]
+        try:
+            return days_until(max(renewal_expiration_dates))
+        except ValueError:
+            # A value error indicates that there were no renewals
+            return self.days_until_expiration
+
+    def get_renewal(self):
+        """
+        Helper to safely return the renewal associated with the subscription, or None if one does not exist.
+        """
+        try:
+            return self.renewal
+        except SubscriptionPlanRenewal.DoesNotExist:
+            return None
 
     def increase_num_licenses(self, num_new_licenses):
         """
