@@ -6,6 +6,7 @@ from license_manager.apps.subscriptions.constants import (
     LICENSE_ACTIVATION_EMAIL_SUBJECT,
     LICENSE_ACTIVATION_EMAIL_TEMPLATE,
     LICENSE_REMINDER_EMAIL_SUBJECT,
+    LICENSE_REMINDER_EMAIL_TEMPLATE,
     REVOCATION_CAP_NOTIFICATION_EMAIL_SUBJECT,
     REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE,
 )
@@ -33,6 +34,7 @@ def send_activation_emails(
     custom_template_text,
     pending_licenses,
     enterprise_slug,
+    enterprise_name,
     is_reminder=False
 ):
     """
@@ -48,11 +50,11 @@ def send_activation_emails(
         is_reminder (bool): whether this is a reminder activation email being sent
     """
     context = {
-        'template_name': LICENSE_ACTIVATION_EMAIL_TEMPLATE,
+        'template_name': LICENSE_REMINDER_EMAIL_TEMPLATE if is_reminder else LICENSE_ACTIVATION_EMAIL_TEMPLATE,
         'subject': (LICENSE_ACTIVATION_EMAIL_SUBJECT, LICENSE_REMINDER_EMAIL_SUBJECT)[is_reminder],
-        'REMINDER': is_reminder,
         'TEMPLATE_CLOSING': custom_template_text['closing'],
         'TEMPLATE_GREETING': custom_template_text['greeting'],
+        'ENTERPRISE_NAME': enterprise_name,
     }
     email_activation_key_map = {}
     for pending_license in pending_licenses:
