@@ -124,6 +124,10 @@ class SubscriptionPlan(TimeStampedModel):
 
     expiration_date = models.DateField()
 
+    expiration_processed = models.BooleanField(
+        default=False
+    )
+
     @property
     def days_until_expiration(self):
         """

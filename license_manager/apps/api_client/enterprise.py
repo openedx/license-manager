@@ -17,6 +17,8 @@ class EnterpriseApiClient(BaseOAuthClient):
     enterprise_customer_endpoint = api_base_url + 'enterprise-customer/'
     pending_enterprise_learner_endpoint = api_base_url + 'pending-enterprise-learner/'
     course_enrollments_revoke_endpoint = api_base_url + 'licensed-enterprise-course-enrollment/license_revoke/'
+    bulk_licensed_enrollments_expiration_endpoint = api_base_url \
+        + 'licensed-enterprise-course-enrollment/bulk_licensed_enrollments_expiration/'
 
     def get_enterprise_slug(self, enterprise_customer_uuid):
         """
@@ -108,6 +110,27 @@ class EnterpriseApiClient(BaseOAuthClient):
                 'Response: {response}'.format(
                     user_id=user_id,
                     enterprise_id=enterprise_id,
+                    response=response.content,
+                )
+            )
+            logger.error(msg)
+
+    def bulk_licensed_enrollments_expiration(self, expired_license_uuids):
+        """
+        Calls the Enterprise API Client to terminate expired course enrollments for the provided license uuids
+
+        Arguments:
+            expired_license_uuids (list of str): The UUIDs of the expired licenses
+        """
+        data = {
+            'expired_license_uuids': expired_license_uuids,
+        }
+        response = self.client.post(self.bulk_licensed_enrollments_expiration_endpoint, json=data)
+        if response.status_code >= 400:
+            msg = (
+                'Failed to terminate expired course enrollments for licenses [{expired_license_uuids}]. '
+                'Response: {response}'.format(
+                    expired_license_uuids=expired_license_uuids,
                     response=response.content,
                 )
             )

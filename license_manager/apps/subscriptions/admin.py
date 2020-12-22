@@ -70,6 +70,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'netsuite_product_id',
         'num_revocations_remaining',
         'num_licenses',
+        'expiration_processed',
     )
     writable_fields = (
         'revoke_max_percentage',
