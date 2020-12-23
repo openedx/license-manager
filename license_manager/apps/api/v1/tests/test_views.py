@@ -229,8 +229,8 @@ def _assert_customer_agreement_response_correct(response, customer_agreement):
     assert response['default_enterprise_catalog_uuid'] == str(customer_agreement.default_enterprise_catalog_uuid)
     assert response['ordered_subscription_plan_expirations'] == customer_agreement.ordered_subscription_plan_expirations
     for response_subscription, agreement_subscription in zip(
-        response['subscription_plans'],
-        customer_agreement.subscription_plans
+        response['subscriptions'],
+        customer_agreement.subscriptions.all()
     ):
         _assert_subscription_response_correct(response_subscription, agreement_subscription)
 
@@ -377,7 +377,7 @@ def test_subscription_plan_list_staff_user_200(api_client, staff_user, boolean_t
     specified by the query parameter.
     """
     enterprise_customer_uuid = uuid4()
-    first_subscription, second_subscription, _ = _create_subscription_plans(enterprise_customer_uuid)
+    first_subscription, second_subscription, __ = _create_subscription_plans(enterprise_customer_uuid)
     third_subscription = _create_subscription_with_renewal(enterprise_customer_uuid)
     _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, boolean_toggle)
 

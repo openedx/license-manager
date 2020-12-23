@@ -1,5 +1,6 @@
 import datetime
 from math import ceil
+from operator import itemgetter
 from uuid import uuid4
 
 from django.core.validators import MinLengthValidator
@@ -69,19 +70,23 @@ class CustomerAgreement(TimeStampedModel):
 
     @property
     def ordered_subscription_plan_expirations(self):
-        subscriptions = SubscriptionPlan.objects.filter(
-            customer_agreement=self,
-        ).order_by('-is_active', '-expiration_date')
-        ordered_subscription_plan_data = list(map(lambda subscription: {
-            'uuid': subscription.uuid,
-            'days_until_expiration': subscription.days_until_expiration,
-            'active': subscription.is_active,
-        }, subscriptions))
-        return ordered_subscription_plan_data
+        subscription_plan_expiration_data = [
+            {
+                'uuid': subscription.uuid,
+                'days_until_expiration': subscription.days_until_expiration,
+                'days_until_expiration_including_renewals': subscription.days_until_expiration_including_renewals,
+                'is_active': subscription.is_active,
+            }
+            for subscription in self.subscriptions.all()
+        ]
 
-    @property
-    def subscription_plans(self):
-        return list(SubscriptionPlan.objects.filter(customer_agreement=self))
+        ordered_subscription_plan_data = sorted(
+            subscription_plan_expiration_data,
+            key=itemgetter('is_active', 'days_until_expiration_including_renewals'),
+            reverse=True,
+        )
+
+        return ordered_subscription_plan_data
 
     class Meta:
         verbose_name = _("Customer Agreement")

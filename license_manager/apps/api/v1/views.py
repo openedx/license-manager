@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
-    """ Viewset for read operations on  CustomerAgreements. """
+    """ Viewset for read operations on CustomerAgreements. """
 
     authentication_classes = [JwtAuthentication]
     permission_classes = [permissions.IsAuthenticated]

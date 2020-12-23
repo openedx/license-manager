@@ -11,28 +11,6 @@ from license_manager.apps.subscriptions.models import (
 )
 
 
-class CustomerAgreementSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the `CustomerAgreement` model.
-    """
-    subscription_plans = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CustomerAgreement
-        fields = [
-            'uuid',
-            'enterprise_customer_uuid',
-            'enterprise_customer_slug',
-            'default_enterprise_catalog_uuid',
-            'ordered_subscription_plan_expirations',
-            'subscription_plans',
-        ]
-
-    def get_subscription_plans(self, obj):
-        subscriptions = obj.subscription_plans
-        return list(map(lambda sub: SubscriptionPlanSerializer(sub).data, subscriptions))
-
-
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     """
     Serializer for the `SubscriptionPlan` model.
@@ -67,6 +45,24 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'applied': obj.num_revocations_applied,
             'remaining': obj.num_revocations_remaining,
         }
+
+
+class CustomerAgreementSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the `CustomerAgreement` model.
+    """
+    subscriptions = SubscriptionPlanSerializer(many=True)
+
+    class Meta:
+        model = CustomerAgreement
+        fields = [
+            'uuid',
+            'enterprise_customer_uuid',
+            'enterprise_customer_slug',
+            'default_enterprise_catalog_uuid',
+            'ordered_subscription_plan_expirations',
+            'subscriptions',
+        ]
 
 
 class LicenseSerializer(serializers.ModelSerializer):
