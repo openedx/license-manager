@@ -143,11 +143,14 @@ validate_translations: fake_translations detect_changed_source_translations ## i
 dev.provision:
 	bash ./provision-license-manager.sh
 
-dev.up: # Starts all containers
+dev.up: dev.up.redis  # Starts all of the services, will bring up the devstack-defined redis container if not running.
 	docker-compose up -d
 
 dev.up.build:
 	docker-compose up -d --build
+
+dev.up.redis:
+	docker-compose -f $(DEVSTACK_WORKSPACE)/devstack/docker-compose.yml up -d redis
 
 dev.down: # Kills containers and all of their data that isn't in volumes
 	docker-compose down
