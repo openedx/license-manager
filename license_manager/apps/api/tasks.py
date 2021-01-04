@@ -31,7 +31,8 @@ def activation_task(custom_template_text, email_recipient_list, subscription_uui
     pending_licenses = subscription_plan.licenses.filter(user_email__in=email_recipient_list).order_by('uuid')
     enterprise_api_client = EnterpriseApiClient()
     enterprise_slug = enterprise_api_client.get_enterprise_slug(subscription_plan.enterprise_customer_uuid)
-    send_activation_emails(custom_template_text, pending_licenses, enterprise_slug)
+    enterprise_name = enterprise_api_client.get_enterprise_name(subscription_plan.enterprise_customer_uuid)
+    send_activation_emails(custom_template_text, pending_licenses, enterprise_slug, enterprise_name)
     License.set_date_fields_to_now(pending_licenses, ['last_remind_date', 'assigned_date'])
 
     for email_recipient in email_recipient_list:
@@ -57,12 +58,14 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
     pending_licenses = subscription_plan.licenses.filter(user_email__in=email_recipient_list).order_by('uuid')
     enterprise_api_client = EnterpriseApiClient()
     enterprise_slug = enterprise_api_client.get_enterprise_slug(subscription_plan.enterprise_customer_uuid)
+    enterprise_name = enterprise_api_client.get_enterprise_name(subscription_plan.enterprise_customer_uuid)
 
     try:
         send_activation_emails(
             custom_template_text,
             pending_licenses,
             enterprise_slug,
+            enterprise_name,
             is_reminder=True
         )
     except Exception:  # pylint: disable=broad-except

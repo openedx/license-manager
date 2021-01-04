@@ -2,20 +2,16 @@
 
 {{ TEMPLATE_GREETING }}
 
-{% if REMINDER %}{% trans "Reminder - " %}{% endif %}
+{% with enterprise_text=ENTERPRISE_NAME|add:" has partnered with edX to give you an unlimited subscription to learn on edX!" %}
+    {% trans enterprise_text %}
+    {% trans " Take the best courses in the most in-demand subject areas and upskill for a new career opportunity." %}
+    {% trans " Earn a professional certificate, start a program or just learn for fun." %}
+{% endwith %}
 
-{% trans "Activate Your edX Subscription License" %}
+{% trans "Activate Your License " %}{{ LICENSE_ACTIVATION_LINK }}
 
-{% trans "You have been assigned a license to an edX Enterprise Subscription." %}
+{% trans "So you don't have to search for this link, bookmark your learning portal now to have easy access to your subscription in the future: " %}{{ LEARNER_PORTAL_LINK }}
 
-{% trans "edX offers high-quality online courses from the world's best universities and institutions." %}
-
-{% trans "After activating your license, you'll have instant access to enroll in a wide-array of courses." %}
-
-{% trans "Activate Your License" %}{{ LICENSE_ACTIVATION_LINK }}
-
-{% trans "You can bookmark the following link to easily access your learning portal in the future: " %}{{ LEARNER_PORTAL_LINK }}
-
-{% trans "Access your learning portal" %}
+{% trans "My Learning Portal" %}
 
 {{ TEMPLATE_CLOSING }}

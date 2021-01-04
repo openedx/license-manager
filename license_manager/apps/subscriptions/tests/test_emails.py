@@ -16,6 +16,7 @@ class EmailTests(TestCase):
         self.custom_template_text = test_email_data['custom_template_text']
         self.enterprise_slug = 'mock-enterprise'
         self.email_recipient_list = test_email_data['email_recipient_list']
+        self.enterprise_name = 'Mock Enterprise'
 
     def _assert_bookmark_content_is_present(self, message):
         """
@@ -24,7 +25,8 @@ class EmailTests(TestCase):
         # Verify that the message about bookmarking the learner portal home is in the message body text
         expected_learner_portal_link = settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL + '/' + self.enterprise_slug
         expected_bookmark_message = (
-            'You can bookmark the following link to easily access your learning portal in the future: '
+            "So you don't have to search for this link, bookmark your learning portal now to have easy access to your"
+            " subscription in the future: "
         )
         self.assertIn(expected_bookmark_message + expected_learner_portal_link, message.body)
 
@@ -34,7 +36,8 @@ class EmailTests(TestCase):
             settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
         )
         expected_bookmark_paragraph = (
-            'You can bookmark the following link to easily access your learning portal in the future:'
+            "So you don't have to search for this link, bookmark your learning portal now to have easy access to your"
+            " subscription in the future: "
         )
         self.assertIn(expected_learner_portal_anchor, actual_html)
         self.assertIn(expected_bookmark_paragraph, actual_html)
@@ -46,7 +49,8 @@ class EmailTests(TestCase):
         emails.send_activation_emails(
             self.custom_template_text,
             [license for license in self.licenses if license.status == constants.ASSIGNED],
-            self.enterprise_slug
+            self.enterprise_slug,
+            self.enterprise_name,
         )
         self.assertEqual(
             len(mail.outbox),
@@ -55,7 +59,7 @@ class EmailTests(TestCase):
         # Verify the contents of the first message
         message = mail.outbox[0]
         self.assertEqual(message.subject, constants.LICENSE_ACTIVATION_EMAIL_SUBJECT)
-        self.assertFalse('Reminder' in message.body)
+        self.assertTrue('Activate' in message.body)
         self._assert_bookmark_content_is_present(message)
 
     def test_send_reminder_email(self):
@@ -67,11 +71,12 @@ class EmailTests(TestCase):
             self.custom_template_text,
             [lic],
             self.enterprise_slug,
-            True
+            self.enterprise_name,
+            is_reminder=True,
         )
         self.assertEqual(len(mail.outbox), 1)
         # Verify the contents of the first message
         message = mail.outbox[0]
         self.assertEqual(message.subject, constants.LICENSE_REMINDER_EMAIL_SUBJECT)
-        self.assertTrue('Reminder' in message.body)
+        self.assertFalse('Activate' in message.body)
         self._assert_bookmark_content_is_present(message)

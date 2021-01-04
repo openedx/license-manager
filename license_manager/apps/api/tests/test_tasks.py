@@ -23,6 +23,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         self.email_recipient_list = test_email_data['email_recipient_list']
         self.assigned_licenses = self.subscription_plan.licenses.filter(status=constants.ASSIGNED).order_by('uuid')
         self.enterprise_slug = 'mock-enterprise'
+        self.enterprise_name = 'Mock Enterprise'
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.send_activation_emails')
@@ -31,6 +32,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         Assert activation_task is called with the correct arguments
         """
         mock_enterprise_client().get_enterprise_slug.return_value = self.enterprise_slug
+        mock_enterprise_client().get_enterprise_name.return_value = self.enterprise_name
         tasks.activation_task(
             self.custom_template_text,
             self.email_recipient_list,
@@ -60,6 +62,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         Assert send_reminder_email_task is called with the correct arguments
         """
         mock_enterprise_client().get_enterprise_slug.return_value = self.enterprise_slug
+        mock_enterprise_client().get_enterprise_name.return_value = self.enterprise_name
         tasks.send_reminder_email_task(
             self.custom_template_text,
             self.email_recipient_list,
@@ -81,6 +84,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         Tests that when sending the remind email fails, last_remind_date is not updated
         """
         mock_enterprise_client().get_enterprise_slug.return_value = self.enterprise_slug
+        mock_enterprise_client().get_enterprise_name.return_value = self.enterprise_name
         with mock_send_emails:
             tasks.send_reminder_email_task(
                 self.custom_template_text,
@@ -98,8 +102,10 @@ class LicenseManagerCeleryTaskTests(TestCase):
             actual_template_text,
             actual_licenses,
             actual_enterprise_slug,
-        ) = send_email_args[:4]
+            actual_enterprise_name,
+        ) = send_email_args[:5]
 
         assert list(self.assigned_licenses) == list(actual_licenses)
         assert self.custom_template_text == actual_template_text
         assert self.enterprise_slug == actual_enterprise_slug
+        assert self.enterprise_name == actual_enterprise_name

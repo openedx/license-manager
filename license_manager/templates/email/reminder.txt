@@ -1,0 +1,17 @@
+{% load i18n %}
+
+{{ TEMPLATE_GREETING }}
+
+{% with enterprise_text=ENTERPRISE_NAME|add:" partnered with edX to give everyone access to high-quality online courses." %}
+    {% trans enterprise_text %}
+    {% trans " Start your subscription and browse courses in nearly every subject including Data Analytics, Digital Media, Business & Leadership, Communications, Computer Science and so much more." %}
+    {% trans " Courses are taught by experts from the world’s leading universities and corporations." %}
+{% endwith %}
+
+{% trans "Start Learning " %}{{ LICENSE_ACTIVATION_LINK }}
+
+{% trans "So you don't have to search for this link, bookmark your learning portal now to have easy access to your subscription in the future: " %}{{ LEARNER_PORTAL_LINK }}
+
+{% trans "My Learning Portal" %}
+
+{{ TEMPLATE_CLOSING }}
