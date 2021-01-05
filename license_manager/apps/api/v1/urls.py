@@ -86,7 +86,7 @@ subscription_router.register(
 urlpatterns = [
     url(
         r'license-subsidy',
-        views.LicenseSubidyView.as_view(),
+        views.LicenseSubsidyView.as_view(),
         name='license-subsidy',
     ),
     url(

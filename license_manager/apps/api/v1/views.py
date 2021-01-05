@@ -49,10 +49,9 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
 
     authentication_classes = [JwtAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    queryset = CustomerAgreement.objects.all()
 
-    lookup_field = 'enterprise_customer_uuid'
-    lookup_url_kwarg = 'enterprise_customer_uuid'
+    lookup_field = 'uuid'
+    lookup_url_kwarg = 'customer_agreement_uuid'
     serializer_class = serializers.CustomerAgreementSerializer
     permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
 
@@ -61,8 +60,31 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
 
+    def list(self, request):
+        """
+        List route depends on the ``enterprise_customer_uuid`` query parameter to return the
+        serialized CustomerAgreement associated with the specified enterprise.
+        """
+        if not self.requested_enterprise_uuid:
+            msg = 'You must supply the enterprise_customer_uuid query parameter'
+            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+
+        customer_agreement = get_object_or_404(
+            CustomerAgreement,
+            enterprise_customer_uuid=self.requested_enterprise_uuid,
+        )
+        serialized_customer_agreement = CustomerAgreementSerializer(customer_agreement)
+        return Response(serialized_customer_agreement.data)
+
     def retrieve(self, request, *args, **kwargs):
-        customer_agreement = get_object_or_404(self.queryset, *args, **kwargs)
+        """
+        Detail route depends on the CustomerAgreement UUID specified in the route to return
+        the serialized CustomerAgreement.
+        """
+        customer_agreement = get_object_or_404(
+            CustomerAgreement,
+            uuid=self.requested_customer_agreement_uuid,
+        )
         serialized_customer_agreement = CustomerAgreementSerializer(customer_agreement)
         return Response(serialized_customer_agreement.data)
 
@@ -76,19 +98,33 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
         except ValueError:
             raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.')
 
-    def get_permission_object(self):
+    @property
+    def requested_customer_agreement_uuid(self):
+        return self.kwargs.get('customer_agreement_uuid')
+
+    def get_permission_object(self, *args, **kwargs):
         """
-        Used for "retrieve" actions.  Determines which SubscriptionPlan instances
-        to check for role-based permissions against.
+        Used for "retrieve" actions. Determines the context (enterprise UUID) to check
+        against for role-based permissions.
         """
+        if self.requested_enterprise_uuid:
+            return self.requested_enterprise_uuid
+
         try:
-            return CustomerAgreement.objects.get(uuid=self.requested_enterprise_uuid)
+            customer_agreement = CustomerAgreement.objects.get(uuid=self.requested_customer_agreement_uuid)
+            return customer_agreement.enterprise_customer_uuid
         except CustomerAgreement.DoesNotExist:
             return None
 
     @property
     def base_queryset(self):
-        return CustomerAgreement.objects.filter(enterprise_customer_uuid=self.requested_enterprise_uuid)
+        queryset = CustomerAgreement.objects.all()
+        if self.requested_enterprise_uuid:
+            return queryset.filter(enterprise_customer_uuid=self.requested_enterprise_uuid)
+        if self.requested_customer_agreement_uuid:
+            return queryset.filter(uuid=self.requested_customer_agreement_uuid)
+
+        return queryset
 
 
 class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
@@ -122,11 +158,12 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
 
     def get_permission_object(self):
         """
-        Used for "retrieve" actions.  Determines which SubscriptionPlan instances
-        to check for role-based permissions against.
+        Used for "retrieve" actions. Determines the context (enterprise UUID) to check
+        against for role-based permissions.
         """
         try:
-            return SubscriptionPlan.objects.get(uuid=self.requested_subscription_uuid)
+            subscription_plan = SubscriptionPlan.objects.get(uuid=self.requested_subscription_uuid)
+            return subscription_plan.customer_agreement.enterprise_customer_uuid
         except SubscriptionPlan.DoesNotExist:
             return None
 
@@ -194,7 +231,11 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
         The requesting user needs access to the license's SubscriptionPlan
         in order to access the license.
         """
-        return self._get_subscription_plan()
+        subscription_plan = self._get_subscription_plan()
+        if not subscription_plan:
+            return None
+
+        return subscription_plan.customer_agreement.enterprise_customer_uuid
 
     def get_serializer_class(self):
         if self.action == 'assign':
@@ -499,7 +540,7 @@ class LicenseBaseView(APIView):
         return utils.get_key_from_jwt(self.decoded_jwt, 'email')
 
 
-class LicenseSubidyView(LicenseBaseView):
+class LicenseSubsidyView(LicenseBaseView):
     """
     View for fetching the data on the subsidy provided by a license.
     """
@@ -509,7 +550,7 @@ class LicenseSubidyView(LicenseBaseView):
 
     @permission_required(
         constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
-        fn=lambda request: utils.get_subscription_plan_from_enterprise(request),  # pylint: disable=unnecessary-lambda
+        fn=lambda request: utils.get_context_for_customer_agreement_from_request(request),  # pylint: disable=unnecessary-lambda
     )
     def get(self, request):
         """
@@ -524,17 +565,22 @@ class LicenseSubidyView(LicenseBaseView):
             msg = 'You must supply the course_key query parameter'
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
-        subscription_plan = utils.get_subscription_plan_from_enterprise(request)
+        customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
+        # note: the below query assumes a user will have at most 1 activated license at a time, even
+        # if the associated CustomerAgreement has multiple active subscription plans.
         user_license = get_object_or_404(
             License,
-            subscription_plan=subscription_plan,
+            subscription_plan__in=customer_agreement.subscriptions.all(),
             lms_user_id=self.lms_user_id,
             status=constants.ACTIVATED,
         )
 
-        course_in_catalog = subscription_plan.contains_content([self.requested_course_key])
+        course_in_catalog = customer_agreement.contains_catalog_content([self.requested_course_key])
         if not course_in_catalog:
-            msg = 'This course was not found in your subscription plan\'s catalog.'
+            msg = (
+                'This course was not found in the subscription plan catalogs associated with the '
+                'specified enterprise UUID.'
+            )
             return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
         ordered_data = OrderedDict({
@@ -542,8 +588,8 @@ class LicenseSubidyView(LicenseBaseView):
             'discount_value': constants.LICENSE_DISCOUNT_VALUE,
             'status': user_license.status,
             'subsidy_id': user_license.uuid,
-            'start_date': subscription_plan.start_date,
-            'expiration_date': subscription_plan.expiration_date,
+            'start_date': user_license.subscription_plan.start_date,
+            'expiration_date': user_license.subscription_plan.expiration_date,
         })
         return Response(ordered_data)
 
@@ -555,7 +601,7 @@ class LicenseActivationView(LicenseBaseView):
 
     @permission_required(
         constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
-        fn=lambda request: utils.get_subscription_plan_by_activation_key(request),  # pylint: disable=unnecessary-lambda
+        fn=lambda request: utils.get_context_from_subscription_plan_by_activation_key(request),  # pylint: disable=unnecessary-lambda
     )
     def post(self, request):
         """

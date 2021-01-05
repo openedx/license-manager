@@ -88,6 +88,27 @@ class CustomerAgreement(TimeStampedModel):
 
         return ordered_subscription_plan_data
 
+    def contains_catalog_content(self, content_ids):
+        """
+        Checks whether the subscriptions related to a CustomerAgreement contains the given content by
+        checking against its linked enterprise catalog(s).
+
+        If a CustomerAgreement "contains" a particular piece of content, that means a license for that
+        CustomerAgreement can be used to access the specified content.
+
+        Arguments:
+            content_ids (list of str): List of content ids to check against the subscriptions associated with the
+                CustomerAgreement.
+
+        Returns:
+            bool: Whether the given content_ids are part of the subscriptions related to the CustomerAgreement.
+        """
+        for subscription in self.subscriptions.all():
+            contains_content = subscription.contains_content(content_ids)
+            if contains_content:
+                return True
+        return False
+
     class Meta:
         verbose_name = _("Customer Agreement")
         verbose_name_plural = _("Customer Agreements")
