@@ -16,39 +16,39 @@ from license_manager.apps.subscriptions.models import (
 
 
 @rules.predicate
-def has_implicit_access_to_subscriptions_admin(user, subscription_plan):  # pylint: disable=unused-argument
+def has_implicit_access_to_subscriptions_admin(user, enterprise_customer_uuid):  # pylint: disable=unused-argument
     """
-    Check that if request user has implicit access to the given SubscriptionPlan for the
+    Check that if request user has implicit access to the given enterprise UUID for the
     `SUBSCRIPTIONS_ADMIN_ROLE` feature role.
 
     Returns:
         boolean: whether the request user has access.
     """
-    if not subscription_plan:
+    if not enterprise_customer_uuid:
         return False
 
     return request_user_has_implicit_access_via_jwt(
         get_decoded_jwt(crum.get_current_request()),
         constants.SUBSCRIPTIONS_ADMIN_ROLE,
-        str(subscription_plan.enterprise_customer_uuid),
+        str(enterprise_customer_uuid),
     )
 
 
 @rules.predicate
-def has_explicit_access_to_subscriptions_admin(user, subscription_plan):
+def has_explicit_access_to_subscriptions_admin(user, enterprise_customer_uuid):
     """
     Check that if request user has explicit access to `SUBSCRIPTIONS_ADMIN_ROLE` feature role.
     Returns:
         boolean: whether the request user has access.
     """
-    if not subscription_plan:
+    if not enterprise_customer_uuid:
         return False
 
     return user_has_access_via_database(
         user,
         constants.SUBSCRIPTIONS_ADMIN_ROLE,
         SubscriptionsRoleAssignment,
-        str(subscription_plan.enterprise_customer_uuid),
+        str(enterprise_customer_uuid),
     )
 
 
@@ -60,40 +60,40 @@ rules.add_perm(
 
 
 @rules.predicate
-def has_implicit_access_to_subscriptions_learner(user, subscription_plan):  # pylint: disable=unused-argument
+def has_implicit_access_to_subscriptions_learner(user, enterprise_customer_uuid):  # pylint: disable=unused-argument
     """
-    Check that if request user has implicit access to the given SubscriptionPlan for the
+    Check that if request user has implicit access to the given enterprise UUID for the
     `SUBSCRIPTIONS_LEARNER_ROLE` feature role.
 
     Returns:
         boolean: whether the request user has access.
     """
-    if not subscription_plan:
+    if not enterprise_customer_uuid:
         return False
 
     return request_user_has_implicit_access_via_jwt(
         get_decoded_jwt(crum.get_current_request()),
         constants.SUBSCRIPTIONS_LEARNER_ROLE,
-        str(subscription_plan.enterprise_customer_uuid),
+        str(enterprise_customer_uuid),
     )
 
 
 @rules.predicate
-def has_explicit_access_to_subscriptions_learner(user, subscription_plan):
+def has_explicit_access_to_subscriptions_learner(user, enterprise_customer_uuid):
     """
     Check that if request user has explicit access to `SUBSCRIPTIONS_LEARNER_ROLE` feature role.
 
     Returns:
         boolean: whether the request user has access.
     """
-    if not subscription_plan:
+    if not enterprise_customer_uuid:
         return False
 
     return user_has_access_via_database(
         user,
         constants.SUBSCRIPTIONS_LEARNER_ROLE,
         SubscriptionsRoleAssignment,
-        str(subscription_plan.enterprise_customer_uuid),
+        str(enterprise_customer_uuid),
     )
 
 

@@ -28,6 +28,8 @@ from rest_framework.test import APIClient
 
 from license_manager.apps.api.v1.tests.constants import (
     SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
+    ADMIN_ROLES,
+    LEARNER_ROLES,
 )
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
@@ -134,15 +136,51 @@ def superuser():
     """
     return get_model_fixture(User, is_staff=True, is_superuser=True)
 
+@pytest.fixture(params=[ADMIN_ROLES, LEARNER_ROLES])
+def user_role(request):
+    """
+    Simple fixture that toggles between various user roles.
+    """
+    return request.param
+
+
+def _customer_agreement_detail_request(api_client, user, customer_agreement_uuid):
+    """
+    Helper method that requests details for a specific customer agreement.
+    """
+    if user:
+        api_client.force_authenticate(user=user)
+
+    url = reverse('api:v1:customer-agreement-detail', kwargs={
+        'customer_agreement_uuid': customer_agreement_uuid,
+    })
+
+    return api_client.get(url)
+
+
+def _customer_agreement_list_request(api_client, user, enterprise_customer_uuid):
+    """
+    Helper method that requests CustomerAgreement details for a specific enterprise customer uuid.
+    """
+    api_client.force_authenticate(user=user)
+    url = reverse('api:v1:customer-agreement-list')
+    if enterprise_customer_uuid is not None:
+        url += f'?enterprise_customer_uuid={enterprise_customer_uuid}'
+
+    return api_client.get(url)
+
 
 def _subscriptions_list_request(api_client, user, enterprise_customer_uuid=None):
     """
     Helper method that requests a list of subscriptions entities for a given enterprise_customer_uuid.
     """
-    api_client.force_authenticate(user=user)
+    if user:
+        api_client.force_authenticate(user=user)
+
     url = reverse('api:v1:subscriptions-list')
     if enterprise_customer_uuid is not None:
         url += f'?enterprise_customer_uuid={enterprise_customer_uuid}'
+
     return api_client.get(url)
 
 
@@ -160,8 +198,11 @@ def _subscriptions_detail_request(api_client, user, subscription_uuid):
     """
     Helper method that requests details for a specific subscription_uuid.
     """
-    api_client.force_authenticate(user=user)
+    if user:
+        api_client.force_authenticate(user=user)
+
     url = reverse('api:v1:subscriptions-detail', kwargs={'subscription_uuid': subscription_uuid})
+
     return api_client.get(url)
 
 
@@ -179,11 +220,14 @@ def _licenses_detail_request(api_client, user, subscription_uuid, license_uuid):
     """
     Helper method that requests details for a specific license_uuid.
     """
-    api_client.force_authenticate(user=user)
+    if user:
+        api_client.force_authenticate(user=user)
+
     url = reverse('api:v1:licenses-detail', kwargs={
         'subscription_uuid': subscription_uuid,
         'license_uuid': license_uuid
     })
+
     return api_client.get(url)
 
 
@@ -207,6 +251,22 @@ def _get_date_string(date):
     if not date:
         return None
     return str(date)
+
+
+def _assert_customer_agreement_response_correct(response, customer_agreement):
+    """
+    Helper for asserting that the response for a customer agreement matches the object's values.
+    """
+    assert response['uuid'] == str(customer_agreement.uuid)
+    assert response['enterprise_customer_uuid'] == str(customer_agreement.enterprise_customer_uuid)
+    assert response['enterprise_customer_slug'] == customer_agreement.enterprise_customer_slug
+    assert response['default_enterprise_catalog_uuid'] == str(customer_agreement.default_enterprise_catalog_uuid)
+    assert response['ordered_subscription_plan_expirations'] == customer_agreement.ordered_subscription_plan_expirations
+    for response_subscription, agreement_subscription in zip(
+        response['subscriptions'],
+        customer_agreement.subscriptions.all()
+    ):
+        _assert_subscription_response_correct(response_subscription, agreement_subscription)
 
 
 def _assert_subscription_response_correct(response, subscription, expected_days_until_renewal_expiration=None):
@@ -242,21 +302,108 @@ def _assert_license_response_correct(response, subscription_license):
 
 
 @pytest.mark.django_db
-def test_subscription_plan_list_unauthenticated_user_403(api_client):
+def test_customer_agreement_unauthenticated_user_401(api_client):
     """
-    Verify that unauthenticated users receive a 403 from the subscription plan list endpoint.
+    Verify that unauthenticated users receive a 401 from the customer agreement detail endpoint.
     """
-    response = _subscriptions_list_request(api_client, AnonymousUser(), enterprise_customer_uuid=uuid4())
+    response = _customer_agreement_detail_request(
+        api_client=api_client,
+        user=None,
+        customer_agreement_uuid=uuid4(),
+    )
+    assert status.HTTP_401_UNAUTHORIZED == response.status_code
+
+
+@pytest.mark.django_db
+def test_customer_agreement_non_staff_user_403(api_client, non_staff_user):
+    """
+    Verify that non-staff users without JWT roles receive a 403 from the customer agreement detail endpoint.
+    """
+    response = _customer_agreement_detail_request(api_client, non_staff_user, uuid4())
     assert status.HTTP_403_FORBIDDEN == response.status_code
 
 
 @pytest.mark.django_db
-def test_subscription_plan_retrieve_unauthenticated_user_403(api_client):
+def test_customer_agreement_detail_non_staff_user_200(api_client, non_staff_user, user_role, boolean_toggle):
     """
-    Verify that unauthenticated users receive a 403 from the subscription plan retrieve endpoint.
+    Verify that non-staff users with JWT roles (admin + learners) receive a 200 from the
+    customer agreement detail endpoint.
     """
-    response = _subscriptions_detail_request(api_client, AnonymousUser(), uuid4())
+    enterprise_customer_uuid = uuid4()
+    __, __, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
+
+    _assign_role_via_jwt_or_db(
+        api_client,
+        non_staff_user,
+        enterprise_customer_uuid,
+        assign_via_jwt=boolean_toggle,
+        system_role=user_role['system_role'],
+        subscriptions_role=user_role['subscriptions_role'],
+    )
+
+    response = _customer_agreement_detail_request(api_client, non_staff_user, customer_agreement.uuid)
+    assert status.HTTP_200_OK == response.status_code
+
+
+@pytest.mark.django_db
+def test_customer_agreement_detail_staff_user_403(api_client, staff_user):
+    """
+    Verify that staff users without any assigned roles receive a 403 from the customer agreement detail endpoint.
+    """
+    response = _customer_agreement_detail_request(api_client, staff_user, uuid4())
     assert status.HTTP_403_FORBIDDEN == response.status_code
+
+
+@pytest.mark.django_db
+def test_customer_agreement_detail_superuser_200(api_client, superuser):
+    """
+    Verify that the customer agreement detail endpoint gives the correct
+    response for superusers.
+    """
+    enterprise_customer_uuid = uuid4()
+    __, __, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
+    response = _customer_agreement_detail_request(api_client, superuser, customer_agreement.uuid)
+
+    assert status.HTTP_200_OK == response.status_code
+    _assert_customer_agreement_response_correct(response.data, customer_agreement)
+
+@pytest.mark.django_db
+def test_customer_agreement_list_superuser_200(api_client, superuser):
+    """
+    Verify that the customer agreement list endpoint gives the correct
+    response for superusers.
+    """
+    enterprise_customer_uuid = uuid4()
+    __, __, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
+    response = _customer_agreement_list_request(api_client, superuser, customer_agreement.enterprise_customer_uuid)
+
+    assert status.HTTP_200_OK == response.status_code
+    _assert_customer_agreement_response_correct(response.data, customer_agreement)
+
+@pytest.mark.django_db
+def test_subscription_plan_list_unauthenticated_user_401(api_client):
+    """
+    Verify that unauthenticated users receive a 401 from the subscription plan list endpoint.
+    """
+    response = _subscriptions_list_request(
+        api_client,
+        user=None,
+        enterprise_customer_uuid=uuid4(),
+    )
+    assert status.HTTP_401_UNAUTHORIZED == response.status_code
+
+
+@pytest.mark.django_db
+def test_subscription_plan_retrieve_unauthenticated_user_401(api_client):
+    """
+    Verify that unauthenticated users receive a 401 from the subscription plan retrieve endpoint.
+    """
+    response = _subscriptions_detail_request(
+        api_client=api_client,
+        user=None,
+        subscription_uuid=uuid4(),
+    )
+    assert status.HTTP_401_UNAUTHORIZED == response.status_code
 
 
 @pytest.mark.django_db
@@ -269,12 +416,17 @@ def test_license_list_unauthenticated_user_401(api_client):
 
 
 @pytest.mark.django_db
-def test_license_retrieve_unauthenticated_user_403(api_client):
+def test_license_retrieve_unauthenticated_user_401(api_client):
     """
-    Verify that unauthenticated users receive a 403 from the license retrieve endpoint.
+    Verify that unauthenticated users receive a 401 from the license retrieve endpoint.
     """
-    response = _licenses_detail_request(api_client, AnonymousUser(), uuid4(), uuid4())
-    assert status.HTTP_403_FORBIDDEN == response.status_code
+    response = _licenses_detail_request(
+        api_client=api_client,
+        user=None,
+        subscription_uuid=uuid4(),
+        license_uuid=uuid4(),
+    )
+    assert status.HTTP_401_UNAUTHORIZED == response.status_code
 
 
 @pytest.mark.django_db
@@ -313,7 +465,7 @@ def test_subscription_plan_list_staff_user_200(api_client, staff_user, boolean_t
     specified by the query parameter.
     """
     enterprise_customer_uuid = uuid4()
-    first_subscription, second_subscription = _create_subscription_plans(enterprise_customer_uuid)
+    first_subscription, second_subscription, __ = _create_subscription_plans(enterprise_customer_uuid)
     third_subscription = _create_subscription_with_renewal(enterprise_customer_uuid)
     _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, boolean_toggle)
 
@@ -642,7 +794,7 @@ def _create_subscription_plans(enterprise_customer_uuid):
     second_subscription = SubscriptionPlanFactory.create(customer_agreement=customer_agreement)
     # Create another subscription not associated with the enterprise that shouldn't show up
     SubscriptionPlanFactory.create(customer_agreement=CustomerAgreementFactory())
-    return first_subscription, second_subscription
+    return first_subscription, second_subscription, customer_agreement
 
 
 def _create_subscription_with_renewal(enterprise_customer_uuid):
@@ -1388,9 +1540,9 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
         assert status.HTTP_400_BAD_REQUEST == response.status_code
         assert '`user_id` is required and could not be found in your jwt' in str(response.content)
 
-    def test_get_subsidy_no_subscription_for_customer(self):
+    def test_get_subsidy_no_subscription_for_enterprise_customer(self):
         """
-        Verify the view returns a 404 if there is no subscription plan for the customer.
+        Verify the view returns a 404 if there is no subscription plan for the enterprise customer.
         """
         self._assign_learner_roles()
         # Pass in some random enterprise_customer_uuid that doesn't have a subscripttion
@@ -1401,22 +1553,15 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
     @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
     def test_get_subsidy_no_active_subscription_for_customer(self, mock_get_decoded_jwt):
         """
-        Verify the view returns a 404 if there is no active subscription plan for the customer.
+        Verify the view returns a 404 if there is no active license for the user.
         """
         mock_get_decoded_jwt.return_value = self._decoded_jwt
-        other_enterprise_uuid = uuid4()
-        customer_agreement = CustomerAgreementFactory.create(enterprise_customer_uuid=other_enterprise_uuid)
-        SubscriptionPlanFactory.create(customer_agreement=customer_agreement, is_active=False)
-        self._assign_learner_roles(alternate_customer=other_enterprise_uuid)
-        url = self._get_url_with_params(enterprise_customer_override=other_enterprise_uuid)
-        response = self.api_client.get(url)
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
-    def test_get_subsidy_no_license_for_user(self, mock_get_decoded_jwt):
-        """
-        Verify the view returns a 404 if the subscription has no license for the user.
-        """
+        customer_agreement = CustomerAgreementFactory.create()
+        subscription_plan = SubscriptionPlanFactory.create(customer_agreement=customer_agreement)
+        non_activated_license = LicenseFactory.create(
+            subscription_plan=subscription_plan,
+            status=constants.ASSIGNED,
+        )
         self._assign_learner_roles()
         # Mock the lms_user_id to be one not associated with any licenses
         mock_get_decoded_jwt.return_value = {'user_id': 500}
@@ -1444,21 +1589,21 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.subscriptions.models.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
-    def test_get_subsidy_course_not_in_catalog(self, mock_get_decoded_jwt, mock_subscription_contains_content):
+    def test_get_subsidy_course_not_in_catalog(self, mock_get_decoded_jwt, mock_contains_content):
         """
         Verify the view returns a 404 if the subscription's catalog does not contain the given course.
         """
         self._assign_learner_roles()
         # Mock that the content was not found in the subscription's catalog
-        mock_subscription_contains_content.return_value = False
+        mock_contains_content.return_value = False
         mock_get_decoded_jwt.return_value = self._decoded_jwt
 
         url = self._get_url_with_params()
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        mock_subscription_contains_content.assert_called_with([self.course_key])
+        mock_contains_content.assert_called_with([self.course_key])
 
     def _assert_correct_subsidy_response(self, response):
         """
@@ -1476,19 +1621,19 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
-    def test_get_subsidy(self, mock_get_decoded_jwt, mock_subscription_contains_content):
+    def test_get_subsidy(self, mock_get_decoded_jwt, mock_contains_content):
         """
         Verify the view returns the correct response for a course in the user's subscription's catalog.
         """
         self._assign_learner_roles()
         # Mock that the content was found in the subscription's catalog
-        mock_subscription_contains_content.return_value = True
+        mock_contains_content.return_value = True
         mock_get_decoded_jwt.return_value = self._decoded_jwt
 
         url = self._get_url_with_params()
         response = self.api_client.get(url)
         self._assert_correct_subsidy_response(response)
-        mock_subscription_contains_content.assert_called_with([self.course_key])
+        mock_contains_content.assert_called_with([self.course_key])
 
 
 class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):

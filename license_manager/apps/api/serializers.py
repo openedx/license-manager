@@ -4,7 +4,11 @@ from rest_framework import serializers
 from license_manager.apps.subscriptions.constants import (
     EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API,
 )
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.models import (
+    CustomerAgreement,
+    License,
+    SubscriptionPlan,
+)
 
 
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
@@ -41,6 +45,24 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'applied': obj.num_revocations_applied,
             'remaining': obj.num_revocations_remaining,
         }
+
+
+class CustomerAgreementSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the `CustomerAgreement` model.
+    """
+    subscriptions = SubscriptionPlanSerializer(many=True)
+
+    class Meta:
+        model = CustomerAgreement
+        fields = [
+            'uuid',
+            'enterprise_customer_uuid',
+            'enterprise_customer_slug',
+            'default_enterprise_catalog_uuid',
+            'ordered_subscription_plan_expirations',
+            'subscriptions',
+        ]
 
 
 class LicenseSerializer(serializers.ModelSerializer):
