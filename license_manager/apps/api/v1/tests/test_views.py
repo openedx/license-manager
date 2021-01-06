@@ -1589,21 +1589,21 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.subscriptions.models.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
-    def test_get_subsidy_course_not_in_catalog(self, mock_get_decoded_jwt, mock_subscription_contains_content):
+    def test_get_subsidy_course_not_in_catalog(self, mock_get_decoded_jwt, mock_contains_content):
         """
         Verify the view returns a 404 if the subscription's catalog does not contain the given course.
         """
         self._assign_learner_roles()
         # Mock that the content was not found in the subscription's catalog
-        mock_subscription_contains_content.return_value = False
+        mock_contains_content.return_value = False
         mock_get_decoded_jwt.return_value = self._decoded_jwt
 
         url = self._get_url_with_params()
         response = self.api_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        mock_subscription_contains_content.assert_called_with([self.course_key])
+        mock_contains_content.assert_called_with([self.course_key])
 
     def _assert_correct_subsidy_response(self, response):
         """
@@ -1619,21 +1619,21 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
             'expiration_date': str(self.active_subscription_for_customer.expiration_date),
         }
 
-    @mock.patch('license_manager.apps.api.v1.views.CustomerAgreement.contains_catalog_content')
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
-    def test_get_subsidy(self, mock_get_decoded_jwt, mock_customer_agreement_contains_content):
+    def test_get_subsidy(self, mock_get_decoded_jwt, mock_contains_content):
         """
         Verify the view returns the correct response for a course in the user's subscription's catalog.
         """
         self._assign_learner_roles()
         # Mock that the content was found in the subscription's catalog
-        mock_customer_agreement_contains_content.return_value = True
+        mock_contains_content.return_value = True
         mock_get_decoded_jwt.return_value = self._decoded_jwt
 
         url = self._get_url_with_params()
         response = self.api_client.get(url)
         self._assert_correct_subsidy_response(response)
-        mock_customer_agreement_contains_content.assert_called_with([self.course_key])
+        mock_contains_content.assert_called_with([self.course_key])
 
 
 class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):

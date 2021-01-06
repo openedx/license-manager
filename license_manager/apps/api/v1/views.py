@@ -566,32 +566,42 @@ class LicenseSubsidyView(LicenseBaseView):
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
         customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
-        # note: the below query assumes a user will have at most 1 activated license at a time, even
-        # if the associated CustomerAgreement has multiple active subscription plans.
-        user_license = get_object_or_404(
-            License,
+        user_activated_licenses = License.objects.filter(
             subscription_plan__in=customer_agreement.subscriptions.all(),
             lms_user_id=self.lms_user_id,
             status=constants.ACTIVATED,
         )
+        # order licenses by their associated subscription plan expiration date
+        ordered_licenses_by_expiration = sorted(
+            user_activated_licenses,
+            key=lambda user_license: user_license.subscription_plan.expiration_date,
+            reverse=True,
+        )
 
-        course_in_catalog = customer_agreement.contains_catalog_content([self.requested_course_key])
-        if not course_in_catalog:
-            msg = (
-                'This course was not found in the subscription plan catalogs associated with the '
-                'specified enterprise UUID.'
-            )
-            return Response(msg, status=status.HTTP_404_NOT_FOUND)
+        # iterate through the ordered licenses to return the license subsidy data for the user's license
+        # which is "valid" for the specified content key and expires furthest in the future.
+        for user_license in ordered_licenses_by_expiration:
+            subscription_plan = user_license.subscription_plan
+            course_in_catalog = subscription_plan.contains_content([self.requested_course_key])
+            if not course_in_catalog:
+                continue
 
-        ordered_data = OrderedDict({
-            'discount_type': constants.PERCENTAGE_DISCOUNT_TYPE,
-            'discount_value': constants.LICENSE_DISCOUNT_VALUE,
-            'status': user_license.status,
-            'subsidy_id': user_license.uuid,
-            'start_date': user_license.subscription_plan.start_date,
-            'expiration_date': user_license.subscription_plan.expiration_date,
-        })
-        return Response(ordered_data)
+            ordered_data = OrderedDict({
+                'discount_type': constants.PERCENTAGE_DISCOUNT_TYPE,
+                'discount_value': constants.LICENSE_DISCOUNT_VALUE,
+                'status': user_license.status,
+                'subsidy_id': user_license.uuid,
+                'start_date': subscription_plan.start_date,
+                'expiration_date': subscription_plan.expiration_date,
+            })
+            return Response(ordered_data)
+
+        # user does not have an activated license that is applicable to the specified content key.
+        msg = (
+            'This course was not found in the subscription plan catalogs associated with the '
+            'specified enterprise UUID.'
+        )
+        return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
 
 class LicenseActivationView(LicenseBaseView):
