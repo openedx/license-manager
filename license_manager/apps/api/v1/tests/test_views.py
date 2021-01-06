@@ -148,7 +148,8 @@ def _customer_agreement_detail_request(api_client, user, customer_agreement_uuid
     """
     Helper method that requests details for a specific customer agreement.
     """
-    api_client.force_authenticate(user=user)
+    if user:
+        api_client.force_authenticate(user=user)
 
     url = reverse('api:v1:customer-agreement-detail', kwargs={
         'customer_agreement_uuid': customer_agreement_uuid,
@@ -173,10 +174,13 @@ def _subscriptions_list_request(api_client, user, enterprise_customer_uuid=None)
     """
     Helper method that requests a list of subscriptions entities for a given enterprise_customer_uuid.
     """
-    api_client.force_authenticate(user=user)
+    if user:
+        api_client.force_authenticate(user=user)
+
     url = reverse('api:v1:subscriptions-list')
     if enterprise_customer_uuid is not None:
         url += f'?enterprise_customer_uuid={enterprise_customer_uuid}'
+
     return api_client.get(url)
 
 
@@ -194,8 +198,11 @@ def _subscriptions_detail_request(api_client, user, subscription_uuid):
     """
     Helper method that requests details for a specific subscription_uuid.
     """
-    api_client.force_authenticate(user=user)
+    if user:
+        api_client.force_authenticate(user=user)
+
     url = reverse('api:v1:subscriptions-detail', kwargs={'subscription_uuid': subscription_uuid})
+
     return api_client.get(url)
 
 
@@ -213,11 +220,14 @@ def _licenses_detail_request(api_client, user, subscription_uuid, license_uuid):
     """
     Helper method that requests details for a specific license_uuid.
     """
-    api_client.force_authenticate(user=user)
+    if user:
+        api_client.force_authenticate(user=user)
+
     url = reverse('api:v1:licenses-detail', kwargs={
         'subscription_uuid': subscription_uuid,
         'license_uuid': license_uuid
     })
+
     return api_client.get(url)
 
 
@@ -292,12 +302,16 @@ def _assert_license_response_correct(response, subscription_license):
 
 
 @pytest.mark.django_db
-def test_customer_agreement_unauthenticated_user_403(api_client):
+def test_customer_agreement_unauthenticated_user_401(api_client):
     """
-    Verify that unauthenticated users receive a 403 from the customer agreement detail endpoint.
+    Verify that unauthenticated users receive a 401 from the customer agreement detail endpoint.
     """
-    response = _customer_agreement_detail_request(api_client, AnonymousUser(), uuid4())
-    assert status.HTTP_403_FORBIDDEN == response.status_code
+    response = _customer_agreement_detail_request(
+        api_client=api_client,
+        user=None,
+        customer_agreement_uuid=uuid4(),
+    )
+    assert status.HTTP_401_UNAUTHORIZED == response.status_code
 
 
 @pytest.mark.django_db
@@ -332,7 +346,7 @@ def test_customer_agreement_detail_non_staff_user_200(api_client, non_staff_user
 
 
 @pytest.mark.django_db
-def test_customer_agreement_staff_user_403(api_client, staff_user):
+def test_customer_agreement_detail_staff_user_403(api_client, staff_user):
     """
     Verify that staff users without any assigned roles receive a 403 from the customer agreement detail endpoint.
     """
@@ -367,21 +381,29 @@ def test_customer_agreement_list_superuser_200(api_client, superuser):
     _assert_customer_agreement_response_correct(response.data, customer_agreement)
 
 @pytest.mark.django_db
-def test_subscription_plan_list_unauthenticated_user_403(api_client):
+def test_subscription_plan_list_unauthenticated_user_401(api_client):
     """
-    Verify that unauthenticated users receive a 403 from the subscription plan list endpoint.
+    Verify that unauthenticated users receive a 401 from the subscription plan list endpoint.
     """
-    response = _subscriptions_list_request(api_client, AnonymousUser(), enterprise_customer_uuid=uuid4())
-    assert status.HTTP_403_FORBIDDEN == response.status_code
+    response = _subscriptions_list_request(
+        api_client,
+        user=None,
+        enterprise_customer_uuid=uuid4(),
+    )
+    assert status.HTTP_401_UNAUTHORIZED == response.status_code
 
 
 @pytest.mark.django_db
-def test_subscription_plan_retrieve_unauthenticated_user_403(api_client):
+def test_subscription_plan_retrieve_unauthenticated_user_401(api_client):
     """
-    Verify that unauthenticated users receive a 403 from the subscription plan retrieve endpoint.
+    Verify that unauthenticated users receive a 401 from the subscription plan retrieve endpoint.
     """
-    response = _subscriptions_detail_request(api_client, AnonymousUser(), uuid4())
-    assert status.HTTP_403_FORBIDDEN == response.status_code
+    response = _subscriptions_detail_request(
+        api_client=api_client,
+        user=None,
+        subscription_uuid=uuid4(),
+    )
+    assert status.HTTP_401_UNAUTHORIZED == response.status_code
 
 
 @pytest.mark.django_db
@@ -394,12 +416,17 @@ def test_license_list_unauthenticated_user_401(api_client):
 
 
 @pytest.mark.django_db
-def test_license_retrieve_unauthenticated_user_403(api_client):
+def test_license_retrieve_unauthenticated_user_401(api_client):
     """
-    Verify that unauthenticated users receive a 403 from the license retrieve endpoint.
+    Verify that unauthenticated users receive a 401 from the license retrieve endpoint.
     """
-    response = _licenses_detail_request(api_client, AnonymousUser(), uuid4(), uuid4())
-    assert status.HTTP_403_FORBIDDEN == response.status_code
+    response = _licenses_detail_request(
+        api_client=api_client,
+        user=None,
+        subscription_uuid=uuid4(),
+        license_uuid=uuid4(),
+    )
+    assert status.HTTP_401_UNAUTHORIZED == response.status_code
 
 
 @pytest.mark.django_db
