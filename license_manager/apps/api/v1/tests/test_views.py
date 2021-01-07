@@ -11,7 +11,6 @@ import factory
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.test import TestCase
@@ -330,7 +329,7 @@ def test_customer_agreement_detail_non_staff_user_200(api_client, non_staff_user
     customer agreement detail endpoint.
     """
     enterprise_customer_uuid = uuid4()
-    __, __, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
+    _, _, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
 
     _assign_role_via_jwt_or_db(
         api_client,
@@ -361,7 +360,7 @@ def test_customer_agreement_detail_superuser_200(api_client, superuser):
     response for superusers.
     """
     enterprise_customer_uuid = uuid4()
-    __, __, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
+    _, _, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
     response = _customer_agreement_detail_request(api_client, superuser, customer_agreement.uuid)
 
     assert status.HTTP_200_OK == response.status_code
@@ -374,11 +373,58 @@ def test_customer_agreement_list_superuser_200(api_client, superuser):
     response for superusers.
     """
     enterprise_customer_uuid = uuid4()
-    __, __, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
+    _, _, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
     response = _customer_agreement_list_request(api_client, superuser, customer_agreement.enterprise_customer_uuid)
 
     assert status.HTTP_200_OK == response.status_code
     _assert_customer_agreement_response_correct(response.data, customer_agreement)
+
+@pytest.mark.django_db
+def test_customer_agreement_list_non_staff_user_200(api_client, non_staff_user, user_role, boolean_toggle):
+    """
+    Verify that non-staff users with JWT roles (admin + learners) receive a 200 from the
+    customer agreement list endpoint.
+    """
+    enterprise_customer_uuid = uuid4()
+    _, _, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
+
+    _assign_role_via_jwt_or_db(
+        api_client,
+        non_staff_user,
+        enterprise_customer_uuid,
+        assign_via_jwt=boolean_toggle,
+        system_role=user_role['system_role'],
+        subscriptions_role=user_role['subscriptions_role'],
+    )
+
+    response = _customer_agreement_list_request(api_client, non_staff_user, customer_agreement.enterprise_customer_uuid)
+    assert status.HTTP_200_OK == response.status_code
+
+@pytest.mark.django_db
+def test_customer_agreement_list_non_staff_user_200_empty(api_client, non_staff_user, user_role, boolean_toggle):
+    """
+    Verify that non-staff users with JWT roles (admin + learners) receive a 200 from the
+    customer agreement list endpoint, but only returns the CustomerAgreement for which the user
+    has access to based on the user's role(s).
+    """
+    enterprise_customer_uuid = uuid4()
+    other_enterprise_customer_uuid = uuid4()
+    _, _, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
+
+    _assign_role_via_jwt_or_db(
+        api_client,
+        non_staff_user,
+        other_enterprise_customer_uuid,
+        assign_via_jwt=boolean_toggle,
+        system_role=user_role['system_role'],
+        subscriptions_role=user_role['subscriptions_role'],
+    )
+
+    response = _customer_agreement_list_request(api_client, non_staff_user, customer_agreement.enterprise_customer_uuid)
+    assert status.HTTP_200_OK == response.status_code
+    # verify response results includes no results as user doesn't have access to the requested enterprise context
+    assert response.data.get('count') == 0
+    assert response.data.get('results') == []
 
 @pytest.mark.django_db
 def test_subscription_plan_list_unauthenticated_user_401(api_client):
@@ -1558,10 +1604,7 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
         mock_get_decoded_jwt.return_value = self._decoded_jwt
         customer_agreement = CustomerAgreementFactory.create()
         subscription_plan = SubscriptionPlanFactory.create(customer_agreement=customer_agreement)
-        non_activated_license = LicenseFactory.create(
-            subscription_plan=subscription_plan,
-            status=constants.ASSIGNED,
-        )
+        LicenseFactory.create(subscription_plan=subscription_plan, status=constants.ASSIGNED)
         self._assign_learner_roles()
         # Mock the lms_user_id to be one not associated with any licenses
         mock_get_decoded_jwt.return_value = {'user_id': 500}
