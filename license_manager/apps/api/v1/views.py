@@ -9,7 +9,7 @@ from django.db.models import Count
 from django.utils.functional import cached_property
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
-from edx_rbac.mixins import PermissionRequiredForListingMixin
+from edx_rbac.mixins import PermissionRequiredForListingMixin, PermissionRequiredMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
@@ -179,7 +179,13 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
 
 
 class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
-    """ Viewset for learner read operations on Licenses."""
+    """
+    Viewset for learner read operations on Licenses.
+
+    Note: This Viewset's endpoint is part of the subscription SimpleNestedRouter - it is
+    only intended for retrieving a single License. To obtain all Licenses for a given user
+    customer pair, use LearnerLicensesViewSet.
+    """
     authentication_classes = [JwtAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
@@ -247,6 +253,73 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
             return SubscriptionPlan.objects.get(uuid=subscription_uuid)
         except SubscriptionPlan.DoesNotExist:
             return None
+
+
+class LearnerLicensesViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
+    """
+    This Viewset allows read operations of all Licenses for a given user-customer pair.
+    """
+    authentication_classes = [JwtAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
+    ordering_fields = [
+        'user_email',
+        'status',
+        'activation_date',
+        'last_remind_date',
+    ]
+    search_fields = ['user_email']
+    filter_class = LicenseStatusFilter
+    serializer_class = serializers.LicenseSerializer
+
+    # The fields that control permissions for 'list' actions.
+    # Roles are granted on specific enterprise identifiers, so we have to join
+    # from this model to SubscriptionPlan to find the corresponding customer identifier.
+    list_lookup_field = 'subscription_plan__customer_agreement__enterprise_customer_uuid'
+    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
+    role_assignment_class = SubscriptionsRoleAssignment
+
+    @property
+    def enterprise_customer_uuid(self):
+        return self.request.query_params.get('enterprise_customer_uuid')
+
+    def get_permission_object(self):
+        """
+        The requesting user needs access to the appropriate CustomerAgreement in order to access the Licenses.
+        """
+        if self.enterprise_customer_uuid:
+            return self.enterprise_customer_uuid
+        return None
+
+    @property
+    def base_queryset(self):
+        """
+        Required by the `PermissionRequiredForListingMixin`.
+        For non-list actions, this is what's returned by `get_queryset()`.
+        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
+
+        Using the authenticated user's email address from the request:
+
+        If enterprise_customer_uuid keyword argument is provided find all SubscriptionPlans with matching customer UUID.
+        Return all Licenses that are associated with the user email and each of the customer's SubscriptionPlans.
+
+        Otherwise, return an empty QuerySet.
+        """
+        user_email = self.request.user.email
+        if self.enterprise_customer_uuid:
+            subscriptions = SubscriptionPlan.objects.filter(
+                customer_agreement__enterprise_customer_uuid=self.enterprise_customer_uuid,
+                is_active=True,
+            )
+            return License.objects.filter(
+                subscription_plan__in=subscriptions,
+                user_email=user_email,
+            ).exclude(
+                status=constants.REVOKED
+            ).order_by('status', '-subscription_plan__expiration_date')
+
+        return License.objects.none()
 
 
 class PageNumberPaginationWithCount(PageNumberPagination):
