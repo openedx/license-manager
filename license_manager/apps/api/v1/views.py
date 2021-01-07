@@ -9,7 +9,7 @@ from django.db.models import Count
 from django.utils.functional import cached_property
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
-from edx_rbac.mixins import PermissionRequiredForListingMixin, PermissionRequiredMixin
+from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )

@@ -1,4 +1,3 @@
-import datetime
 from math import ceil
 from operator import itemgetter
 from uuid import uuid4
@@ -291,6 +290,7 @@ class SubscriptionPlan(TimeStampedModel):
         Helper to safely return the renewal associated with the subscription, or None if one does not exist.
         """
         try:
+            # TODO: SubscriptionPlan has no 'renewal' member
             return self.renewal
         except SubscriptionPlanRenewal.DoesNotExist:
             return None

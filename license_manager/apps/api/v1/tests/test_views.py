@@ -1492,6 +1492,13 @@ class LicenseViewTestMixin:
 
 
 @ddt.ddt
+class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
+    """
+    Tests for the LearnerLicensesViewset
+    """
+
+
+@ddt.ddt
 class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
     """
     Tests for the LicenseSubsidyView.
