@@ -6,7 +6,6 @@ from uuid import uuid4
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
-from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
@@ -24,7 +23,6 @@ from rest_framework.views import APIView
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseStatusFilter
 from license_manager.apps.api.permissions import CanRetireUser
-from license_manager.apps.api.serializers import CustomerAgreementSerializer
 from license_manager.apps.api.tasks import (
     activation_task,
     send_reminder_email_task,
@@ -60,34 +58,6 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
 
-    def list(self, request):
-        """
-        List route depends on the ``enterprise_customer_uuid`` query parameter to return the
-        serialized CustomerAgreement associated with the specified enterprise.
-        """
-        if not self.requested_enterprise_uuid:
-            msg = 'You must supply the enterprise_customer_uuid query parameter'
-            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
-
-        customer_agreement = get_object_or_404(
-            CustomerAgreement,
-            enterprise_customer_uuid=self.requested_enterprise_uuid,
-        )
-        serialized_customer_agreement = CustomerAgreementSerializer(customer_agreement)
-        return Response(serialized_customer_agreement.data)
-
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Detail route depends on the CustomerAgreement UUID specified in the route to return
-        the serialized CustomerAgreement.
-        """
-        customer_agreement = get_object_or_404(
-            CustomerAgreement,
-            uuid=self.requested_customer_agreement_uuid,
-        )
-        serialized_customer_agreement = CustomerAgreementSerializer(customer_agreement)
-        return Response(serialized_customer_agreement.data)
-
     @property
     def requested_enterprise_uuid(self):
         enterprise_customer_uuid = self.request.query_params.get('enterprise_customer_uuid')
@@ -102,7 +72,7 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
     def requested_customer_agreement_uuid(self):
         return self.kwargs.get('customer_agreement_uuid')
 
-    def get_permission_object(self, *args, **kwargs):
+    def get_permission_object(self):
         """
         Used for "retrieve" actions. Determines the context (enterprise UUID) to check
         against for role-based permissions.
@@ -118,13 +88,18 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
 
     @property
     def base_queryset(self):
-        queryset = CustomerAgreement.objects.all()
+        """
+        Required by the `PermissionRequiredForListingMixin`.
+        For non-list actions, this is what's returned by `get_queryset()`.
+        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
+        """
+        kwargs = {}
         if self.requested_enterprise_uuid:
-            return queryset.filter(enterprise_customer_uuid=self.requested_enterprise_uuid)
+            kwargs.update({'enterprise_customer_uuid': self.requested_enterprise_uuid})
         if self.requested_customer_agreement_uuid:
-            return queryset.filter(uuid=self.requested_customer_agreement_uuid)
+            kwargs.update({'uuid': self.requested_customer_agreement_uuid})
 
-        return queryset
+        return CustomerAgreement.objects.filter(**kwargs)
 
 
 class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):

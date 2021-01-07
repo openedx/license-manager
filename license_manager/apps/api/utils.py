@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from edx_rbac.utils import get_decoded_jwt
 from rest_framework.exceptions import ParseError
 
-from license_manager.apps.subscriptions.models import CustomerAgreement, License, SubscriptionPlan
+from license_manager.apps.subscriptions.models import CustomerAgreement, License
 
 
 def get_customer_agreement_from_request_enterprise_uuid(request):
@@ -74,7 +74,7 @@ def get_context_from_subscription_plan_by_activation_key(request):
     Params:
         ``request`` - A DRF Request object.
 
-    Returns: A ``SubscriptionPlan`` object.
+    Returns: The ``enterprise_customer_uuid`` associated with the user's license.
     """
     user_license = get_object_or_404(
         License,
