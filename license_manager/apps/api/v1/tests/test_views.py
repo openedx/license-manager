@@ -1541,10 +1541,10 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         },
     )
     @ddt.unpack
-    def test_endpoint_permissions_correct_customer(self, system_role, subs_role, customer_match):
+    def test_endpoint_permissions_with_customer_uuid(self, system_role, subs_role, customer_match):
         """
         Data-driven test to ensure permissions are correctly enforced when the user
-        does/doesn't have subs access to the specified customer as learner or admin.
+        does/doesn't have subs access to the specified customer as learner/admin.
         """
         customer_uuid = self.enterprise_customer_uuid if customer_match else uuid4()
         _assign_role_via_jwt_or_db(
