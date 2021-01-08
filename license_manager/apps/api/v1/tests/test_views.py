@@ -1496,6 +1496,108 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
     """
     Tests for the LearnerLicensesViewset
     """
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.base_url = reverse('api:v1:learner-licenses-list')
+
+    def _get_url_with_customer_uuid(self, enterprise_customer_uuid):
+        """
+        Private helper method to make a get request to the base URL
+        using the enterprise_customer_uuid query parameter.
+        """
+        query_params = QueryDict(mutable=True)
+        query_params['enterprise_customer_uuid'] = enterprise_customer_uuid
+        url = self.base_url + '?' + query_params.urlencode()
+        return self.api_client.get(url)
+
+    def test_endpoint_permissions_missing_role(self):
+        """
+        Verify the endpoint returns a 403 for users without the learner or admin role.
+        """
+        response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @ddt.data(
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_LEARNER_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_LEARNER_ROLE,
+            'customer_match': True,
+        },
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_ADMIN_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_ADMIN_ROLE,
+            'customer_match': True,
+        },
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_LEARNER_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_LEARNER_ROLE,
+            'customer_match': False,
+        },
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_ADMIN_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_ADMIN_ROLE,
+            'customer_match': False,
+        },
+    )
+    @ddt.unpack
+    def test_endpoint_permissions_correct_customer(self, system_role, subs_role, customer_match):
+        """
+        Data-driven test to ensure permissions are correctly enforced when the user
+        does/doesn't have subs access to the specified customer as learner or admin.
+        """
+        customer_uuid = self.enterprise_customer_uuid if customer_match else uuid4()
+        _assign_role_via_jwt_or_db(
+            self.api_client,
+            self.user,
+            customer_uuid,
+            assign_via_jwt=True,
+            system_role=system_role,
+            subscriptions_role=subs_role,
+        )
+
+        response = self._get_url_with_customer_uuid(customer_uuid)
+
+        assert response.status_code == status.HTTP_200_OK
+        if not customer_match:
+            content = response.json()
+            assert content['results'] == []
+
+    @ddt.data(
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_LEARNER_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_LEARNER_ROLE,
+        },
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_ADMIN_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_ADMIN_ROLE,
+        },
+    )
+    @ddt.unpack
+    def test_endpoint_request_missing_customer_uuid(self, system_role, subs_role):
+        """
+        Test that the appropriate response is returned when the enterprise_customer_uuid
+        query param isn't included in the request with existing learner/admin roles.
+
+        Note: role assignment is needed because 403 would be returned otherwise.
+        """
+        _assign_role_via_jwt_or_db(
+            self.api_client,
+            self.user,
+            self.enterprise_customer_uuid,
+            assign_via_jwt=True,
+            system_role=system_role,
+            subscriptions_role=subs_role,
+        )
+        response = self.api_client.get(self.base_url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'missing enterprise_customer_uuid query param' in str(response.content)
+
+    def test_endpoint_results_correctly_ordered(self):
+        """
+        Test the ordering of responses from the endpoint matches the following:
+            ORDER BY License.status ASC, License.SubscriptionPlan.expiration_date DESC
+        """
 
 
 @ddt.ddt

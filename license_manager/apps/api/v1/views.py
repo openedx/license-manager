@@ -260,17 +260,17 @@ class LearnerLicensesViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnl
     This Viewset allows read operations of all Licenses for a given user-customer pair.
     """
     authentication_classes = [JwtAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
+    filter_class = LicenseStatusFilter
     ordering_fields = [
         'user_email',
         'status',
         'activation_date',
         'last_remind_date',
     ]
+    permission_classes = [permissions.IsAuthenticated]
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
     search_fields = ['user_email']
-    filter_class = LicenseStatusFilter
     serializer_class = serializers.LicenseSerializer
 
     # The fields that control permissions for 'list' actions.
@@ -286,11 +286,17 @@ class LearnerLicensesViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnl
 
     def get_permission_object(self):
         """
-        The requesting user needs access to the appropriate CustomerAgreement in order to access the Licenses.
+        The requesting user needs access to the specified Customer in order to access the Licenses.
         """
         if self.enterprise_customer_uuid:
             return self.enterprise_customer_uuid
         return None
+
+    def list(self, request, *args, **kwargs):
+        if not self.enterprise_customer_uuid:
+            msg = 'missing enterprise_customer_uuid query param'
+            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+        return super(LearnerLicensesViewSet).list(request)
 
     @property
     def base_queryset(self):
