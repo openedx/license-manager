@@ -99,6 +99,26 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
 
 
 @shared_task(base=LoggedTask)
+def license_expiration_task(license_uuids):
+    """
+    Sends terminating the licensed course enrollments for the submitted license_uuids asynchronously
+
+    Arguments:
+        license_uuids (list of str): The UUIDs of the expired licenses
+    """
+    try:
+        enterprise_api_client = EnterpriseApiClient()
+        enterprise_api_client.bulk_licensed_enrollments_expiration(expired_license_uuids=license_uuids)
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.error(
+            "Expiration of course enrollments FAILED for licenses [{license_uuids}]: {exc}".format(
+                license_uuids=license_uuids,
+                exc=exc,
+            )
+        )
+
+
+@shared_task(base=LoggedTask)
 def send_revocation_cap_notification_email_task(subscription_uuid):
     """
     Sends revocation cap email notification to ECS asynchronously.
