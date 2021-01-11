@@ -16,6 +16,7 @@ from edx_rest_framework_extensions.auth.jwt.authentication import (
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError
+from rest_framework.mixins import ListModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -255,7 +256,7 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
             return None
 
 
-class LearnerLicensesViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
+class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, viewsets.GenericViewSet):
     """
     This Viewset allows read operations of all Licenses for a given user-customer pair.
     """
@@ -288,9 +289,7 @@ class LearnerLicensesViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnl
         """
         The requesting user needs access to the specified Customer in order to access the Licenses.
         """
-        if self.enterprise_customer_uuid:
-            return self.enterprise_customer_uuid
-        return None
+        return self.enterprise_customer_uuid
 
     def list(self, request, *args, **kwargs):
         if not self.enterprise_customer_uuid:
@@ -312,20 +311,20 @@ class LearnerLicensesViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnl
 
         Otherwise, return an empty QuerySet.
         """
-        user_email = self.request.user.email
-        if self.enterprise_customer_uuid:
-            subscriptions = SubscriptionPlan.objects.filter(
-                customer_agreement__enterprise_customer_uuid=self.enterprise_customer_uuid,
-                is_active=True,
-            )
-            return License.objects.filter(
-                subscription_plan__in=subscriptions,
-                user_email=user_email,
-            ).exclude(
-                status=constants.REVOKED
-            ).order_by('status', '-subscription_plan__expiration_date')
+        if not self.enterprise_customer_uuid:
+            return License.objects.none()
 
-        return License.objects.none()
+        user_email = self.request.user.email
+        subscriptions = SubscriptionPlan.objects.filter(
+            customer_agreement__enterprise_customer_uuid=self.enterprise_customer_uuid,
+            is_active=True,
+        )
+        return License.objects.filter(
+            subscription_plan__in=subscriptions,
+            user_email=user_email,
+        ).exclude(
+            status=constants.REVOKED
+        ).order_by('status', '-subscription_plan__expiration_date')
 
 
 class PageNumberPaginationWithCount(PageNumberPagination):
