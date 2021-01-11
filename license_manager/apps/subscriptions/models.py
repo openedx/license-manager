@@ -290,7 +290,7 @@ class SubscriptionPlan(TimeStampedModel):
         Helper to safely return the renewal associated with the subscription, or None if one does not exist.
         """
         try:
-            return self.renewal
+            return self.renewal  # pylint: disable=no-member
         except SubscriptionPlanRenewal.DoesNotExist:
             return None
 

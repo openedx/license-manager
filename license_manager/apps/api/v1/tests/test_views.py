@@ -379,7 +379,9 @@ def test_customer_agreement_list_superuser_200(api_client, superuser):
     response = _customer_agreement_list_request(api_client, superuser, customer_agreement.enterprise_customer_uuid)
 
     assert status.HTTP_200_OK == response.status_code
-    _assert_customer_agreement_response_correct(response.data, customer_agreement)
+    assert 1 == response.data['count']
+    _assert_customer_agreement_response_correct(response.data['results'][0], customer_agreement)
+
 
 
 @pytest.mark.django_db

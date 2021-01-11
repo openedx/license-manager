@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 export DJANGO_SETTINGS_MODULE=license_manager.settings.test
 
 source /edx/app/license-manager/venvs/license-manager/bin/activate
