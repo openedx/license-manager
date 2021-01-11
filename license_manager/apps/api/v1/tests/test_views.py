@@ -383,7 +383,6 @@ def test_customer_agreement_list_superuser_200(api_client, superuser):
     _assert_customer_agreement_response_correct(response.data['results'][0], customer_agreement)
 
 
-
 @pytest.mark.django_db
 def test_customer_agreement_list_non_staff_user_200(api_client, non_staff_user, user_role, boolean_toggle):
     """
