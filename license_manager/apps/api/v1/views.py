@@ -296,7 +296,7 @@ class LearnerLicensesViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnl
         if not self.enterprise_customer_uuid:
             msg = 'missing enterprise_customer_uuid query param'
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)
-        return super(LearnerLicensesViewSet).list(request)
+        return super().list(request)
 
     @property
     def base_queryset(self):

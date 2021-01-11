@@ -26,9 +26,9 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from license_manager.apps.api.v1.tests.constants import (
-    SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
     ADMIN_ROLES,
     LEARNER_ROLES,
+    SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
 )
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
@@ -134,6 +134,7 @@ def superuser():
     Fixture that provides a superuser.
     """
     return get_model_fixture(User, is_staff=True, is_superuser=True)
+
 
 @pytest.fixture(params=[ADMIN_ROLES, LEARNER_ROLES])
 def user_role(request):
@@ -366,6 +367,7 @@ def test_customer_agreement_detail_superuser_200(api_client, superuser):
     assert status.HTTP_200_OK == response.status_code
     _assert_customer_agreement_response_correct(response.data, customer_agreement)
 
+
 @pytest.mark.django_db
 def test_customer_agreement_list_superuser_200(api_client, superuser):
     """
@@ -378,6 +380,7 @@ def test_customer_agreement_list_superuser_200(api_client, superuser):
 
     assert status.HTTP_200_OK == response.status_code
     _assert_customer_agreement_response_correct(response.data, customer_agreement)
+
 
 @pytest.mark.django_db
 def test_customer_agreement_list_non_staff_user_200(api_client, non_staff_user, user_role, boolean_toggle):
@@ -399,6 +402,7 @@ def test_customer_agreement_list_non_staff_user_200(api_client, non_staff_user, 
 
     response = _customer_agreement_list_request(api_client, non_staff_user, customer_agreement.enterprise_customer_uuid)
     assert status.HTTP_200_OK == response.status_code
+
 
 @pytest.mark.django_db
 def test_customer_agreement_list_non_staff_user_200_empty(api_client, non_staff_user, user_role, boolean_toggle):
@@ -425,6 +429,7 @@ def test_customer_agreement_list_non_staff_user_200_empty(api_client, non_staff_
     # verify response results includes no results as user doesn't have access to the requested enterprise context
     assert response.data.get('count') == 0
     assert response.data.get('results') == []
+
 
 @pytest.mark.django_db
 def test_subscription_plan_list_unauthenticated_user_401(api_client):
@@ -1462,12 +1467,14 @@ class LicenseViewTestMixin:
         cls.enterprise_catalog_uuid = uuid4()
         cls.course_key = 'testX'
         cls.lms_user_id = 1
+        cls.now = localized_utcnow()
+        cls.activation_key = uuid4()
 
-        customer_agreement = CustomerAgreementFactory(
+        cls.customer_agreement = CustomerAgreementFactory(
             enterprise_customer_uuid=cls.enterprise_customer_uuid,
         )
         cls.active_subscription_for_customer = SubscriptionPlanFactory.create(
-            customer_agreement=customer_agreement,
+            customer_agreement=cls.customer_agreement,
             enterprise_catalog_uuid=cls.enterprise_catalog_uuid,
             is_active=True,
         )
@@ -1488,6 +1495,26 @@ class LicenseViewTestMixin:
             system_role=constants.SYSTEM_ENTERPRISE_LEARNER_ROLE,
             subscriptions_role=constants.SUBSCRIPTIONS_LEARNER_ROLE,
             jwt_payload_extra=jwt_payload_extra,
+        )
+
+    def _create_license(
+        self,
+        activation_date=None,
+        license_status=constants.ASSIGNED,
+        subscription_plan=None,
+    ):
+        """
+        Helper method to create a license.
+        """
+        if not subscription_plan:
+            subscription_plan = self.active_subscription_for_customer
+        return LicenseFactory.create(
+            status=license_status,
+            lms_user_id=self.lms_user_id,
+            user_email=self.user.email,
+            subscription_plan=subscription_plan,
+            activation_key=self.activation_key,
+            activation_date=activation_date,
         )
 
 
@@ -1597,7 +1624,70 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         """
         Test the ordering of responses from the endpoint matches the following:
             ORDER BY License.status ASC, License.SubscriptionPlan.expiration_date DESC
+
+        Licenses are created as follows:
+         - Activated, expires in future
+         - Activated, expires before ^
+         - Assigned, expires in future
+         - Assigned, expires before ^
         """
+        self._assign_learner_roles()
+
+        # Using SubscriptionPlan from LicenseViewTestMixin for first License
+        self.active_subscription_for_customer.expiration_date = self.now + datetime.timedelta(weeks=52)
+        first_license = self._create_license(
+            activation_date=self.now,
+            license_status=constants.ACTIVATED,
+            subscription_plan=self.active_subscription_for_customer,
+        )
+
+        # Create second SubscriptionPlan and License
+        second_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            expiration_date=self.now + datetime.timedelta(weeks=26),
+            is_active=True,
+        )
+        second_license = self._create_license(
+            activation_date=self.now,
+            license_status=constants.ACTIVATED,
+            subscription_plan=second_sub,
+        )
+
+        # Create third SubscriptionPlan and License
+        third_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            expiration_date=self.now + datetime.timedelta(weeks=52),
+            is_active=True,
+        )
+        third_license = self._create_license(
+            activation_date=self.now,
+            subscription_plan=third_sub,
+        )
+
+        # Create fourth SubscriptionPlan and License
+        fourth_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            expiration_date=self.now + datetime.timedelta(weeks=26),
+            is_active=True,
+        )
+        fourth_license = self._create_license(
+            activation_date=self.now,
+            subscription_plan=fourth_sub,
+        )
+
+        expected_response = [
+            first_license,
+            second_license,
+            third_license,
+            fourth_license,
+        ]
+        response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid)
+        for expected, actual in zip(expected_response, response.json()['results']):
+            # Ensure UUIDs are in expected order
+            assert str(expected.uuid) == actual['uuid']
 
 
 @ddt.ddt
@@ -1792,8 +1882,6 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
     """
     Tests for the license activation view.
     """
-    NOW = localized_utcnow()
-    ACTIVATION_KEY = uuid4()
 
     def tearDown(self):
         """
@@ -1815,19 +1903,6 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         query_params['activation_key'] = str(activation_key)
         url = reverse('api:v1:license-activation') + '/?' + query_params.urlencode()
         return self.api_client.post(url)
-
-    def _create_license(self, status=constants.ASSIGNED, activation_date=None):
-        """
-        Helper method to create a license.
-        """
-        return LicenseFactory.create(
-            status=status,
-            lms_user_id=self.lms_user_id,
-            user_email=self.user.email,
-            subscription_plan=self.active_subscription_for_customer,
-            activation_key=self.ACTIVATION_KEY,
-            activation_date=activation_date,
-        )
 
     def test_activation_no_auth(self):
         """
@@ -1853,7 +1928,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         )
         self._create_license()
 
-        response = self._post_request(self.ACTIVATION_KEY)
+        response = self._post_request(self.activation_key)
 
         assert status.HTTP_403_FORBIDDEN == response.status_code
 
@@ -1863,7 +1938,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         Verify that license activation returns a 400 if the user's email could not be found in the JWT.
         """
         mock_get_decoded_jwt.return_value = {}
-        response = self._post_request(str(self.ACTIVATION_KEY))
+        response = self._post_request(str(self.activation_key))
 
         assert status.HTTP_400_BAD_REQUEST == response.status_code
         assert '`email` is required and could not be found in your jwt' in str(response.content)
@@ -1907,14 +1982,14 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         )
         license_to_be_activated = self._create_license()
 
-        with freeze_time(self.NOW):
-            response = self._post_request(str(self.ACTIVATION_KEY))
+        with freeze_time(self.now):
+            response = self._post_request(str(self.activation_key))
 
         assert status.HTTP_204_NO_CONTENT == response.status_code
         license_to_be_activated.refresh_from_db()
         assert constants.ACTIVATED == license_to_be_activated.status
         assert self.lms_user_id == license_to_be_activated.lms_user_id
-        assert self.NOW == license_to_be_activated.activation_date
+        assert self.now == license_to_be_activated.activation_date
 
     def test_license_already_activated_returns_204(self):
         self._assign_learner_roles(
@@ -1924,17 +1999,17 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             }
         )
         already_activated_license = self._create_license(
-            status=constants.ACTIVATED,
-            activation_date=self.NOW,
+            license_status=constants.ACTIVATED,
+            activation_date=self.now,
         )
 
-        response = self._post_request(str(self.ACTIVATION_KEY))
+        response = self._post_request(str(self.activation_key))
 
         assert status.HTTP_204_NO_CONTENT == response.status_code
         already_activated_license.refresh_from_db()
         assert constants.ACTIVATED == already_activated_license.status
         assert self.lms_user_id == already_activated_license.lms_user_id
-        assert self.NOW == already_activated_license.activation_date
+        assert self.now == already_activated_license.activation_date
 
     def test_activating_revoked_license_returns_422(self):
         self._assign_learner_roles(
@@ -1944,17 +2019,17 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             }
         )
         revoked_license = self._create_license(
-            status=constants.REVOKED,
-            activation_date=self.NOW,
+            license_status=constants.REVOKED,
+            activation_date=self.now,
         )
 
-        response = self._post_request(str(self.ACTIVATION_KEY))
+        response = self._post_request(str(self.activation_key))
 
         assert status.HTTP_422_UNPROCESSABLE_ENTITY == response.status_code
         revoked_license.refresh_from_db()
         assert constants.REVOKED == revoked_license.status
         assert self.lms_user_id == revoked_license.lms_user_id
-        assert self.NOW == revoked_license.activation_date
+        assert self.now == revoked_license.activation_date
 
 
 @ddt.ddt
