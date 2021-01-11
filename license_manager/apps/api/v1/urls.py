@@ -52,6 +52,11 @@ class NestedSimpleRouter(NestedMixin, routers.SimpleRouter):
 
 router = routers.SimpleRouter()
 router.register(
+    prefix=r'learner-licenses',
+    viewset=views.LearnerLicensesViewSet,
+    basename='learner-licenses',
+)
+router.register(
     prefix=r'learner-subscriptions',
     viewset=views.LearnerSubscriptionViewSet,
     basename='learner-subscriptions',

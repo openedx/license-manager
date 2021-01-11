@@ -1468,12 +1468,14 @@ class LicenseViewTestMixin:
         cls.enterprise_catalog_uuid = uuid4()
         cls.course_key = 'testX'
         cls.lms_user_id = 1
+        cls.now = localized_utcnow()
+        cls.activation_key = uuid4()
 
-        customer_agreement = CustomerAgreementFactory(
+        cls.customer_agreement = CustomerAgreementFactory(
             enterprise_customer_uuid=cls.enterprise_customer_uuid,
         )
         cls.active_subscription_for_customer = SubscriptionPlanFactory.create(
-            customer_agreement=customer_agreement,
+            customer_agreement=cls.customer_agreement,
             enterprise_catalog_uuid=cls.enterprise_catalog_uuid,
             is_active=True,
         )
@@ -1495,6 +1497,198 @@ class LicenseViewTestMixin:
             subscriptions_role=constants.SUBSCRIPTIONS_LEARNER_ROLE,
             jwt_payload_extra=jwt_payload_extra,
         )
+
+    def _create_license(
+        self,
+        activation_date=None,
+        license_status=constants.ASSIGNED,
+        subscription_plan=None,
+    ):
+        """
+        Helper method to create a license.
+        """
+        if not subscription_plan:
+            subscription_plan = self.active_subscription_for_customer
+        return LicenseFactory.create(
+            status=license_status,
+            lms_user_id=self.lms_user_id,
+            user_email=self.user.email,
+            subscription_plan=subscription_plan,
+            activation_key=self.activation_key,
+            activation_date=activation_date,
+        )
+
+
+@ddt.ddt
+class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
+    """
+    Tests for the LearnerLicensesViewset
+    """
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.base_url = reverse('api:v1:learner-licenses-list')
+
+    def _get_url_with_customer_uuid(self, enterprise_customer_uuid):
+        """
+        Private helper method to make a get request to the base URL
+        using the enterprise_customer_uuid query parameter.
+        """
+        query_params = QueryDict(mutable=True)
+        query_params['enterprise_customer_uuid'] = enterprise_customer_uuid
+        url = self.base_url + '?' + query_params.urlencode()
+        return self.api_client.get(url)
+
+    def test_endpoint_permissions_missing_role(self):
+        """
+        Verify the endpoint returns a 403 for users without the learner or admin role.
+        """
+        response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @ddt.data(
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_LEARNER_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_LEARNER_ROLE,
+            'customer_match': True,
+        },
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_ADMIN_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_ADMIN_ROLE,
+            'customer_match': True,
+        },
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_LEARNER_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_LEARNER_ROLE,
+            'customer_match': False,
+        },
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_ADMIN_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_ADMIN_ROLE,
+            'customer_match': False,
+        },
+    )
+    @ddt.unpack
+    def test_endpoint_permissions_with_customer_uuid(self, system_role, subs_role, customer_match):
+        """
+        Data-driven test to ensure permissions are correctly enforced when the user
+        does/doesn't have subs access to the specified customer as learner/admin.
+        """
+        customer_uuid = self.enterprise_customer_uuid if customer_match else uuid4()
+        _assign_role_via_jwt_or_db(
+            self.api_client,
+            self.user,
+            customer_uuid,
+            assign_via_jwt=True,
+            system_role=system_role,
+            subscriptions_role=subs_role,
+        )
+
+        response = self._get_url_with_customer_uuid(customer_uuid)
+
+        assert response.status_code == status.HTTP_200_OK
+        if not customer_match:
+            content = response.json()
+            assert content['results'] == []
+
+    @ddt.data(
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_LEARNER_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_LEARNER_ROLE,
+        },
+        {
+            'system_role': constants.SYSTEM_ENTERPRISE_ADMIN_ROLE,
+            'subs_role': constants.SUBSCRIPTIONS_ADMIN_ROLE,
+        },
+    )
+    @ddt.unpack
+    def test_endpoint_request_missing_customer_uuid(self, system_role, subs_role):
+        """
+        Test that the appropriate response is returned when the enterprise_customer_uuid
+        query param isn't included in the request with existing learner/admin roles.
+
+        Note: role assignment is needed because 403 would be returned otherwise.
+        """
+        _assign_role_via_jwt_or_db(
+            self.api_client,
+            self.user,
+            self.enterprise_customer_uuid,
+            assign_via_jwt=True,
+            system_role=system_role,
+            subscriptions_role=subs_role,
+        )
+        response = self.api_client.get(self.base_url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'missing enterprise_customer_uuid query param' in str(response.content)
+
+    def test_endpoint_results_correctly_ordered(self):
+        """
+        Test the ordering of responses from the endpoint matches the following:
+            ORDER BY License.status ASC, License.SubscriptionPlan.expiration_date DESC
+
+        Licenses are created as follows:
+         - Activated, expires in future
+         - Activated, expires before ^
+         - Assigned, expires in future
+         - Assigned, expires before ^
+        """
+        self._assign_learner_roles()
+
+        # Using SubscriptionPlan from LicenseViewTestMixin for first License
+        self.active_subscription_for_customer.expiration_date = self.now + datetime.timedelta(weeks=52)
+        first_license = self._create_license(
+            activation_date=self.now,
+            license_status=constants.ACTIVATED,
+            subscription_plan=self.active_subscription_for_customer,
+        )
+
+        # Create second SubscriptionPlan and License
+        second_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            expiration_date=self.now + datetime.timedelta(weeks=26),
+            is_active=True,
+        )
+        second_license = self._create_license(
+            activation_date=self.now,
+            license_status=constants.ACTIVATED,
+            subscription_plan=second_sub,
+        )
+
+        # Create third SubscriptionPlan and License
+        third_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            expiration_date=self.now + datetime.timedelta(weeks=52),
+            is_active=True,
+        )
+        third_license = self._create_license(
+            activation_date=self.now,
+            subscription_plan=third_sub,
+        )
+
+        # Create fourth SubscriptionPlan and License
+        fourth_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            expiration_date=self.now + datetime.timedelta(weeks=26),
+            is_active=True,
+        )
+        fourth_license = self._create_license(
+            activation_date=self.now,
+            subscription_plan=fourth_sub,
+        )
+
+        expected_response = [
+            first_license,
+            second_license,
+            third_license,
+            fourth_license,
+        ]
+        response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid)
+        for expected, actual in zip(expected_response, response.json()['results']):
+            # Ensure UUIDs are in expected order
+            assert str(expected.uuid) == actual['uuid']
 
 
 @ddt.ddt
@@ -1689,8 +1883,6 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
     """
     Tests for the license activation view.
     """
-    NOW = localized_utcnow()
-    ACTIVATION_KEY = uuid4()
 
     def tearDown(self):
         """
@@ -1712,19 +1904,6 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         query_params['activation_key'] = str(activation_key)
         url = reverse('api:v1:license-activation') + '/?' + query_params.urlencode()
         return self.api_client.post(url)
-
-    def _create_license(self, status=constants.ASSIGNED, activation_date=None):
-        """
-        Helper method to create a license.
-        """
-        return LicenseFactory.create(
-            status=status,
-            lms_user_id=self.lms_user_id,
-            user_email=self.user.email,
-            subscription_plan=self.active_subscription_for_customer,
-            activation_key=self.ACTIVATION_KEY,
-            activation_date=activation_date,
-        )
 
     def test_activation_no_auth(self):
         """
@@ -1750,7 +1929,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         )
         self._create_license()
 
-        response = self._post_request(self.ACTIVATION_KEY)
+        response = self._post_request(self.activation_key)
 
         assert status.HTTP_403_FORBIDDEN == response.status_code
 
@@ -1760,7 +1939,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         Verify that license activation returns a 400 if the user's email could not be found in the JWT.
         """
         mock_get_decoded_jwt.return_value = {}
-        response = self._post_request(str(self.ACTIVATION_KEY))
+        response = self._post_request(str(self.activation_key))
 
         assert status.HTTP_400_BAD_REQUEST == response.status_code
         assert '`email` is required and could not be found in your jwt' in str(response.content)
@@ -1804,14 +1983,14 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         )
         license_to_be_activated = self._create_license()
 
-        with freeze_time(self.NOW):
-            response = self._post_request(str(self.ACTIVATION_KEY))
+        with freeze_time(self.now):
+            response = self._post_request(str(self.activation_key))
 
         assert status.HTTP_204_NO_CONTENT == response.status_code
         license_to_be_activated.refresh_from_db()
         assert constants.ACTIVATED == license_to_be_activated.status
         assert self.lms_user_id == license_to_be_activated.lms_user_id
-        assert self.NOW == license_to_be_activated.activation_date
+        assert self.now == license_to_be_activated.activation_date
 
     def test_license_already_activated_returns_204(self):
         self._assign_learner_roles(
@@ -1821,17 +2000,17 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             }
         )
         already_activated_license = self._create_license(
-            status=constants.ACTIVATED,
-            activation_date=self.NOW,
+            license_status=constants.ACTIVATED,
+            activation_date=self.now,
         )
 
-        response = self._post_request(str(self.ACTIVATION_KEY))
+        response = self._post_request(str(self.activation_key))
 
         assert status.HTTP_204_NO_CONTENT == response.status_code
         already_activated_license.refresh_from_db()
         assert constants.ACTIVATED == already_activated_license.status
         assert self.lms_user_id == already_activated_license.lms_user_id
-        assert self.NOW == already_activated_license.activation_date
+        assert self.now == already_activated_license.activation_date
 
     def test_activating_revoked_license_returns_422(self):
         self._assign_learner_roles(
@@ -1841,17 +2020,17 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             }
         )
         revoked_license = self._create_license(
-            status=constants.REVOKED,
-            activation_date=self.NOW,
+            license_status=constants.REVOKED,
+            activation_date=self.now,
         )
 
-        response = self._post_request(str(self.ACTIVATION_KEY))
+        response = self._post_request(str(self.activation_key))
 
         assert status.HTTP_422_UNPROCESSABLE_ENTITY == response.status_code
         revoked_license.refresh_from_db()
         assert constants.REVOKED == revoked_license.status
         assert self.lms_user_id == revoked_license.lms_user_id
-        assert self.NOW == revoked_license.activation_date
+        assert self.now == revoked_license.activation_date
 
 
 @ddt.ddt
