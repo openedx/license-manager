@@ -20,3 +20,7 @@ zipp<2.0
 # Celery 5.0 has some breaking changes, as python 3.8 is priority so,
 # we will look at it after python 3.8 deployment
 celery<5.0
+
+# 4.0.3 requires PyJWT > 2.0 but drf-jwt requires < 2.0
+social-auth-core<4.0.3
+
