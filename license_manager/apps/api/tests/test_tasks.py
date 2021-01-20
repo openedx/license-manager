@@ -55,6 +55,24 @@ class LicenseManagerCeleryTaskTests(TestCase):
         # Verify the 'last_remind_date' and 'assigned_date' of all licenses have been updated
         assert_date_fields_correct(send_email_args[1], ['last_remind_date', 'assigned_date'], True)
 
+    @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.send_activation_emails', side_effect=SMTPException)
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    def test_activation_task_send_email_failure_logged(self, mock_enterprise_client, mock_send_emails, mock_logger):
+        """
+        Tests that when sending the activate email fails, an error gets logged
+        """
+        mock_enterprise_client().get_enterprise_slug.return_value = self.enterprise_slug
+        mock_enterprise_client().get_enterprise_name.return_value = self.enterprise_name
+        with mock_send_emails:
+            tasks.activation_task(
+                self.custom_template_text,
+                self.email_recipient_list,
+                str(self.subscription_plan.uuid)
+            )
+
+        mock_logger.error.assert_called_once()
+
     @mock.patch('license_manager.apps.api.tasks.send_activation_emails')
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     def test_send_reminder_email_task(self, mock_enterprise_client, mock_send_emails):
