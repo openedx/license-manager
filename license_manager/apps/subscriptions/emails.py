@@ -5,11 +5,13 @@ from django.template.loader import get_template
 from license_manager.apps.subscriptions.constants import (
     LICENSE_ACTIVATION_EMAIL_SUBJECT,
     LICENSE_ACTIVATION_EMAIL_TEMPLATE,
+    LICENSE_BULK_OPERATION_BATCH_SIZE,
     LICENSE_REMINDER_EMAIL_SUBJECT,
     LICENSE_REMINDER_EMAIL_TEMPLATE,
     REVOCATION_CAP_NOTIFICATION_EMAIL_SUBJECT,
     REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE,
 )
+from license_manager.apps.subscriptions.utils import chunks
 
 
 def send_revocation_cap_notification_email(subscription_plan, enterprise_name):
@@ -95,9 +97,12 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
         })
         emails.append(_message_from_context_and_template(context))
 
-    # Use a single connection to send all messages
-    with mail.get_connection() as connection:
-        connection.send_messages(emails)
+    # Send out the emails in batches
+    email_chunks = chunks(emails, LICENSE_BULK_OPERATION_BATCH_SIZE)
+    for email_chunk in email_chunks:
+        # Renew the email connection for each chunk of emails sent
+        with mail.get_connection() as connection:
+            connection.send_messages(email_chunk)
 
 
 def _generate_license_activation_link(enterprise_slug, activation_key):
