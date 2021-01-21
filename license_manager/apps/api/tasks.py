@@ -13,8 +13,12 @@ from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 
 logger = logging.getLogger(__name__)
 
+# Soft time out of 15 minutes, max time out of 16 minutes
+SOFT_TIME_LIMIT = 900
+MAX_TIME_LIMIT = 960
 
-@shared_task(base=LoggedTask)
+
+@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def activation_task(custom_template_text, email_recipient_list, subscription_uuid):
     """
     Sends license activation email(s) asynchronously, and creates pending enterprise users to link the email recipients
@@ -51,7 +55,7 @@ def activation_task(custom_template_text, email_recipient_list, subscription_uui
         )
 
 
-@shared_task(base=LoggedTask)
+@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def send_reminder_email_task(custom_template_text, email_recipient_list, subscription_uuid):
     """
     Sends license activation reminder email(s) asynchronously.
@@ -88,7 +92,7 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
     License.set_date_fields_to_now(pending_licenses, ['last_remind_date'])
 
 
-@shared_task(base=LoggedTask)
+@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
     """
     Sends revoking the user's enterprise licensed course enrollments asynchronously
@@ -110,7 +114,7 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
         )
 
 
-@shared_task(base=LoggedTask)
+@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def license_expiration_task(license_uuids):
     """
     Sends terminating the licensed course enrollments for the submitted license_uuids asynchronously
