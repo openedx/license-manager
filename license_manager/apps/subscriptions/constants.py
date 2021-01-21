@@ -49,7 +49,7 @@ MAX_NUM_LICENSES = 5000
 # Number of license uuids enrollments are expired for in each batch
 LICENSE_EXPIRATION_BATCH_SIZE = 200
 
-# SQL bulk operation constants
+# Bulk operation constants
 LICENSE_BULK_OPERATION_BATCH_SIZE = 100
 
 # Feature Toggles
