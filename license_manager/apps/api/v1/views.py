@@ -175,6 +175,7 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
         if self.requested_enterprise_uuid:
             queryset = SubscriptionPlan.objects.filter(
                 customer_agreement__enterprise_customer_uuid=self.requested_enterprise_uuid,
+                is_active=True,
             )
         return queryset.order_by('-start_date')
 
