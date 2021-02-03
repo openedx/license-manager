@@ -395,8 +395,8 @@ class LicenseViewSet(LearnerLicenseViewSet):
         """
         # Validate the user_emails and text sent in the data
         self._validate_data(request.data)
-        # Dedupe emails before turning back into a list for indexing
-        user_emails = list(set(request.data.get('user_emails', [])))
+        # Dedupe all lowercase emails before turning back into a list for indexing
+        user_emails = list(set([email.lower() for email in request.data.get('user_emails', [])]))
 
         subscription_plan = self._get_subscription_plan()
 
@@ -409,7 +409,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
         if already_associated_licenses:
             already_associated_emails = list(already_associated_licenses.values_list('user_email', flat=True))
             for email in already_associated_emails:
-                user_emails.remove(email)
+                user_emails.remove(email.lower())
 
         # Get the revoked licenses that are attempting to be assigned to
         revoked_licenses_for_assignment = subscription_plan.licenses.filter(
