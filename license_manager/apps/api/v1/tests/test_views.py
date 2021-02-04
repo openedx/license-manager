@@ -1074,6 +1074,25 @@ class LicenseViewSetActionTests(TestCase):
         )
 
     @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
+    def test_assign_dedupe_casing_input(self, mock_activation_task):
+        """
+        Verify the assign endpoint deduplicates submitted emails with different casing.
+        """
+        self._create_available_licenses()
+        user_emails = [self.test_email, self.test_email.upper()]
+        response = self.api_client.post(
+            self.assign_url,
+            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        self._assert_licenses_assigned([self.test_email])
+        mock_activation_task.assert_called_with(
+            {'greeting': self.greeting, 'closing': self.closing},
+            [self.test_email.lower()],
+            str(self.subscription_plan.uuid),
+        )
+
+    @mock.patch('license_manager.apps.api.v1.views.activation_task.delay')
     def test_assign_to_revoked_user(self, mock_activation_task):
         """
         Verify that the assign endpoint allows assigning a license to a user who previously had a license revoked.
