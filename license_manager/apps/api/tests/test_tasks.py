@@ -33,7 +33,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         """
         mock_enterprise_client().get_enterprise_slug.return_value = self.enterprise_slug
         mock_enterprise_client().get_enterprise_name.return_value = self.enterprise_name
-        tasks.activation_task(
+        tasks.activation_email_task(
             self.custom_template_text,
             self.email_recipient_list,
             str(self.subscription_plan.uuid)
@@ -45,16 +45,6 @@ class LicenseManagerCeleryTaskTests(TestCase):
             self.subscription_plan.enterprise_customer_uuid
         )
 
-        # Verify a call is made to create a pending enterprise user for each user_email specified
-        for recipient in self.email_recipient_list:
-            mock_enterprise_client().create_pending_enterprise_user.assert_any_call(
-                self.subscription_plan.enterprise_customer_uuid,
-                recipient,
-            )
-
-        # Verify the 'last_remind_date' and 'assigned_date' of all licenses have been updated
-        assert_date_fields_correct(send_email_args[1], ['last_remind_date', 'assigned_date'], True)
-
     @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.send_activation_emails', side_effect=SMTPException)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
@@ -65,7 +55,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         mock_enterprise_client().get_enterprise_slug.return_value = self.enterprise_slug
         mock_enterprise_client().get_enterprise_name.return_value = self.enterprise_name
         with mock_send_emails:
-            tasks.activation_task(
+            tasks.activation_email_task(
                 self.custom_template_text,
                 self.email_recipient_list,
                 str(self.subscription_plan.uuid)

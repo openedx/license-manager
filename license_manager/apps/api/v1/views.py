@@ -3,6 +3,7 @@ import uuid
 from collections import OrderedDict
 from uuid import uuid4
 
+from celery import chain
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
@@ -25,7 +26,8 @@ from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseStatusFilter
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
-    activation_task,
+    activation_email_task,
+    link_learners_to_enterprise_task,
     send_reminder_email_task,
 )
 from license_manager.apps.subscriptions import constants
@@ -37,7 +39,7 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionsRoleAssignment,
 )
-from license_manager.apps.subscriptions.utils import localized_utcnow
+from license_manager.apps.subscriptions.utils import chunks, localized_utcnow
 
 
 logger = logging.getLogger(__name__)
@@ -458,18 +460,27 @@ class LicenseViewSet(LearnerLicenseViewSet):
             unassigned_license.status = constants.ASSIGNED
             activation_key = str(uuid4())
             unassigned_license.activation_key = activation_key
+            unassigned_license.assigned_date = localized_utcnow()
+            unassigned_license.last_remind_date = localized_utcnow()
 
         License.bulk_update(
             unassigned_licenses,
-            ['user_email', 'status', 'activation_key'],
+            ['user_email', 'status', 'activation_key', 'assigned_date', 'last_remind_date'],
         )
 
-        # Send activation emails
-        activation_task.delay(
-            self._get_custom_text(request.data),
-            user_emails,
-            subscription_uuid,
-        )
+        # Create async chains of the pending learners and activation emails tasks with each batch of users
+        for pending_learner_batch in chunks(user_emails, constants.PENDING_ACCOUNT_CREATION_BATCH_SIZE):
+            chain(
+                link_learners_to_enterprise_task.s(
+                    pending_learner_batch,
+                    subscription_plan.enterprise_customer_uuid,
+                ),
+                activation_email_task.s(
+                    self._get_custom_text(request.data),
+                    pending_learner_batch,
+                    subscription_uuid,
+                )
+            ).apply_async()
 
         # Pass email assignment data back to frontend for display
         response_data = {

@@ -315,6 +315,7 @@ CELERY_BROKER_URL = '{}://{}:{}@{}/{}'.format(
     CELERY_BROKER_HOSTNAME,
     CELERY_BROKER_VHOST
 )
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
 # Celery task time limits.
 # Tasks will be asked to quit after four minutes, and un-gracefully killed
