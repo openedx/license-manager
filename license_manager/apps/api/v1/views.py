@@ -469,18 +469,20 @@ class LicenseViewSet(LearnerLicenseViewSet):
         )
 
         # Create async chains of the pending learners and activation emails tasks with each batch of users
+        # The task signatures are immutable, hence the `si()` - we don't want the result of the
+        # link_learners_to_enterprise_task passed to the "child" activation_email_task.
         for pending_learner_batch in chunks(user_emails, constants.PENDING_ACCOUNT_CREATION_BATCH_SIZE):
             chain(
-                link_learners_to_enterprise_task.s(
+                link_learners_to_enterprise_task.si(
                     pending_learner_batch,
                     subscription_plan.enterprise_customer_uuid,
                 ),
-                activation_email_task.s(
+                activation_email_task.si(
                     self._get_custom_text(request.data),
                     pending_learner_batch,
                     subscription_uuid,
                 )
-            ).delay()
+            ).apply_async()
 
         # Pass email assignment data back to frontend for display
         response_data = {
