@@ -944,8 +944,8 @@ class LicenseViewSetActionTests(TestCase):
         assert response.status_code == status.HTTP_403_FORBIDDEN
         mock_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_no_emails(self, mock_activation_task, mock_link_learners_task):
         """
         Verify the assign endpoint returns a 400 if no user emails are provided.
@@ -955,8 +955,8 @@ class LicenseViewSetActionTests(TestCase):
         mock_activation_task.assert_not_called()
         mock_link_learners_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     @ddt.data(True, False)
     def test_assign_non_admin_user(self, user_is_staff, mock_activation_task, mock_link_learners_task):
         """
@@ -966,8 +966,8 @@ class LicenseViewSetActionTests(TestCase):
         self._test_and_assert_forbidden_user(self.assign_url, user_is_staff, mock_activation_task)
         mock_link_learners_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_empty_emails(self, mock_activation_task, mock_link_learners_task):
         """
         Verify the assign endpoint returns a 400 if the list of emails provided is empty.
@@ -977,8 +977,8 @@ class LicenseViewSetActionTests(TestCase):
         mock_activation_task.assert_not_called()
         mock_link_learners_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_invalid_emails(self, mock_activation_task, mock_link_learners_task):
         """
         Verify the assign endpoint returns a 400 if the list contains an invalid email.
@@ -988,8 +988,8 @@ class LicenseViewSetActionTests(TestCase):
         mock_activation_task.assert_not_called()
         mock_link_learners_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_insufficient_licenses(self, mock_activation_task, mock_link_learners_task):
         """
         Verify the assign endpoint returns a 400 if there are not enough unassigned licenses to assign to.
@@ -1002,8 +1002,8 @@ class LicenseViewSetActionTests(TestCase):
         mock_activation_task.assert_not_called()
         mock_link_learners_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_insufficient_licenses_revoked(self, mock_activation_task, mock_link_learners_task):
         """
         Verify the endpoint returns a 400 if there are not enough licenses to assign to considering revoked licenses
@@ -1016,8 +1016,8 @@ class LicenseViewSetActionTests(TestCase):
         mock_activation_task.assert_not_called()
         mock_link_learners_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_already_associated_email(self, mock_activation_task, mock_link_learners_task):
         """
         Verify the assign endpoint returns a 200 if there is already a license associated with a provided email.
@@ -1046,8 +1046,8 @@ class LicenseViewSetActionTests(TestCase):
             self.subscription_plan.customer_agreement.enterprise_customer_uuid
         )
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     @ddt.data(True, False)
     def test_assign(self, use_superuser, mock_activation_task, mock_link_learners_task):
         """
@@ -1078,8 +1078,8 @@ class LicenseViewSetActionTests(TestCase):
             self.subscription_plan.customer_agreement.enterprise_customer_uuid
         )
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_dedupe_input(self, mock_activation_task, mock_link_learners_task):
         """
         Verify the assign endpoint deduplicates submitted emails.
@@ -1102,8 +1102,8 @@ class LicenseViewSetActionTests(TestCase):
             self.subscription_plan.customer_agreement.enterprise_customer_uuid
         )
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_dedupe_casing_input(self, mock_activation_task, mock_link_learners_task):
         """
         Verify the assign endpoint deduplicates submitted emails with different casing.
@@ -1126,8 +1126,8 @@ class LicenseViewSetActionTests(TestCase):
             self.subscription_plan.customer_agreement.enterprise_customer_uuid
         )
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_to_revoked_user(self, mock_activation_task, mock_link_learners_task):
         """
         Verify that the assign endpoint allows assigning a license to a user who previously had a license revoked.
@@ -1425,10 +1425,10 @@ class LicenseViewSetActionTests(TestCase):
         response = self.api_client.post(self.revoke_license_url, {'user_email': 'foo@bar.com'})
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
     @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.s')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_after_license_revoke(
         self,
         mock_activation_task,
