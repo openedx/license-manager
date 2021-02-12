@@ -58,7 +58,9 @@ class EnterpriseApiClient(BaseOAuthClient):
     )
     def create_pending_enterprise_user(self, enterprise_customer_uuid, user_email):
         """
-        Creates a pending enterprise user for the specified user and enterprise.
+        Creates a pending enterprise user for the specified user and enterprise. On a non rate limiting error this will
+        retry creating the pending enterprise user because errors can occasionally happen. If a rate limiting error
+        happens the number of retries is renewed back to 3.
 
         Arguments:
             enterprise_customer_uuid (UUID): UUID of the enterprise customer associated with an enterprise
@@ -71,25 +73,35 @@ class EnterpriseApiClient(BaseOAuthClient):
             'enterprise_customer': enterprise_customer_uuid,
             'user_email': user_email,
         }
-        response = self.client.post(self.pending_enterprise_learner_endpoint, data=data)
-        if response.status_code == 429:
-            msg = (
-                'Rate limited when trying to create a pending enterprise user for enterprise with uuid: {uuid}. '
-                'Response: {response}. '
-                'Backing off and trying request again shortly'.format(
-                    uuid=enterprise_customer_uuid,
-                    response=response.json(),
+        retries = 3
+        while retries:
+            response = self.client.post(self.pending_enterprise_learner_endpoint, data=data)
+            if response.status_code == 429:
+                msg = (
+                    'Rate limited when trying to create a pending enterprise user for enterprise with uuid: {uuid}. '
+                    'Response: {response}. '
+                    'Backing off and trying request again shortly'.format(
+                        uuid=enterprise_customer_uuid,
+                        response=response.json(),
+                    )
                 )
-            )
-            logger.error(msg)
-        elif response.status_code >= 400:
-            msg = (
-                'Failed to create a pending enterprise user for enterprise with uuid: {uuid}. '
-                'Response: {response}'.format(uuid=enterprise_customer_uuid, response=response.json())
-            )
-            logger.error(msg)
-
-        return response.status_code
+                logger.error(msg)
+                return response.status_code
+            elif response.status_code >= 400:
+                retries = retries - 1
+                if not retries:
+                    msg = (
+                        'Failed to create a pending enterprise user for enterprise with uuid: {uuid} and email {email}.'
+                        ' Response: {response}'.format(
+                            email=user_email,
+                            uuid=enterprise_customer_uuid,
+                            response=response.json(),
+                        )
+                    )
+                    logger.error(msg)
+                    return response.status_code
+            else:
+                return response.status_code
 
     def revoke_course_enrollments_for_user(self, user_id, enterprise_id):
         """

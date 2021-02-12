@@ -19,7 +19,7 @@ MAX_TIME_LIMIT = 960
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
-def activation_task(custom_template_text, email_recipient_list, subscription_uuid):
+def activation_email_task(custom_template_text, email_recipient_list, subscription_uuid):
     """
     Sends license activation email(s) asynchronously, and creates pending enterprise users to link the email recipients
     to the subscription's enterprise.
@@ -46,12 +46,21 @@ def activation_task(custom_template_text, email_recipient_list, subscription_uui
         logger.error(msg, exc_info=True)
         return
 
-    License.set_date_fields_to_now(pending_licenses, ['last_remind_date', 'assigned_date'])
 
-    for email_recipient in email_recipient_list:
+@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+def link_learners_to_enterprise_task(learner_emails, enterprise_customer_uuid):
+    """
+    Links learners to an enterprise asynchronously.
+
+    Arguments:
+        learner_emails (list): list containing the list of learner emails to link to the enterprise
+        enterprise_customer_uuid (str): UUID (string representation) of the enterprise to link learns to
+    """
+    enterprise_api_client = EnterpriseApiClient()
+    for learner_email in learner_emails:
         enterprise_api_client.create_pending_enterprise_user(
-            subscription_plan.enterprise_customer_uuid,
-            email_recipient,
+            enterprise_customer_uuid,
+            learner_email,
         )
 
 

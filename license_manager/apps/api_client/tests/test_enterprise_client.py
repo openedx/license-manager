@@ -27,6 +27,19 @@ class EnterpriseApiClientTests(TestCase):
 
     @mock.patch('license_manager.apps.api_client.enterprise.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
+    def test_create_pending_enterprise_user_successful(self, mock_oauth_client, mock_logger):
+        """
+        Verify the ``create_pending_enterprise_user`` method does not retry or log an error on success
+        """
+        # Mock out the response from the lms
+        mock_oauth_client().post.return_value = MockResponse({'detail': 'Good Request'}, 201)
+
+        EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
+        assert mock_oauth_client().post.call_count == 1
+        mock_logger.error.assert_not_called()
+
+    @mock.patch('license_manager.apps.api_client.enterprise.logger', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
     def test_create_pending_enterprise_user_logs(self, mock_oauth_client, mock_logger):
         """
         Verify the ``create_pending_enterprise_user`` method logs an error for a status code of >=400.
@@ -53,6 +66,64 @@ class EnterpriseApiClientTests(TestCase):
 
         EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
         assert mock_oauth_client().post.call_count == 4
+
+    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
+    def test_create_pending_enterprise_user_rate_with_error_retries(self, mock_oauth_client):
+        """
+        Verify the ``create_pending_enterprise_user`` method retries on a non 429 error code
+        """
+        error_response = MockResponse({'detail': '500 Internal Server'}, 500)
+        # Mock out a few rate-limited response and one good from the lms
+        mock_oauth_client().post.side_effect = [
+            error_response,
+            error_response,
+            MockResponse({'detail': 'Good Request'}, 201),
+        ]
+
+        EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
+        assert mock_oauth_client().post.call_count == 3
+
+    @mock.patch('license_manager.apps.api_client.enterprise.logger', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
+    def test_create_pending_enterprise_user_rate_with_max_error_retries(self, mock_oauth_client, mock_logger):
+        """
+        Verify the ``create_pending_enterprise_user`` method retries on a non 429 error code a max of 3 times and only
+        logs an error once
+        """
+        error_response = MockResponse({'detail': '500 Internal Server'}, 500)
+        # Mock out a few rate-limited response and one good from the lms
+        mock_oauth_client().post.side_effect = [
+            error_response,
+            error_response,
+            error_response,
+            MockResponse({'detail': 'Good Request'}, 201),
+        ]
+
+        EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
+        assert mock_oauth_client().post.call_count == 3
+        mock_logger.error.assert_called_once()
+
+    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
+    def test_create_pending_enterprise_user_rate_with_error_retries_and_rate_limiting(self, mock_oauth_client):
+        """
+        Verify the ``create_pending_enterprise_user`` method has 3 error retries if a rate limited error occurs
+        """
+        error_response = MockResponse({'detail': '500 Internal Server'}, 500)
+        rate_limited_response = MockResponse({'detail': 'Rate limited'}, 429)
+        # Mock out a few rate-limited response and one good from the lms
+        mock_oauth_client().post.side_effect = [
+            error_response,
+            error_response,
+            rate_limited_response,
+            error_response,
+            error_response,
+            error_response,
+            error_response,
+            MockResponse({'detail': 'Good Request'}, 201),
+        ]
+
+        EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
+        assert mock_oauth_client().post.call_count == 6
 
     @mock.patch('license_manager.apps.api_client.enterprise.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
