@@ -480,7 +480,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
                     pending_learner_batch,
                     subscription_uuid,
                 )
-            ).apply_async()
+            ).delay()
 
         # Pass email assignment data back to frontend for display
         response_data = {
