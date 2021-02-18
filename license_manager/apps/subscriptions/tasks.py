@@ -3,8 +3,11 @@ import logging
 from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 
-from license_manager.apps.api_client.enterprise_catalog import EnterpriseCatalogApiClient
+from license_manager.apps.api_client.enterprise_catalog import (
+    EnterpriseCatalogApiClient,
+)
 from license_manager.apps.subscriptions.models import SubscriptionPlan
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,7 @@ def validate_query_mapping_task():
         response['count'],
         response['catalog_query_ids'],
     )
-    if response['count'] != 2:
+    if response['count'] != 3:
         error_msg = 'ERROR: Unexpected number of Subscription Catalog Queries found. ' + summary
         logger.error(error_msg)
         # TODO: Send email to ECS

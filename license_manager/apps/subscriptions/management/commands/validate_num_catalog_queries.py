@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 
 from license_manager.apps.subscriptions.tasks import validate_query_mapping_task
 
+
 logger = logging.getLogger(__name__)
 
 
