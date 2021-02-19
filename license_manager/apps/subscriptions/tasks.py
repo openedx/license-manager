@@ -6,6 +6,9 @@ from celery_utils.logged_task import LoggedTask
 from license_manager.apps.api_client.enterprise_catalog import (
     EnterpriseCatalogApiClient,
 )
+from license_manager.apps.subscriptions.emails import (
+    send_invalid_num_distinct_catalog_queries_email,
+)
 from license_manager.apps.subscriptions.models import SubscriptionPlan
 
 
@@ -31,8 +34,8 @@ def validate_query_mapping_task():
         response['catalog_query_ids'],
     )
     if response['count'] != 3:
-        error_msg = 'ERROR: Unexpected number of Subscription Catalog Queries found. ' + summary
+        error_msg = 'ERROR: Unexpected number of Subscription Catalog Queries found. {}'.format(summary)
         logger.error(error_msg)
-        # TODO: Send email to ECS
+        send_invalid_num_distinct_catalog_queries_email(error_msg)
     else:
-        logger.info('SUCCESS: ' + summary)
+        logger.info('SUCCESS: {}'.format(summary))
