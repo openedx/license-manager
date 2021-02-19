@@ -12,7 +12,6 @@ class ValidateQueryMappingTaskTests(TestCase):
     """
     Tests for the validate_query_mapping_task
     """
-    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     @ddt.unpack
     @ddt.data(
         {
@@ -38,7 +37,7 @@ class ValidateQueryMappingTaskTests(TestCase):
             'catalog_query_ids': [],
         }
         mock_api_client.return_value.get_distinct_catalog_queries.return_value = mock_response
-        validate_query_mapping_task.delay()
+        validate_query_mapping_task()
         if is_valid:
             mock_email_fn.assert_not_called()
         else:
