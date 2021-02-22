@@ -145,10 +145,10 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
 
 @admin.register(CustomerAgreement)
 class CustomerAgreementAdmin(admin.ModelAdmin):
-    read_only_fields = (
-        'enterprise_customer_uuid',
-    )
+    # TODO: remove ``enterprise_customer_uuid`` as a writeable field, as this is meant to be temporary.
+    read_only_fields = ()
     writable_fields = (
+        'enterprise_customer_uuid',
         'enterprise_customer_slug',
         'default_enterprise_catalog_uuid',
     )
