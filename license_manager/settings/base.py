@@ -364,9 +364,3 @@ RETIREMENT_SERVICE_WORKER_USERNAME = "replace with valid username"
 FEATURES = {
     EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API: False,
 }
-
-# Number of Subscription Customer Types (see SubscriptionPlan.netsuite_product_id)
-# This number is used in checks to determine whether the number of CatalogQuery
-# objects being used for SubscriptionPlan EnterpriseCustomerCatalogs matches the
-# number of Subscription Customer Types.
-NUM_SUBSCRIPTION_CUSTOMER_TYPES = 3
