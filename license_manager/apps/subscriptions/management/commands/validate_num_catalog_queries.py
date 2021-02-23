@@ -21,24 +21,32 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        all_catalog_uuids = [str(uuid) for uuid in SubscriptionPlan.objects.filter(
+        # Filter any subscriptions that have expired or are FIUO
+        customer_subs = SubscriptionPlan.objects.filter(
             expiration_processed=False,
             for_internal_use_only=False,
-        ).distinct().values_list('enterprise_catalog_uuid', flat=True)]
-
-        result = set()
-        for catalog_uuid_batch in chunks(all_catalog_uuids, constants.VALIDATE_NUM_CATALOG_QUERIES_BATCH_SIZE):
-            response = EnterpriseCatalogApiClient().get_distinct_catalog_queries(catalog_uuid_batch)
-            # import pdb; pdb.set_trace()
-            for id in response['catalog_query_ids']:
-                result.add(id)
-        result = list(result)
-
-        summary = '{} distinct catalog queries found: {}'.format(
-            len(result),
-            result,
         )
-        if len(result) != settings.NUM_SUBSCRIPTION_CUSTOMER_TYPES:
+        distinct_catalog_uuids = [
+            str(uuid) for uuid in customer_subs.values_list('enterprise_catalog_uuid', flat=True).distinct()
+        ]
+
+        # Batch the catalog UUIDs and aggregate API response data in a set
+        distinct_catalog_query_ids = set()
+        for catalog_uuid_batch in chunks(distinct_catalog_uuids, constants.VALIDATE_NUM_CATALOG_QUERIES_BATCH_SIZE):
+            response = EnterpriseCatalogApiClient().get_distinct_catalog_queries(catalog_uuid_batch)
+            distinct_catalog_query_ids.update(response['catalog_query_ids'])
+        distinct_catalog_query_ids = list(distinct_catalog_query_ids)
+
+        # Calculate the number of customer types using the distinct number of Netsuite
+        # product IDs found among customer subscriptions. If the number of distinct catalog
+        # query IDs doesn't match the number of customer types, log an error.
+        num_customer_types = customer_subs.values_list('netsuite_product_id', flat=True).distinct().count()
+        summary = '{} distinct catalog queries found: {} ({} expected)'.format(
+            len(distinct_catalog_query_ids),
+            distinct_catalog_query_ids,
+            num_customer_types,
+        )
+        if len(distinct_catalog_query_ids) != num_customer_types:
             error_msg = 'ERROR: Unexpected number of Subscription Catalog Queries found. {}'.format(summary)
             logger.error(error_msg)
         else:
