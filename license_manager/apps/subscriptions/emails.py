@@ -32,22 +32,6 @@ def send_revocation_cap_notification_email(subscription_plan, enterprise_name):
     email.send()
 
 
-def send_invalid_num_distinct_catalog_queries_email(email_body):
-    """
-    Sends an email to ECS when validate_num_catalog_queries fails.
-
-    Arguments:
-        email_body (str): the text to send in the body of the email
-    """
-    mail.send_mail(
-        'FAILURE: Invalid # of distinct CatalogQueries used by Subscriptions',
-        email_body,
-        settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
-        [settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS],
-        fail_silently=False,
-    )
-
-
 def send_activation_emails(
     custom_template_text,
     pending_licenses,
