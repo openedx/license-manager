@@ -63,6 +63,9 @@ class CustomerAgreement(TimeStampedModel):
     default_enterprise_catalog_uuid = models.UUIDField(
         blank=True,
         null=True,
+        help_text=_(
+            "The default enterprise catalog UUID must be from a catalog associated with the above Enterprise Customer UUID."
+        )
     )
 
     history = HistoricalRecords()
