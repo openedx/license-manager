@@ -30,6 +30,7 @@ from license_manager.apps.api.tasks import (
     link_learners_to_enterprise_task,
     send_reminder_email_task,
 )
+from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.api import revoke_license
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
@@ -605,6 +606,203 @@ class LicenseBaseView(APIView):
     @property
     def user_email(self):
         return utils.get_key_from_jwt(self.decoded_jwt, 'email')
+
+
+class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
+    """
+    View for validating a group of enterprise learners' license subsidies for a list of courses and then enrolling all
+    provided learners in all courses.
+    """
+    @property
+    def requested_notify_learners(self):
+        if type(self.request.data.get('notify')) != bool:
+            self.validation_errors.append('notify')
+        return self.request.data.get('notify')
+
+    @property
+    def requested_course_run_keys(self):
+        if type(self.request.data.get('course_run_keys')) != list:
+            self.validation_errors.append('course_run_keys')
+        return self.request.data.get('course_run_keys')
+
+    @property
+    def requested_user_emails(self):
+        email_list = self.request.data.get('emails')
+        if email_list:
+            try:
+                email_list = email_list.splitlines()
+            except AttributeError:
+                self.validation_errors.append('emails')
+                return None
+        return email_list
+
+    @property
+    def requested_enterprise_id(self):
+        return self.request.query_params.get('enterprise_customer_uuid')
+
+    def _validate_request_params(self):
+        """
+        Helper function to validate both the existing of required params and their typing.
+        """
+        self.validation_errors = []
+        self.missing_params = []
+
+        if not self.requested_notify_learners:
+            self.missing_params.append('notify')
+
+        if not self.requested_course_run_keys:
+            self.missing_params.append('course_run_keys')
+
+        if not self.requested_user_emails:
+            self.missing_params.append('emails')
+
+        if not self.requested_enterprise_id:
+            self.missing_params.append('enterprise_customer_uuid')
+
+        # Validation of param type
+        if self.validation_errors:
+            return 'Received invalid types for the following required params: {}'.format(self.validation_errors)
+
+        # Validation of required params
+        if self.missing_params:
+            return 'Missing the following required request data: {}'.format(self.missing_params)
+
+        return ''
+
+    def _check_missing_licenses(self, customer_agreement):
+        """
+        Helper function to check that each of the provided learners has a valid subscriptions license for the provided
+        courses.
+        """
+        missing_subscriptions = self.requested_user_emails
+        licensed_enrollment_info = []
+
+        for email in self.requested_user_emails:
+            if email:
+                filtered_licenses = License.objects.filter(
+                    subscription_plan__in=customer_agreement.subscriptions.all(),
+                    user_email=email,
+                )
+
+                # order licenses by their associated subscription plan expiration date
+                ordered_licenses_by_expiration = sorted(
+                    filtered_licenses,
+                    key=lambda user_license: user_license.subscription_plan.expiration_date,
+                    reverse=True,
+                )
+                for course_key in self.requested_course_run_keys:
+                    for user_index, user_license in enumerate(ordered_licenses_by_expiration):
+                        subscription_plan = user_license.subscription_plan
+                        if subscription_plan.contains_content([course_key]):
+                            missing_subscriptions.pop(user_index)
+                            licensed_enrollment_info.append({
+                                'email': email,
+                                'course_run_key': course_key,
+                                'license_uuid': str(user_license.uuid)
+                            })
+                            break
+
+        return missing_subscriptions, licensed_enrollment_info
+
+    @permission_required(
+        constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
+        fn=lambda request: utils.get_context_for_customer_agreement_from_request(request),  # pylint: disable=unnecessary-lambda
+    )
+    def post(self, request):
+        """
+        Returns the enterprise bulk enrollment API response after validating that each user requesting to be enrolled
+        has a valid subscription for each of the requested courses.
+
+        Expected params:
+            - notify (bool): Whether or not learners should be notified of their enrollments.
+
+            - course_run_keys (list of strings): An array of course run keys in which all provided learners will be
+            enrolled in
+            Example:
+                course_run_keys: ['course-v1:edX+DemoX+Demo_Course', 'course-v2:edX+The+Second+DemoX+Demo_Course', ... ]
+
+            - emails (string): A single string of multiple learner emails separated with a `\n` (new line) character
+            Example:
+                emails: 'testuser@abc.com\nlearner@example.com\newuser@wow.com'
+
+            - enterprise_customer_uuid (string): the uuid of the associated enterprise customer provided as a query
+            params.
+
+        Expected Return Values:
+            Success cases:
+                - All learners have licenses and are enrolled - {}, 201
+
+            Partial failure cases:
+                License verification and bulk enterprise enrollment happen non-transactionally, meaning that a subset of
+                learners failing one step will not stop others from continuing the enrollment flow. As such, partial
+                failures will be reported in the following ways:
+
+                Fails license verification:
+                    response includes: {'failed_license_checks': [<users who do not have valid licenses>]}
+
+                Fails Enrollment:
+                    response includes {'failed_enrollments': [<users who were not able to be enrolled>]
+
+                Fails Validation (something goes wrong with requesting enrollments):
+                    response includes:
+                     {'bulk_enrollment_errors': [<errors returned by the bulk enrollment endpoint>]}
+        """
+        param_validation = self._validate_request_params()
+        if param_validation:
+            return Response(param_validation, status=status.HTTP_400_BAD_REQUEST)
+
+        results = {}
+        customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
+        missing_subscriptions, licensed_enrollment_info = self._check_missing_licenses(customer_agreement)
+
+        if missing_subscriptions:
+            msg = 'One or more of the learners entered do not have a valid subscription for your requested courses. ' \
+                  'Learners: {}'.format(missing_subscriptions)
+            results['failed_license_checks'] = missing_subscriptions
+            logger.error(msg)
+
+        if licensed_enrollment_info:
+            options = {
+                'licenses_info': licensed_enrollment_info,
+                'notify': self.requested_notify_learners
+            }
+            enrollment_response = EnterpriseApiClient().bulk_enroll_enterprise_learners(
+                self.requested_enterprise_id, options
+            )
+
+            # Check for bulk enrollment errors
+            if enrollment_response.status_code >= 400 and enrollment_response.status_code != 409:
+                results['bulk_enrollment_errors'] = []
+
+                response_json = enrollment_response.json()
+                msg = 'Encountered a validation error when requesting bulk enrollment. Endpoint returned with error: ' \
+                      '{}'.format(response_json)
+                logger.error(msg)
+
+                # check for non field specific errors
+                if response_json.get('non_field_errors'):
+                    results['bulk_enrollment_errors'].append(response_json['non_field_errors'])
+
+                # check for param field specific validation errors
+                for param in options:
+                    if response_json.get(param):
+                        results['bulk_enrollment_errors'].append(enrollment_response.get(param))
+
+                status_code = status.HTTP_400_BAD_REQUEST
+
+            else:
+                enrollment_result = enrollment_response.json()
+                if enrollment_result.get('failures'):
+                    results['failed_enrollments'] = enrollment_result['failures']
+
+                if enrollment_result.get('failures') or missing_subscriptions:
+                    status_code = status.HTTP_409_CONFLICT
+                else:
+                    status_code = status.HTTP_201_CREATED
+        else:
+            status_code = status.HTTP_404_NOT_FOUND
+
+        return Response(results, status=status_code)
 
 
 class LicenseSubsidyView(LicenseBaseView):

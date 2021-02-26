@@ -22,6 +22,7 @@ from edx_rest_framework_extensions.auth.jwt.tests.utils import (
     generate_unversioned_payload,
 )
 from freezegun import freeze_time
+from requests import models
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -1754,6 +1755,278 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         for expected, actual in zip(expected_response, response.json()['results']):
             # Ensure UUIDs are in expected order
             assert str(expected.uuid) == actual['uuid']
+
+
+class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
+    """
+    Tests for the EnterpriseEnrollmentWithLicenseSubsidyView.
+    """
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.base_url = reverse('api:v1:bulk-license-enrollment')
+        cls.activated_license = LicenseFactory.create(
+            status=constants.ACTIVATED,
+            user_email=cls.user.email,
+            subscription_plan=cls.active_subscription_for_customer,
+        )
+
+    def _get_url_with_params(
+        self,
+        use_enterprise_customer=True,
+    ):
+        """
+        Helper to add the appropriate query parameters to the base url if specified.
+        """
+        url = reverse('api:v1:bulk-license-enrollment')
+        query_params = QueryDict(mutable=True)
+        if use_enterprise_customer:
+            # Use the override uuid if it's given
+            query_params['enterprise_customer_uuid'] = self.enterprise_customer_uuid
+        return url + '/?' + query_params.urlencode()
+
+    def test_bulk_enroll_with_missing_role(self):
+        """
+        Verify the view returns a 403 for users without the learner role.
+        """
+        url = self._get_url_with_params()
+        response = self.api_client.post(url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_bulk_enroll_with_missing_course_key_param(self):
+        """
+        Verify the view returns a 400 if the `course_run_keys` query param is not provided.
+        """
+        self._assign_learner_roles()
+        url = self._get_url_with_params()
+        response = self.api_client.post(url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_bulk_enroll_with_missing_enterprise_customer(self):
+        """
+        Verify the view returns a 404 if the `enterprise_customer_uuid` query param is not provided.
+        """
+        self._assign_learner_roles()
+        url = self._get_url_with_params(use_enterprise_customer=False)
+        response = self.api_client.post(url)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @mock.patch('license_manager.apps.subscriptions.models.SubscriptionPlan.contains_content')
+    def test_bulk_enroll_course_not_in_catalog(self, mock_contains_content):
+        """
+        Verify the view returns a 404 if the subscription's catalog does not contain the given course.
+        """
+        self._assign_learner_roles()
+        # Mock that the content was not found in the subscription's catalog
+        mock_contains_content.return_value = False
+
+        data = {
+            'emails': self.user.email,
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+
+        url = self._get_url_with_params()
+        response = self.api_client.post(url, data)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json() == {'failed_license_checks': [self.user.email]}
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_enroll(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+        """
+        Verify the view returns the correct response for a course in the user's subscription's catalog.
+        """
+        self._assign_learner_roles()
+
+        # Mock that the content was found in the subscription's catalog
+        mock_contains_content.return_value = True
+
+        # Mock the bulk enterprise enrollment endpoint's results
+        mock_enrollment_response = mock.Mock(spec=models.Response)
+        mock_enrollment_response.json.return_value = {
+            'successes': [{'email': self.user.email, 'course_run_key': self.course_key}],
+            'pending': [],
+            'failures': []
+        }
+        mock_enrollment_response.status_code = 201
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+
+        data = {
+            'emails': self.user.email,
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params()
+        response = self.api_client.post(url, data)
+
+        expected_enterprise_enrollment_request_options = {
+            'licenses_info': [
+                {
+                    'email': self.user.email,
+                    'course_run_key': self.course_key,
+                    'license_uuid': str(self.activated_license.uuid)
+                }
+            ],
+            'notify': True
+        }
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json() == {}
+        mock_bulk_enroll_enterprise_learners.assert_called_with(
+            str(self.enterprise_customer_uuid),
+            expected_enterprise_enrollment_request_options
+        )
+        mock_contains_content.assert_called_with([self.course_key])
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_enroll_failure_with_no_licenses_failure(
+        self,
+        mock_bulk_enroll_enterprise_learners,
+        mock_contains_content
+    ):
+        """
+        Test that even with an errored response from the enterprise bulk enrollment endpoint, we still report users
+        who do not have a valid license.
+        """
+        self._assign_learner_roles()
+
+        # Mock that the content was found in the subscription's catalog of the user that has a subscription
+        mock_contains_content.return_value = True
+
+        # Mock the bulk enterprise enrollment endpoint's results
+        mock_enrollment_response = mock.Mock(spec=models.Response)
+        mock_enrollment_response.json.return_value = {
+            'non_field_errors': ['Something went wrong']
+        }
+        mock_enrollment_response.status_code = 400
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+
+        no_license_user = UserFactory()
+
+        data = {
+            'emails': self.user.email + '\n' + no_license_user.email,
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params()
+        response = self.api_client.post(url, data)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {
+            'failed_license_checks': [no_license_user.email],
+            'bulk_enrollment_errors': [['Something went wrong']]
+        }
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_enroll_succeeds_with_no_license_found(
+        self,
+        mock_bulk_enroll_enterprise_learners,
+        mock_contains_content
+    ):
+        """
+        Test that the endpoint properly handles partial cases when one or more users don't have valid licenses and one
+        or more users have valid licenses and are properly enrolled.
+        """
+        self._assign_learner_roles()
+
+        # Mock that the content was found in the subscription's catalog of the user that has a subscription
+        mock_contains_content.return_value = True
+
+        # Mock the bulk enterprise enrollment endpoint's results
+        mock_enrollment_response = mock.Mock(spec=models.Response)
+        mock_enrollment_response.json.return_value = {
+            'successes': [{'email': self.user.email, 'course_run_key': self.course_key}],
+            'pending': [],
+            'failures': []
+        }
+        mock_enrollment_response.status_code = 409
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+
+        no_license_user = UserFactory()
+
+        data = {
+            'emails': self.user.email + '\n' + no_license_user.email,
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params()
+        response = self.api_client.post(url, data)
+        assert response.status_code == 409
+        assert response.json() == {'failed_license_checks': [no_license_user.email]}
+
+    def test_bulk_enrollment_with_poorly_formatted_email(self):
+        """
+        Test that we properly handle undesirably formatted parameters
+        """
+        self._assign_learner_roles()
+
+        bad_emails_data = {
+            'emails': 1111,
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params()
+        response = self.api_client.post(url, bad_emails_data)
+        assert response.status_code == 400
+        assert response.json() == "Received invalid types for the following required params: ['emails']"
+
+        bad_course_run_keys_data = {
+            'emails': self.user.email,
+            'course_run_keys': 'BADCOURSERUNKEYS',
+            'notify': True,
+        }
+        response = self.api_client.post(url, bad_course_run_keys_data)
+        assert response.status_code == 400
+        assert response.json() == "Received invalid types for the following required params: ['course_run_keys']"
+
+        bad_notify_data = {
+            'emails': self.user.email,
+            'course_run_keys': [self.course_key],
+            'notify': 'BADNOTIFYVALUE'
+        }
+        response = self.api_client.post(url, bad_notify_data)
+        assert response.status_code == 400
+        assert response.json() == "Received invalid types for the following required params: ['notify']"
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_licensed_enrollment_with_empty_email(
+        self,
+        mock_bulk_enroll_enterprise_learners,
+        mock_contains_content
+    ):
+        """
+        Test that we properly handle the odd empty string in the list of emails
+        """
+        self._assign_learner_roles()
+
+        # Mock that the content was found in the subscription's catalog for the real user.
+        mock_contains_content.return_value = True
+
+        # Mock the bulk enterprise enrollment endpoint's results
+        mock_enrollment_response = mock.Mock(spec=models.Response)
+        mock_enrollment_response.json.return_value = {
+            'successes': [{'email': self.user.email, 'course_run_key': self.course_key}],
+            'pending': [],
+            'failures': []
+        }
+        mock_enrollment_response.status_code = 201
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+
+        successful_user_with_empty_email_data = {
+            'emails': self.user.email + '\n\n',
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params()
+        response = self.api_client.post(url, successful_user_with_empty_email_data)
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.json() == {'failed_license_checks': ['']}
 
 
 @ddt.ddt

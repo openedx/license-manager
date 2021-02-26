@@ -147,3 +147,10 @@ class EnterpriseApiClient(BaseOAuthClient):
                 )
             )
             logger.error(msg)
+
+    def bulk_enroll_enterprise_learners(self, enterprise_id, options):
+        """
+        Calls the Enterprise Bulk Enrollment API to enroll learners in courses.
+        """
+        enrollment_url = '{}{}/enroll_learners_in_courses/'.format(self.enterprise_customer_endpoint, enterprise_id)
+        return self.client.post(enrollment_url, options)

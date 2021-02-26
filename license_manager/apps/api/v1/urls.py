@@ -90,6 +90,11 @@ subscription_router.register(
 
 urlpatterns = [
     url(
+        r'bulk-enrollment',
+        views.EnterpriseEnrollmentWithLicenseSubsidyView.as_view(),
+        name='bulk-license-enrollment',
+    ),
+    url(
         r'license-subsidy',
         views.LicenseSubsidyView.as_view(),
         name='license-subsidy',
