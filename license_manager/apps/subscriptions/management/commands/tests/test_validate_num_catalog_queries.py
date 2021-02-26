@@ -48,8 +48,8 @@ class ValidateQueryMappingTaskTests(TestCase):
             for _ in range(num_queries_found):
                 catalog_query_ids[str(uuid.uuid4())] = [str(uuid.uuid4())]
             mock_api_client.return_value.get_distinct_catalog_queries.return_value = {
-                'count': num_queries_found,
-                'catalog_query_ids': catalog_query_ids,
+                'num_distinct_query_ids': num_queries_found,
+                'catalog_uuids_by_catalog_query_id': catalog_query_ids,
             }
             if is_valid:
                 call_command(self.command_name)

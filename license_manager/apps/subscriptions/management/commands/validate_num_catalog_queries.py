@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 
 from django.core.management.base import BaseCommand
 
@@ -30,16 +31,13 @@ class Command(BaseCommand):
         ]
 
         # Batch the catalog UUIDs and aggregate API response data in a set
-        all_response_data = {}
+        catalog_uuids_by_catalog_query_id = defaultdict(list)
         for catalog_uuid_batch in chunks(distinct_catalog_uuids, constants.VALIDATE_NUM_CATALOG_QUERIES_BATCH_SIZE):
             response = EnterpriseCatalogApiClient().get_distinct_catalog_queries(catalog_uuid_batch)
-            query_ids = response['catalog_query_ids']
+            query_ids = response['catalog_uuids_by_catalog_query_id']
             for key in query_ids.keys():
-                if key in all_response_data.keys():
-                    all_response_data[key] += query_ids[key]
-                else:
-                    all_response_data[key] = query_ids[key]
-        distinct_catalog_query_ids = all_response_data.keys()
+                catalog_uuids_by_catalog_query_id[key] += query_ids[key]
+        distinct_catalog_query_ids = catalog_uuids_by_catalog_query_id.keys()
 
         # Calculate the number of customer types using the distinct number of Netsuite
         # product IDs found among customer subscriptions. If the number of distinct catalog
@@ -52,7 +50,7 @@ class Command(BaseCommand):
         if len(distinct_catalog_query_ids) != num_customer_types:
             error_msg = 'ERROR: {}\nCatalogQuery to CustomerCatalog(s) mapping: {}'.format(
                 summary,
-                all_response_data,
+                dict(catalog_uuids_by_catalog_query_id),
             )
             logger.error(error_msg)
             raise InvalidCatalogQueryMappingError
