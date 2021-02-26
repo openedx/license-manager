@@ -30,23 +30,37 @@ class Command(BaseCommand):
         ]
 
         # Batch the catalog UUIDs and aggregate API response data in a set
-        distinct_catalog_query_ids = set()
+        all_response_data = {}
         for catalog_uuid_batch in chunks(distinct_catalog_uuids, constants.VALIDATE_NUM_CATALOG_QUERIES_BATCH_SIZE):
             response = EnterpriseCatalogApiClient().get_distinct_catalog_queries(catalog_uuid_batch)
-            distinct_catalog_query_ids.update(response['catalog_query_ids'])
-        distinct_catalog_query_ids = list(distinct_catalog_query_ids)
+            query_ids = response['catalog_query_ids']
+            for key in query_ids.keys():
+                if key in all_response_data.keys():
+                    all_response_data[key] += query_ids[key]
+                else:
+                    all_response_data[key] = query_ids[key]
+        distinct_catalog_query_ids = all_response_data.keys()
 
         # Calculate the number of customer types using the distinct number of Netsuite
         # product IDs found among customer subscriptions. If the number of distinct catalog
         # query IDs doesn't match the number of customer types, log an error.
         num_customer_types = customer_subs.values_list('netsuite_product_id', flat=True).distinct().count()
-        summary = '{} distinct catalog queries found: {} ({} expected)'.format(
+        summary = '{} distinct Subscription Catalog Queries found, {} expected.'.format(
             len(distinct_catalog_query_ids),
-            distinct_catalog_query_ids,
             num_customer_types,
         )
         if len(distinct_catalog_query_ids) != num_customer_types:
-            error_msg = 'ERROR: Unexpected number of Subscription Catalog Queries found. {}'.format(summary)
+            error_msg = 'ERROR: {}\nCatalogQuery to CustomerCatalog(s) mapping: {}'.format(
+                summary,
+                all_response_data,
+            )
             logger.error(error_msg)
+            raise InvalidCatalogQueryMappingError
         else:
             logger.info('SUCCESS: {}'.format(summary))
+
+
+class InvalidCatalogQueryMappingError(Exception):
+    """
+    Exception to indicate failure of the validate_num_catalog_queries management command.
+    """
