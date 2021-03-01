@@ -86,7 +86,6 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
     for email_address in email_recipient_list:
         # Construct user specific context for each message
         context.update({
-            'LEARNER_PORTAL_LINK': _learner_portal_link(enterprise_slug),
             'LICENSE_ACTIVATION_LINK': _generate_license_activation_link(
                 enterprise_slug,
                 email_activation_key_map.get(email_address)
