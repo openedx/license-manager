@@ -2,10 +2,12 @@ import uuid
 from unittest import mock
 
 import ddt
-from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
 
+from license_manager.apps.subscriptions.management.commands.validate_num_catalog_queries import (
+    InvalidCatalogQueryMappingError,
+)
 from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
 )
@@ -42,13 +44,17 @@ class ValidateQueryMappingTaskTests(TestCase):
             log_level = 'ERROR'
             num_queries_found = num_subs - 1
         with self.assertLogs(level=log_level) as log:
-            catalog_query_ids = [str(uuid.uuid4()) for _ in range(num_queries_found)]
+            catalog_query_ids = {}
+            for _ in range(num_queries_found):
+                catalog_query_ids[str(uuid.uuid4())] = [str(uuid.uuid4())]
             mock_api_client.return_value.get_distinct_catalog_queries.return_value = {
-                'count': num_queries_found,
-                'catalog_query_ids': catalog_query_ids,
+                'num_distinct_query_ids': num_queries_found,
+                'catalog_uuids_by_catalog_query_id': catalog_query_ids,
             }
-            call_command(self.command_name)
             if is_valid:
+                call_command(self.command_name)
                 assert 'SUCCESS' in log.output[0]
             else:
+                with self.assertRaises(InvalidCatalogQueryMappingError):
+                    call_command(self.command_name)
                 assert 'ERROR' in log.output[0]
