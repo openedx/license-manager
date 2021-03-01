@@ -17,6 +17,7 @@ class EmailTests(TestCase):
         self.enterprise_slug = 'mock-enterprise'
         self.email_recipient_list = test_email_data['email_recipient_list']
         self.enterprise_name = 'Mock Enterprise'
+        self.enterprise_sender_alias = 'Mock Enterprise Alias'
 
     def test_send_activation_emails(self):
         """
@@ -27,6 +28,7 @@ class EmailTests(TestCase):
             [license for license in self.licenses if license.status == constants.ASSIGNED],
             self.enterprise_slug,
             self.enterprise_name,
+            self.enterprise_sender_alias,
         )
         self.assertEqual(
             len(mail.outbox),
@@ -47,6 +49,7 @@ class EmailTests(TestCase):
             [lic],
             self.enterprise_slug,
             self.enterprise_name,
+            self.enterprise_sender_alias,
             is_reminder=True,
         )
         self.assertEqual(len(mail.outbox), 1)
