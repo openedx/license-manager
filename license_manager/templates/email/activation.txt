@@ -10,8 +10,10 @@
 
 {% trans "Activate Your License " %}{{ LICENSE_ACTIVATION_LINK }}
 
-{% trans "So you don't have to search for this link, bookmark your learning portal now to have easy access to your subscription in the future: " %}{{ LEARNER_PORTAL_LINK }}
+{% trans "About edX" %}
 
-{% trans "My Learning Portal" %}
+{% trans "Since 2012, edX has been committed to increasing access to high-quality education for everyone, everywhere. By harnessing the transformative power of education through online learning, edX empowers learners to unlock their potential and become changemakers." %}
+
+{% trans "We are excited to welcome you to our growing community of over 35 million users and 15 thousand instructors from 160 partner universities and organizations." %}
 
 {{ TEMPLATE_CLOSING }}
