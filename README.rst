@@ -8,6 +8,37 @@ License Manager  |Travis|_ |Codecov|_
 
 Django backend for managing licenses and subscriptions.
 
+Setting up license-manager
+--------------------------
+
+Prerequisites
+^^^^^^^^^^^^^
+- Set the ``DEVSTACK_WORKSPACE`` env variable (either locally or in your shell config file: ``.bash_rc``, ``.zshrc``, or equivalent) to the folder which contains this repo and the `devstack` repo.
+  e.g ``export DEVSTACK_WORKSPACE=/home/<your_user>/edx``
+- Set up `devstack <https://github.com/edx/devstack>`_
+
+Quick Setup
+^^^^^^^^^^^
+`More detailed setup instructions <https://github.com/edx/license-manager/blob/master/docs/getting_started.rst>`_
+
+::
+
+  $ make docker_build
+  $ make dev.provision
+  $ make dev.up
+  $ make app-shell
+  # make requirements
+
+The server will run on ``localhost:18170``
+
+Running migrations
+------------------
+
+::
+
+  $ make app-shell
+  # ./manage.py migrate
+
 Documentation
 -------------
 .. |ReadtheDocs| image:: https://readthedocs.org/projects/license-manager/badge/?version=latest
