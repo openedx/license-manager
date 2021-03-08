@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urljoin
 
 import backoff
 from django.conf import settings
@@ -47,6 +48,21 @@ class EnterpriseApiClient(BaseOAuthClient):
         endpoint = self.enterprise_customer_endpoint + str(enterprise_customer_uuid) + '/'
         response = self.client.get(endpoint).json()
         return response.get('name', None)
+
+    def get_enterprise_sender_alias(self, enterprise_customer_uuid):
+        """
+        Gets the sender alias for the enterprise associated with a customer.
+
+        Arguments:
+            enterprise_customer_uuid (UUID): UUID of the enterprise customer associated with an enterprise
+
+        Returns:
+            string: The sender alias for the enterprise, if sender alias for the enterprise is None or not present
+                then the default alias `edX Support Team` is returned.
+        """
+        endpoint = urljoin(self.enterprise_customer_endpoint, str(enterprise_customer_uuid)) + '/'
+        response = self.client.get(endpoint).json()
+        return response.get('sender_alias', None) or 'edX Support Team'
 
     @backoff.on_predicate(
         # Use an exponential backoff algorithm

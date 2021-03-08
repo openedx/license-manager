@@ -36,9 +36,14 @@ def activation_email_task(custom_template_text, email_recipient_list, subscripti
     enterprise_api_client = EnterpriseApiClient()
     enterprise_slug = enterprise_api_client.get_enterprise_slug(subscription_plan.enterprise_customer_uuid)
     enterprise_name = enterprise_api_client.get_enterprise_name(subscription_plan.enterprise_customer_uuid)
+    enterprise_sender_alias = enterprise_api_client.get_enterprise_sender_alias(
+        subscription_plan.enterprise_customer_uuid
+    )
 
     try:
-        send_activation_emails(custom_template_text, pending_licenses, enterprise_slug, enterprise_name)
+        send_activation_emails(
+            custom_template_text, pending_licenses, enterprise_slug, enterprise_name, enterprise_sender_alias
+        )
     except Exception:  # pylint: disable=broad-except
         msg = 'License manager activation email sending received an exception for enterprise: {}.'.format(
             enterprise_name
@@ -81,6 +86,9 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
     enterprise_api_client = EnterpriseApiClient()
     enterprise_slug = enterprise_api_client.get_enterprise_slug(subscription_plan.enterprise_customer_uuid)
     enterprise_name = enterprise_api_client.get_enterprise_name(subscription_plan.enterprise_customer_uuid)
+    enterprise_sender_alias = enterprise_api_client.get_enterprise_sender_alias(
+        subscription_plan.enterprise_customer_uuid
+    )
 
     try:
         send_activation_emails(
@@ -88,6 +96,7 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
             pending_licenses,
             enterprise_slug,
             enterprise_name,
+            enterprise_sender_alias,
             is_reminder=True
         )
     except Exception:  # pylint: disable=broad-except
@@ -154,11 +163,15 @@ def send_revocation_cap_notification_email_task(subscription_uuid):
     subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
     enterprise_api_client = EnterpriseApiClient()
     enterprise_name = enterprise_api_client.get_enterprise_name(subscription_plan.enterprise_customer_uuid)
+    enterprise_sender_alias = enterprise_api_client.get_enterprise_sender_alias(
+        subscription_plan.enterprise_customer_uuid
+    )
 
     try:
         send_revocation_cap_notification_email(
             subscription_plan,
             enterprise_name,
+            enterprise_sender_alias,
         )
     except Exception:  # pylint: disable=broad-except
         logger.error('Revocation cap notification email sending received an exception.', exc_info=True)

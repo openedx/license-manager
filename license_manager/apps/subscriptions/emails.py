@@ -14,7 +14,7 @@ from license_manager.apps.subscriptions.constants import (
 from license_manager.apps.subscriptions.utils import chunks
 
 
-def send_revocation_cap_notification_email(subscription_plan, enterprise_name):
+def send_revocation_cap_notification_email(subscription_plan, enterprise_name, enterprise_sender_alias):
     """
     Sends an email to inform ECS that a subscription plan for a customer has reached its
     revocation cap, and that action may be necessary to help the customer add more licenses.
@@ -28,7 +28,7 @@ def send_revocation_cap_notification_email(subscription_plan, enterprise_name):
         'RECIPIENT_EMAIL': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
         'HIDE_EMAIL_FOOTER_MARKETING': True,
     }
-    email = _message_from_context_and_template(context)
+    email = _message_from_context_and_template(context, enterprise_sender_alias)
     email.send()
 
 
@@ -37,6 +37,7 @@ def send_activation_emails(
     pending_licenses,
     enterprise_slug,
     enterprise_name,
+    enterprise_sender_alias,
     is_reminder=False
 ):
     """
@@ -49,6 +50,7 @@ def send_activation_emails(
         subscription_plan (SubscriptionPlan): The subscription that the recipients are associated with or
             will be associated with.
         enterprise_slug (str): The slug associated with an enterprise to uniquely identify it
+        enterprise_sender_alias (str): Sender alias of the enterprise customer
         is_reminder (bool): whether this is a reminder activation email being sent
     """
     context = {
@@ -66,10 +68,11 @@ def send_activation_emails(
         email_activation_key_map,
         context,
         enterprise_slug,
+        enterprise_sender_alias,
     )
 
 
-def _send_email_with_activation(email_activation_key_map, context, enterprise_slug):
+def _send_email_with_activation(email_activation_key_map, context, enterprise_slug, sender_alias):
     """
     Helper that sends emails with the given template with an activation link to the the given list of emails.
 
@@ -79,6 +82,7 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
         context (dict): Dictionary of context variables for template rendering. Context takes an optional `REMINDER`
             key. If `REMINDER` is provided, a reminder message is added to the email.
         enterprise_slug (str): The slug associated with an enterprise to uniquely identify it.
+        sender_alias (str): The alias to use in from email for sending the email.
     """
     # Construct each message to be sent and appended onto the email list
     email_recipient_list = email_activation_key_map.keys()
@@ -94,7 +98,7 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
             'SOCIAL_MEDIA_FOOTER_URLS': settings.SOCIAL_MEDIA_FOOTER_URLS,
             'MOBILE_STORE_URLS': settings.MOBILE_STORE_URLS,
         })
-        emails.append(_message_from_context_and_template(context))
+        emails.append(_message_from_context_and_template(context, sender_alias))
 
     # Send out the emails in batches
     email_chunks = chunks(emails, LICENSE_BULK_OPERATION_BATCH_SIZE)
@@ -132,12 +136,13 @@ def _get_rendered_template_content(template_name, extension, context):
     return get_template(message_template).render(context)
 
 
-def _message_from_context_and_template(context):
+def _message_from_context_and_template(context, sender_alias):
     """
     Creates a message about the subscription_plan in the template specified by the context, with custom_template_text.
 
     Args:
         context (dict): Dictionary of context variables for template rendering.
+        sender_alias (str): The alias to use in from email for sending the email.
 
     Returns:
         EmailMultiAlternative: an individual message constructed from the information provided, not yet sent
@@ -153,7 +158,10 @@ def _message_from_context_and_template(context):
     html_content = _get_rendered_template_content(template_name, '.html', context)
 
     # Display sender name in addition to the email address
-    from_email_string = '"edX Support Team" <' + settings.SUBSCRIPTIONS_FROM_EMAIL + '>'
+    from_email_string = '"{sender_alias}" <{from_email}>'.format(
+        sender_alias=sender_alias,
+        from_email=settings.SUBSCRIPTIONS_FROM_EMAIL,
+    )
 
     # Using both the mailto: and https:// methods for the List-Unsubscribe header
     list_unsubscribe_header = '<mailto:' + settings.SUBSCRIPTIONS_FROM_EMAIL + '?subject=unsubscribe>' + \
