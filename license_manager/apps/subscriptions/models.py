@@ -64,7 +64,8 @@ class CustomerAgreement(TimeStampedModel):
         blank=True,
         null=True,
         help_text=_(
-            "The default enterprise catalog UUID must be from a catalog associated with the above Enterprise Customer UUID."
+            "The default enterprise catalog UUID must be from a catalog associated with the above Enterprise Customer "
+            "UUID."
         )
     )
 
