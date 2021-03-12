@@ -61,23 +61,23 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     form = SubscriptionPlanForm
     # This is not to be confused with readonly_fields of the BaseModelAdmin class
     read_only_fields = (
-        'title',
-        'start_date',
-        'expiration_date',
-        'customer_agreement',
-        'enterprise_catalog_uuid',
-        'salesforce_opportunity_id',
-        'netsuite_product_id',
         'num_revocations_remaining',
         'num_licenses',
         'expiration_processed',
+        'customer_agreement',
     )
     writable_fields = (
+        'title',
+        'start_date',
+        'expiration_date',
+        'enterprise_catalog_uuid',
+        'salesforce_opportunity_id',
+        'netsuite_product_id',
         'revoke_max_percentage',
         'is_active',
         'for_internal_use_only',
     )
-    fields = read_only_fields + writable_fields
+    fields = writable_fields + read_only_fields
     list_display = (
         'title',
         'uuid',
