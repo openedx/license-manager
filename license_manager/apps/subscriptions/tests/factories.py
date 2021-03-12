@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from uuid import uuid4
 
 import factory
+from faker import Faker
 
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions.constants import (
@@ -19,6 +20,8 @@ from license_manager.apps.subscriptions.models import (
 
 
 USER_PASSWORD = 'password'
+
+FAKE = Faker()
 
 
 def get_random_salesforce_id():
@@ -55,7 +58,9 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SubscriptionPlan
 
-    title = factory.Faker('word')
+    # Make the title sufficiently random to avoid violating
+    # the unique constraint on (customer_agreement, title)
+    title = factory.LazyAttribute(lambda p: '{} {}'.format(FAKE.word(), random.randint(0, 1000000)))
     uuid = factory.LazyFunction(uuid4)
     is_active = True
     start_date = date.today()
