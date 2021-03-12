@@ -120,7 +120,8 @@ class ExpireSubscriptionsCommandTests(TestCase):
             "--expired-after=2013-1-01",
             "--expired-before=2016-1-01"
         )
-        mock_license_expiration_task.assert_called_with([str(expired_license_1.uuid), str(expired_license_2.uuid)])
+        actual_args = mock_license_expiration_task.call_args_list[0][0][0]
+        assert sorted(actual_args) == sorted([str(expired_license_1.uuid), str(expired_license_2.uuid)])
 
     @mock.patch(
         'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
