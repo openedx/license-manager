@@ -22,7 +22,7 @@ from edx_rest_framework_extensions.auth.jwt.tests.utils import (
     generate_unversioned_payload,
 )
 from freezegun import freeze_time
-from requests import models
+from requests import Response, models
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -2027,6 +2027,35 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         response = self.api_client.post(url, successful_user_with_empty_email_data)
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.json() == {'failed_license_checks': ['']}
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_licensed_enrollment_with_bad_response_from_enterprise(
+        self,
+        mock_bulk_enroll_enterprise_learners,
+        mock_contains_content
+    ):
+        self._assign_learner_roles()
+
+        # Mock that the content was found in the subscription's catalog for the real user.
+        mock_contains_content.return_value = True
+
+        # Mock the bulk enterprise enrollment endpoint's results
+        mock_enrollment_response = Response()
+        failure_reason = 'Something went wrong.'
+        mock_enrollment_response.reason = failure_reason
+        mock_enrollment_response.data = '<!doctype html>'  # Mock an uncaught exception from the enterprise endpoint
+        mock_enrollment_response.status_code = 500
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+        data = {
+            'emails': self.user.email,
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params()
+        response = self.api_client.post(url, data)
+        assert response.status_code == 400
+        assert response.json() == {'bulk_enrollment_errors': [failure_reason]}
 
 
 @ddt.ddt

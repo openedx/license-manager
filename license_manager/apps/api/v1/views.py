@@ -21,6 +21,7 @@ from rest_framework.mixins import ListModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from simplejson.errors import JSONDecodeError
 
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseStatusFilter
@@ -616,13 +617,15 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
     @property
     def requested_notify_learners(self):
         if type(self.request.data.get('notify')) != bool:
-            self.validation_errors.append('notify')
+            if self.request.data.get('notify'):
+                self.validation_errors.append('notify')
         return self.request.data.get('notify')
 
     @property
     def requested_course_run_keys(self):
-        if type(self.request.data.get('course_run_keys')) != list:
-            self.validation_errors.append('course_run_keys')
+        if self.request.data.get('course_run_keys'):
+            if type(self.request.data.get('course_run_keys')) != list:
+                self.validation_errors.append('course_run_keys')
         return self.request.data.get('course_run_keys')
 
     @property
@@ -646,8 +649,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         """
         self.validation_errors = []
         self.missing_params = []
-
-        if not self.requested_notify_learners:
+        if self.requested_notify_learners is None:
             self.missing_params.append('notify')
 
         if not self.requested_course_run_keys:
@@ -772,23 +774,26 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
 
             # Check for bulk enrollment errors
             if enrollment_response.status_code >= 400 and enrollment_response.status_code != 409:
-                results['bulk_enrollment_errors'] = []
-
-                response_json = enrollment_response.json()
-                msg = 'Encountered a validation error when requesting bulk enrollment. Endpoint returned with error: ' \
-                      '{}'.format(response_json)
-                logger.error(msg)
-
-                # check for non field specific errors
-                if response_json.get('non_field_errors'):
-                    results['bulk_enrollment_errors'].append(response_json['non_field_errors'])
-
-                # check for param field specific validation errors
-                for param in options:
-                    if response_json.get(param):
-                        results['bulk_enrollment_errors'].append(enrollment_response.get(param))
-
                 status_code = status.HTTP_400_BAD_REQUEST
+                results['bulk_enrollment_errors'] = []
+                try:
+                    response_json = enrollment_response.json()
+                except JSONDecodeError:
+                    # Catch uncaught exceptions from enterprise
+                    results['bulk_enrollment_errors'].append(enrollment_response.reason)
+                else:
+                    msg = 'Encountered a validation error when requesting bulk enrollment. Endpoint returned with ' \
+                          'error: {}'.format(response_json)
+                    logger.error(msg)
+
+                    # check for non field specific errors
+                    if response_json.get('non_field_errors'):
+                        results['bulk_enrollment_errors'].append(response_json['non_field_errors'])
+
+                    # check for param field specific validation errors
+                    for param in options:
+                        if response_json.get(param):
+                            results['bulk_enrollment_errors'].append(response_json.get(param))
 
             else:
                 enrollment_result = enrollment_response.json()
