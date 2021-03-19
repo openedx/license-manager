@@ -613,10 +613,23 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
     """
     View for validating a group of enterprise learners' license subsidies for a list of courses and then enrolling all
     provided learners in all courses.
+
+    POST /api/v1/bulk-license-enrollment
+
+    Required query param:
+        - enterprise_customer_uuid (str): enterprise customer's uuid
+
+    Required body params:
+        - notify (bool): whether to notify the learners of their enrollment
+        - course_run_keys (list): an array of string course run keys
+        - emails (list): an array learners emails
     """
+    validation_errors = None
+    missing_params = None
+
     @property
     def requested_notify_learners(self):
-        if type(self.request.data.get('notify')) != bool:
+        if not isinstance(self.request.data.get('notify'), bool):
             if self.request.data.get('notify'):
                 self.validation_errors.append('notify')
         return self.request.data.get('notify')
@@ -624,20 +637,16 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
     @property
     def requested_course_run_keys(self):
         if self.request.data.get('course_run_keys'):
-            if type(self.request.data.get('course_run_keys')) != list:
+            if not isinstance(self.request.data.get('course_run_keys'), list):
                 self.validation_errors.append('course_run_keys')
         return self.request.data.get('course_run_keys')
 
     @property
     def requested_user_emails(self):
-        email_list = self.request.data.get('emails')
-        if email_list:
-            try:
-                email_list = email_list.splitlines()
-            except AttributeError:
+        if self.request.data.get('emails'):
+            if not isinstance(self.request.data.get('emails'), list):
                 self.validation_errors.append('emails')
-                return None
-        return email_list
+        return self.request.data.get('emails')
 
     @property
     def requested_enterprise_id(self):
@@ -676,7 +685,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         Helper function to check that each of the provided learners has a valid subscriptions license for the provided
         courses.
         """
-        missing_subscriptions = self.requested_user_emails
+        missing_subscriptions = {}
         licensed_enrollment_info = []
 
         for email in self.requested_user_emails:
@@ -693,16 +702,21 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                     reverse=True,
                 )
                 for course_key in self.requested_course_run_keys:
-                    for user_index, user_license in enumerate(ordered_licenses_by_expiration):
+                    plan_found = False
+                    for user_license in ordered_licenses_by_expiration:
                         subscription_plan = user_license.subscription_plan
                         if subscription_plan.contains_content([course_key]):
-                            missing_subscriptions.pop(user_index)
                             licensed_enrollment_info.append({
                                 'email': email,
                                 'course_run_key': course_key,
                                 'license_uuid': str(user_license.uuid)
                             })
-                            break
+                            plan_found = True
+                    if not plan_found:
+                        if missing_subscriptions.get(email):
+                            missing_subscriptions[email].append(course_key)
+                        else:
+                            missing_subscriptions[email] = [course_key]
 
         return missing_subscriptions, licensed_enrollment_info
 

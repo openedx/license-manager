@@ -1822,7 +1822,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         mock_contains_content.return_value = False
 
         data = {
-            'emails': self.user.email,
+            'emails': [self.user.email],
             'course_run_keys': [self.course_key],
             'notify': True,
         }
@@ -1831,7 +1831,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         response = self.api_client.post(url, data)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json() == {'failed_license_checks': [self.user.email]}
+        assert response.json() == {'failed_license_checks': {self.user.email: [self.course_key]}}
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
@@ -1855,7 +1855,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
         data = {
-            'emails': self.user.email,
+            'emails': [self.user.email],
             'course_run_keys': [self.course_key],
             'notify': True,
         }
@@ -1908,7 +1908,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         no_license_user = UserFactory()
 
         data = {
-            'emails': self.user.email + '\n' + no_license_user.email,
+            'emails': [self.user.email, no_license_user.email],
             'course_run_keys': [self.course_key],
             'notify': True,
         }
@@ -1917,7 +1917,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json() == {
-            'failed_license_checks': [no_license_user.email],
+            'failed_license_checks': {no_license_user.email: [self.course_key]},
             'bulk_enrollment_errors': [['Something went wrong']]
         }
 
@@ -1950,14 +1950,14 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         no_license_user = UserFactory()
 
         data = {
-            'emails': self.user.email + '\n' + no_license_user.email,
+            'emails': [self.user.email, no_license_user.email],
             'course_run_keys': [self.course_key],
             'notify': True,
         }
         url = self._get_url_with_params()
         response = self.api_client.post(url, data)
         assert response.status_code == 409
-        assert response.json() == {'failed_license_checks': [no_license_user.email]}
+        assert response.json() == {'failed_license_checks': {no_license_user.email: [self.course_key]}}
 
     def test_bulk_enrollment_with_poorly_formatted_email(self):
         """
@@ -1976,7 +1976,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         assert response.json() == "Received invalid types for the following required params: ['emails']"
 
         bad_course_run_keys_data = {
-            'emails': self.user.email,
+            'emails': [self.user.email],
             'course_run_keys': 'BADCOURSERUNKEYS',
             'notify': True,
         }
@@ -1985,48 +1985,13 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         assert response.json() == "Received invalid types for the following required params: ['course_run_keys']"
 
         bad_notify_data = {
-            'emails': self.user.email,
+            'emails': [self.user.email],
             'course_run_keys': [self.course_key],
             'notify': 'BADNOTIFYVALUE'
         }
         response = self.api_client.post(url, bad_notify_data)
         assert response.status_code == 400
         assert response.json() == "Received invalid types for the following required params: ['notify']"
-
-    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
-    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_licensed_enrollment_with_empty_email(
-        self,
-        mock_bulk_enroll_enterprise_learners,
-        mock_contains_content
-    ):
-        """
-        Test that we properly handle the odd empty string in the list of emails
-        """
-        self._assign_learner_roles()
-
-        # Mock that the content was found in the subscription's catalog for the real user.
-        mock_contains_content.return_value = True
-
-        # Mock the bulk enterprise enrollment endpoint's results
-        mock_enrollment_response = mock.Mock(spec=models.Response)
-        mock_enrollment_response.json.return_value = {
-            'successes': [{'email': self.user.email, 'course_run_key': self.course_key}],
-            'pending': [],
-            'failures': []
-        }
-        mock_enrollment_response.status_code = 201
-        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
-
-        successful_user_with_empty_email_data = {
-            'emails': self.user.email + '\n\n',
-            'course_run_keys': [self.course_key],
-            'notify': True,
-        }
-        url = self._get_url_with_params()
-        response = self.api_client.post(url, successful_user_with_empty_email_data)
-        assert response.status_code == status.HTTP_409_CONFLICT
-        assert response.json() == {'failed_license_checks': ['']}
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
@@ -2048,7 +2013,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         mock_enrollment_response.status_code = 500
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
         data = {
-            'emails': self.user.email,
+            'emails': [self.user.email],
             'course_run_keys': [self.course_key],
             'notify': True,
         }
@@ -2056,6 +2021,22 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         response = self.api_client.post(url, data)
         assert response.status_code == 400
         assert response.json() == {'bulk_enrollment_errors': [failure_reason]}
+
+    def test_bulk_licensed_enrollment_with_missing_emails(self):
+        """
+        Test that we properly handle the odd empty string in the list of emails
+        """
+        self._assign_learner_roles()
+
+        empty_email_data = {
+            'emails': [],
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params()
+        response = self.api_client.post(url, empty_email_data)
+        assert response.status_code == 400
+        assert response.json() == "Missing the following required request data: ['emails']"
 
 
 @ddt.ddt
