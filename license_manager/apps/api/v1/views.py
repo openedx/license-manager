@@ -622,7 +622,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
     Required body params:
         - notify (bool): whether to notify the learners of their enrollment
         - course_run_keys (list): an array of string course run keys
-        - emails (list): an array learners emails
+        - emails (list): an array of learners' emails
     """
     validation_errors = None
     missing_params = None
@@ -654,27 +654,26 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
 
     def _validate_request_params(self):
         """
-        Helper function to validate both the existing of required params and their typing.
+        Helper function to validate both the existence of required params and their typing.
         """
         self.validation_errors = []
         self.missing_params = []
         if self.requested_notify_learners is None:
             self.missing_params.append('notify')
 
+        # Gather all missing and incorrect typing validation errors
         if not self.requested_course_run_keys:
             self.missing_params.append('course_run_keys')
-
         if not self.requested_user_emails:
             self.missing_params.append('emails')
-
         if not self.requested_enterprise_id:
             self.missing_params.append('enterprise_customer_uuid')
 
-        # Validation of param type
+        # Report param type errors
         if self.validation_errors:
             return 'Received invalid types for the following required params: {}'.format(self.validation_errors)
 
-        # Validation of required params
+        # Report required params type errors
         if self.missing_params:
             return 'Missing the following required request data: {}'.format(self.missing_params)
 
@@ -689,34 +688,33 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         licensed_enrollment_info = []
 
         for email in self.requested_user_emails:
-            if email:
-                filtered_licenses = License.objects.filter(
-                    subscription_plan__in=customer_agreement.subscriptions.all(),
-                    user_email=email,
-                )
+            filtered_licenses = License.objects.filter(
+                subscription_plan__in=customer_agreement.subscriptions.all(),
+                user_email=email,
+            )
 
-                # order licenses by their associated subscription plan expiration date
-                ordered_licenses_by_expiration = sorted(
-                    filtered_licenses,
-                    key=lambda user_license: user_license.subscription_plan.expiration_date,
-                    reverse=True,
-                )
-                for course_key in self.requested_course_run_keys:
-                    plan_found = False
-                    for user_license in ordered_licenses_by_expiration:
-                        subscription_plan = user_license.subscription_plan
-                        if subscription_plan.contains_content([course_key]):
-                            licensed_enrollment_info.append({
-                                'email': email,
-                                'course_run_key': course_key,
-                                'license_uuid': str(user_license.uuid)
-                            })
-                            plan_found = True
-                    if not plan_found:
-                        if missing_subscriptions.get(email):
-                            missing_subscriptions[email].append(course_key)
-                        else:
-                            missing_subscriptions[email] = [course_key]
+            # order licenses by their associated subscription plan expiration date
+            ordered_licenses_by_expiration = sorted(
+                filtered_licenses,
+                key=lambda user_license: user_license.subscription_plan.expiration_date,
+                reverse=True,
+            )
+            for course_key in self.requested_course_run_keys:
+                plan_found = False
+                for user_license in ordered_licenses_by_expiration:
+                    subscription_plan = user_license.subscription_plan
+                    if subscription_plan.contains_content([course_key]):
+                        licensed_enrollment_info.append({
+                            'email': email,
+                            'course_run_key': course_key,
+                            'license_uuid': str(user_license.uuid)
+                        })
+                        plan_found = True
+                if not plan_found:
+                    if missing_subscriptions.get(email):
+                        missing_subscriptions[email].append(course_key)
+                    else:
+                        missing_subscriptions[email] = [course_key]
 
         return missing_subscriptions, licensed_enrollment_info
 
