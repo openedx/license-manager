@@ -32,7 +32,7 @@ git config --global user.email "${GITHUB_EMAIL}"
 
 # stage
 git checkout -b edx-deployment/stage/$GITHUB_SHA
-sed -i -e "s/tag: .*/tag: $GITHUB_SHA-newrelic/" argocd/applications/${REPO_NAME}/stage.yaml
+sed -i -e "s/tag: .*/tag: $GITHUB_SHA-newrelic/" argocd/applications/${REPO_NAME}/stage-currently-deployed-image.yaml
 git commit -a -m "${REPO_NAME} stage deploy: $GITHUB_UPSTREAM_PR_TITLE" --author "GitHub Actions CI Deployment automation <admin@edx.org>"
 git push --set-upstream origin edx-deployment/stage/$GITHUB_SHA
 ../hub-linux*/bin/hub pull-request -m "${REPO_NAME} stage deploy: $GITHUB_UPSTREAM_PR_TITLE" -m "Staging environment deployment of https://github.com/edx/${REPO_NAME}/pull/$GITHUB_UPSTREAM_PR_NUMBER" -m "Review and merge this PR to deploy your code to stage.edx.org" -l staging-deployment -l automerge
@@ -40,7 +40,7 @@ git push --set-upstream origin edx-deployment/stage/$GITHUB_SHA
 # prod
 git checkout master
 git checkout -b edx-deployment/prod/$GITHUB_SHA
-sed -i -e "s/tag: .*/tag: $GITHUB_SHA-newrelic/" argocd/applications/${REPO_NAME}/prod.yaml
+sed -i -e "s/tag: .*/tag: $GITHUB_SHA-newrelic/" argocd/applications/${REPO_NAME}/prod-currently-deployed-image.yaml
 git commit -a -m "${REPO_NAME} prod deploy: $GITHUB_UPSTREAM_PR_TITLE" --author "GitHub Actions CI Deployment automation <admin@edx.org>"
 git push --set-upstream origin edx-deployment/prod/$GITHUB_SHA
 ../hub-linux*/bin/hub pull-request -m "${REPO_NAME} prod deploy: $GITHUB_UPSTREAM_PR_TITLE" -m "Production environment deployment of https://github.com/edx/${REPO_NAME}/pull/$GITHUB_UPSTREAM_PR_NUMBER" -m "Review and merge this PR to deploy your code to edx.org"
