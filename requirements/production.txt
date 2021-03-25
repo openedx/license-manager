@@ -105,10 +105,13 @@ django==2.2.19
     #   edx-rbac
     #   jsonfield2
     #   rest-condition
+djangorestframework-csv==2.1.0
+    # via -r requirements/base.txt
 djangorestframework==3.12.2
     # via
     #   -r requirements/base.txt
     #   django-rest-swagger
+    #   djangorestframework-csv
     #   drf-jwt
     #   drf-nested-routers
     #   edx-drf-extensions
@@ -287,6 +290,7 @@ six==1.15.0
     # via
     #   -r requirements/base.txt
     #   django-simple-history
+    #   djangorestframework-csv
     #   edx-auth-backends
     #   edx-drf-extensions
     #   edx-rbac
@@ -319,6 +323,10 @@ stevedore==3.3.0
     #   -r requirements/base.txt
     #   edx-django-utils
     #   edx-opaque-keys
+unicodecsv==0.14.1
+    # via
+    #   -r requirements/base.txt
+    #   djangorestframework-csv
 uritemplate==3.0.1
     # via
     #   -r requirements/base.txt

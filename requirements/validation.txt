@@ -173,11 +173,16 @@ django==2.2.19
     #   edx-rbac
     #   jsonfield2
     #   rest-condition
+djangorestframework-csv==2.1.0
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
 djangorestframework==3.12.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-rest-swagger
+    #   djangorestframework-csv
     #   drf-jwt
     #   drf-nested-routers
     #   edx-drf-extensions
@@ -501,6 +506,7 @@ six==1.15.0
     #   -r requirements/test.txt
     #   django-dynamic-fixture
     #   django-simple-history
+    #   djangorestframework-csv
     #   edx-auth-backends
     #   edx-drf-extensions
     #   edx-i18n-tools
@@ -557,6 +563,11 @@ toml==0.10.2
     #   -r requirements/test.txt
     #   pylint
     #   pytest
+unicodecsv==0.14.1
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   djangorestframework-csv
 uritemplate==3.0.1
     # via
     #   -r requirements/quality.txt
