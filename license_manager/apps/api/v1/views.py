@@ -601,7 +601,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
         Only includes licenses with a status of ACTIVATED, ASSIGNED, or REVOKED.
         """
         subscription = self._get_subscription_plan()
-        enterprise_slug = EnterpriseApiClient().get_enterprise_slug(subscription.enterprise_customer_uuid)
+        enterprise_slug = subscription.customer_agreement.enterprise_customer_slug
         licenses = subscription.licenses.filter(
             status__in=[constants.ACTIVATED, constants.ASSIGNED, constants.REVOKED],
         ).values('status', 'user_email', 'activation_date', 'last_remind_date', 'activation_key')
