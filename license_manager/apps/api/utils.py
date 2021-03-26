@@ -40,10 +40,10 @@ def get_activation_key_from_request(request):
     """
     try:
         return uuid.UUID(request.query_params['activation_key'])
-    except KeyError:
-        raise ParseError('activation_key is a required parameter')
-    except ValueError:
-        raise ParseError('{} is not a valid activation key.'.format(request.query_params['activation_key']))
+    except KeyError as exc:
+        raise ParseError('activation_key is a required parameter') from exc
+    except ValueError as exc:
+        raise ParseError('{} is not a valid activation key.'.format(request.query_params['activation_key'])) from exc
 
 
 def get_key_from_jwt(decoded_jwt, key):

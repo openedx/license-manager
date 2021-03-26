@@ -108,6 +108,11 @@ urlpatterns = [
         r'retire_user',
         views.UserRetirementView.as_view(),
         name='user-retirement',
-    )
+    ),
+    url(
+        r'staff_lookup_licenses',
+        views.StaffLicenseLookupView.as_view(),
+        name='staff-lookup-licenses',
+    ),
 ]
 urlpatterns += router.urls + subscription_router.urls

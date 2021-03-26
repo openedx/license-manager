@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from django.core.validators import MinLengthValidator
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rbac.utils import ALL_ACCESS_CONTEXT
@@ -28,6 +29,7 @@ from license_manager.apps.subscriptions.constants import (
 )
 from license_manager.apps.subscriptions.utils import (
     days_until,
+    get_license_activation_link,
     localized_utcnow,
 )
 
@@ -533,6 +535,16 @@ class License(TimeStampedModel):
             )
         )
 
+    @cached_property
+    def activation_link(self):
+        """
+        Returns the activation link displayed in the activation email sent to a learner.
+        """
+        return get_license_activation_link(
+            self.subscription_plan.customer_agreement.enterprise_customer_slug,
+            self.activation_key,
+        )
+
     def clear_pii(self):
         """
         Helper function to remove pii (user_email & lms_user_id) from the license.
@@ -610,6 +622,18 @@ class License(TimeStampedModel):
         https://django-simple-history.readthedocs.io/en/2.12.0/common_issues.html#bulk-creating-and-queryset-updating
         """
         bulk_update_with_history(license_objects, cls, field_names, batch_size=batch_size)
+
+    @classmethod
+    def by_user_email(cls, user_email):
+        """
+        Returns all licenses asssociated with the given user email.
+        """
+        return cls.objects.filter(
+            user_email=user_email,
+        ).select_related(
+            'subscription_plan',
+            'subscription_plan__customer_agreement',
+        )
 
 
 class SubscriptionsFeatureRole(UserRole):

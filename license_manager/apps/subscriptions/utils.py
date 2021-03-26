@@ -18,12 +18,12 @@ def days_until(end_date):
     return diff.days
 
 
-def chunks(list, chunk_size):
+def chunks(a_list, chunk_size):
     """
     Helper to break a list up into chunks. Returns a list of lists
     """
-    for i in range(0, len(list), chunk_size):
-        yield list[i:i + chunk_size]
+    for i in range(0, len(a_list), chunk_size):
+        yield a_list[i:i + chunk_size]
 
 
 def get_learner_portal_url(enterprise_slug):
@@ -41,6 +41,6 @@ def get_license_activation_link(enterprise_slug, activation_key):
     return '/'.join((
         get_learner_portal_url(enterprise_slug),
         'licenses',
-        activation_key,
+        str(activation_key),
         'activate'
     ))

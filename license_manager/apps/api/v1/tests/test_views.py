@@ -242,6 +242,13 @@ def _learner_license_detail_request(api_client, subscription_uuid):
     return api_client.get(url)
 
 
+def _iso_8601_format(datetime):
+    """
+    Helper to return an ISO8601-formatted datetime string, with a trailing 'Z'.
+    """
+    return datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
 def _get_date_string(date):
     """
     Helper to get the string associated with a date, or None if it doesn't exist.
@@ -1634,9 +1641,8 @@ class LicenseViewTestMixin:
 
     def _create_license(
         self,
-        activation_date=None,
-        license_status=constants.ASSIGNED,
         subscription_plan=None,
+        **kwargs,
     ):
         """
         Helper method to create a license.
@@ -1644,12 +1650,13 @@ class LicenseViewTestMixin:
         if not subscription_plan:
             subscription_plan = self.active_subscription_for_customer
         return LicenseFactory.create(
-            status=license_status,
+            status=kwargs.pop('status', constants.ASSIGNED),
             lms_user_id=self.lms_user_id,
             user_email=self.user.email,
             subscription_plan=subscription_plan,
             activation_key=self.activation_key,
-            activation_date=activation_date,
+            activation_date=kwargs.pop('activation_date', None),
+            **kwargs,
         )
 
 
@@ -1772,7 +1779,7 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         self.active_subscription_for_customer.expiration_date = self.now + datetime.timedelta(weeks=52)
         first_license = self._create_license(
             activation_date=self.now,
-            license_status=constants.ACTIVATED,
+            status=constants.ACTIVATED,
             subscription_plan=self.active_subscription_for_customer,
         )
 
@@ -1785,7 +1792,7 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         )
         second_license = self._create_license(
             activation_date=self.now,
-            license_status=constants.ACTIVATED,
+            status=constants.ACTIVATED,
             subscription_plan=second_sub,
         )
 
@@ -2416,7 +2423,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             }
         )
         already_activated_license = self._create_license(
-            license_status=constants.ACTIVATED,
+            status=constants.ACTIVATED,
             activation_date=self.now,
         )
 
@@ -2436,7 +2443,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             }
         )
         revoked_license = self._create_license(
-            license_status=constants.REVOKED,
+            status=constants.REVOKED,
             activation_date=self.now,
         )
 
@@ -2603,3 +2610,116 @@ class UserRetirementViewTests(TestCase):
         User = get_user_model()
         with self.assertRaises(ObjectDoesNotExist):
             User.objects.get(username=self.original_username)
+
+
+class StaffLicenseLookupViewTests(LicenseViewTestMixin, TestCase):
+    """
+    Tests for the ``StaffLicenseLookupView``.
+    """
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.admin_user = UserFactory(is_staff=True)
+
+        cls.other_subscription = SubscriptionPlanFactory.create(
+            customer_agreement=cls.customer_agreement,
+            enterprise_catalog_uuid=cls.enterprise_catalog_uuid,
+            is_active=True,
+            title='Other Subscription Plan',
+        )
+
+    def _post_request(self, user_email):
+        """
+        Helper to make the POST request to the admin license lookup endpoint.
+        """
+        data = {
+            'user_email': user_email,
+        }
+        url = reverse('api:v1:staff-lookup-licenses')
+        return self.api_client.post(url, data)
+
+    def test_lookup_no_auth(self):
+        """
+        Unauthenticated requests should result in a 401.
+        """
+        # Create a new client with no authentication present.
+        self.api_client = APIClient()
+
+        response = self._post_request(self.user.email)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_lookup_missing_permission(self):
+        """
+        Requests from non-admin users should result in a 403.
+        """
+        self.api_client.force_authenticate(user=self.user)
+        # Give the user an enterprise admin JWT role for good measure
+        _assign_role_via_jwt_or_db(self.api_client, self.user, self.enterprise_customer_uuid, True)
+
+        response = self._post_request(self.user.email)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_lookup_email_with_no_licenses(self):
+        """
+        Requests from admin users should 404 if no license for the given email exists.
+        """
+        self.api_client.force_authenticate(user=self.admin_user)
+
+        response = self._post_request('NO-SUCH-EMAIL')
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_lookup_post_data_missing_email_key(self):
+        """
+        Requests from admin users should 400 if the payload contains no ``user_email`` key.
+        """
+        self.api_client.force_authenticate(user=self.admin_user)
+
+        url = reverse('api:v1:staff-lookup-licenses')
+        response = self.api_client.post(url, data={'something-else': 'whatever'})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_lookup_where_licenses_for_email_exist(self):
+        """
+        Requests from admin users should return 200/OK and some data if licenses
+        for the given email exist.
+        """
+        self.api_client.force_authenticate(user=self.admin_user)
+
+        first_license = self._create_license(
+            assigned_date=datetime.datetime(2020, 10, 31),
+            activation_date=datetime.datetime(2020, 11, 1),
+            status=constants.ACTIVATED,
+        )
+        second_license = self._create_license(
+            subscription_plan=self.other_subscription,
+            assigned_date=datetime.datetime(2020, 12, 1),
+            activation_date=datetime.datetime(2020, 12, 31),
+            status=constants.REVOKED,
+            revoked_date=datetime.datetime(2021, 2, 1),
+        )
+
+        response = self._post_request(self.user.email)
+        assert response.status_code == status.HTTP_200_OK
+        self.assertCountEqual([
+            {
+                'activation_date': _iso_8601_format(second_license.activation_date),
+                'activation_link': second_license.activation_link,
+                'assigned_date': _iso_8601_format(second_license.assigned_date),
+                'last_remind_date': None,
+                'revoked_date': _iso_8601_format(second_license.revoked_date),
+                'status': constants.REVOKED,
+                'subscription_plan_expiration_date': str(self.other_subscription.expiration_date),
+                'subscription_plan_title': self.other_subscription.title,
+            },
+            {
+                'activation_date': _iso_8601_format(first_license.activation_date),
+                'activation_link': first_license.activation_link,
+                'assigned_date': _iso_8601_format(first_license.assigned_date),
+                'last_remind_date': None,
+                'revoked_date': None,
+                'status': constants.ACTIVATED,
+                'subscription_plan_expiration_date': str(self.active_subscription_for_customer.expiration_date),
+                'subscription_plan_title': self.active_subscription_for_customer.title,
+            },
+        ], response.json())

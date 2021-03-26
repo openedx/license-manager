@@ -82,6 +82,34 @@ class LicenseSerializer(serializers.ModelSerializer):
             fields.append('activation_key')
 
 
+class StaffLicenseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the ``License`` model that is usable by views
+    that are restricted to staff/admin users.
+    """
+    subscription_plan_title = serializers.SerializerMethodField()
+    subscription_plan_expiration_date = serializers.SerializerMethodField()
+
+    class Meta:
+        model = License
+        fields = [
+            'status',
+            'assigned_date',
+            'activation_date',
+            'revoked_date',
+            'last_remind_date',
+            'subscription_plan_title',
+            'subscription_plan_expiration_date',
+            'activation_link',
+        ]
+
+    def get_subscription_plan_title(self, obj):
+        return obj.subscription_plan.title
+
+    def get_subscription_plan_expiration_date(self, obj):
+        return obj.subscription_plan.expiration_date
+
+
 class SingleEmailSerializer(serializers.Serializer):  # pylint: disable=abstract-method
     """
     Serializer for specifying a single email
