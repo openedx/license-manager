@@ -75,8 +75,8 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
             return None
         try:
             return uuid.UUID(enterprise_customer_uuid)
-        except ValueError:
-            raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.')
+        except ValueError as exc:
+            raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.') from exc
 
     @property
     def requested_customer_agreement_uuid(self):
@@ -134,8 +134,8 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
             return None
         try:
             return uuid.UUID(enterprise_customer_uuid)
-        except ValueError:
-            raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.')
+        except ValueError as exc:
+            raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.') from exc
 
     @property
     def requested_subscription_uuid(self):
@@ -405,7 +405,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
         # Validate the user_emails and text sent in the data
         self._validate_data(request.data)
         # Dedupe all lowercase emails before turning back into a list for indexing
-        user_emails = list(set([email.lower() for email in request.data.get('user_emails', [])]))
+        user_emails = list({email.lower() for email in request.data.get('user_emails', [])})
 
         subscription_plan = self._get_subscription_plan()
 
@@ -559,7 +559,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
         return Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
-    def revoke(self, request, subscription_uuid=None):
+    def revoke(self, request, subscription_uuid=None):  # pylint: disable=unused-argument
         self._validate_data(request.data)
         # Find the active or pending license for the user
         user_email = request.data.get('user_email')
@@ -587,14 +587,14 @@ class LicenseViewSet(LearnerLicenseViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
-    def overview(self, request, subscription_uuid=None):
+    def overview(self, request, subscription_uuid=None):  # pylint: disable=unused-argument
         queryset = self.filter_queryset(self.get_queryset())
         queryset_values = queryset.values('status').annotate(count=Count('status')).order_by('-count')
         license_overview = list(queryset_values)
         return Response(license_overview, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'])
-    def csv(self, request, subscription_uuid):
+    def csv(self, request, subscription_uuid):  # pylint: disable=unused-argument
         """
         Returns license data for a given subscription in CSV format.
 
@@ -607,7 +607,7 @@ class LicenseViewSet(LearnerLicenseViewSet):
         ).values('status', 'user_email', 'activation_date', 'last_remind_date', 'activation_key')
         for lic in licenses:
             # We want to expose the full activation link rather than just the activation key
-            lic['activation_link'] = get_license_activation_link(enterprise_slug, str(lic['activation_key']))
+            lic['activation_link'] = get_license_activation_link(enterprise_slug, lic['activation_key'])
             lic.pop('activation_key', None)
         csv_data = CSVRenderer().render(list(licenses))
         return Response(csv_data, status=status.HTTP_200_OK, content_type='text/csv')
@@ -987,7 +987,7 @@ class UserRetirementView(APIView):
         field_value = self.request.data.get(field_name)
         if not field_value:
             message = f'Required field "{field_name}" missing or missing value in retirement request"'
-            logger.error(f'{message}. Returning 400 BAD REQUEST')
+            logger.error('{}. Returning 400 BAD REQUEST'.format(message))
             raise ParseError(message)
 
         return field_value
@@ -1032,12 +1032,77 @@ class UserRetirementView(APIView):
         try:
             User = get_user_model()
             user = User.objects.get(username=original_username)
-            logger.info(f'Retiring user with id {user.id} and lms_user_id {lms_user_id}')
+            logger.info('Retiring user with id %r and lms_user_id %r', user.id, lms_user_id)
             user.delete()
         except ObjectDoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         except Exception as exc:  # pylint: disable=broad-except
-            logger.exception(f'500 error retiring user with lms_user_id {lms_user_id}. Error: {exc}')
+            logger.exception('500 error retiring user with lms_user_id %r. Error: %s', lms_user_id, exc)
             return Response('Error retiring user', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class StaffLicenseLookupView(LicenseBaseView):
+    """
+    A class that allows users with staff permissions
+    to lookup all licenses for a user, given the user's email address.
+
+    POST /api/v1/staff_lookup_licenses
+    With POST data
+
+    {
+        'user_email': 'someone@someplace.net'
+    }
+
+    Returns a response with status codes and data as follows:
+        * 400 Bad Request - if the ``user_email`` data is missing from the POST request.
+        * 401 Unauthorized - if the requesting user is not authenticated.
+        * 403 Forbidden - if the requesting user does not have staff/administrator permissions.
+        * 404 Not Found - if no licenses associated with the given email were found.
+        * 200 OK - If at least one license associated with the given email was found.
+                   The response data is a list of objects describing the license and associated subscription plan.
+
+    Example response data:
+
+    [
+      {
+        "status": "assigned",
+        "assigned_date": "2020-12-31",
+        "activation_date": null,
+        "revoked_date": null,
+        "last_remind_date": null,
+        "subscription_plan_title": "Pied Piper's First Subscription - Renewed",
+        "subscription_plan_expiration_date": "2022-11-30",
+        "activation_link": "https://base.url/licenses/some-key/activate"
+      }
+    ]
+    """
+    authentication_classes = [JwtAuthentication]
+    permission_classes = [permissions.IsAdminUser]
+
+    def post(self, request):
+        """
+        For a given email address provided in POST data,
+        returns all licenses and associated subscription data
+        associated with that email address.
+        """
+        user_email = request.data.get('user_email')
+        if not user_email:
+            return Response(
+                'A ``user_email`` is required in the request data',
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user_licenses = License.by_user_email(user_email)
+        if not user_licenses:
+            return Response(
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serialized_licenses = serializers.StaffLicenseSerializer(user_licenses, many=True)
+
+        return Response(
+            serialized_licenses.data,
+            status=status.HTTP_200_OK,
+        )
