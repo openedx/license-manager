@@ -15,6 +15,7 @@ rules
 django-simple-history
 django-waffle
 djangorestframework
+djangorestframework-csv
 drf-nested-routers
 edx-auth-backends
 edx-celeryutils

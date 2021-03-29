@@ -11,7 +11,10 @@ from license_manager.apps.subscriptions.constants import (
     REVOCATION_CAP_NOTIFICATION_EMAIL_SUBJECT,
     REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE,
 )
-from license_manager.apps.subscriptions.utils import chunks
+from license_manager.apps.subscriptions.utils import (
+    chunks,
+    get_license_activation_link,
+)
 
 
 def send_revocation_cap_notification_email(subscription_plan, enterprise_name, enterprise_sender_alias):
@@ -90,7 +93,7 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
     for email_address in email_recipient_list:
         # Construct user specific context for each message
         context.update({
-            'LICENSE_ACTIVATION_LINK': _generate_license_activation_link(
+            'LICENSE_ACTIVATION_LINK': get_license_activation_link(
                 enterprise_slug,
                 email_activation_key_map.get(email_address)
             ),
@@ -106,26 +109,6 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
         # Renew the email connection for each chunk of emails sent
         with mail.get_connection() as connection:
             connection.send_messages(email_chunk)
-
-
-def _generate_license_activation_link(enterprise_slug, activation_key):
-    """
-    Returns the activation link displayed in the activation email sent to a learner
-    """
-    return '/'.join((
-        _learner_portal_link(enterprise_slug),
-        'licenses',
-        activation_key,
-        'activate'
-    ))
-
-
-def _learner_portal_link(enterprise_slug):
-    """
-    Returns the link to the learner portal, given an enterprise slug.
-    Does not contain a trailing slash.
-    """
-    return settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL + '/' + enterprise_slug
 
 
 def _get_rendered_template_content(template_name, extension, context):

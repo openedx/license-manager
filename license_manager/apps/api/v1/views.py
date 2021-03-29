@@ -21,6 +21,7 @@ from rest_framework.mixins import ListModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_csv.renderers import CSVRenderer
 from simplejson.errors import JSONDecodeError
 
 from license_manager.apps.api import serializers, utils
@@ -41,7 +42,11 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionsRoleAssignment,
 )
-from license_manager.apps.subscriptions.utils import chunks, localized_utcnow
+from license_manager.apps.subscriptions.utils import (
+    chunks,
+    get_license_activation_link,
+    localized_utcnow,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -587,6 +592,25 @@ class LicenseViewSet(LearnerLicenseViewSet):
         queryset_values = queryset.values('status').annotate(count=Count('status')).order_by('-count')
         license_overview = list(queryset_values)
         return Response(license_overview, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def csv(self, request, subscription_uuid):
+        """
+        Returns license data for a given subscription in CSV format.
+
+        Only includes licenses with a status of ACTIVATED, ASSIGNED, or REVOKED.
+        """
+        subscription = self._get_subscription_plan()
+        enterprise_slug = subscription.customer_agreement.enterprise_customer_slug
+        licenses = subscription.licenses.filter(
+            status__in=[constants.ACTIVATED, constants.ASSIGNED, constants.REVOKED],
+        ).values('status', 'user_email', 'activation_date', 'last_remind_date', 'activation_key')
+        for lic in licenses:
+            # We want to expose the full activation link rather than just the activation key
+            lic['activation_link'] = get_license_activation_link(enterprise_slug, str(lic['activation_key']))
+            lic.pop('activation_key', None)
+        csv_data = CSVRenderer().render(list(licenses))
+        return Response(csv_data, status=status.HTTP_200_OK, content_type='text/csv')
 
 
 class LicenseBaseView(APIView):

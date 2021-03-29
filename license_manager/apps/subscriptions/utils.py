@@ -1,6 +1,7 @@
 """ Utility functions for the subscriptions app. """
 from datetime import date, datetime
 
+from django.conf import settings
 from pytz import UTC
 
 
@@ -23,3 +24,23 @@ def chunks(list, chunk_size):
     """
     for i in range(0, len(list), chunk_size):
         yield list[i:i + chunk_size]
+
+
+def get_learner_portal_url(enterprise_slug):
+    """
+    Returns the link to the learner portal, given an enterprise slug.
+    Does not contain a trailing slash.
+    """
+    return '{}/{}'.format(settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL, enterprise_slug)
+
+
+def get_license_activation_link(enterprise_slug, activation_key):
+    """
+    Returns the activation link displayed in the activation email sent to a learner
+    """
+    return '/'.join((
+        get_learner_portal_url(enterprise_slug),
+        'licenses',
+        activation_key,
+        'activate'
+    ))

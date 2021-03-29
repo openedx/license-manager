@@ -902,9 +902,12 @@ class LicenseViewSetActionTests(TestCase):
             'api:v1:licenses-overview',
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
-
         cls.revoke_license_url = reverse(
             'api:v1:licenses-revoke',
+            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
+        )
+        cls.licenses_csv_url = reverse(
+            'api:v1:licenses-csv',
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
 
@@ -1515,6 +1518,71 @@ class LicenseViewSetActionTests(TestCase):
             # There should be 1 fewer allocated license now that we revoked the activated license
             'allocated': len(allocated_licenses) - 1,
         }
+
+    @staticmethod
+    def _get_csv_data_rows(response):
+        """
+        Helper method to create list of str for each row in the CSV data
+        returned from the licenses CSV endpoint. As is expected, each
+        column in a given row is comma separated.
+        """
+        return str(response.data)[2:].split('\\r\\n')[:-1]
+
+    def test_csv_action_license_fields(self):
+        """
+        Tests that the CSV action only returns the expected license fields
+        in the data, as detailed by the expected_fields list below.
+        """
+        expected_fields = [
+            'status',
+            'user_email',
+            'activation_date',
+            'last_remind_date',
+            'activation_link',
+        ]
+        assigned_license = LicenseFactory.create(status=constants.ASSIGNED)
+        self.subscription_plan.licenses.set([assigned_license])
+        response = self.api_client.get(self.licenses_csv_url)
+        rows = self._get_csv_data_rows(response)
+        response_license_fields = rows[0].split(',')
+        assert set(expected_fields) == set(response_license_fields)
+
+    def test_csv_action_license_statuses(self):
+        """
+        Tests that the CSV action only returns data for licenses with status of:
+         - Assigned
+         - Activated
+         - Revoked
+        """
+        assigned_license = LicenseFactory.create(status=constants.ASSIGNED)
+        activated_license = LicenseFactory.create(status=constants.ACTIVATED)
+        unassigned_license = LicenseFactory.create(status=constants.UNASSIGNED)
+        revoked_license = LicenseFactory.create(status=constants.REVOKED)
+        self.subscription_plan.licenses.set([
+            assigned_license,
+            activated_license,
+            unassigned_license,
+            revoked_license,
+        ])
+        response = self.api_client.get(self.licenses_csv_url)
+        rows = self._get_csv_data_rows(response)
+
+        # Ensure that licenses with status of UNASSIGNED aren't
+        # included in the CSV data returned in the response.
+        for row in rows[1:]:
+            cols = row.split(',')
+            assert cols[3] != constants.UNASSIGNED
+
+        # Ensure that the correct number of licenses is returned
+        # in the CSV data returned in the response.
+        num_allocated_licenses = self.subscription_plan.licenses.filter(
+            status__in=[
+                constants.ASSIGNED,
+                constants.ACTIVATED,
+                constants.REVOKED,
+            ],
+        ).count()
+        assert num_allocated_licenses == len(rows) - 1
 
 
 class LicenseViewTestMixin:
