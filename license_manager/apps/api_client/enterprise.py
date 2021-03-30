@@ -1,7 +1,7 @@
 import logging
 from urllib.parse import urljoin
 
-import backoff
+import requests
 from django.conf import settings
 
 from license_manager.apps.api_client.base_oauth import BaseOAuthClient
@@ -33,60 +33,43 @@ class EnterpriseApiClient(BaseOAuthClient):
         endpoint = '{}{}/'.format(self.enterprise_customer_endpoint, str(enterprise_customer_uuid))
         return self.client.get(endpoint).json()
 
-    @backoff.on_predicate(
-        # Use an exponential backoff algorithm
-        backoff.expo,
-        # Backoff when a status code of 429 is returned, indicating rate limiting
-        lambda status_code: status_code == 429,
-        # Back off for a maximum of 120 seconds (2 minutes) before giving up. This might need to be adjusted
-        max_time=120,
-    )
-    def create_pending_enterprise_user(self, enterprise_customer_uuid, user_email):
+    def create_pending_enterprise_users(self, enterprise_customer_uuid, user_emails):
         """
-        Creates a pending enterprise user for the specified user and enterprise. On a non rate limiting error this will
-        retry creating the pending enterprise user because errors can occasionally happen. If a rate limiting error
-        happens the number of retries is renewed back to 3.
+        Creates a pending enterprise user in the given ``enterprise_customer_uuid`` for each of the
+        specified ``user_emails`` provided.
 
         Arguments:
-            enterprise_customer_uuid (UUID): UUID of the enterprise customer associated with an enterprise
-            user_email (str): The email to create the pending enterprise user entry for.
+            enterprise_customer_uuid (UUID): UUID of the enterprise customer in which pending user records are created.
+            user_emails (list(str)): The emails for which pending enterprise users will be created.
         Returns:
-            int: The status code returned by the POST request to create the pending enterprise user. This is only used
-                for the purpose of backing off of requests for rate limiting.
+            Response: A ``requests.Response`` object.
+        Raises:
+            ``requests.exceptions.HTTPError`` on any response with an unsuccessful status code.
         """
-        data = {
-            'enterprise_customer': enterprise_customer_uuid,
-            'user_email': user_email,
-        }
-        retries = 3
-        while retries:
-            response = self.client.post(self.pending_enterprise_learner_endpoint, data=data)
-            if response.status_code == 429:
-                msg = (
-                    'Rate limited when trying to create a pending enterprise user for enterprise with uuid: {uuid}. '
-                    'Response: {response}. '
-                    'Backing off and trying request again shortly'.format(
-                        uuid=enterprise_customer_uuid,
-                        response=response.json(),
-                    )
-                )
-                logger.error(msg)
-                return response.status_code
-            elif response.status_code >= 400:
-                retries = retries - 1
-                if not retries:
-                    msg = (
-                        'Failed to create a pending enterprise user for enterprise with uuid: {uuid} and email {email}.'
-                        ' Response: {response}'.format(
-                            email=user_email,
-                            uuid=enterprise_customer_uuid,
-                            response=response.json(),
-                        )
-                    )
-                    logger.error(msg)
-                    return response.status_code
-            else:
-                return response.status_code
+        data = [
+            {
+                'enterprise_customer': enterprise_customer_uuid,
+                'user_email': user_email,
+            }
+            for user_email in user_emails
+        ]
+        response = self.client.post(self.pending_enterprise_learner_endpoint, json=data)
+        try:
+            response.raise_for_status()
+            logger.info(
+                'Successfully created %r PendingEnterpriseCustomerUser records for customer %r',
+                len(data),
+                enterprise_customer_uuid,
+            )
+            return response
+        except requests.exceptions.HTTPError as exc:
+            logger.error(
+                'Failed to create %r PendingEnterpriseCustomerUser records for customer %r because %r',
+                len(data),
+                enterprise_customer_uuid,
+                response.text,
+            )
+            raise exc
 
     def revoke_course_enrollments_for_user(self, user_id, enterprise_id):
         """

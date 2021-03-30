@@ -81,6 +81,8 @@ lint: ## run Python code linting
 
 quality: style isort_check lint ## check code style and import sorting, then lint
 
+quality_fix: style isort lint ## Check code style, FIX any imports, then lint
+
 pii_check: ## check for PII annotations on all Django models
 	DJANGO_SETTINGS_MODULE=license_manager.settings.test \
 	code_annotations django_find_annotations --config_file .pii_annotations.yml --lint --report --coverage

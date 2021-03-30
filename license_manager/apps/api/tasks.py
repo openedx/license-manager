@@ -4,11 +4,15 @@ from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
+from license_manager.apps.subscriptions.constants import (
+    PENDING_ACCOUNT_CREATION_BATCH_SIZE,
+)
 from license_manager.apps.subscriptions.emails import (
     send_activation_emails,
     send_revocation_cap_notification_email,
 )
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.utils import chunks
 
 
 logger = logging.getLogger(__name__)
@@ -57,14 +61,15 @@ def link_learners_to_enterprise_task(learner_emails, enterprise_customer_uuid):
     Links learners to an enterprise asynchronously.
 
     Arguments:
-        learner_emails (list): list containing the list of learner emails to link to the enterprise
-        enterprise_customer_uuid (str): UUID (string representation) of the enterprise to link learns to
+        learner_emails (list): list email addresses to link to the given enterprise.
+        enterprise_customer_uuid (str): UUID (string representation) of the enterprise to link learns to.
     """
     enterprise_api_client = EnterpriseApiClient()
-    for learner_email in learner_emails:
-        enterprise_api_client.create_pending_enterprise_user(
+
+    for user_email_batch in chunks(learner_emails, PENDING_ACCOUNT_CREATION_BATCH_SIZE):
+        enterprise_api_client.create_pending_enterprise_users(
             enterprise_customer_uuid,
-            learner_email,
+            user_email_batch,
         )
 
 

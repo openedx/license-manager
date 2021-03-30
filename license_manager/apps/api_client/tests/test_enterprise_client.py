@@ -3,6 +3,7 @@ from unittest import mock
 from uuid import uuid4
 
 import ddt
+import requests
 from django.test import TestCase
 
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
@@ -21,109 +22,65 @@ class EnterpriseApiClientTests(TestCase):
         super().setUpTestData()
 
         cls.uuid = uuid4()
-        cls.user_email = 'test@example.com'
         cls.user_id = 3
         cls.content_ids = ['demoX', 'testX']
 
-    @mock.patch('license_manager.apps.api_client.enterprise.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
-    def test_create_pending_enterprise_user_successful(self, mock_oauth_client, mock_logger):
+    def test_create_pending_enterprise_users_successful(self, mock_oauth_client):
         """
-        Verify the ``create_pending_enterprise_user`` method does not retry or log an error on success
+        Verify the ``create_pending_enterprise_users`` method does not raise an exception for successful requests.
         """
         # Mock out the response from the lms
-        mock_oauth_client().post.return_value = MockResponse({'detail': 'Good Request'}, 201)
+        mock_oauth_client.return_value.post.return_value = MockResponse(
+            {'detail': 'Good Request'},
+            201,
+        )
 
-        EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
-        assert mock_oauth_client().post.call_count == 1
-        mock_logger.error.assert_not_called()
+        user_emails = [
+            'larry@stooges.com',
+            'moe@stooges.com',
+            'curly@stooges.com',
+        ]
+        enterprise_client = EnterpriseApiClient()
+        response = enterprise_client.create_pending_enterprise_users(self.uuid, user_emails)
+        mock_oauth_client.return_value.post.assert_called_once_with(
+            enterprise_client.pending_enterprise_learner_endpoint,
+            json=[
+                {'enterprise_customer': self.uuid, 'user_email': user_email}
+                for user_email in user_emails
+            ],
+        )
+        assert response.status_code == 201
 
-    @mock.patch('license_manager.apps.api_client.enterprise.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
-    def test_create_pending_enterprise_user_logs(self, mock_oauth_client, mock_logger):
+    def test_create_pending_enterprise_users_http_error(self, mock_oauth_client):
         """
-        Verify the ``create_pending_enterprise_user`` method logs an error for a status code of >=400.
+        Verify the ``create_pending_enterprise_users`` method does not raise an exception for successful requests.
         """
         # Mock out the response from the lms
-        mock_oauth_client().post.return_value = MockResponse({'detail': 'Bad Request'}, 400)
+        mock_oauth_client.return_value.post.return_value = MockResponse(
+            {'detail': 'Bad Request'},
+            400,
+            content=b'error response',
+        )
 
-        EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
-        mock_logger.error.assert_called_once()
-
-    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
-    def test_create_pending_enterprise_user_rate_limited(self, mock_oauth_client):
-        """
-        Verify the ``create_pending_enterprise_user`` method retries on a 429 response code.
-        """
-        rate_limited_response = MockResponse({'detail': 'Rate limited'}, 429)
-        # Mock out a few rate-limited response and one good from the lms
-        mock_oauth_client().post.side_effect = [
-            rate_limited_response,
-            rate_limited_response,
-            rate_limited_response,
-            MockResponse({'detail': 'Good Request'}, 201),
+        user_emails = [
+            'larry@stooges.com',
+            'moe@stooges.com',
+            'curly@stooges.com',
         ]
-
-        EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
-        assert mock_oauth_client().post.call_count == 4
-
-    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
-    def test_create_pending_enterprise_user_rate_with_error_retries(self, mock_oauth_client):
-        """
-        Verify the ``create_pending_enterprise_user`` method retries on a non 429 error code
-        """
-        error_response = MockResponse({'detail': '500 Internal Server'}, 500)
-        # Mock out a few rate-limited response and one good from the lms
-        mock_oauth_client().post.side_effect = [
-            error_response,
-            error_response,
-            MockResponse({'detail': 'Good Request'}, 201),
-        ]
-
-        EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
-        assert mock_oauth_client().post.call_count == 3
-
-    @mock.patch('license_manager.apps.api_client.enterprise.logger', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
-    def test_create_pending_enterprise_user_rate_with_max_error_retries(self, mock_oauth_client, mock_logger):
-        """
-        Verify the ``create_pending_enterprise_user`` method retries on a non 429 error code a max of 3 times and only
-        logs an error once
-        """
-        error_response = MockResponse({'detail': '500 Internal Server'}, 500)
-        # Mock out a few rate-limited response and one good from the lms
-        mock_oauth_client().post.side_effect = [
-            error_response,
-            error_response,
-            error_response,
-            MockResponse({'detail': 'Good Request'}, 201),
-        ]
-
-        EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
-        assert mock_oauth_client().post.call_count == 3
-        mock_logger.error.assert_called_once()
-
-    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
-    def test_create_pending_enterprise_user_rate_with_error_retries_and_rate_limiting(self, mock_oauth_client):
-        """
-        Verify the ``create_pending_enterprise_user`` method has 3 error retries if a rate limited error occurs
-        """
-        error_response = MockResponse({'detail': '500 Internal Server'}, 500)
-        rate_limited_response = MockResponse({'detail': 'Rate limited'}, 429)
-        # Mock out a few rate-limited response and one good from the lms
-        mock_oauth_client().post.side_effect = [
-            error_response,
-            error_response,
-            rate_limited_response,
-            error_response,
-            error_response,
-            error_response,
-            error_response,
-            MockResponse({'detail': 'Good Request'}, 201),
-        ]
-
-        EnterpriseApiClient().create_pending_enterprise_user(self.uuid, self.user_email)
-        assert mock_oauth_client().post.call_count == 6
+        enterprise_client = EnterpriseApiClient()
+        with self.assertRaises(requests.exceptions.HTTPError):
+            response = enterprise_client.create_pending_enterprise_users(self.uuid, user_emails)
+            mock_oauth_client.return_value.post.assert_called_once_with(
+                enterprise_client.pending_enterprise_learner_endpoint,
+                json=[
+                    {'enterprise_customer': self.uuid, 'user_email': user_email}
+                    for user_email in user_emails
+                ],
+            )
+            assert response.status_code == 400
+            assert response.content == 'error response'
 
     @mock.patch('license_manager.apps.api_client.enterprise.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
@@ -132,8 +89,7 @@ class EnterpriseApiClientTests(TestCase):
         Verify the ``update_course_enrollment_mode_for_user`` method logs an error for a status code of >=400.
         """
         # Mock out the response from the lms
-        mock_oauth_client().post.return_value = MockResponse({'detail': 'Bad Request'}, 400)
-        mock_oauth_client().post.return_value.content = 'error response'
+        mock_oauth_client().post.return_value = MockResponse({'detail': 'Bad Request'}, 400, content='error response')
 
         EnterpriseApiClient().revoke_course_enrollments_for_user(
             user_id=self.user_id,
