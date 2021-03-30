@@ -147,10 +147,10 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
 class CustomerAgreementAdmin(admin.ModelAdmin):
     read_only_fields = (
         'enterprise_customer_uuid',
-        'enterprise_customer_slug',
     )
     writable_fields = (
         'default_enterprise_catalog_uuid',
+        'enterprise_customer_slug',
     )
     fields = read_only_fields + writable_fields
     list_display = (
