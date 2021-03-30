@@ -32,9 +32,11 @@ class LicenseManagerCeleryTaskTests(TestCase):
         """
         Assert activation_task is called with the correct arguments
         """
-        mock_enterprise_client().get_enterprise_slug.return_value = self.enterprise_slug
-        mock_enterprise_client().get_enterprise_name.return_value = self.enterprise_name
-        mock_enterprise_client().get_enterprise_sender_alias.return_value = self.enterprise_sender_alias
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+        }
 
         tasks.activation_email_task(
             self.custom_template_text,
@@ -44,7 +46,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
 
         send_email_args, _ = mock_send_emails.call_args
         self._verify_mock_send_email_arguments(send_email_args)
-        mock_enterprise_client().get_enterprise_slug.assert_called_with(
+        mock_enterprise_client().get_enterprise_customer_data.assert_called_with(
             self.subscription_plan.enterprise_customer_uuid
         )
 
@@ -55,9 +57,11 @@ class LicenseManagerCeleryTaskTests(TestCase):
         """
         Tests that when sending the activate email fails, an error gets logged
         """
-        mock_enterprise_client().get_enterprise_slug.return_value = self.enterprise_slug
-        mock_enterprise_client().get_enterprise_name.return_value = self.enterprise_name
-        mock_enterprise_client().get_enterprise_sender_alias.return_value = self.enterprise_sender_alias
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+        }
 
         with mock_send_emails:
             tasks.activation_email_task(
@@ -74,9 +78,11 @@ class LicenseManagerCeleryTaskTests(TestCase):
         """
         Assert send_reminder_email_task is called with the correct arguments
         """
-        mock_enterprise_client().get_enterprise_slug.return_value = self.enterprise_slug
-        mock_enterprise_client().get_enterprise_name.return_value = self.enterprise_name
-        mock_enterprise_client().get_enterprise_sender_alias.return_value = self.enterprise_sender_alias
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+        }
         tasks.send_reminder_email_task(
             self.custom_template_text,
             self.email_recipient_list,
@@ -85,7 +91,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
 
         send_email_args, _ = mock_send_emails.call_args
         self._verify_mock_send_email_arguments(send_email_args)
-        mock_enterprise_client().get_enterprise_slug.assert_called_with(
+        mock_enterprise_client().get_enterprise_customer_data.assert_called_with(
             self.subscription_plan.enterprise_customer_uuid
         )
         # Verify the 'last_remind_date' of all licenses have been updated
@@ -97,9 +103,11 @@ class LicenseManagerCeleryTaskTests(TestCase):
         """
         Tests that when sending the remind email fails, last_remind_date is not updated
         """
-        mock_enterprise_client().get_enterprise_slug.return_value = self.enterprise_slug
-        mock_enterprise_client().get_enterprise_name.return_value = self.enterprise_name
-        mock_enterprise_client().get_enterprise_sender_alias.return_value = self.enterprise_sender_alias
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+        }
         with mock_send_emails:
             tasks.send_reminder_email_task(
                 self.custom_template_text,

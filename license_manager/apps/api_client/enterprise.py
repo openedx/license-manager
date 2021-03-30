@@ -21,48 +21,17 @@ class EnterpriseApiClient(BaseOAuthClient):
     bulk_licensed_enrollments_expiration_endpoint = api_base_url \
         + 'licensed-enterprise-course-enrollment/bulk_licensed_enrollments_expiration/'
 
-    def get_enterprise_slug(self, enterprise_customer_uuid):
+    def get_enterprise_customer_data(self, enterprise_customer_uuid):
         """
-        Gets the enterprise slug for the enterprise associated with a customer.
+        Gets the data for an EnterpriseCustomer with a given UUID.
 
         Arguments:
             enterprise_customer_uuid (UUID): UUID of the enterprise customer associated with an enterprise
-
         Returns:
-            string: The enterprise_slug for the enterprise
+            response (dict): JSON response data
         """
-        endpoint = self.enterprise_customer_endpoint + str(enterprise_customer_uuid) + '/'
-        response = self.client.get(endpoint).json()
-        return response.get('slug', None)
-
-    def get_enterprise_name(self, enterprise_customer_uuid):
-        """
-        Gets the enterprise name for the enterprise associated with a customer.
-
-        Arguments:
-            enterprise_customer_uuid (UUID): UUID of the enterprise customer associated with an enterprise
-
-        Returns:
-            string: The enterprise_name for the enterprise
-        """
-        endpoint = self.enterprise_customer_endpoint + str(enterprise_customer_uuid) + '/'
-        response = self.client.get(endpoint).json()
-        return response.get('name', None)
-
-    def get_enterprise_sender_alias(self, enterprise_customer_uuid):
-        """
-        Gets the sender alias for the enterprise associated with a customer.
-
-        Arguments:
-            enterprise_customer_uuid (UUID): UUID of the enterprise customer associated with an enterprise
-
-        Returns:
-            string: The sender alias for the enterprise, if sender alias for the enterprise is None or not present
-                then the default alias `edX Support Team` is returned.
-        """
-        endpoint = urljoin(self.enterprise_customer_endpoint, str(enterprise_customer_uuid)) + '/'
-        response = self.client.get(endpoint).json()
-        return response.get('sender_alias', None) or 'edX Support Team'
+        endpoint = '{}{}/'.format(self.enterprise_customer_endpoint, str(enterprise_customer_uuid))
+        return self.client.get(endpoint).json()
 
     @backoff.on_predicate(
         # Use an exponential backoff algorithm
