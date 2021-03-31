@@ -13,7 +13,7 @@ def create_relationships(apps, schema_editor):
     subscriptions_with_customers = SubscriptionPlan.objects.exclude(enterprise_customer_uuid=None)
     for plan in subscriptions_with_customers:
         customer_uuid = plan.enterprise_customer_uuid
-        enterprise_slug = EnterpriseApiClient().get_enterprise_slug(customer_uuid)
+        enterprise_slug = EnterpriseApiClient().get_enterprise_customer_data(customer_uuid).get('slug')
         customer_agreement, _ = CustomerAgreement.objects.get_or_create(
             enterprise_customer_uuid=customer_uuid,
             defaults={
