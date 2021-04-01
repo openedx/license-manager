@@ -31,6 +31,7 @@ from license_manager.apps.api.tasks import (
     activation_email_task,
     link_learners_to_enterprise_task,
     send_reminder_email_task,
+    send_onboarding_email_task,
 )
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import constants
@@ -966,6 +967,13 @@ class LicenseActivationView(LicenseBaseView):
             user_license.activation_date = localized_utcnow()
             user_license.lms_user_id = self.lms_user_id
             user_license.save()
+
+            # Following successful license activation, send learner an email
+            # to help them get started using the Enterprise Learner Portal.
+            send_onboarding_email_task.delay(
+                user_license.subscription_plan.enterprise_customer_uuid,
+                user_license.user_email,
+            )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

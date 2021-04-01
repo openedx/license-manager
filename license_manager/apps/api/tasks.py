@@ -6,6 +6,7 @@ from celery_utils.logged_task import LoggedTask
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.emails import (
     send_activation_emails,
+    send_onboarding_email,
     send_revocation_cap_notification_email,
 )
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
@@ -106,6 +107,17 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
         return
 
     License.set_date_fields_to_now(pending_licenses, ['last_remind_date'])
+
+
+@shared_task(base=LoggedTask)
+def send_onboarding_email_task(enterprise_customer_uuid, user_email):
+    """
+    Asynchronously sends onboarding email to learner. Intended for use following license activation.
+    """
+    try:
+        send_onboarding_email(enterprise_customer_uuid, user_email)
+    except Exception:  # pylint: disable=broad-except
+        logger.error('Onboarding email to {} failed'.format(user_email), exc_info=True)
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)

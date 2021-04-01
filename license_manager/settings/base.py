@@ -341,11 +341,11 @@ SUBSCRIPTIONS_FROM_EMAIL = 'from@example.com'  # Dummy from email address for de
 CUSTOMER_SUCCESS_EMAIL_ADDRESS = 'ecs@example.com'  # Dummy ECS email address for development use
 # End email configuration
 
+# Default URLS for external services
 ENTERPRISE_CATALOG_URL = os.environ.get('ENTERPRISE_CATALOG_URL', '')
-
-# Default URLS for LMS and learner-portal
 ENTERPRISE_LEARNER_PORTAL_BASE_URL = os.environ.get('ENTERPRISE_LEARNER_PORTAL_BASE_URL', '')
 LMS_URL = os.environ.get('LMS_URL', '')
+SUPPORT_SITE_URL = os.environ.get('SUPPORT_SITE_URL', '')
 
 # Set up system-to-feature roles mapping for edx-rbac
 SYSTEM_TO_FEATURE_ROLE_MAPPING = {

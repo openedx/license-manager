@@ -1,0 +1,32 @@
+{% load i18n %}
+
+{% trans "Welcome to edX Subscriptions!" %}
+
+{% blocktrans trimmed %}
+On behalf of edX, we're excited to have you join our global community of over 35 million learners! Your edX
+subscription is a special benefit for you through your affiliation with {{ ENTERPRISE_NAME }}.
+{% endblocktrans %}
+
+{% trans "Get started learning on edX now by following the steps below:" %}
+
+{% trans "1. Bookmark your Learner Portal" %}
+{% blocktrans trimmed %}
+Your {{ ENTERPRISE_NAME }} Learner Portal is your home base to see all of the courses included in your
+{{ ENTERPRISE_NAME }} subscription catalog. This link is unique for {{ ENTERPRISE_NAME }} subscribers so be sure to add
+it to your bookmarks!
+{% endblocktrans %}
+{% trans "Your Learner Portal: " %}{{ LICENSE_ACTIVATION_LINK }}
+
+{% trans "2. Find a course" %}
+{% blocktrans trimmed %}
+Click "Find a Course" above the banner. You can search for subjects, course names, and content providers. Once you find
+the right course, click "Enroll". You can even save courses you are interested in for later.
+{% endblocktrans %}
+
+{% trans "3. Enroll and start your journey" %}
+{% blocktrans trimmed %}
+The edX learner support team is available to answer any questions. Use the great information at our Help Center
+({{ HELP_CENTER_URL }}), or use info@edx.org to contact us.
+{% endblocktrans %}
+
+{% trans "We hope you love learning on edX!" %}
