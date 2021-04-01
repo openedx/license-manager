@@ -1,5 +1,6 @@
 {% extends "email/email_base.html" %}
 {% load i18n %}
+{% load static %}
 {% block body %}
     <!-- Message Body -->
     <h2>
@@ -17,7 +18,11 @@
     <table>
         <tr>
             <td>
-                <!-- Icon -->
+                <img src="{% static 'img/edX_Icon_CGvirtualproctor_2.png' %}"
+                     alt="Bookmark your Learner Portal"
+                     height="100"
+                     width="100"
+                >
             </td>
             <td>
                 <h3>
@@ -38,7 +43,7 @@
             </td>
             <td>
                 <p>
-                    <a href="{{ LEARNER_PORTAL_LINK }}"
+                    <a href="{{ LEARNER_PORTAL_LINK|safe }}"
                     style="
                         color: #ffffff;
                         text-decoration: none;
@@ -57,7 +62,11 @@
         </tr>
         <tr>
             <td>
-                <!-- Icon -->
+                <img src="{% static 'img/edX_Icon_1000courses.png' %}"
+                     alt="Find a course"
+                     height="100"
+                     width="100"
+                >
             </td>
             <td>
                 <h3>
@@ -74,7 +83,11 @@
         </tr>
         <tr>
             <td>
-                <!-- Icon -->
+                <img src="{% static 'img/edX_Icon_LearningNeuroscience.png' %}"
+                     alt="Enroll and start your journey"
+                     height="100"
+                     width="100"
+                >
             </td>
             <td>
                 <h3>
@@ -83,7 +96,7 @@
                 <p>
                     {% blocktrans trimmed %}
                         The edX learner support team is available to answer any questions. Use the great information at
-                        our <a href="{{ HELP_CENTER_URL }}">Help Center</a>, or use
+                        our <a href="{{ HELP_CENTER_URL|safe }}">Help Center</a>, or use
                         <a href="mailto:info@edx.org">info@edx.org</a> to contact us.
                     {% endblocktrans %}
                 </p>
@@ -91,6 +104,7 @@
         </tr>
     </table>
     <hr>
+    <br>
     <p>
         {% trans "We hope you love learning on edX!" %}
     </p>
