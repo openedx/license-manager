@@ -30,8 +30,8 @@ from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_email_task,
     link_learners_to_enterprise_task,
-    send_reminder_email_task,
     send_onboarding_email_task,
+    send_reminder_email_task,
 )
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import constants

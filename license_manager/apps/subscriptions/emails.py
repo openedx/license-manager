@@ -16,8 +16,8 @@ from license_manager.apps.subscriptions.constants import (
 )
 from license_manager.apps.subscriptions.utils import (
     chunks,
-    get_license_activation_link,
     get_learner_portal_url,
+    get_license_activation_link,
 )
 
 
