@@ -3,6 +3,7 @@ Tests for the license-manager API celery tasks
 """
 from smtplib import SMTPException
 from unittest import mock
+from uuid import uuid4
 
 from django.test import TestCase
 
@@ -18,10 +19,12 @@ class LicenseManagerCeleryTaskTests(TestCase):
     def setUp(self):
         super().setUp()
         test_email_data = make_test_email_data()
+        self.user_email = 'test_email@example.com'
         self.subscription_plan = test_email_data['subscription_plan']
         self.custom_template_text = test_email_data['custom_template_text']
         self.email_recipient_list = test_email_data['email_recipient_list']
         self.assigned_licenses = self.subscription_plan.licenses.filter(status=constants.ASSIGNED).order_by('uuid')
+        self.enterprise_uuid = uuid4()
         self.enterprise_slug = 'mock-enterprise'
         self.enterprise_name = 'Mock Enterprise'
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
@@ -134,3 +137,11 @@ class LicenseManagerCeleryTaskTests(TestCase):
         assert self.enterprise_slug == actual_enterprise_slug
         assert self.enterprise_name == actual_enterprise_name
         assert self.enterprise_sender_alias == actual_enterprise_sender_alias
+
+    @mock.patch('license_manager.apps.api.tasks.send_onboarding_email', return_value=mock.MagicMock())
+    def test_onboarding_email_task(self, mock_send_onboarding_email):
+        """
+        Tests that the onboarding email task sends the email
+        """
+        tasks.send_onboarding_email_task(self.enterprise_uuid, self.user_email)
+        mock_send_onboarding_email.assert_called_with(self.enterprise_uuid, self.user_email)

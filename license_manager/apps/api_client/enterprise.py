@@ -1,5 +1,4 @@
 import logging
-from urllib.parse import urljoin
 
 import backoff
 from django.conf import settings
