@@ -2397,7 +2397,8 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
 
         assert status.HTTP_404_NOT_FOUND == response.status_code
 
-    def test_activate_an_assigned_license(self):
+    @mock.patch('license_manager.apps.api.v1.views.send_onboarding_email_task.delay')
+    def test_activate_an_assigned_license(self, mock_onboarding_email_task):
         self._assign_learner_roles(
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
@@ -2414,6 +2415,10 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         assert constants.ACTIVATED == license_to_be_activated.status
         assert self.lms_user_id == license_to_be_activated.lms_user_id
         assert self.now == license_to_be_activated.activation_date
+        mock_onboarding_email_task.assert_called_with(
+            self.enterprise_customer_uuid,
+            self.user.email,
+        )
 
     def test_license_already_activated_returns_204(self):
         self._assign_learner_roles(

@@ -2,17 +2,21 @@ from django.conf import settings
 from django.core import mail
 from django.template.loader import get_template
 
+from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
     LICENSE_ACTIVATION_EMAIL_SUBJECT,
     LICENSE_ACTIVATION_EMAIL_TEMPLATE,
     LICENSE_BULK_OPERATION_BATCH_SIZE,
     LICENSE_REMINDER_EMAIL_SUBJECT,
     LICENSE_REMINDER_EMAIL_TEMPLATE,
+    ONBOARDING_EMAIL_SUBJECT,
+    ONBOARDING_EMAIL_TEMPLATE,
     REVOCATION_CAP_NOTIFICATION_EMAIL_SUBJECT,
     REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE,
 )
 from license_manager.apps.subscriptions.utils import (
     chunks,
+    get_learner_portal_url,
     get_license_activation_link,
 )
 
@@ -32,6 +36,34 @@ def send_revocation_cap_notification_email(subscription_plan, enterprise_name, e
         'HIDE_EMAIL_FOOTER_MARKETING': True,
     }
     email = _message_from_context_and_template(context, enterprise_sender_alias)
+    email.send()
+
+
+def send_onboarding_email(enterprise_customer_uuid, user_email):
+    """
+    Sends onboarding email to learner. Intended for use following license activation.
+
+    Arguments:
+        enterprise_customer_uuid (UUID): unique identifier of the EnterpriseCustomer
+        that is linked to the SubscriptionPlan associated with the activated license
+        user_email (str): email of the learner whose license has just been activated
+    """
+    enterprise_customer_data = EnterpriseApiClient().get_enterprise_customer_data(enterprise_customer_uuid)
+    enterprise_name = enterprise_customer_data.get('name')
+    enterprise_slug = enterprise_customer_data.get('slug')
+    sender_alias = enterprise_customer_data.get('sender_alias', 'edX Support Team')
+    context = {
+        'subject': ONBOARDING_EMAIL_SUBJECT,
+        'template_name': ONBOARDING_EMAIL_TEMPLATE,
+        'ENTERPRISE_NAME': enterprise_name,
+        'ENTERPRISE_SLUG': enterprise_slug,
+        'HELP_CENTER_URL': settings.SUPPORT_SITE_URL,
+        'LEARNER_PORTAL_LINK': get_learner_portal_url(enterprise_slug),
+        'MOBILE_STORE_URLS': settings.MOBILE_STORE_URLS,
+        'RECIPIENT_EMAIL': user_email,
+        'SOCIAL_MEDIA_FOOTER_URLS': settings.SOCIAL_MEDIA_FOOTER_URLS,
+    }
+    email = _message_from_context_and_template(context, sender_alias)
     email.send()
 
 

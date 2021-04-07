@@ -65,6 +65,23 @@ CORS_ORIGIN_WHITELIST = [
 ENTERPRISE_LEARNER_PORTAL_BASE_URL = 'http://localhost:8734'
 ENTERPRISE_CATALOG_URL = 'http://enterprise.catalog.app:18160'
 LMS_URL = 'http://edx.devstack.lms:18000'
+SUPPORT_SITE_URL = 'https://support.edx.org'
+
+# URLs used for email footers
+MOBILE_STORE_URLS = {
+    'apple': 'https://itunes.apple.com/us/app/edx/id945480667?mt=8',
+    'google': 'https://play.google.com/store/apps/details?id=org.edx.mobile',
+}
+SOCIAL_MEDIA_FOOTER_URLS = {
+    'facebook': 'http://www.facebook.com/EdxOnline',
+    'instagram': 'https://www.instagram.com/edxonline/',
+    'linkedin': 'http://www.linkedin.com/company/edx',
+    'meetup': 'http://www.meetup.com/edX-Global-Community',
+    'reddit': 'http://www.reddit.com/r/edx',
+    'tumblr': 'http://edxstories.tumblr.com/',
+    'twitter': 'https://twitter.com/edXOnline',
+    'youtube': 'https://www.youtube.com/user/edxonline',
+}
 
 # Feature Toggles
 FEATURES[EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API] = True

@@ -1,4 +1,5 @@
 import logging
+from smtplib import SMTPException
 
 from celery import shared_task
 from celery_utils.logged_task import LoggedTask
@@ -9,6 +10,7 @@ from license_manager.apps.subscriptions.constants import (
 )
 from license_manager.apps.subscriptions.emails import (
     send_activation_emails,
+    send_onboarding_email,
     send_revocation_cap_notification_email,
 )
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
@@ -47,7 +49,7 @@ def activation_email_task(custom_template_text, email_recipient_list, subscripti
         send_activation_emails(
             custom_template_text, pending_licenses, enterprise_slug, enterprise_name, enterprise_sender_alias
         )
-    except Exception:  # pylint: disable=broad-except
+    except SMTPException:
         msg = 'License manager activation email sending received an exception for enterprise: {}.'.format(
             enterprise_name
         )
@@ -102,7 +104,7 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
             enterprise_sender_alias,
             is_reminder=True
         )
-    except Exception:  # pylint: disable=broad-except
+    except SMTPException:
         msg = 'License manager reminder email sending received an exception for enterprise: {}.'.format(
             enterprise_name
         )
@@ -111,6 +113,17 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
         return
 
     License.set_date_fields_to_now(pending_licenses, ['last_remind_date'])
+
+
+@shared_task(base=LoggedTask)
+def send_onboarding_email_task(enterprise_customer_uuid, user_email):
+    """
+    Asynchronously sends onboarding email to learner. Intended for use following license activation.
+    """
+    try:
+        send_onboarding_email(enterprise_customer_uuid, user_email)
+    except SMTPException:
+        logger.error('Onboarding email to {} failed'.format(user_email), exc_info=True)
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -125,13 +138,13 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
     try:
         enterprise_api_client = EnterpriseApiClient()
         enterprise_api_client.revoke_course_enrollments_for_user(user_id=user_id, enterprise_id=enterprise_id)
-    except Exception as exc:  # pylint: disable=broad-except
+    except Exception:  # pylint: disable=broad-except
         logger.error(
-            "Revocation of course enrollments FAILED for user [{user_id}], enterprise [{enterprise_id}]: {exc}".format(
+            'Revocation of course enrollments FAILED for user [{user_id}], enterprise [{enterprise_id}]'.format(
                 user_id=user_id,
                 enterprise_id=enterprise_id,
-                exc=exc,
-            )
+            ),
+            exc_info=True,
         )
 
 
@@ -146,12 +159,12 @@ def license_expiration_task(license_uuids):
     try:
         enterprise_api_client = EnterpriseApiClient()
         enterprise_api_client.bulk_licensed_enrollments_expiration(expired_license_uuids=license_uuids)
-    except Exception as exc:  # pylint: disable=broad-except
+    except Exception:  # pylint: disable=broad-except
         logger.error(
-            "Expiration of course enrollments FAILED for licenses [{license_uuids}]: {exc}".format(
+            "Expiration of course enrollments FAILED for licenses [{license_uuids}]".format(
                 license_uuids=license_uuids,
-                exc=exc,
-            )
+            ),
+            exc_info=True,
         )
 
 
@@ -175,5 +188,5 @@ def send_revocation_cap_notification_email_task(subscription_uuid):
             enterprise_name,
             enterprise_sender_alias,
         )
-    except Exception:  # pylint: disable=broad-except
+    except SMTPException:
         logger.error('Revocation cap notification email sending received an exception.', exc_info=True)

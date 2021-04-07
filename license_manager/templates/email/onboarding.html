@@ -1,0 +1,111 @@
+{% extends "email/email_base.html" %}
+{% load i18n %}
+{% load static %}
+{% block body %}
+    <!-- Message Body -->
+    <h2>
+        {% trans "Welcome to edX Subscriptions!" %}
+    </h2>
+    <p>
+        {% trans "On behalf of edX, we're excited to have you join our global community of over 35 million learners!" %}
+        {% blocktrans %}
+            Your edX subscription is a special benefit for you through your affiliation with {{ ENTERPRISE_NAME }}.
+        {% endblocktrans %}
+    </p>
+    <p>
+        {% trans "Get started learning on edX now by following the steps below:" %}
+    </p>
+    <table>
+        <tr>
+            <td>
+                <img src="{% static 'img/edX_Icon_CGvirtualproctor_2.png' %}"
+                     alt=""
+                     height="100"
+                     width="100"
+                >
+            </td>
+            <td style="padding-left: 20px">
+                <h3>
+                    {% trans "1. Bookmark your Learner Portal" %}
+                </h3>
+                <p>
+                    {% blocktrans trimmed %}
+                        Your {{ ENTERPRISE_NAME }} Learner Portal is your home base to see all of the courses included
+                        in your {{ ENTERPRISE_NAME }} subscription catalog. This link is unique for
+                        {{ ENTERPRISE_NAME }} subscribers so be sure to add it to your bookmarks!
+                    {% endblocktrans %}
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <!-- Empty column to force button alignment with second column -->
+            </td>
+            <td style="padding-left: 20px">
+                <p>
+                    <a href="{{ LEARNER_PORTAL_LINK|safe }}"
+                    style="
+                        color: #ffffff;
+                        text-decoration: none;
+                        border-radius: 4px;
+                        -webkit-border-radius: 4px;
+                        -moz-border-radius: 4px;
+                        background-color: #002b2b;
+                        padding: 12px 50px;
+                        display: inline-block;
+                    ">
+                        {# old email clients require the use of the font tag :( #}
+                        <font color="#ffffff"><b>{% trans "Your Learner Portal" %}</b></font>
+                    </a>
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="{% static 'img/edX_Icon_1000courses.png' %}"
+                     alt=""
+                     height="100"
+                     width="100"
+                >
+            </td>
+            <td style="padding-left: 20px">
+                <h3>
+                    {% trans "2. Find a course" %}
+                </h3>
+                <p>
+                    {% blocktrans trimmed %}
+                        Click "Find a Course" above the banner. You can search for subjects, course names, and content
+                        providers. Once you find the right course, click "Enroll". You can even save courses you are
+                        interested in for later.
+                    {% endblocktrans %}
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="{% static 'img/edX_Icon_LearningNeuroscience.png' %}"
+                     alt=""
+                     height="100"
+                     width="100"
+                >
+            </td>
+            <td style="padding-left: 20px">
+                <h3>
+                    {% trans "3. Enroll and start your journey" %}
+                </h3>
+                <p>
+                    {% blocktrans trimmed %}
+                        The edX learner support team is available to answer any questions. Use the great information at
+                        our <a href="{{ HELP_CENTER_URL|safe }}">Help Center</a>, or use
+                        <a href="mailto:info@edx.org">info@edx.org</a> to contact us.
+                    {% endblocktrans %}
+                </p>
+            </td>
+        </tr>
+    </table>
+    <hr style="padding: 20px 0 30px 0;">
+    <p>
+        {% trans "We hope you love learning on edX!" %}
+    </p>
+    <!-- End Message Body -->
+{% endblock body %}

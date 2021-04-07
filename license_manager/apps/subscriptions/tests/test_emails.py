@@ -1,5 +1,6 @@
+from unittest import mock
+from uuid import uuid4
 
-from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 
@@ -11,9 +12,11 @@ class EmailTests(TestCase):
     def setUp(self):
         super().setUp()
         test_email_data = make_test_email_data()
+        self.user_email = 'emailtest@example.com'
         self.subscription_plan = test_email_data['subscription_plan']
         self.licenses = test_email_data['licenses']
         self.custom_template_text = test_email_data['custom_template_text']
+        self.enterprise_uuid = uuid4()
         self.enterprise_slug = 'mock-enterprise'
         self.email_recipient_list = test_email_data['email_recipient_list']
         self.enterprise_name = 'Mock Enterprise'
@@ -57,3 +60,13 @@ class EmailTests(TestCase):
         message = mail.outbox[0]
         self.assertEqual(message.subject, constants.LICENSE_REMINDER_EMAIL_SUBJECT)
         self.assertFalse('Activate' in message.body)
+
+    @mock.patch('license_manager.apps.subscriptions.emails.EnterpriseApiClient')
+    def test_onboarding_email(self, mock_enterprise_api_client):
+        """
+        Tests that onboarding emails are correctly sent.
+        """
+        emails.send_onboarding_email(self.enterprise_uuid, self.user_email)
+        mock_enterprise_api_client.return_value.get_enterprise_customer_data.assert_called_with(self.enterprise_uuid)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, constants.ONBOARDING_EMAIL_SUBJECT)
