@@ -14,7 +14,10 @@ from license_manager.apps.subscriptions.emails import (
     send_revocation_cap_notification_email,
 )
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
-from license_manager.apps.subscriptions.utils import chunks
+from license_manager.apps.subscriptions.utils import (
+    chunks,
+    get_enterprise_sender_alias,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -43,7 +46,7 @@ def activation_email_task(custom_template_text, email_recipient_list, subscripti
     enterprise_customer = enterprise_api_client.get_enterprise_customer_data(subscription_plan.enterprise_customer_uuid)
     enterprise_slug = enterprise_customer.get('slug')
     enterprise_name = enterprise_customer.get('name')
-    enterprise_sender_alias = enterprise_customer.get('sender_alias', 'edX Support Team')
+    enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
 
     try:
         send_activation_emails(
@@ -93,7 +96,7 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
     enterprise_customer = enterprise_api_client.get_enterprise_customer_data(subscription_plan.enterprise_customer_uuid)
     enterprise_slug = enterprise_customer.get('slug')
     enterprise_name = enterprise_customer.get('name')
-    enterprise_sender_alias = enterprise_customer.get('sender_alias', 'edX Support Team')
+    enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
 
     try:
         send_activation_emails(
@@ -180,7 +183,7 @@ def send_revocation_cap_notification_email_task(subscription_uuid):
     enterprise_api_client = EnterpriseApiClient()
     enterprise_customer = enterprise_api_client.get_enterprise_customer_data(subscription_plan.enterprise_customer_uuid)
     enterprise_name = enterprise_customer.get('name')
-    enterprise_sender_alias = enterprise_customer.get('sender_alias', 'edX Support Team')
+    enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
 
     try:
         send_revocation_cap_notification_email(

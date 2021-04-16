@@ -16,6 +16,7 @@ from license_manager.apps.subscriptions.constants import (
 )
 from license_manager.apps.subscriptions.utils import (
     chunks,
+    get_enterprise_sender_alias,
     get_learner_portal_url,
     get_license_activation_link,
 )
@@ -48,10 +49,11 @@ def send_onboarding_email(enterprise_customer_uuid, user_email):
         that is linked to the SubscriptionPlan associated with the activated license
         user_email (str): email of the learner whose license has just been activated
     """
-    enterprise_customer_data = EnterpriseApiClient().get_enterprise_customer_data(enterprise_customer_uuid)
-    enterprise_name = enterprise_customer_data.get('name')
-    enterprise_slug = enterprise_customer_data.get('slug')
-    sender_alias = enterprise_customer_data.get('sender_alias', 'edX Support Team')
+    enterprise_customer = EnterpriseApiClient().get_enterprise_customer_data(enterprise_customer_uuid)
+    enterprise_name = enterprise_customer.get('name')
+    enterprise_slug = enterprise_customer.get('slug')
+    enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
+
     context = {
         'subject': ONBOARDING_EMAIL_SUBJECT,
         'template_name': ONBOARDING_EMAIL_TEMPLATE,
@@ -63,7 +65,7 @@ def send_onboarding_email(enterprise_customer_uuid, user_email):
         'RECIPIENT_EMAIL': user_email,
         'SOCIAL_MEDIA_FOOTER_URLS': settings.SOCIAL_MEDIA_FOOTER_URLS,
     }
-    email = _message_from_context_and_template(context, sender_alias)
+    email = _message_from_context_and_template(context, enterprise_sender_alias)
     email.send()
 
 
