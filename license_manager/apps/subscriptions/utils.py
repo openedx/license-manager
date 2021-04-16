@@ -4,7 +4,9 @@ from datetime import date, datetime
 from django.conf import settings
 from pytz import UTC
 
-from license_manager.apps.subscriptions.constants import DEFAULT_EMAIL_SENDER_ALIAS
+from license_manager.apps.subscriptions.constants import (
+    DEFAULT_EMAIL_SENDER_ALIAS,
+)
 
 
 def localized_utcnow():
