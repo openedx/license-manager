@@ -4,6 +4,10 @@ from datetime import date, datetime
 from django.conf import settings
 from pytz import UTC
 
+from license_manager.apps.subscriptions.constants import (
+    DEFAULT_EMAIL_SENDER_ALIAS,
+)
+
 
 def localized_utcnow():
     """Helper function to return localized utcnow()."""
@@ -44,3 +48,11 @@ def get_license_activation_link(enterprise_slug, activation_key):
         str(activation_key),
         'activate'
     ))
+
+
+def get_enterprise_sender_alias(enterprise_customer):
+    """
+    Returns the configured sender alias for an enterprise, if configured; otherwise
+    returns the default sender alias.
+    """
+    return enterprise_customer.get('sender_alias') or DEFAULT_EMAIL_SENDER_ALIAS
