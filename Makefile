@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 .PHONY: help clean piptools requirements ci_requirements dev_requirements \
-        validation_requirements doc_requirementsprod_requirements static shell \
+        validation_requirements doc_requirements production-requirements static shell \
         test coverage isort_check isort style lint quality pii_check validate \
         migrate html_coverage upgrade extract_translation dummy_translations \
         compile_translations fake_translations  pull_translations \
@@ -50,7 +50,7 @@ validation_requirements: ## sync to requirements for testing & code quality chec
 doc_requirements:
 	pip-sync -q requirements/doc.txt
 
-prod_requirements: ## install requirements for production
+production-requirements: piptools ## install requirements for production
 	pip-sync -q requirements/production.txt
 
 static: ## generate static files
