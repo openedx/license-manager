@@ -69,6 +69,8 @@ class LicenseSerializer(serializers.ModelSerializer):
     """
     Serializer for the `License` model.
     """
+    subscription_plan = SubscriptionPlanSerializer(read_only=True)
+
     class Meta:
         model = License
         fields = [
@@ -77,6 +79,7 @@ class LicenseSerializer(serializers.ModelSerializer):
             'user_email',
             'activation_date',
             'last_remind_date',
+            'subscription_plan',
         ]
         if settings.FEATURES[EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API]:
             fields.append('activation_key')
