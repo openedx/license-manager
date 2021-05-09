@@ -751,37 +751,28 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         """
         Returns the enterprise bulk enrollment API response after validating that each user requesting to be enrolled
         has a valid subscription for each of the requested courses.
-
         Expected params:
             - notify (bool): Whether or not learners should be notified of their enrollments.
-
             - course_run_keys (list of strings): An array of course run keys in which all provided learners will be
             enrolled in
             Example:
                 course_run_keys: ['course-v1:edX+DemoX+Demo_Course', 'course-v2:edX+The+Second+DemoX+Demo_Course', ... ]
-
-            - emails (string): A single string of multiple learner emails separated with a `\n` (new line) character
+            - emails (string): A single string of multiple learner emails separated with a newline character
             Example:
-                emails: 'testuser@abc.com\nlearner@example.com\newuser@wow.com'
-
+                emails: 'testuser@abc.com\\nlearner@example.com\\newuser@wow.com'
             - enterprise_customer_uuid (string): the uuid of the associated enterprise customer provided as a query
             params.
-
         Expected Return Values:
             Success cases:
                 - All learners have licenses and are enrolled - {}, 201
-
             Partial failure cases:
                 License verification and bulk enterprise enrollment happen non-transactionally, meaning that a subset of
                 learners failing one step will not stop others from continuing the enrollment flow. As such, partial
                 failures will be reported in the following ways:
-
                 Fails license verification:
-                    response includes: {'failed_license_checks': [<users who do not have valid licenses>]}
-
+                    response includes: {'failed_license_checks': [<users who do not have valid licenses>]
                 Fails Enrollment:
                     response includes {'failed_enrollments': [<users who were not able to be enrolled>]
-
                 Fails Validation (something goes wrong with requesting enrollments):
                     response includes:
                      {'bulk_enrollment_errors': [<errors returned by the bulk enrollment endpoint>]}
