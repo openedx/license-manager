@@ -770,9 +770,9 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                 learners failing one step will not stop others from continuing the enrollment flow. As such, partial
                 failures will be reported in the following ways:
                 Fails license verification:
-                    response includes: {'failed_license_checks': [<users who do not have valid licenses>]
+                    response includes: {'failed_license_checks': [<users who do not have valid licenses>]}
                 Fails Enrollment:
-                    response includes {'failed_enrollments': [<users who were not able to be enrolled>]
+                    response includes {'failed_enrollments': [<users who were not able to be enrolled>]}
                 Fails Validation (something goes wrong with requesting enrollments):
                     response includes:
                      {'bulk_enrollment_errors': [<errors returned by the bulk enrollment endpoint>]}
