@@ -269,6 +269,7 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
 
 class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, viewsets.GenericViewSet):
     """
+    !!Random DELETE ME!!
     This Viewset allows read operations of all Licenses for a given user-customer pair.
     """
     authentication_classes = [JwtAuthentication]
