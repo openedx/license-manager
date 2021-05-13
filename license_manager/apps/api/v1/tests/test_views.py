@@ -667,10 +667,14 @@ def test_subscription_plan_detail_staff_user_200(api_client, staff_user, boolean
         expected_days_until_renewal_expiration=SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
     )
 
-
 @pytest.mark.django_db
 def test_license_list_staff_user_200(api_client, staff_user, boolean_toggle):
-    subscription, assigned_license, unassigned_license = _subscription_and_licenses()
+    (subscription,
+    assigned_license,
+    unassigned_license,
+    activated_license,
+    revoked_license) = _subscription_and_licenses()
+
     _assign_role_via_jwt_or_db(
         api_client,
         staff_user,
@@ -685,6 +689,23 @@ def test_license_list_staff_user_200(api_client, staff_user, boolean_toggle):
     assert len(results_by_uuid) == 4
     _assert_license_response_correct(results_by_uuid[str(unassigned_license.uuid)], unassigned_license)
     _assert_license_response_correct(results_by_uuid[str(assigned_license.uuid)], assigned_license)
+    _assert_license_response_correct(results_by_uuid[str(activated_license.uuid)], activated_license)
+    _assert_license_response_correct(results_by_uuid[str(revoked_license.uuid)], revoked_license)
+
+@pytest.mark.django_db
+def test_license_list_active_licenses(api_client, staff_user, boolean_toggle):
+    (subscription,
+    assigned_license,
+    unassigned_license,
+    activated_license,
+    revoked_license) = _subscription_and_licenses()
+
+    _assign_role_via_jwt_or_db(
+        api_client,
+        staff_user,
+        subscription.enterprise_customer_uuid,
+        boolean_toggle,
+    )
 
 @pytest.mark.django_db
 def test_license_list_staff_user_200(api_client, staff_user, boolean_toggle):
@@ -863,10 +884,10 @@ def _assign_role_via_jwt_or_db(
             role=SubscriptionsFeatureRole.objects.get(name=subscriptions_role),
         )
 
-
 def _subscription_and_licenses():
     """
-    Helper method to return a SubscriptionPlan, an unassigned license, active license, revoked licenseand an assigned license.
+    Helper method to return a SubscriptionPlan, an unassigned license, active license, revoked license and an assigned
+    license.
     """
     subscription = SubscriptionPlanFactory.create()
 
