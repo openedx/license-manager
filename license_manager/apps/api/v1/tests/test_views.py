@@ -207,13 +207,15 @@ def _subscriptions_detail_request(api_client, user, subscription_uuid):
     return api_client.get(url)
 
 
-def _licenses_list_request(api_client, subscription_uuid, page_size=None):
+def _licenses_list_request(api_client, subscription_uuid, page_size=None, is_active=None):
     """
     Helper method that requests a list of licenses for a given subscription_uuid.
     """
     url = reverse('api:v1:licenses-list', kwargs={'subscription_uuid': subscription_uuid})
     if page_size:
         url += f'?page_size={page_size}'
+    if is_active:
+        url += f'?is_active={is_active}'
     return api_client.get(url)
 
 
@@ -680,14 +682,50 @@ def test_license_list_staff_user_200(api_client, staff_user, boolean_toggle):
 
     assert status.HTTP_200_OK == response.status_code
     results_by_uuid = {item['uuid']: item for item in response.data['results']}
-    assert len(results_by_uuid) == 2
+    assert len(results_by_uuid) == 4
     _assert_license_response_correct(results_by_uuid[str(unassigned_license.uuid)], unassigned_license)
     _assert_license_response_correct(results_by_uuid[str(assigned_license.uuid)], assigned_license)
 
+@pytest.mark.django_db
+def test_license_list_staff_user_200(api_client, staff_user, boolean_toggle):
+    subscription, assigned_license, unassigned_license, activated_license, revoked_license = _subscription_and_licenses()
+    _assign_role_via_jwt_or_db(
+        api_client,
+        staff_user,
+        subscription.enterprise_customer_uuid,
+        boolean_toggle,
+    )
+
+    response = _licenses_list_request(api_client, subscription.uuid)
+
+    assert status.HTTP_200_OK == response.status_code
+    results_by_uuid = {item['uuid']: item for item in response.data['results']}
+    assert len(results_by_uuid) == 4
+    _assert_license_response_correct(results_by_uuid[str(unassigned_license.uuid)], unassigned_license)
+    _assert_license_response_correct(results_by_uuid[str(assigned_license.uuid)], assigned_license)
+    _assert_license_response_correct(results_by_uuid[str(activated_license.uuid)], activated_license)
+    _assert_license_response_correct(results_by_uuid[str(revoked_license.uuid)], revoked_license)
+
+@pytest.mark.django_db
+def test_license_list_active_licenses(api_client, staff_user, boolean_toggle):
+    subscription, assigned_license, unassigned_license, activated_license, revoked_license = _subscription_and_licenses()
+    _assign_role_via_jwt_or_db(
+        api_client,
+        staff_user,
+        subscription.enterprise_customer_uuid,
+        boolean_toggle,
+    )
+
+    response = _licenses_list_request(api_client, subscription.uuid, is_active='1')
+    results_by_uuid = {item['uuid']: item for item in response.data['results']}
+    _assert_license_response_correct(results_by_uuid[str(assigned_license.uuid)], assigned_license)
+    _assert_license_response_correct(results_by_uuid[str(activated_license.uuid)], activated_license)
+    assert not hasattr(results_by_uuid, str(unassigned_license.uuid))
+    assert not hasattr(results_by_uuid, str(revoked_license.uuid))
 
 @pytest.mark.django_db
 def test_license_list_staff_user_200_custom_page_size(api_client, staff_user):
-    subscription, _, _ = _subscription_and_licenses()
+    subscription, _, _, _, _ = _subscription_and_licenses()
     _assign_role_via_jwt_or_db(
         api_client,
         staff_user,
@@ -701,7 +739,7 @@ def test_license_list_staff_user_200_custom_page_size(api_client, staff_user):
     results_by_uuid = {item['uuid']: item for item in response.data['results']}
     # We test for content in the test above, we're just worried about the number of pages here
     assert len(results_by_uuid) == 1
-    assert 2 == response.data['count']
+    assert response.data['count'] == 4
     assert response.data['next'] is not None
 
 
@@ -828,16 +866,18 @@ def _assign_role_via_jwt_or_db(
 
 def _subscription_and_licenses():
     """
-    Helper method to return a SubscriptionPlan, an unassigned license, and an assigned license.
+    Helper method to return a SubscriptionPlan, an unassigned license, active license, revoked licenseand an assigned license.
     """
     subscription = SubscriptionPlanFactory.create()
 
     # Associate some licenses with the subscription
-    unassigned_license = LicenseFactory.create()
-    assigned_license = LicenseFactory.create(status=constants.ASSIGNED, user_email='fake@fake.com')
-    subscription.licenses.set([unassigned_license, assigned_license])
+    unassigned_license = LicenseFactory.create(user_email='unassigned@edx.org')
+    assigned_license = LicenseFactory.create(status=constants.ASSIGNED, user_email='assigned@fake.com')
+    pending_license = LicenseFactory.create(status=constants.ACTIVATED, user_email='activated@edx.org')
+    revoked_license = LicenseFactory.create(status=constants.REVOKED)
+    subscription.licenses.set([unassigned_license, assigned_license, pending_license, revoked_license])
 
-    return subscription, assigned_license, unassigned_license
+    return subscription, assigned_license, unassigned_license, pending_license, revoked_license
 
 
 def _create_subscription_plans(enterprise_customer_uuid):
