@@ -63,7 +63,7 @@ MIDDLEWARE = (
     'edx_django_utils.cache.middleware.RequestCacheMiddleware',
 
     # Enables monitoring utility for writing custom metrics.
-    'edx_django_utils.monitoring.middleware.MonitoringCustomMetricsMiddleware',
+    'edx_django_utils.monitoring.CachedCustomMonitoringMiddleware',
 
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -82,7 +82,7 @@ MIDDLEWARE = (
     'edx_django_utils.cache.middleware.TieredCacheMiddleware',
 
     # Outputs monitoring metrics for a request.
-    'edx_rest_framework_extensions.middleware.RequestMetricsMiddleware',
+    'edx_rest_framework_extensions.middleware.RequestCustomAttributesMiddleware',
 
     # Ensures proper DRF permissions in support of JWTs
     'edx_rest_framework_extensions.auth.jwt.middleware.EnsureJWTAuthSettingsMiddleware',

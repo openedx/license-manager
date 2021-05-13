@@ -270,10 +270,11 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
 class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, viewsets.GenericViewSet):
     """
     This Viewset allows read operations of all Licenses for a given user-customer pair.
+    /learner-licenses
     """
     authentication_classes = [JwtAuthentication]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    filter_class = LicenseStatusFilter
+    filterset_class = LicenseStatusFilter
     ordering_fields = [
         'user_email',
         'status',
