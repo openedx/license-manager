@@ -207,15 +207,15 @@ def _subscriptions_detail_request(api_client, user, subscription_uuid):
     return api_client.get(url)
 
 
-def _licenses_list_request(api_client, subscription_uuid, page_size=None, is_active=None):
+def _licenses_list_request(api_client, subscription_uuid, page_size=None, active_only=None):
     """
     Helper method that requests a list of licenses for a given subscription_uuid.
     """
     url = reverse('api:v1:licenses-list', kwargs={'subscription_uuid': subscription_uuid})
     if page_size:
         url += f'?page_size={page_size}'
-    if is_active:
-        url += f'?is_active={is_active}'
+    if active_only:
+        url += f'?active_only={active_only}'
     return api_client.get(url)
 
 
@@ -737,8 +737,12 @@ def test_license_list_active_licenses(api_client, staff_user, boolean_toggle):
         boolean_toggle,
     )
 
-    response = _licenses_list_request(api_client, subscription.uuid, is_active='1')
+    response = _licenses_list_request(api_client, subscription.uuid, active_only='1')
+
+    assert status.HTTP_200_OK == response.status_code
     results_by_uuid = {item['uuid']: item for item in response.data['results']}
+
+    assert len(results_by_uuid) == 2
     _assert_license_response_correct(results_by_uuid[str(assigned_license.uuid)], assigned_license)
     _assert_license_response_correct(results_by_uuid[str(activated_license.uuid)], activated_license)
     assert not hasattr(results_by_uuid, str(unassigned_license.uuid))
