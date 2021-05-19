@@ -22,6 +22,7 @@ from edx_rest_framework_extensions.auth.jwt.tests.utils import (
     generate_unversioned_payload,
 )
 from freezegun import freeze_time
+from pytz import UTC
 from requests import Response, models
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -51,7 +52,10 @@ from license_manager.apps.subscriptions.tests.utils import (
     assert_license_fields_cleared,
     assert_pii_cleared,
 )
-from license_manager.apps.subscriptions.utils import localized_utcnow
+from license_manager.apps.subscriptions.utils import (
+    localized_datetime,
+    localized_utcnow,
+)
 
 
 def _jwt_payload_from_role_context_pairs(user, role_context_pairs):
@@ -2727,16 +2731,16 @@ class StaffLicenseLookupViewTests(LicenseViewTestMixin, TestCase):
         self.api_client.force_authenticate(user=self.admin_user)
 
         first_license = self._create_license(
-            assigned_date=datetime.datetime(2020, 10, 31),
-            activation_date=datetime.datetime(2020, 11, 1),
+            assigned_date=localized_datetime(2020, 10, 31),
+            activation_date=localized_datetime(2020, 11, 1),
             status=constants.ACTIVATED,
         )
         second_license = self._create_license(
             subscription_plan=self.other_subscription,
-            assigned_date=datetime.datetime(2020, 12, 1),
-            activation_date=datetime.datetime(2020, 12, 31),
+            assigned_date=localized_datetime(2020, 12, 1),
+            activation_date=localized_datetime(2020, 12, 31),
             status=constants.REVOKED,
-            revoked_date=datetime.datetime(2021, 2, 1),
+            revoked_date=localized_datetime(2021, 2, 1),
         )
 
         response = self._post_request(self.user.email)

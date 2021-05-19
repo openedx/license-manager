@@ -3,13 +3,28 @@ ACTIVATED = 'activated'
 ASSIGNED = 'assigned'
 UNASSIGNED = 'unassigned'
 REVOKED = 'revoked'
-DEACTIVATED = 'deactivated'  # Deprecated for REVOKED
+TRANSFERRED_FOR_RENEWAL = 'transferred-renewal'
 LICENSE_STATUS_CHOICES = (
     (ACTIVATED, 'Activated'),
     (ASSIGNED, 'Assigned'),
     (UNASSIGNED, 'Unassigned'),
     (REVOKED, 'Revoked'),
+    (TRANSFERRED_FOR_RENEWAL, 'Transferred for renewal'),
 )
+
+
+# Subscription/license renewals
+class LicenseTypesToRenew:
+    ASSIGNED_AND_ACTIVATED = 'assigned_and_activated'
+    ACTIVATED = 'activated'
+    NOTHING = 'nothing'
+
+    CHOICES = (
+        (ASSIGNED_AND_ACTIVATED, 'Assigned and activated'),
+        (ACTIVATED, 'Activated'),
+        (NOTHING, 'None'),
+    )
+
 
 # Subject lines used for emails
 LICENSE_ACTIVATION_EMAIL_SUBJECT = 'Start your edX Subscription'
@@ -63,3 +78,7 @@ EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API = 'expose_license_activation_key_over_api
 
 # Default sender alias for emails
 DEFAULT_EMAIL_SENDER_ALIAS = 'edX Support Team'
+
+
+# Deprecated Constants #
+DEACTIVATED = 'deactivated'  # Deprecated for REVOKED

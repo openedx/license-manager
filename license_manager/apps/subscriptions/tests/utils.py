@@ -5,7 +5,10 @@ from datetime import date, timedelta
 
 from faker import Factory as FakerFactory
 
-from license_manager.apps.subscriptions.constants import ASSIGNED
+from license_manager.apps.subscriptions.constants import (
+    ASSIGNED,
+    LicenseTypesToRenew,
+)
 from license_manager.apps.subscriptions.forms import (
     SubscriptionPlanForm,
     SubscriptionPlanRenewalForm,
@@ -63,6 +66,7 @@ def make_bound_subscription_plan_renewal_form(
     renewed_expiration_date,
     processed=False,
     salesforce_opportunity_id=get_random_salesforce_id(),
+    license_types_to_copy=LicenseTypesToRenew.ASSIGNED_AND_ACTIVATED,
 ):
     """
     Builds a bound SubscriptionPlanRenewalForm
@@ -74,6 +78,7 @@ def make_bound_subscription_plan_renewal_form(
         'processed': processed,
         'number_of_licenses': faker.random_int(),
         'salesforce_opportunity_id': salesforce_opportunity_id,
+        'license_types_to_copy': license_types_to_copy,
     }
     return SubscriptionPlanRenewalForm(form_data)
 

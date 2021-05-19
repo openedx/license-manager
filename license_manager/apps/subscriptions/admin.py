@@ -130,9 +130,12 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
 
     def get_customer_agreement_link(self, obj):
         if obj.customer_agreement:
-            return mark_safe('<a href="{}">{}</a></br>'.format(
-                reverse('admin:subscriptions_customeragreement_change', args=(obj.customer_agreement.uuid,)),
-                obj.customer_agreement.uuid,
+            return mark_safe('<a href="{agreement_href}">{agreement_string}</a><br/>'.format(
+                agreement_href=reverse(
+                    'admin:subscriptions_customeragreement_change',
+                    args=(obj.customer_agreement.uuid,)
+                ),
+                agreement_string=obj.customer_agreement.enterprise_customer_slug,
             ))
         return ''
     get_customer_agreement_link.short_description = 'Customer Agreement'
@@ -257,8 +260,8 @@ class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         """
-        If the subscription renewal has already been created, it should not be editable.
+        If the subscription renewal has already been processed, it should not be editable.
         """
-        if obj:
+        if obj and obj.processed:
             return False
         return True

@@ -110,7 +110,7 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
         if self.requested_customer_agreement_uuid:
             kwargs.update({'uuid': self.requested_customer_agreement_uuid})
 
-        return CustomerAgreement.objects.filter(**kwargs)
+        return CustomerAgreement.objects.filter(**kwargs).order_by('uuid')
 
 
 class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
@@ -209,7 +209,7 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
         'last_remind_date',
     ]
     search_fields = ['user_email']
-    filter_class = LicenseStatusFilter
+    filterset_class = LicenseStatusFilter
     permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
 
     # The fields that control permissions for 'list' actions.
@@ -251,7 +251,9 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
         return License.objects.filter(
             subscription_plan=self._get_subscription_plan(),
             user_email=self.request.user.email,
-        ).exclude(status=constants.REVOKED)
+        ).exclude(
+            status=constants.REVOKED
+        ).order_by('status', '-subscription_plan__expiration_date')
 
     def _get_subscription_plan(self):
         """
@@ -382,8 +384,11 @@ class LicenseViewSet(LearnerLicenseViewSet):
         For non-list actions, this is what's returned by `get_queryset()`.
         For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
         """
-        queryset = License.objects.filter(subscription_plan=self._get_subscription_plan()) \
-            .order_by('status', 'user_email')
+        queryset = License.objects.filter(
+            subscription_plan=self._get_subscription_plan()
+        ).order_by(
+            'status', 'user_email'
+        )
         if self.active_only:
             queryset = queryset.filter(status__in=[constants.ACTIVATED, constants.ASSIGNED])
 

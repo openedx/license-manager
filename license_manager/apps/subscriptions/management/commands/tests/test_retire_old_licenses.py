@@ -21,6 +21,7 @@ from license_manager.apps.subscriptions.tests.utils import (
     assert_license_fields_cleared,
     assert_pii_cleared,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 faker = FakerFactory.create()
@@ -34,17 +35,27 @@ class RetireOldLicensesCommandTests(TestCase):
         super().setUpTestData()
 
         subscription_plan = SubscriptionPlanFactory()
-        day_before_retirement_deadline = datetime.today().date() - timedelta(DAYS_TO_RETIRE + 1)
+        day_before_retirement_deadline = localized_utcnow() - timedelta(DAYS_TO_RETIRE + 1)
         cls.expired_subscription_plan = SubscriptionPlanFactory(expiration_date=day_before_retirement_deadline)
 
         # Set up a bunch of licenses that should not be retired
-        LicenseFactory.create_batch(3, status=ACTIVATED, subscription_plan=subscription_plan)
-        LicenseFactory.create_batch(4, status=REVOKED, subscription_plan=subscription_plan)
+        LicenseFactory.create_batch(
+            3,
+            status=ACTIVATED,
+            subscription_plan=subscription_plan,
+            revoked_date=None,
+        )
+        LicenseFactory.create_batch(
+            4,
+            status=REVOKED,
+            subscription_plan=subscription_plan,
+            revoked_date=localized_utcnow(),
+        )
         LicenseFactory.create_batch(
             5,
             status=REVOKED,
             subscription_plan=subscription_plan,
-            revoked_date=datetime.now(),
+            revoked_date=localized_utcnow(),
         )
         LicenseFactory.create_batch(
             5,
@@ -57,7 +68,8 @@ class RetireOldLicensesCommandTests(TestCase):
             2,
             status=ASSIGNED,
             subscription_plan=subscription_plan,
-            assigned_date=datetime.now(),
+            assigned_date=localized_utcnow(),
+            revoked_date=None,
         )
 
         # Set up licenses that should be retired as either there subscription plan has been expired for long enough
