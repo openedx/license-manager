@@ -14,6 +14,13 @@ def localized_utcnow():
     return UTC.localize(datetime.utcnow())  # pylint: disable=no-value-for-parameter
 
 
+def localized_datetime(*args, **kwargs):
+    """
+    Helper to return a UTC-localized datetime.
+    """
+    return UTC.localize(datetime(*args, **kwargs))
+
+
 def days_until(end_date):
     """
     Helper to return the number of days until the end date.

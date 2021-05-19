@@ -102,6 +102,7 @@ class LicenseFactory(factory.django.DjangoModelFactory):
     activation_key = factory.LazyFunction(uuid4)
     status = UNASSIGNED
     subscription_plan = factory.SubFactory(SubscriptionPlanFactory)
+    revoked_date = None
 
 
 class UserFactory(factory.django.DjangoModelFactory):

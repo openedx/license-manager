@@ -10,6 +10,7 @@ from license_manager.apps.subscriptions.constants import (
     UNASSIGNED,
 )
 from license_manager.apps.subscriptions.models import License
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class Command(BaseCommand):
         for expired_license in expired_licenses_for_retirement:
             expired_license.clear_pii()
             expired_license.status = REVOKED
-            expired_license.revoked_date = datetime.now()
+            expired_license.revoked_date = localized_utcnow()
             expired_license.save()
             # Clear historical pii after removing pii from the license itself
             expired_license.clear_historical_pii()

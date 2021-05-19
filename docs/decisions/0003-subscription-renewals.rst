@@ -4,7 +4,12 @@
 Status
 ======
 
-Accepted (circa November 2020)
+Mostly Rejected May 2021
+------------------------
+We implemented the renewal model. Everything below about how renewals are processed
+and transferred has now been rejected and superceded by ADR 0004.
+
+(Originally Accepted circa November 2020)
 
 Context
 =======

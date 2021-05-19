@@ -26,6 +26,7 @@ from license_manager.apps.subscriptions.constants import (
     REVOKED,
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
+    LicenseTypesToRenew,
 )
 from license_manager.apps.subscriptions.utils import (
     days_until,
@@ -269,6 +270,13 @@ class SubscriptionPlan(TimeStampedModel):
         return self.licenses.filter(status=UNASSIGNED)
 
     @property
+    def activated_licenses(self):
+        """
+        Returns all activated licenses for this subscription plan.
+        """
+        return self.licenses.filter(status=ACTIVATED)
+
+    @property
     def num_licenses(self):
         """
         Gets the number of licenses associated with the subscription excluding revoked licenses.
@@ -448,6 +456,31 @@ class SubscriptionPlanRenewal(TimeStampedModel):
         help_text=_("Whether the renewal has been processed and gone into effect for the linked subscription."),
     )
 
+    processed_datetime = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_("The time at which the renewal was processed."),
+    )
+
+    renewed_plan_title = models.CharField(
+        max_length=128,
+        blank=True,
+        null=True,
+        help_text=_("The title of the future plan."),
+    )
+
+    license_types_to_copy = models.CharField(
+        max_length=32,
+        blank=False,
+        null=False,
+        choices=LicenseTypesToRenew.CHOICES,
+        default=LicenseTypesToRenew.ASSIGNED_AND_ACTIVATED,
+        help_text=(
+            "Which types of licenses are copied from the original plan to the future plan. "
+            "'None' means the future plan will be created with only unassigned licenses."
+        ),
+    )
+
     history = HistoricalRecords()
 
     class Meta:
@@ -503,6 +536,8 @@ class License(TimeStampedModel):
             "\nUnassigned: A license which has been created but does not have a learner assigned to it."
             "\nRevoked: A license which has been created but is no longer active (intentionally revoked or"
             " has expired). A license in this state may or may not have a learner assigned."
+            "\nTransferred for renwal: The license's subscription plan was renewed into a new plan,"
+            " and the license transferred to a new, active license in the renewed plan."
         )
     )
 
