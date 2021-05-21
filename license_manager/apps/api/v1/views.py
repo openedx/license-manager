@@ -270,10 +270,11 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
 class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, viewsets.GenericViewSet):
     """
     This Viewset allows read operations of all Licenses for a given user-customer pair.
+    /learner-licenses
     """
     authentication_classes = [JwtAuthentication]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    filter_class = LicenseStatusFilter
+    filterset_class = LicenseStatusFilter
     ordering_fields = [
         'user_email',
         'status',
@@ -358,7 +359,10 @@ class LicensePagination(PageNumberPaginationWithCount):
 
 
 class LicenseViewSet(LearnerLicenseViewSet):
-    """ Viewset for Admin read operations on Licenses."""
+    """
+    Viewset for Admin read operations on Licenses.
+    /subscriptions/<EnterpriseUuid>/licenses
+    """
     lookup_field = 'uuid'
     lookup_url_kwarg = 'license_uuid'
 
@@ -368,13 +372,22 @@ class LicenseViewSet(LearnerLicenseViewSet):
     pagination_class = LicensePagination
 
     @property
+    def active_only(self):
+        return int(self.request.query_params.get('active_only', 0))
+
+    @property
     def base_queryset(self):
         """
         Required by the `PermissionRequiredForListingMixin`.
         For non-list actions, this is what's returned by `get_queryset()`.
         For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
         """
-        return License.objects.filter(subscription_plan=self._get_subscription_plan()).order_by('status', 'user_email')
+        queryset = License.objects.filter(subscription_plan=self._get_subscription_plan()) \
+            .order_by('status', 'user_email')
+        if self.active_only:
+            queryset = queryset.filter(status__in=[constants.ACTIVATED, constants.ASSIGNED])
+
+        return queryset
 
     def _get_custom_text(self, data):
         """
