@@ -355,12 +355,12 @@ class LicensePagination(PageNumberPaginationWithCount):
     A PageNumber paginator that allows the client to specify the page size, up to some maximum.
     """
     page_size_query_param = 'page_size'
-    max_page_size = 10000
+    max_page_size = 500
 
 
 class LicenseViewSet(LearnerLicenseViewSet):
     """ Viewset for Admin read operations on Licenses.
-    /subscriptions/<EnterpriseUUid/licenses
+    /subscriptions/<EnterpriseUuid>/licenses
     """
     lookup_field = 'uuid'
     lookup_url_kwarg = 'license_uuid'
