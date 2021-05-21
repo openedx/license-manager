@@ -868,11 +868,11 @@ def _subscription_and_licenses():
     # Associate some licenses with the subscription
     unassigned_license = LicenseFactory.create(user_email='unassigned@edx.org')
     assigned_license = LicenseFactory.create(status=constants.ASSIGNED, user_email='assigned@fake.com')
-    pending_license = LicenseFactory.create(status=constants.ACTIVATED, user_email='activated@edx.org')
+    active_license = LicenseFactory.create(status=constants.ACTIVATED, user_email='activated@edx.org')
     revoked_license = LicenseFactory.create(status=constants.REVOKED)
-    subscription.licenses.set([unassigned_license, assigned_license, pending_license, revoked_license])
+    subscription.licenses.set([unassigned_license, assigned_license, active_license, revoked_license])
 
-    return subscription, assigned_license, unassigned_license, pending_license, revoked_license
+    return subscription, assigned_license, unassigned_license, active_license, revoked_license
 
 
 def _create_subscription_plans(enterprise_customer_uuid):

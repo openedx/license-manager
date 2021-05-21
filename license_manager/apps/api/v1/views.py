@@ -359,7 +359,8 @@ class LicensePagination(PageNumberPaginationWithCount):
 
 
 class LicenseViewSet(LearnerLicenseViewSet):
-    """ Viewset for Admin read operations on Licenses.
+    """
+    Viewset for Admin read operations on Licenses.
     /subscriptions/<EnterpriseUuid>/licenses
     """
     lookup_field = 'uuid'
