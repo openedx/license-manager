@@ -381,7 +381,8 @@ class LicenseViewSet(LearnerLicenseViewSet):
         For non-list actions, this is what's returned by `get_queryset()`.
         For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
         """
-        queryset = License.objects.filter(subscription_plan=self._get_subscription_plan()).order_by('status', 'user_email')
+        queryset = License.objects.filter(subscription_plan=self._get_subscription_plan()) \
+            .order_by('status', 'user_email')
         if self.active_only:
             queryset = queryset.filter(status__in=[constants.ACTIVATED, constants.ASSIGNED])
 
