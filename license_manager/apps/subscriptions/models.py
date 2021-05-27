@@ -108,6 +108,39 @@ class CustomerAgreement(TimeStampedModel):
         )
 
 
+class PlanType(models.Model):
+    """
+    Stores top-level information related to available enterprise Subscription plan types.
+
+    .. no_pii: This model has no PII
+    """
+    label = models.CharField(
+        max_length=128,
+        blank=False,
+        null=False,
+    )
+    description = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+    )
+    is_paid_subscription = models.BooleanField(
+        default=True
+    )
+    ns_id_required = models.BooleanField(
+        default=True
+    )
+    sf_id_required = models.BooleanField(
+        default=True
+    )
+    internal_use_only = models.BooleanField(
+        default=False
+    )
+
+    def __str__(self):
+        return self.label
+
+
 class SubscriptionPlan(TimeStampedModel):
     """
     Stores top-level information related to an enterprise Subscriptions purchase.
@@ -212,6 +245,8 @@ class SubscriptionPlan(TimeStampedModel):
             "Whether this SubscriptionPlan is only for internal use (e.g. a test Subscription record)."
         )
     )
+
+    plan_type = models.ForeignKey(PlanType, on_delete=models.CASCADE, null=True, blank=True)
 
     @property
     def enterprise_customer_uuid(self):
