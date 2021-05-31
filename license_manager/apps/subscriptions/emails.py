@@ -16,13 +16,14 @@ from license_manager.apps.subscriptions.constants import (
 )
 from license_manager.apps.subscriptions.utils import (
     chunks,
+    get_enterprise_reply_to_email,
     get_enterprise_sender_alias,
     get_learner_portal_url,
     get_license_activation_link,
 )
 
 
-def send_revocation_cap_notification_email(subscription_plan, enterprise_name, enterprise_sender_alias):
+def send_revocation_cap_notification_email(subscription_plan, enterprise_name, enterprise_sender_alias, reply_to_email):
     """
     Sends an email to inform ECS that a subscription plan for a customer has reached its
     revocation cap, and that action may be necessary to help the customer add more licenses.
@@ -36,7 +37,7 @@ def send_revocation_cap_notification_email(subscription_plan, enterprise_name, e
         'RECIPIENT_EMAIL': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
         'HIDE_EMAIL_FOOTER_MARKETING': True,
     }
-    email = _message_from_context_and_template(context, enterprise_sender_alias)
+    email = _message_from_context_and_template(context, enterprise_sender_alias, reply_to_email)
     email.send()
 
 
@@ -53,6 +54,7 @@ def send_onboarding_email(enterprise_customer_uuid, user_email):
     enterprise_name = enterprise_customer.get('name')
     enterprise_slug = enterprise_customer.get('slug')
     enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
+    reply_to_email = get_enterprise_reply_to_email(enterprise_customer)
 
     context = {
         'subject': ONBOARDING_EMAIL_SUBJECT,
@@ -65,7 +67,7 @@ def send_onboarding_email(enterprise_customer_uuid, user_email):
         'RECIPIENT_EMAIL': user_email,
         'SOCIAL_MEDIA_FOOTER_URLS': settings.SOCIAL_MEDIA_FOOTER_URLS,
     }
-    email = _message_from_context_and_template(context, enterprise_sender_alias)
+    email = _message_from_context_and_template(context, enterprise_sender_alias, reply_to_email)
     email.send()
 
 
@@ -75,6 +77,7 @@ def send_activation_emails(
     enterprise_slug,
     enterprise_name,
     enterprise_sender_alias,
+    reply_to_email,
     is_reminder=False
 ):
     """
@@ -88,6 +91,7 @@ def send_activation_emails(
             will be associated with.
         enterprise_slug (str): The slug associated with an enterprise to uniquely identify it
         enterprise_sender_alias (str): Sender alias of the enterprise customer
+        reply_to_email (str): Reply to email of the enterprise customer
         is_reminder (bool): whether this is a reminder activation email being sent
     """
     context = {
@@ -106,10 +110,11 @@ def send_activation_emails(
         context,
         enterprise_slug,
         enterprise_sender_alias,
+        reply_to_email,
     )
 
 
-def _send_email_with_activation(email_activation_key_map, context, enterprise_slug, sender_alias):
+def _send_email_with_activation(email_activation_key_map, context, enterprise_slug, sender_alias, reply_to_email):
     """
     Helper that sends emails with the given template with an activation link to the the given list of emails.
 
@@ -120,6 +125,7 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
             key. If `REMINDER` is provided, a reminder message is added to the email.
         enterprise_slug (str): The slug associated with an enterprise to uniquely identify it.
         sender_alias (str): The alias to use in from email for sending the email.
+        reply_to_email (str): Reply to email of the enterprise customer
     """
     # Construct each message to be sent and appended onto the email list
     email_recipient_list = email_activation_key_map.keys()
@@ -135,7 +141,7 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
             'SOCIAL_MEDIA_FOOTER_URLS': settings.SOCIAL_MEDIA_FOOTER_URLS,
             'MOBILE_STORE_URLS': settings.MOBILE_STORE_URLS,
         })
-        emails.append(_message_from_context_and_template(context, sender_alias))
+        emails.append(_message_from_context_and_template(context, sender_alias, reply_to_email))
 
     # Send out the emails in batches
     email_chunks = chunks(emails, LICENSE_BULK_OPERATION_BATCH_SIZE)
@@ -153,13 +159,14 @@ def _get_rendered_template_content(template_name, extension, context):
     return get_template(message_template).render(context)
 
 
-def _message_from_context_and_template(context, sender_alias):
+def _message_from_context_and_template(context, sender_alias, reply_to_email):
     """
     Creates a message about the subscription_plan in the template specified by the context, with custom_template_text.
 
     Args:
         context (dict): Dictionary of context variables for template rendering.
         sender_alias (str): The alias to use in from email for sending the email.
+        reply_to_email (str): Reply to email of the enterprise customer
 
     Returns:
         EmailMultiAlternative: an individual message constructed from the information provided, not yet sent
@@ -186,8 +193,10 @@ def _message_from_context_and_template(context, sender_alias):
 
     # Additional headers to attach to the message
     message_headers = {
-        'List-Unsubscribe': list_unsubscribe_header
+        'List-Unsubscribe': list_unsubscribe_header,
     }
+    if reply_to_email:
+        message_headers['Reply-To'] = reply_to_email
 
     message = mail.EmailMultiAlternatives(
         subject=context['subject'],

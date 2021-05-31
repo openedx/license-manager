@@ -21,6 +21,7 @@ class EmailTests(TestCase):
         self.email_recipient_list = test_email_data['email_recipient_list']
         self.enterprise_name = 'Mock Enterprise'
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
+        self.reply_to_email = 'edx@example.com'
 
     def test_send_activation_emails(self):
         """
@@ -32,6 +33,7 @@ class EmailTests(TestCase):
             self.enterprise_slug,
             self.enterprise_name,
             self.enterprise_sender_alias,
+            self.reply_to_email,
         )
         self.assertEqual(
             len(mail.outbox),
@@ -53,6 +55,7 @@ class EmailTests(TestCase):
             self.enterprise_slug,
             self.enterprise_name,
             self.enterprise_sender_alias,
+            self.reply_to_email,
             is_reminder=True,
         )
         self.assertEqual(len(mail.outbox), 1)

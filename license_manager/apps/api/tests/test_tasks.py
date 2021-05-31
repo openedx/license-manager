@@ -28,6 +28,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         self.enterprise_slug = 'mock-enterprise'
         self.enterprise_name = 'Mock Enterprise'
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
+        self.reply_to_email = 'edx@example.com'
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.send_activation_emails')
@@ -39,6 +40,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
             'slug': self.enterprise_slug,
             'name': self.enterprise_name,
             'sender_alias': self.enterprise_sender_alias,
+            'reply_to': self.reply_to_email,
         }
 
         tasks.activation_email_task(
@@ -64,6 +66,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
             'slug': self.enterprise_slug,
             'name': self.enterprise_name,
             'sender_alias': self.enterprise_sender_alias,
+            'reply_to': self.reply_to_email,
         }
 
         with mock_send_emails:
@@ -85,6 +88,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
             'slug': self.enterprise_slug,
             'name': self.enterprise_name,
             'sender_alias': self.enterprise_sender_alias,
+            'reply_to': self.reply_to_email,
         }
         tasks.send_reminder_email_task(
             self.custom_template_text,
@@ -110,6 +114,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
             'slug': self.enterprise_slug,
             'name': self.enterprise_name,
             'sender_alias': self.enterprise_sender_alias,
+            'reply_to': self.reply_to_email,
         }
         with mock_send_emails:
             tasks.send_reminder_email_task(
@@ -130,13 +135,15 @@ class LicenseManagerCeleryTaskTests(TestCase):
             actual_enterprise_slug,
             actual_enterprise_name,
             actual_enterprise_sender_alias,
-        ) = send_email_args[:5]
+            actual_enterprise_reply_to_email,
+        ) = send_email_args[:6]
 
         assert list(self.assigned_licenses) == list(actual_licenses)
         assert self.custom_template_text == actual_template_text
         assert self.enterprise_slug == actual_enterprise_slug
         assert self.enterprise_name == actual_enterprise_name
         assert self.enterprise_sender_alias == actual_enterprise_sender_alias
+        assert self.reply_to_email == actual_enterprise_reply_to_email
 
     @mock.patch('license_manager.apps.api.tasks.send_onboarding_email', return_value=mock.MagicMock())
     def test_onboarding_email_task(self, mock_send_onboarding_email):

@@ -16,6 +16,7 @@ from license_manager.apps.subscriptions.emails import (
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 from license_manager.apps.subscriptions.utils import (
     chunks,
+    get_enterprise_reply_to_email,
     get_enterprise_sender_alias,
 )
 
@@ -47,10 +48,12 @@ def activation_email_task(custom_template_text, email_recipient_list, subscripti
     enterprise_slug = enterprise_customer.get('slug')
     enterprise_name = enterprise_customer.get('name')
     enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
+    reply_to_email = get_enterprise_reply_to_email(enterprise_customer)
 
     try:
         send_activation_emails(
-            custom_template_text, pending_licenses, enterprise_slug, enterprise_name, enterprise_sender_alias
+            custom_template_text, pending_licenses, enterprise_slug, enterprise_name, enterprise_sender_alias,
+            reply_to_email,
         )
     except SMTPException:
         msg = 'License manager activation email sending received an exception for enterprise: {}.'.format(
@@ -97,6 +100,7 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
     enterprise_slug = enterprise_customer.get('slug')
     enterprise_name = enterprise_customer.get('name')
     enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
+    reply_to_email = get_enterprise_reply_to_email(enterprise_customer)
 
     try:
         send_activation_emails(
@@ -105,6 +109,7 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
             enterprise_slug,
             enterprise_name,
             enterprise_sender_alias,
+            reply_to_email,
             is_reminder=True
         )
     except SMTPException:
@@ -184,12 +189,14 @@ def send_revocation_cap_notification_email_task(subscription_uuid):
     enterprise_customer = enterprise_api_client.get_enterprise_customer_data(subscription_plan.enterprise_customer_uuid)
     enterprise_name = enterprise_customer.get('name')
     enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
+    reply_to_email = get_enterprise_reply_to_email(enterprise_customer)
 
     try:
         send_revocation_cap_notification_email(
             subscription_plan,
             enterprise_name,
             enterprise_sender_alias,
+            reply_to_email,
         )
     except SMTPException:
         logger.error('Revocation cap notification email sending received an exception.', exc_info=True)
