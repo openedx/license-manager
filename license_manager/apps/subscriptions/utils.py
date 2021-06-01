@@ -56,3 +56,10 @@ def get_enterprise_sender_alias(enterprise_customer):
     returns the default sender alias.
     """
     return enterprise_customer.get('sender_alias') or DEFAULT_EMAIL_SENDER_ALIAS
+
+
+def get_enterprise_reply_to_email(enterprise_customer):
+    """
+    Returns the configured reply_to email for an enterprise, if configured.
+    """
+    return enterprise_customer.get('reply_to') or ''
