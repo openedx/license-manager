@@ -2,6 +2,10 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+from license_manager.apps.subscriptions.api import (
+    expire_plan_post_renewal,
+    renew_subscription,
+)
 from license_manager.apps.subscriptions.forms import (
     SubscriptionPlanForm,
     SubscriptionPlanRenewalForm,
@@ -15,14 +19,21 @@ from license_manager.apps.subscriptions.models import (
 )
 
 
+def _related_object_link(admin_viewname, object_pk, object_str):
+    return mark_safe('<a href="{href}">{object_string}</a><br/>'.format(
+        href=reverse(admin_viewname, args=(object_pk,)),
+        object_string=object_str,
+    ))
+
+
 @admin.register(License)
 class LicenseAdmin(admin.ModelAdmin):
     readonly_fields = [
         'activation_key',
-        'renewed_to',
+        'get_renewed_to',
         'get_renewed_from',
     ]
-    exclude = ['history']
+    exclude = ['history', 'renewed_to']
     list_display = (
         'uuid',
         'get_subscription_plan_title',
@@ -54,15 +65,32 @@ class LicenseAdmin(admin.ModelAdmin):
     )
 
     def get_subscription_plan_title(self, obj):
-        return mark_safe('<a href="{}">{}</a>'.format(
-            reverse('admin:subscriptions_subscriptionplan_change', args=(obj.subscription_plan.uuid,)),
+        return _related_object_link(
+            'admin:subscriptions_subscriptionplan_change',
+            obj.subscription_plan.uuid,
             obj.subscription_plan.title,
-        ))
+        )
     get_subscription_plan_title.short_description = 'Subscription Plan'
 
+    def get_renewed_to(self, obj):
+        if not obj.renewed_to:
+            return ''
+        return _related_object_link(
+            'admin:subscriptions_license_change',
+            obj.renewed_to.uuid,
+            obj.renewed_to.uuid,
+        )
+    get_renewed_to.short_description = 'License renewed to'
+
     def get_renewed_from(self, obj):
-        return obj.renewed_from
-    get_renewed_from.short_description = 'Renewed from'
+        if not obj.renewed_from:
+            return ''
+        return _related_object_link(
+            'admin:subscriptions_license_change',
+            obj.renewed_from.uuid,
+            obj.renewed_from.uuid,
+        )
+    get_renewed_from.short_description = 'License renewed from'
 
 
 @admin.register(SubscriptionPlan)
@@ -119,6 +147,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'start_date',
         'expiration_date',
     )
+    actions = ['process_expiration_post_renewal']
 
     def save_model(self, request, obj, form, change):
         # If a uuid is not specified on the subscription itself, use the default one for the CustomerAgreement
@@ -140,13 +169,11 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
 
     def get_customer_agreement_link(self, obj):
         if obj.customer_agreement:
-            return mark_safe('<a href="{agreement_href}">{agreement_string}</a><br/>'.format(
-                agreement_href=reverse(
-                    'admin:subscriptions_customeragreement_change',
-                    args=(obj.customer_agreement.uuid,)
-                ),
-                agreement_string=obj.customer_agreement.enterprise_customer_slug,
-            ))
+            return _related_object_link(
+                'admin:subscriptions_customeragreement_change',
+                obj.customer_agreement.uuid,
+                obj.customer_agreement.enterprise_customer_slug,
+            )
         return ''
     get_customer_agreement_link.short_description = 'Customer Agreement'
 
@@ -154,6 +181,11 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         if db_field.name == 'customer_agreement':
             kwargs['queryset'] = CustomerAgreement.objects.filter().order_by('enterprise_customer_slug')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def process_expiration_post_renewal(self, request, queryset):
+        for subscription_plan in queryset:
+            expire_plan_post_renewal(subscription_plan)
+    process_expiration_post_renewal.short_description = 'Process the post-renewal expiration of selected records'
 
 
 @admin.register(CustomerAgreement)
@@ -195,15 +227,17 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         return ()
 
     def get_subscription_plan_links(self, obj):
-        links = ''
+        links = []
         for subscription_plan in obj.subscriptions.all():
             if subscription_plan.is_active:
-                links = links + '<a href="{}">{}: {}</a></br>'.format(
-                    reverse('admin:subscriptions_subscriptionplan_change', args=(subscription_plan.uuid,)),
-                    subscription_plan.title,
-                    subscription_plan.uuid,
+                links.append(
+                    _related_object_link(
+                        'admin:subscriptions_subscriptionplan_change',
+                        subscription_plan.uuid,
+                        '{}: {}'.format(subscription_plan.title, subscription_plan.uuid),
+                    )
                 )
-        return mark_safe(links)
+        return mark_safe(' '.join(links))
     get_subscription_plan_links.short_description = 'Subscription Plans'
 
 
@@ -237,6 +271,12 @@ class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
         'prior_subscription_plan__customer_agreement__enterprise_customer_uuid__startswith',
         'prior_subscription_plan__enterprise_catalog_uuid__startswith',
     )
+    actions = ['process_renewal']
+
+    def process_renewal(self, request, queryset):
+        for renewal in queryset:
+            renew_subscription(renewal)
+    process_renewal.short_description = 'Process selected renewal records'
 
     def get_prior_subscription_plan_title(self, obj):
         return obj.prior_subscription_plan.title
@@ -262,11 +302,11 @@ class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
 
     def get_renewed_plan_link(self, obj):
         if obj.renewed_subscription_plan:
-            return mark_safe('<a href="{}">{}: {}</a></br>'.format(
-                reverse('admin:subscriptions_subscriptionplan_change', args=(obj.renewed_subscription_plan.uuid,)),
-                obj.renewed_subscription_plan.title,
+            return _related_object_link(
+                'admin:subscriptions_subscriptionplan_change',
                 obj.renewed_subscription_plan.uuid,
-            ))
+                '{}: {}'.format(obj.renewed_subscription_plan.title, obj.renewed_subscription_plan.uuid),
+            )
         return ''
     get_renewed_plan_link.short_description = 'Renewed Subscription Plan'
 

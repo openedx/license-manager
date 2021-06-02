@@ -91,7 +91,7 @@ Which licenses in the original plan should be "copied" to new licenses in the fu
 * We'll copy the status value from the original license to the future license.  The future licenses
   will end up only being ``ASSIGNED`` or ``ACTIVATED``.
 * We'll set a new ``License.renewed_to`` field to reference the ``uuid`` field of the future license.
-  This field allow us to know the pre-renewal status of a license after the renewal
+  This field allows us to know the pre-renewal status of a license after the renewal
   is processed (e.g. was it "assigned" or "activated" before the renewal happened?).
   It will also let us directly reference an original license from a future license, or the converse.
 

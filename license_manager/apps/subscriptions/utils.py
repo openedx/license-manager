@@ -21,6 +21,13 @@ def localized_datetime(*args, **kwargs):
     return UTC.localize(datetime(*args, **kwargs))
 
 
+def localized_datetime_from_date(date_obj):
+    """
+    Converts a date object to a UTC-localized datetime with 0 hours, minutes, and seconds.
+    """
+    return UTC.localize(datetime.combine(date_obj, datetime.min.time()))
+
+
 def days_until(end_date):
     """
     Helper to return the number of days until the end date.
