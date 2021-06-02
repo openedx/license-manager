@@ -526,6 +526,14 @@ class SubscriptionPlanRenewal(TimeStampedModel):
         verbose_name = _("Subscription Plan Renewal")
         verbose_name_plural = _("Subscription Plan Renewals")
 
+    def get_renewed_plan_title(self):
+        if self.renewed_plan_title:
+            return self.renewed_plan_title
+        return '{prior_title} - Renewal {activation_year}'.format(
+            prior_title=self.prior_subscription_plan.title,
+            activation_year=self.effective_date.year,
+        )
+
     def __str__(self):
         """
         Return human-readable string representation.
