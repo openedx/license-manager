@@ -722,6 +722,7 @@ def test_license_list_active_licenses(api_client, staff_user, boolean_toggle):
     assert not hasattr(results_by_uuid, str(unassigned_license.uuid))
     assert not hasattr(results_by_uuid, str(revoked_license.uuid))
 
+
 @pytest.mark.django_db
 def test_license_list_search_by_email(api_client, staff_user, boolean_toggle):
     subscription, _, unassigned_license, _, _ = _subscription_and_licenses()
@@ -739,6 +740,7 @@ def test_license_list_search_by_email(api_client, staff_user, boolean_toggle):
 
     assert len(results_by_uuid) == 1
     _assert_license_response_correct(results_by_uuid[str(unassigned_license.uuid)], unassigned_license)
+
 
 @pytest.mark.django_db
 def test_license_list_staff_user_200_custom_page_size(api_client, staff_user):
@@ -934,6 +936,7 @@ class LicenseViewSetActionTests(TestCase):
     """
     Tests for special actions on the LicenseViewSet.
     """
+
     def setUp(self):
         super().setUp()
 
