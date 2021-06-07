@@ -211,7 +211,7 @@ def _subscriptions_detail_request(api_client, user, subscription_uuid):
     return api_client.get(url)
 
 
-def _licenses_list_request(api_client, subscription_uuid, page_size=None, active_only=None):
+def _licenses_list_request(api_client, subscription_uuid, page_size=None, active_only=None, search=None):
     """
     Helper method that requests a list of licenses for a given subscription_uuid.
     """
@@ -220,6 +220,8 @@ def _licenses_list_request(api_client, subscription_uuid, page_size=None, active
         url += f'?page_size={page_size}'
     if active_only:
         url += f'?active_only={active_only}'
+    if search:
+        url += f'?search={search}'
     return api_client.get(url)
 
 
@@ -722,6 +724,25 @@ def test_license_list_active_licenses(api_client, staff_user, boolean_toggle):
 
 
 @pytest.mark.django_db
+def test_license_list_search_by_email(api_client, staff_user, boolean_toggle):
+    subscription, _, unassigned_license, _, _ = _subscription_and_licenses()
+    _assign_role_via_jwt_or_db(
+        api_client,
+        staff_user,
+        subscription.enterprise_customer_uuid,
+        boolean_toggle,
+    )
+
+    response = _licenses_list_request(api_client, subscription.uuid, search='unas')
+
+    assert status.HTTP_200_OK == response.status_code
+    results_by_uuid = {item['uuid']: item for item in response.data['results']}
+
+    assert len(results_by_uuid) == 1
+    _assert_license_response_correct(results_by_uuid[str(unassigned_license.uuid)], unassigned_license)
+
+
+@pytest.mark.django_db
 def test_license_list_staff_user_200_custom_page_size(api_client, staff_user):
     subscription, _, _, _, _ = _subscription_and_licenses()
     _assign_role_via_jwt_or_db(
@@ -915,6 +936,7 @@ class LicenseViewSetActionTests(TestCase):
     """
     Tests for special actions on the LicenseViewSet.
     """
+
     def setUp(self):
         super().setUp()
 

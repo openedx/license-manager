@@ -373,6 +373,9 @@ class LicenseViewSet(LearnerLicenseViewSet):
 
     pagination_class = LicensePagination
 
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['user_email']
+
     @property
     def active_only(self):
         return int(self.request.query_params.get('active_only', 0))
