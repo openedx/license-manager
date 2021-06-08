@@ -17,7 +17,8 @@ def revoke_license(user_license):
         user_license (License): The License to be revoked
     """
     # Number of revocations remaining can become negative if revoke max percentage is decreased
-    revoke_limit_reached = user_license.subscription_plan.num_revocations_remaining <= 0
+    is_revocation_cap_enabled = user_license.subscription_plan.is_revocation_cap_enabled
+    revoke_limit_reached = not user_license.subscription_plan.has_revocations_remaining
     # Revocation of ASSIGNED licenses is not limited
     if revoke_limit_reached and user_license.status == ACTIVATED:
         raise LicenseRevocationError(
@@ -40,11 +41,12 @@ def revoke_license(user_license):
             user_id=user_license.lms_user_id,
             enterprise_id=str(user_license.subscription_plan.enterprise_customer_uuid),
         )
-        # Revocation only counts against the limit for ACTIVATED licenses
-        user_license.subscription_plan.num_revocations_applied += 1
-        user_license.subscription_plan.save()
+        if is_revocation_cap_enabled:
+            # Revocation only counts against the limit for ACTIVATED licenses
+            user_license.subscription_plan.num_revocations_applied += 1
+            user_license.subscription_plan.save()
 
-    if user_license.subscription_plan.num_revocations_remaining <= 0:
+    if not user_license.subscription_plan.has_revocations_remaining:
         # Send email notification to ECS that the Subscription Plan has reached its revocation cap
         send_revocation_cap_notification_email_task.delay(
             subscription_uuid=user_license.subscription_plan.uuid,

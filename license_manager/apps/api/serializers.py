@@ -28,6 +28,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'enterprise_customer_uuid',
             'enterprise_catalog_uuid',
             'is_active',
+            'is_revocation_cap_enabled',
             'licenses',
             'revocations',
             'days_until_expiration',
@@ -41,6 +42,9 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
         }
 
     def get_revocations(self, obj):
+        if not obj.is_revocation_cap_enabled:
+            return None
+
         return {
             'applied': obj.num_revocations_applied,
             'remaining': obj.num_revocations_remaining,

@@ -74,6 +74,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'salesforce_opportunity_id',
         'netsuite_product_id',
         'revoke_max_percentage',
+        'is_revocation_cap_enabled',
         'is_active',
         'for_internal_use_only',
     )
