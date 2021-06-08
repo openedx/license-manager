@@ -154,6 +154,7 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
     writable_fields = (
         'default_enterprise_catalog_uuid',
         'enterprise_customer_slug',
+        'disable_expiration_notifications',
     )
     fields = read_only_fields + writable_fields
     list_display = (
@@ -161,6 +162,7 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'enterprise_customer_uuid',
         'enterprise_customer_slug',
         'get_subscription_plan_links',
+        'disable_expiration_notifications',
     )
     sortable_by = (
         'uuid',

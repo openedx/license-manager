@@ -62,6 +62,7 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
             'default_enterprise_catalog_uuid',
             'ordered_subscription_plan_expirations',
             'subscriptions',
+            'disable_expiration_notifications',
         ]
 
 

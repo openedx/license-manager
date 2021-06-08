@@ -72,6 +72,13 @@ class CustomerAgreement(TimeStampedModel):
         )
     )
 
+    disable_expiration_notifications = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Used in MFEs to disable subscription expiration notifications"
+        )
+    )
+
     history = HistoricalRecords()
 
     @property
