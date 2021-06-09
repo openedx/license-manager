@@ -205,6 +205,13 @@ class SubscriptionPlan(TimeStampedModel):
         default=False
     )
 
+    is_revocation_cap_enabled = models.BooleanField(
+        default=False,
+        help_text=(
+            "Determines whether there is a maximum cap on the number of license revocations for this SubscriptionPlan. Defaults to False."
+        )
+    )
+
     revoke_max_percentage = models.PositiveSmallIntegerField(
         blank=True,
         default=5,
@@ -221,11 +228,23 @@ class SubscriptionPlan(TimeStampedModel):
     )
 
     @property
+    def has_revocations_remaining(self):
+        """
+        Gets whether there are any revocations remaining for this SubscriptionPlan. If the revocation cap is enabled,
+        returns whether there is at least one revocation remaining.
+        """
+        if not self.is_revocation_cap_enabled:
+            return True
+        return self.num_revocations_remaining > 0
+
+    @property
     def num_revocations_remaining(self):
         """
-        Gets the number of revocations that can still be made against this SubscriptionPlan.
+        Gets the number of revocations that can still be made against this SubscriptionPlan. The
+        revocation cap must be enabled for a count that decrements per revocation. Note: This value
+        is rounded up.
 
-        Note: This value is rounded up.
+        When the revocation cap is not enabled for this SubscriptionPlan, ``None``is returned.
         """
         num_revocations_allowed = ceil(self.num_licenses * (self.revoke_max_percentage / 100))
         return num_revocations_allowed - self.num_revocations_applied
