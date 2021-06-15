@@ -9,6 +9,7 @@ from license_manager.apps.subscriptions.forms import (
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
+    PlanType,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
@@ -268,3 +269,48 @@ class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
         if obj and obj.processed:
             return False
         return True
+
+
+@admin.register(PlanType)
+class PlanTypeAdmin(admin.ModelAdmin):
+    exclude = ['history']
+    list_display = (
+        'label',
+        'description',
+    )
+    ordering = (
+        'label',
+        'description',
+        'is_paid_subscription',
+        'ns_id_required',
+        'sf_id_required',
+        'internal_use_only',
+    )
+    sortable_by = (
+        'label',
+        'description',
+        'is_paid_subscription',
+        'ns_id_required',
+        'sf_id_required',
+        'internal_use_only',
+    )
+    list_filter = (
+        'label',
+        'description'
+    )
+    search_fields = (
+        'label',
+        'description',
+        'is_paid_subscription',
+        'ns_id_required',
+        'sf_id_required',
+        'internal_use_only',
+    )
+    fields = (
+        'label',
+        'description',
+        'is_paid_subscription',
+        'ns_id_required',
+        'sf_id_required',
+        'internal_use_only',
+    )
