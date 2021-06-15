@@ -133,16 +133,28 @@ class PlanType(models.Model):
         null=False,
     )
     is_paid_subscription = models.BooleanField(
-        default=True
+        default=True,
+        help_text=_(
+            "Marking this indicates that the plan is a paid subscription."
+        )
     )
     ns_id_required = models.BooleanField(
-        default=True
+        default=True,
+        help_text=_(
+            "Marking this indicates the NetSuite ID is required."
+        )
     )
     sf_id_required = models.BooleanField(
-        default=True
+        default=True,
+        help_text=_(
+            "Marking this indicates the Salesforce ID is required."
+        )
     )
     internal_use_only = models.BooleanField(
-        default=False
+        default=False,
+        help_text=_(
+            "Marking this indicates this subscription is only used internally by edX employees."
+        )
     )
 
     def __str__(self):
