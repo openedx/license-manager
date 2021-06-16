@@ -15,15 +15,15 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for row in SubscriptionPlan.objects.all():
             if row.netsuite_product_id == 0:
-                Command.save_plan(row, 'OCE')
+                plan = Command.save_plan(row, 'OCE')
             elif row.netsuite_product_id == 106 or row.netsuite_product_id == 110:
-                Command.save_plan(row, 'Standard Paid')
+                plan = Command.save_plan(row, 'Standard Paid')
             else:
-                Command.save_plan(row, 'Test')
+                plan = Command.save_plan(row, 'Test')
+            row.PlanType = plan
+            row.save()
 
-    def save_plan(row, label):
-        plan = PlanType.objects.filter(label='OCE')
-        row.PlanType = plan
-        row.save()
-        message = 'Assigned {} label to subscription plan \"{}\"'.format(label, row.title)
+    def save_plan(row, plan_label):
+        message = 'Assigned {} label to subscription plan \"{}\"'.format(plan_label, row.title)
         logger.info(message)
+        return PlanType.objects.get(label=plan_label)
