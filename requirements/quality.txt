@@ -18,11 +18,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.17.72
+boto3==1.17.96
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.20.72
+botocore==1.20.96
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -32,7 +32,7 @@ celery==4.4.7
     #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   edx-celeryutils
-certifi==2020.12.5
+certifi==2021.5.30
     # via
     #   -r requirements/base.txt
     #   requests
@@ -52,7 +52,7 @@ click==7.1.2
     #   click-log
     #   code-annotations
     #   edx-lint
-code-annotations==1.1.1
+code-annotations==1.1.2
     # via edx-lint
 coreapi==2.3.3
     # via
@@ -95,16 +95,15 @@ django-ses==2.0.0
     # via -r requirements/base.txt
 django-simple-history==3.0.0
     # via -r requirements/base.txt
-django-waffle==2.1.0
+django-waffle==2.2.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
     #   edx-drf-extensions
-django==2.2.23
+django==2.2.24
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/base.txt
-    #   code-annotations
     #   django-cors-headers
     #   django-crum
     #   django-extensions
@@ -122,7 +121,7 @@ django==2.2.23
     #   edx-rbac
     #   jsonfield2
     #   rest-condition
-djangorestframework-csv==2.1.0
+djangorestframework-csv==2.1.1
     # via -r requirements/base.txt
 djangorestframework==3.12.4
     # via
@@ -135,6 +134,7 @@ djangorestframework==3.12.4
     #   rest-condition
 drf-jwt==1.19.0
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/base.txt
     #   edx-drf-extensions
 drf-nested-routers==0.93.3
@@ -143,7 +143,7 @@ edx-auth-backends==3.3.3
     # via -r requirements/base.txt
 edx-celeryutils==1.0.0
     # via -r requirements/base.txt
-edx-django-utils==4.0.0
+edx-django-utils==4.1.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -153,7 +153,7 @@ edx-drf-extensions==6.5.0
     #   edx-rbac
 edx-lint==5.0.0
     # via -r requirements/quality.in
-edx-opaque-keys==2.2.0
+edx-opaque-keys==2.2.1
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -211,11 +211,11 @@ mccabe==0.6.1
     # via pylint
 mysqlclient==2.0.3
     # via -r requirements/base.txt
-newrelic==6.2.0.156
+newrelic==6.4.1.158
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-oauthlib==3.1.0
+oauthlib==3.1.1
     # via
     #   -r requirements/base.txt
     #   requests-oauthlib
@@ -242,7 +242,7 @@ pycryptodomex==3.10.1
     # via
     #   -r requirements/base.txt
     #   pyjwkest
-pydocstyle==6.0.0
+pydocstyle==6.1.1
     # via -r requirements/quality.in
 pyjwkest==1.4.2
     # via
@@ -264,7 +264,7 @@ pylint-plugin-utils==0.6
     # via
     #   pylint-celery
     #   pylint-django
-pylint==2.8.2
+pylint==2.8.3
     # via
     #   edx-lint
     #   pylint-celery
@@ -379,7 +379,7 @@ uritemplate==3.0.1
     # via
     #   -r requirements/base.txt
     #   coreapi
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   -r requirements/base.txt
     #   botocore

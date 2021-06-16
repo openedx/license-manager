@@ -10,9 +10,9 @@ backoff==1.10.0
     # via -r requirements/base.in
 billiard==3.6.4.0
     # via celery
-boto3==1.17.72
+boto3==1.17.96
     # via django-ses
-botocore==1.20.72
+botocore==1.20.96
     # via
     #   boto3
     #   s3transfer
@@ -21,7 +21,7 @@ celery==4.4.7
     #   -c requirements/constraints.txt
     #   -r requirements/base.in
     #   edx-celeryutils
-certifi==2020.12.5
+certifi==2021.5.30
     # via requests
 cffi==1.14.5
     # via cryptography
@@ -62,12 +62,12 @@ django-ses==2.0.0
     # via -r requirements/base.in
 django-simple-history==3.0.0
     # via -r requirements/base.in
-django-waffle==2.1.0
+django-waffle==2.2.0
     # via
     #   -r requirements/base.in
     #   edx-django-utils
     #   edx-drf-extensions
-django==2.2.23
+django==2.2.24
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/base.in
@@ -87,7 +87,7 @@ django==2.2.23
     #   edx-rbac
     #   jsonfield2
     #   rest-condition
-djangorestframework-csv==2.1.0
+djangorestframework-csv==2.1.1
     # via -r requirements/base.in
 djangorestframework==3.12.4
     # via
@@ -99,14 +99,16 @@ djangorestframework==3.12.4
     #   edx-drf-extensions
     #   rest-condition
 drf-jwt==1.19.0
-    # via edx-drf-extensions
+    # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
+    #   edx-drf-extensions
 drf-nested-routers==0.93.3
     # via -r requirements/base.in
 edx-auth-backends==3.3.3
     # via -r requirements/base.in
 edx-celeryutils==1.0.0
     # via -r requirements/base.in
-edx-django-utils==4.0.0
+edx-django-utils==4.1.0
     # via
     #   -r requirements/base.in
     #   edx-drf-extensions
@@ -114,7 +116,7 @@ edx-drf-extensions==6.5.0
     # via
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys==2.2.0
+edx-opaque-keys==2.2.1
     # via edx-drf-extensions
 edx-rbac==1.4.2
     # via -r requirements/base.in
@@ -149,9 +151,9 @@ markupsafe==1.1.1
     #   jinja2
 mysqlclient==2.0.3
     # via -r requirements/base.in
-newrelic==6.2.0.156
+newrelic==6.4.1.158
     # via edx-django-utils
-oauthlib==3.1.0
+oauthlib==3.1.1
     # via
     #   requests-oauthlib
     #   social-auth-core
@@ -240,7 +242,7 @@ unicodecsv==0.14.1
     # via djangorestframework-csv
 uritemplate==3.0.1
     # via coreapi
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   botocore
     #   requests

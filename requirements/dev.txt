@@ -23,11 +23,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.17.72
+boto3==1.17.96
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.20.72
+botocore==1.20.96
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -37,7 +37,7 @@ celery==4.4.7
     #   -c requirements/constraints.txt
     #   -r requirements/validation.txt
     #   edx-celeryutils
-certifi==2020.12.5
+certifi==2021.5.30
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -63,7 +63,7 @@ click==7.1.2
     #   code-annotations
     #   edx-lint
     #   pip-tools
-code-annotations==1.1.1
+code-annotations==1.1.2
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -94,7 +94,7 @@ defusedxml==0.7.1
     #   -r requirements/validation.txt
     #   python3-openid
     #   social-auth-core
-diff-cover==5.1.1
+diff-cover==5.1.2
     # via -r requirements/dev.in
 django-cors-headers==3.7.0
     # via -r requirements/validation.txt
@@ -124,16 +124,15 @@ django-ses==2.0.0
     # via -r requirements/validation.txt
 django-simple-history==3.0.0
     # via -r requirements/validation.txt
-django-waffle==2.1.0
+django-waffle==2.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
     #   edx-drf-extensions
-django==2.2.23
+django==2.2.24
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/validation.txt
-    #   code-annotations
     #   django-cors-headers
     #   django-crum
     #   django-debug-toolbar
@@ -153,7 +152,7 @@ django==2.2.23
     #   edx-rbac
     #   jsonfield2
     #   rest-condition
-djangorestframework-csv==2.1.0
+djangorestframework-csv==2.1.1
     # via -r requirements/validation.txt
 djangorestframework==3.12.4
     # via
@@ -166,6 +165,7 @@ djangorestframework==3.12.4
     #   rest-condition
 drf-jwt==1.19.0
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/validation.txt
     #   edx-drf-extensions
 drf-nested-routers==0.93.3
@@ -174,7 +174,7 @@ edx-auth-backends==3.3.3
     # via -r requirements/validation.txt
 edx-celeryutils==1.0.0
     # via -r requirements/validation.txt
-edx-django-utils==4.0.0
+edx-django-utils==4.1.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
@@ -186,7 +186,7 @@ edx-i18n-tools==0.5.3
     # via -r requirements/validation.txt
 edx-lint==5.0.0
     # via -r requirements/validation.txt
-edx-opaque-keys==2.2.0
+edx-opaque-keys==2.2.1
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
@@ -271,11 +271,11 @@ mccabe==0.6.1
     #   pylint
 mysqlclient==2.0.3
     # via -r requirements/validation.txt
-newrelic==6.2.0.156
+newrelic==6.4.1.158
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
-oauthlib==3.1.0
+oauthlib==3.1.1
     # via
     #   -r requirements/validation.txt
     #   requests-oauthlib
@@ -292,7 +292,7 @@ path.py==12.5.0
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
-path==15.1.2
+path==16.0.0
     # via
     #   -r requirements/validation.txt
     #   path.py
@@ -335,7 +335,7 @@ pycryptodomex==3.10.1
     # via
     #   -r requirements/validation.txt
     #   pyjwkest
-pydocstyle==6.0.0
+pydocstyle==6.1.1
     # via -r requirements/validation.txt
 pygments==2.9.0
     # via diff-cover
@@ -364,7 +364,7 @@ pylint-plugin-utils==0.6
     #   -r requirements/validation.txt
     #   pylint-celery
     #   pylint-django
-pylint==2.8.2
+pylint==2.8.3
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -379,9 +379,9 @@ pyparsing==2.4.7
     # via
     #   -r requirements/validation.txt
     #   packaging
-pytest-cov==2.11.1
+pytest-cov==2.12.1
     # via -r requirements/validation.txt
-pytest-django==4.2.0
+pytest-django==4.4.0
     # via -r requirements/validation.txt
 pytest==6.2.4
     # via
@@ -507,6 +507,7 @@ toml==0.10.2
     #   pep517
     #   pylint
     #   pytest
+    #   pytest-cov
 unicodecsv==0.14.1
     # via
     #   -r requirements/validation.txt
@@ -515,7 +516,7 @@ uritemplate==3.0.1
     # via
     #   -r requirements/validation.txt
     #   coreapi
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   -r requirements/validation.txt
     #   botocore
