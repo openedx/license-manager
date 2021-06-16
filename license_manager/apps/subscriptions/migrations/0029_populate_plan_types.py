@@ -4,23 +4,23 @@ from django.db import migrations, models
 
 logger = logging.getLogger(__name__)
 
-def save_plan(row, plan_label, apps):
-    PlanType = apps.get_model("subscriptions", "PlanType")
-    message = 'Assigned {} label to subscription plan \"{}\"'.format(plan_label, row.title)
-    logger.info(message)
-    return PlanType.objects.get(label=plan_label)
-
 def populate_plan(apps, schema_editor):
     SubscriptionPlan = apps.get_model('subscriptions', 'SubscriptionPlan')
+    PlanType = apps.get_model("subscriptions", "PlanType")
     for row in SubscriptionPlan.objects.all():
+        label_name = 'Test'
         if row.netsuite_product_id == 0:
-            plan = save_plan(row, 'OCE', apps)
+            label_name = 'OCE'
+            plan = PlanType.objects.get(label=label_name)
         elif row.netsuite_product_id == 106 or row.netsuite_product_id == 110:
-            plan = save_plan(row, 'Standard Paid', apps)
+            label_name - 'Standard Paid'
+            plan = PlanType.objects.get(label=label_name)        
         else:
-            plan = save_plan(row, 'Test', apps)
+            plan = PlanType.objects.get(label=label_name)
         row.PlanType = plan
         row.save()
+        message = 'Assigned {} label to subscription plan \"{}\"'.format(label_name, row.title)
+        logger.info(message)
 
 class Migration(migrations.Migration):
     dependencies = [
@@ -30,5 +30,3 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(populate_plan),
     ]
-
-
