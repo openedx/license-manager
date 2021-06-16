@@ -24,7 +24,7 @@ def populate_plan(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('subscriptions', '0027_renewal_cap_toggle'),
+        ('subscriptions', '0028_plan_type_help_text'),
     ]
 
     operations = [
