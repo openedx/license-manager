@@ -1,8 +1,4 @@
-import logging
-
 from django.db import migrations
-
-logger = logging.getLogger(__name__)
 
 def populate_plan(apps, schema_editor):
     SubscriptionPlan = apps.get_model('subscriptions', 'SubscriptionPlan')
@@ -19,7 +15,6 @@ def populate_plan(apps, schema_editor):
 
 def depopulate_plan(apps, schema_editor):
     SubscriptionPlan = apps.get_model('subscriptions', 'SubscriptionPlan')
-    PlanType = apps.get_model("subscriptions", "PlanType")
     for row in SubscriptionPlan.objects.all():
         row.plan_type = None
         row.save()
