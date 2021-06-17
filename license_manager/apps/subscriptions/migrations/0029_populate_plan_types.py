@@ -1,26 +1,17 @@
-import logging
-
-from django.db import migrations, models
-
-logger = logging.getLogger(__name__)
+from django.db import migrations
 
 def populate_plan(apps, schema_editor):
     SubscriptionPlan = apps.get_model('subscriptions', 'SubscriptionPlan')
     PlanType = apps.get_model("subscriptions", "PlanType")
     for row in SubscriptionPlan.objects.all():
-        label_name = 'Test'
         if row.netsuite_product_id == 0:
-            label_name = 'OCE'
-            plan = PlanType.objects.get(label=label_name)
+            plan = PlanType.objects.get(label='OCE')
         elif row.netsuite_product_id == 106 or row.netsuite_product_id == 110:
-            label_name - 'Standard Paid'
-            plan = PlanType.objects.get(label=label_name)        
+            plan = PlanType.objects.get(label='Standard Paid')        
         else:
-            plan = PlanType.objects.get(label=label_name)
+            plan = PlanType.objects.get(label='Test')
         row.PlanType = plan
         row.save()
-        message = 'Assigned {} label to subscription plan \"{}\"'.format(label_name, row.title)
-        logger.info(message)
 
 class Migration(migrations.Migration):
     dependencies = [
