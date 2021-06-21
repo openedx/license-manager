@@ -28,12 +28,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.17.72
+boto3==1.17.96
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.20.72
+botocore==1.20.96
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -45,7 +45,7 @@ celery==4.4.7
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-celeryutils
-certifi==2020.12.5
+certifi==2021.5.30
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -73,7 +73,7 @@ click==7.1.2
     #   click-log
     #   code-annotations
     #   edx-lint
-code-annotations==1.1.1
+code-annotations==1.1.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -145,18 +145,17 @@ django-simple-history==3.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-waffle==2.1.0
+django-waffle==2.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
     #   edx-drf-extensions
-django==2.2.23
+django==2.2.24
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-    #   code-annotations
     #   django-cors-headers
     #   django-crum
     #   django-extensions
@@ -175,7 +174,7 @@ django==2.2.23
     #   edx-rbac
     #   jsonfield2
     #   rest-condition
-djangorestframework-csv==2.1.0
+djangorestframework-csv==2.1.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -191,6 +190,7 @@ djangorestframework==3.12.4
     #   rest-condition
 drf-jwt==1.19.0
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -206,7 +206,7 @@ edx-celeryutils==1.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-django-utils==4.0.0
+edx-django-utils==4.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -222,7 +222,7 @@ edx-lint==5.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-opaque-keys==2.2.0
+edx-opaque-keys==2.2.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -314,12 +314,12 @@ mysqlclient==2.0.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==6.2.0.156
+newrelic==6.4.1.158
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-oauthlib==3.1.0
+oauthlib==3.1.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -336,7 +336,7 @@ packaging==20.9
     #   pytest
 path.py==12.5.0
     # via edx-i18n-tools
-path==15.1.2
+path==16.0.0
     # via path.py
 pathlib2==2.3.5
     # via -r requirements/validation.in
@@ -372,7 +372,7 @@ pycryptodomex==3.10.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pyjwkest
-pydocstyle==6.0.0
+pydocstyle==6.1.1
     # via -r requirements/quality.txt
 pyjwkest==1.4.2
     # via
@@ -404,7 +404,7 @@ pylint-plugin-utils==0.6
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pylint==2.8.2
+pylint==2.8.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -421,9 +421,9 @@ pyparsing==2.4.7
     # via
     #   -r requirements/test.txt
     #   packaging
-pytest-cov==2.11.1
+pytest-cov==2.12.1
     # via -r requirements/test.txt
-pytest-django==4.2.0
+pytest-django==4.4.0
     # via -r requirements/test.txt
 pytest==6.2.4
     # via
@@ -567,6 +567,7 @@ toml==0.10.2
     #   -r requirements/test.txt
     #   pylint
     #   pytest
+    #   pytest-cov
 unicodecsv==0.14.1
     # via
     #   -r requirements/quality.txt
@@ -577,7 +578,7 @@ uritemplate==3.0.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   coreapi
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
