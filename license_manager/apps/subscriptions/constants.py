@@ -3,13 +3,11 @@ ACTIVATED = 'activated'
 ASSIGNED = 'assigned'
 UNASSIGNED = 'unassigned'
 REVOKED = 'revoked'
-TRANSFERRED_FOR_RENEWAL = 'transferred-renewal'
 LICENSE_STATUS_CHOICES = (
     (ACTIVATED, 'Activated'),
     (ASSIGNED, 'Assigned'),
     (UNASSIGNED, 'Unassigned'),
     (REVOKED, 'Revoked'),
-    (TRANSFERRED_FOR_RENEWAL, 'Transferred for renewal'),
 )
 
 

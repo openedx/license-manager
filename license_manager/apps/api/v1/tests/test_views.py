@@ -22,7 +22,6 @@ from edx_rest_framework_extensions.auth.jwt.tests.utils import (
     generate_unversioned_payload,
 )
 from freezegun import freeze_time
-from pytz import UTC
 from requests import Response, models
 from rest_framework import status
 from rest_framework.test import APIClient

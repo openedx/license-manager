@@ -17,7 +17,11 @@ from license_manager.apps.subscriptions.models import (
 
 @admin.register(License)
 class LicenseAdmin(admin.ModelAdmin):
-    readonly_fields = ['activation_key']
+    readonly_fields = [
+        'activation_key',
+        'renewed_to',
+        'get_renewed_from',
+    ]
     exclude = ['history']
     list_display = (
         'uuid',
@@ -55,6 +59,10 @@ class LicenseAdmin(admin.ModelAdmin):
             obj.subscription_plan.title,
         ))
     get_subscription_plan_title.short_description = 'Subscription Plan'
+
+    def get_renewed_from(self, obj):
+        return obj.renewed_from
+    get_renewed_from.short_description = 'Renewed from'
 
 
 @admin.register(SubscriptionPlan)

@@ -5,6 +5,7 @@ Status
 ======
 
 Proposed May 2021
+Accepted June 2021
 
 Context
 =======
@@ -89,6 +90,10 @@ Which licenses in the original plan should be "copied" to new licenses in the fu
   the database record was created and the assignment date from the end user's perspective.
 * We'll copy the status value from the original license to the future license.  The future licenses
   will end up only being ``ASSIGNED`` or ``ACTIVATED``.
+* We'll set a new ``License.renewed_to`` field to reference the ``uuid`` field of the future license.
+  This field allow us to know the pre-renewal status of a license after the renewal
+  is processed (e.g. was it "assigned" or "activated" before the renewal happened?).
+  It will also let us directly reference an original license from a future license, or the converse.
 
 Expire original plans and mark its licenses as transferred
 ----------------------------------------------------------
@@ -98,7 +103,6 @@ probably by a cron job.  "Marked as expired" means that the original plan's ``ex
 is set to ``True``.
 We'll introduce a process to routinely look for expired plans associated with a renewal and do the following:
 
-* Mark each of the associated licenses as transferred.
 * Set the original plan's expiration date
 
 No backfilling of data
