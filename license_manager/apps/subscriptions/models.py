@@ -220,7 +220,8 @@ class SubscriptionPlan(TimeStampedModel):
     is_revocation_cap_enabled = models.BooleanField(
         default=False,
         help_text=(
-            "Determines whether there is a maximum cap on the number of license revocations for this SubscriptionPlan. Defaults to False."
+            "Determines whether there is a maximum cap on the number of license revocations for this SubscriptionPlan. "
+            "Defaults to False."
         )
     )
 
@@ -622,6 +623,14 @@ class License(TimeStampedModel):
         on_delete=models.CASCADE,
     )
 
+    renewed_to = models.OneToOneField(
+        'License',  # Passed as a string because we're in the License class definition here.
+        related_name='_renewed_from',
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+
     history = HistoricalRecords()
 
     class Meta:
@@ -652,6 +661,16 @@ class License(TimeStampedModel):
             self.subscription_plan.customer_agreement.enterprise_customer_slug,
             self.activation_key,
         )
+
+    @property
+    def renewed_from(self):
+        """
+        Helper to get any existing licenses this license was renewed from.
+        """
+        try:
+            return self._renewed_from
+        except License._renewed_from.RelatedObjectDoesNotExist:
+            return None
 
     def clear_pii(self):
         """

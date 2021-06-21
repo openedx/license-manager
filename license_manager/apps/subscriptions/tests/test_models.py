@@ -6,6 +6,7 @@ from django.test import TestCase
 from license_manager.apps.subscriptions.constants import REVOKED, UNASSIGNED
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (
+    LicenseFactory,
     SubscriptionPlanFactory,
 )
 
@@ -54,6 +55,23 @@ class LicenseModelTests(TestCase):
         Removes all test instances of License that have been created.
         """
         License.objects.all().delete()
+
+    def test_license_renewed_to_and_from(self):
+        """
+        Tests that links between renewed licenses are sane.
+        """
+        original = LicenseFactory.create()
+        future = LicenseFactory.create()
+
+        original.renewed_to = future
+        original.save()
+        future.save()
+
+        self.assertEqual(future.renewed_from, original)
+
+        another_one = LicenseFactory.create()
+        self.assertIsNone(another_one.renewed_to)
+        self.assertIsNone(another_one.renewed_from)
 
     def test_bulk_create(self):
         """
