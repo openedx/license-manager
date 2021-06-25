@@ -137,8 +137,8 @@ class LicenseManagerCeleryTaskTests(TestCase):
             actual_enterprise_name,
             actual_enterprise_sender_alias,
             actual_enterprise_reply_to_email,
-            subscription_uuid
-        ) = send_email_args[:6]
+            actual_subscription_uuid
+        ) = send_email_args[:7]
 
         assert list(self.assigned_licenses) == list(actual_licenses)
         assert self.custom_template_text == actual_template_text
@@ -146,6 +146,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         assert self.enterprise_name == actual_enterprise_name
         assert self.enterprise_sender_alias == actual_enterprise_sender_alias
         assert self.reply_to_email == actual_enterprise_reply_to_email
+        assert self.subscription_plan_id == actual_subscription_uuid
 
     @mock.patch('license_manager.apps.api.tasks.send_onboarding_email', return_value=mock.MagicMock())
     def test_onboarding_email_task(self, mock_send_onboarding_email):
@@ -153,4 +154,4 @@ class LicenseManagerCeleryTaskTests(TestCase):
         Tests that the onboarding email task sends the email
         """
         tasks.send_onboarding_email_task(self.enterprise_uuid, self.user_email, self.subscription_plan_id)
-        mock_send_onboarding_email.assert_called_with(self.enterprise_uuid, self.user_email)
+        mock_send_onboarding_email.assert_called_with(self.enterprise_uuid, self.user_email, self.subscription_plan_id)

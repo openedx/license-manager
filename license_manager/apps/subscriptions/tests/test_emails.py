@@ -34,8 +34,8 @@ class EmailTests(TestCase):
             self.enterprise_slug,
             self.enterprise_name,
             self.enterprise_sender_alias,
-            self.subscription_uuid,
             self.reply_to_email,
+            self.subscription_uuid,
         )
         self.assertEqual(
             len(mail.outbox),
@@ -57,8 +57,8 @@ class EmailTests(TestCase):
             self.enterprise_slug,
             self.enterprise_name,
             self.enterprise_sender_alias,
-            self.subscription_uuid,
             self.reply_to_email,
+            self.subscription_uuid,
             is_reminder=True,
         )
         self.assertEqual(len(mail.outbox), 1)
