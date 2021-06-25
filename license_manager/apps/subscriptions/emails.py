@@ -157,7 +157,7 @@ def _get_rendered_template_content(template_name, context):
     Returns the rendered content from the Plan Email Templates model 
     """
     sub_plan_id = context['SUBSCRIPTION_PLAN_ID'] 
-    sub = SubscriptionPlan.objects.filter(uuid__exact=sub_plan_id).get()
+    sub = SubscriptionPlan.objects.filter(uuid__exact=sub_plan_id)
     print(sub)
     plan_type_id = sub.plan_type_id
     plan_email_template = PlanEmailTemplates.objects.filter(
