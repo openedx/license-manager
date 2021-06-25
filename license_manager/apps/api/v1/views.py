@@ -14,7 +14,6 @@ from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
-from license_manager.apps import subscriptions
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError
@@ -984,7 +983,7 @@ class LicenseActivationView(LicenseBaseView):
             send_onboarding_email_task.delay(
                 user_license.subscription_plan.enterprise_customer_uuid,
                 user_license.user_email,
-                user_license.subscription_plan_id
+                user_license.subscription_plan.uuid,
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
