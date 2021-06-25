@@ -6,6 +6,7 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from django.utils.safestring import mark_safe
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rbac.utils import ALL_ACCESS_CONTEXT
 from model_utils.models import TimeStampedModel
@@ -159,6 +160,49 @@ class PlanType(models.Model):
 
     def __str__(self):
         return self.label
+
+class PlanEmailTemplates(models.Model):
+    """
+    Stores email templates associated with each enterprise Subscription plan type.
+
+    .. no_pii: This model has no PII
+    """
+    plaintext_template = models.TextField(
+        blank=False,
+    )
+    html_template = models.TextField(
+        blank=False,
+    )
+    subject_line = models.CharField(
+        max_length=100,
+        blank=False,
+        null=False,
+    )
+    plan_type = models.ForeignKey(
+        PlanType,
+        related_name='subscriptions',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
+    template_type = models.TextField(
+        blank=False,
+        null=False,
+    )
+    def __str__(self):
+        return self.label
+
+    def render_html_template(self, kwargs):
+        """
+        Render just the HTML template and return it as a string.
+        """
+        return self.render_template(mark_safe(self.html_template), kwargs)
+
+    def render_plaintext_template(self, kwargs):
+        """
+        Render just the plaintext template and return it as a string.
+        """
+        return self.render_template(self.plaintext_template, kwargs)
 
 
 class SubscriptionPlan(TimeStampedModel):
