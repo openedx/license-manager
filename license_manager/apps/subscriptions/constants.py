@@ -24,7 +24,7 @@ class LicenseTypesToRenew:
     )
 
 
-# Subject lines used for emails
+# Subject lines used for emails for testing
 LICENSE_ACTIVATION_EMAIL_SUBJECT = 'Start your edX Subscription'
 LICENSE_REMINDER_EMAIL_SUBJECT = 'Your edX License is pending'
 ONBOARDING_EMAIL_SUBJECT = 'Welcome to edX Subscriptions!'
