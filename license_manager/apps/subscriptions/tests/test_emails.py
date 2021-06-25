@@ -22,7 +22,7 @@ class EmailTests(TestCase):
         self.enterprise_name = 'Mock Enterprise'
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
         self.reply_to_email = 'edx@example.com'
-        self.subscription_uuid = uuid4()
+        self.subscription_uuid = '4a2dcb96-cb0d-4e0b-8ee0-b4ee28d6137a' #KIRA
 
     def test_send_activation_emails(self):
         """
