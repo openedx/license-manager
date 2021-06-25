@@ -110,6 +110,7 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
             enterprise_name,
             enterprise_sender_alias,
             reply_to_email,
+            subscription_uuid,
             is_reminder=True
         )
     except SMTPException:
@@ -177,7 +178,7 @@ def license_expiration_task(license_uuids):
 
 
 @shared_task(base=LoggedTask)
-def send_revocation_cap_notification_email_task(subscription_uuid):
+def send_revocation_cap_notification_email_task(subscription_uuid, subscription_plan_id):
     """
     Sends revocation cap email notification to ECS asynchronously.
 
