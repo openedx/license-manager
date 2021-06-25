@@ -956,7 +956,6 @@ class LicenseActivationView(LicenseBaseView):
             user_license = License.objects.get(
                 activation_key=activation_key_uuid,
                 user_email=self.user_email,
-                subscription_plan_id=self.subscription_plan_id,
                 subscription_plan__is_active=True,
             )
         except License.DoesNotExist:
