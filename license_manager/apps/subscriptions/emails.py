@@ -1,19 +1,17 @@
 from django.conf import settings
 from django.core import mail
+from django.db.models.query_utils import Q
 from django.template.loader import get_template
 
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
-    LICENSE_ACTIVATION_EMAIL_SUBJECT,
-    LICENSE_ACTIVATION_EMAIL_TEMPLATE,
     LICENSE_BULK_OPERATION_BATCH_SIZE,
-    LICENSE_REMINDER_EMAIL_SUBJECT,
+    LICENSE_ACTIVATION_EMAIL_TEMPLATE,
     LICENSE_REMINDER_EMAIL_TEMPLATE,
-    ONBOARDING_EMAIL_SUBJECT,
     ONBOARDING_EMAIL_TEMPLATE,
-    REVOCATION_CAP_NOTIFICATION_EMAIL_SUBJECT,
     REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE,
 )
+from license_manager.apps.subscriptions.models import PlanEmailTemplates, SubscriptionPlan
 from license_manager.apps.subscriptions.utils import (
     chunks,
     get_enterprise_reply_to_email,
@@ -30,25 +28,26 @@ def send_revocation_cap_notification_email(subscription_plan, enterprise_name, e
     """
     context = {
         'template_name': REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE,
-        'subject': REVOCATION_CAP_NOTIFICATION_EMAIL_SUBJECT.format(subscription_plan.title),
         'SUBSCRIPTION_TITLE': subscription_plan.title,
         'ENTERPRISE_NAME': enterprise_name,
         'NUM_REVOCATIONS_APPLIED': subscription_plan.num_revocations_applied,
         'RECIPIENT_EMAIL': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
         'HIDE_EMAIL_FOOTER_MARKETING': True,
+        'SUBSCRIPTION_PLAN_ID': subscription_plan.uuid,
     }
     email = _message_from_context_and_template(context, enterprise_sender_alias, reply_to_email)
     email.send()
 
 
-def send_onboarding_email(enterprise_customer_uuid, user_email):
+def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_plan_id):
     """
     Sends onboarding email to learner. Intended for use following license activation.
 
     Arguments:
         enterprise_customer_uuid (UUID): unique identifier of the EnterpriseCustomer
-        that is linked to the SubscriptionPlan associated with the activated license
+            that is linked to the SubscriptionPlan associated with the activated license
         user_email (str): email of the learner whose license has just been activated
+        subscription_plan_id: unique identifier to uuid of specific plan type 
     """
     enterprise_customer = EnterpriseApiClient().get_enterprise_customer_data(enterprise_customer_uuid)
     enterprise_name = enterprise_customer.get('name')
@@ -57,8 +56,8 @@ def send_onboarding_email(enterprise_customer_uuid, user_email):
     reply_to_email = get_enterprise_reply_to_email(enterprise_customer)
 
     context = {
-        'subject': ONBOARDING_EMAIL_SUBJECT,
         'template_name': ONBOARDING_EMAIL_TEMPLATE,
+        'SUBSCRIPTION_PLAN_ID': subscription_plan_id,
         'ENTERPRISE_NAME': enterprise_name,
         'ENTERPRISE_SLUG': enterprise_slug,
         'HELP_CENTER_URL': settings.SUPPORT_SITE_URL,
@@ -78,6 +77,7 @@ def send_activation_emails(
     enterprise_name,
     enterprise_sender_alias,
     reply_to_email,
+    subscription_uuid,
     is_reminder=False
 ):
     """
@@ -92,11 +92,12 @@ def send_activation_emails(
         enterprise_slug (str): The slug associated with an enterprise to uniquely identify it
         enterprise_sender_alias (str): Sender alias of the enterprise customer
         reply_to_email (str): Reply to email of the enterprise customer
+        subscription_uuid (int): unique identifier of enterprise subscription
         is_reminder (bool): whether this is a reminder activation email being sent
     """
     context = {
         'template_name': LICENSE_REMINDER_EMAIL_TEMPLATE if is_reminder else LICENSE_ACTIVATION_EMAIL_TEMPLATE,
-        'subject': (LICENSE_ACTIVATION_EMAIL_SUBJECT, LICENSE_REMINDER_EMAIL_SUBJECT)[is_reminder],
+        'SUBSCRIPTION_PLAN_ID': subscription_uuid,
         'TEMPLATE_CLOSING': custom_template_text['closing'],
         'TEMPLATE_GREETING': custom_template_text['greeting'],
         'ENTERPRISE_NAME': enterprise_name,
@@ -151,12 +152,18 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
             connection.send_messages(email_chunk)
 
 
-def _get_rendered_template_content(template_name, extension, context):
+def _get_rendered_template_content(template_name, context):
     """
-    Returns the rendered content for a given template name and file extension
+    Returns the rendered content from the Plan Email Templates model 
     """
-    message_template = 'email/' + template_name + extension
-    return get_template(message_template).render(context)
+    sub_plan_id = context['SUBSCRIPTION_PLAN_ID'] 
+    plan_type_id = SubscriptionPlan.objects.filter(uuid__exact=sub_plan_id).get().plan_type_id
+    plan_email_template = PlanEmailTemplates.objects.filter(
+        template_type__exact=template_name, plan_type__exact=plan_type_id).get()
+    plaintext_template = plan_email_template.render_plaintext_template
+    html_template = plan_email_template.render_html_template
+
+    return plaintext_template, html_template
 
 
 def _message_from_context_and_template(context, sender_alias, reply_to_email):
@@ -178,8 +185,7 @@ def _message_from_context_and_template(context, sender_alias, reply_to_email):
 
     # Render the message contents using Django templates
     template_name = context['template_name']
-    txt_content = _get_rendered_template_content(template_name, '.txt', context)
-    html_content = _get_rendered_template_content(template_name, '.html', context)
+    txt_content, html_content = _get_rendered_template_content(template_name, context)
 
     # Display sender name in addition to the email address
     from_email_string = '"{sender_alias}" <{from_email}>'.format(

@@ -53,7 +53,7 @@ def activation_email_task(custom_template_text, email_recipient_list, subscripti
     try:
         send_activation_emails(
             custom_template_text, pending_licenses, enterprise_slug, enterprise_name, enterprise_sender_alias,
-            reply_to_email,
+            reply_to_email, subscription_uuid
         )
     except SMTPException:
         msg = 'License manager activation email sending received an exception for enterprise: {}.'.format(
@@ -124,12 +124,12 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
 
 
 @shared_task(base=LoggedTask)
-def send_onboarding_email_task(enterprise_customer_uuid, user_email):
+def send_onboarding_email_task(enterprise_customer_uuid, user_email, subscription_plan_id):
     """
     Asynchronously sends onboarding email to learner. Intended for use following license activation.
     """
     try:
-        send_onboarding_email(enterprise_customer_uuid, user_email)
+        send_onboarding_email(enterprise_customer_uuid, user_email, subscription_plan_id)
     except SMTPException:
         logger.error('Onboarding email to {} failed'.format(user_email), exc_info=True)
 
