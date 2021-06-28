@@ -1,3 +1,5 @@
+import uuid
+from datetime import date
 from unittest import mock
 
 import ddt
@@ -6,8 +8,12 @@ from django.test import TestCase
 from license_manager.apps.subscriptions.constants import REVOKED, UNASSIGNED
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (
+    CustomerAgreementFactory,
     LicenseFactory,
     SubscriptionPlanFactory,
+)
+from license_manager.apps.subscriptions.utils import (
+    localized_datetime_from_date,
 )
 
 
@@ -47,7 +53,59 @@ class LicenseModelTests(TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
+        NOW = localized_datetime_from_date(date(2021, 7, 1))
+
+        cls.user_email = 'bob@example.com'
+        cls.enterprise_customer_uuid = uuid.uuid4()
+        cls.customer_agreement = CustomerAgreementFactory.create(
+            enterprise_customer_uuid=cls.enterprise_customer_uuid,
+        )
+
         cls.subscription_plan = SubscriptionPlanFactory()
+
+        cls.active_current_plan = SubscriptionPlanFactory.create(
+            customer_agreement=cls.customer_agreement,
+            is_active=True,
+            start_date=date(2021, 1, 1),
+            expiration_date=date(2021, 12, 31),
+        )
+        cls.active_current_license = LicenseFactory.create(
+            user_email=cls.user_email,
+            subscription_plan=cls.active_current_plan,
+        )
+
+        cls.inactive_current_plan = SubscriptionPlanFactory.create(
+            customer_agreement=cls.customer_agreement,
+            is_active=False,
+            start_date=date(2021, 1, 1),
+            expiration_date=date(2021, 12, 31),
+        )
+        cls.inactive_current_license = LicenseFactory.create(
+            user_email=cls.user_email,
+            subscription_plan=cls.inactive_current_plan,
+        )
+
+        cls.non_current_active_plan = SubscriptionPlanFactory.create(
+            customer_agreement=cls.customer_agreement,
+            is_active=True,
+            start_date=date(2022, 1, 1),
+            expiration_date=date(2022, 12, 31),
+        )
+        cls.non_current_active_license = LicenseFactory.create(
+            user_email=cls.user_email,
+            subscription_plan=cls.non_current_active_plan,
+        )
+
+        cls.non_current_inactive_plan = SubscriptionPlanFactory.create(
+            customer_agreement=cls.customer_agreement,
+            is_active=False,
+            start_date=date(2022, 1, 1),
+            expiration_date=date(2022, 12, 31),
+        )
+        cls.non_current_inactive_license = LicenseFactory.create(
+            user_email=cls.user_email,
+            subscription_plan=cls.non_current_inactive_plan,
+        )
 
     @classmethod
     def tearDownClass(cls):  # pylint: disable=unused-argument
@@ -110,3 +168,60 @@ class LicenseModelTests(TestCase):
             assert 2 == len(license_history)
             assert self.CREATE_HISTORY_TYPE == user_license.history.earliest().history_type
             assert self.UPDATE_HISTORY_TYPE == user_license.history.first().history_type
+
+    def test_for_email_and_customer_no_kwargs(self):
+        expected_licenses = [
+            self.active_current_license,
+            self.inactive_current_license,
+            self.non_current_active_license,
+            self.non_current_inactive_license,
+        ]
+
+        actual_licenses = License.for_email_and_customer(
+            self.user_email,
+            self.enterprise_customer_uuid,
+        )
+
+        self.assertCountEqual(actual_licenses, expected_licenses)
+
+    def test_for_email_and_customer_active_only(self):
+        expected_licenses = [
+            self.active_current_license,
+            self.non_current_active_license,
+        ]
+
+        actual_licenses = License.for_email_and_customer(
+            self.user_email,
+            self.enterprise_customer_uuid,
+            active_plans_only=True,
+        )
+
+        self.assertCountEqual(actual_licenses, expected_licenses)
+
+    def test_for_email_and_customer_current_only(self):
+        expected_licenses = [
+            self.active_current_license,
+            self.inactive_current_license,
+        ]
+
+        actual_licenses = License.for_email_and_customer(
+            self.user_email,
+            self.enterprise_customer_uuid,
+            current_plans_only=True,
+        )
+
+        self.assertCountEqual(actual_licenses, expected_licenses)
+
+    def test_for_email_and_customer_active_and_current_only(self):
+        expected_licenses = [
+            self.active_current_license,
+        ]
+
+        actual_licenses = License.for_email_and_customer(
+            self.user_email,
+            self.enterprise_customer_uuid,
+            active_plans_only=True,
+            current_plans_only=True,
+        )
+
+        self.assertCountEqual(actual_licenses, expected_licenses)

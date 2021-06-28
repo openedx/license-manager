@@ -770,6 +770,34 @@ class License(TimeStampedModel):
             'subscription_plan__customer_agreement',
         )
 
+    @classmethod
+    def for_email_and_customer(
+        cls,
+        user_email,
+        enterprise_customer_uuid,
+        active_plans_only=False,
+        current_plans_only=False,
+    ):
+        """
+        Returns all licenses asssociated with the given user email that are associated
+        with a particular customer's SubscrptionPlans.  The optional ``active_plans_only``
+        and ``current_plans_only`` allow the caller to filter for licenses whose plans
+        are marked ``active`` or that are current (the current time is within the plan's
+        start/end range), respectively.
+        """
+        queryset = cls.by_user_email(user_email)
+        kwargs = {
+            'subscription_plan__customer_agreement__enterprise_customer_uuid': enterprise_customer_uuid,
+        }
+        if active_plans_only:
+            kwargs['subscription_plan__is_active'] = True
+        if current_plans_only:
+            today = localized_utcnow().date()
+            kwargs['subscription_plan__start_date__lte'] = today
+            kwargs['subscription_plan__expiration_date__gte'] = today
+
+        return queryset.filter(**kwargs)
+
 
 class SubscriptionsFeatureRole(UserRole):
     """
