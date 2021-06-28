@@ -46,7 +46,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         tasks.activation_email_task(
             self.custom_template_text,
             self.email_recipient_list,
-            str(self.subscription_plan.uuid)
+            str(self.subscription_uuid)
         )
 
         send_email_args, _ = mock_send_emails.call_args
@@ -73,7 +73,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
             tasks.activation_email_task(
                 self.custom_template_text,
                 self.email_recipient_list,
-                str(self.subscription_plan.uuid)
+                str(self.subscription_uuid)
             )
 
         mock_logger.error.assert_called_once()
@@ -136,7 +136,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
             actual_enterprise_name,
             actual_enterprise_sender_alias,
             actual_enterprise_reply_to_email,
-            actual_subscription_plan_id,
+            actual_subscription_uuid,
         ) = send_email_args[:7]
 
         assert list(self.assigned_licenses) == list(actual_licenses)
@@ -152,5 +152,5 @@ class LicenseManagerCeleryTaskTests(TestCase):
         """
         Tests that the onboarding email task sends the email
         """
-        tasks.send_onboarding_email_task(self.enterprise_uuid, self.user_email, self.subscription_plan_id)
-        mock_send_onboarding_email.assert_called_with(self.enterprise_uuid, self.user_email, self.subscription_plan_id)
+        tasks.send_onboarding_email_task(self.enterprise_uuid, self.user_email, self.subscription_uuid)
+        mock_send_onboarding_email.assert_called_with(self.enterprise_uuid, self.user_email, self.subscription_uuid)

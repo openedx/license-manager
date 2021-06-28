@@ -125,12 +125,12 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
 
 
 @shared_task(base=LoggedTask)
-def send_onboarding_email_task(enterprise_customer_uuid, user_email, subscription_plan_id):
+def send_onboarding_email_task(enterprise_customer_uuid, user_email, subscription_uuid):
     """
     Asynchronously sends onboarding email to learner. Intended for use following license activation.
     """
     try:
-        send_onboarding_email(enterprise_customer_uuid, user_email, subscription_plan_id)
+        send_onboarding_email(enterprise_customer_uuid, user_email, subscription_uuid)
     except SMTPException:
         logger.error('Onboarding email to {} failed'.format(user_email), exc_info=True)
 
@@ -178,7 +178,7 @@ def license_expiration_task(license_uuids):
 
 
 @shared_task(base=LoggedTask)
-def send_revocation_cap_notification_email_task(subscription_uuid, subscription_plan_id):
+def send_revocation_cap_notification_email_task(subscription_uuid):
     """
     Sends revocation cap email notification to ECS asynchronously.
 
