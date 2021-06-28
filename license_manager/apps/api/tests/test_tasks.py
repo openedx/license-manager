@@ -29,7 +29,6 @@ class LicenseManagerCeleryTaskTests(TestCase):
         self.enterprise_name = 'Mock Enterprise'
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
         self.reply_to_email = 'edx@example.com'
-        self.subscription_plan_id = '8f83316a-9b76-47b8-a66f-96bdd91211f2' #KIRA
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.send_activation_emails')
@@ -146,6 +145,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         assert self.enterprise_name == actual_enterprise_name
         assert self.enterprise_sender_alias == actual_enterprise_sender_alias
         assert self.reply_to_email == actual_enterprise_reply_to_email
+        assert self.subscription_plan_id == actual_subscription_plan_id
 
     @mock.patch('license_manager.apps.api.tasks.send_onboarding_email', return_value=mock.MagicMock())
     def test_onboarding_email_task(self, mock_send_onboarding_email):
