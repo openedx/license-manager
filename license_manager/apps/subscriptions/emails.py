@@ -39,7 +39,7 @@ def send_revocation_cap_notification_email(subscription_plan, enterprise_name, e
     email.send()
 
 
-def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_plan_id):
+def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_uuid):
     """
     Sends onboarding email to learner. Intended for use following license activation.
 
@@ -47,7 +47,7 @@ def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_pla
         enterprise_customer_uuid (UUID): unique identifier of the EnterpriseCustomer
             that is linked to the SubscriptionPlan associated with the activated license
         user_email (str): email of the learner whose license has just been activated
-        subscription_plan_id: unique identifier to uuid of specific plan type 
+        subscription_uuid: unique identifier to uuid of specific plan type 
     """
     enterprise_customer = EnterpriseApiClient().get_enterprise_customer_data(enterprise_customer_uuid)
     enterprise_name = enterprise_customer.get('name')
@@ -57,7 +57,7 @@ def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_pla
 
     context = {
         'template_name': ONBOARDING_EMAIL_TEMPLATE,
-        'SUBSCRIPTION_PLAN_ID': subscription_plan_id,
+        'SUBSCRIPTION_PLAN_ID': subscription_uuid,
         'ENTERPRISE_NAME': enterprise_name,
         'ENTERPRISE_SLUG': enterprise_slug,
         'HELP_CENTER_URL': settings.SUPPORT_SITE_URL,
