@@ -2424,7 +2424,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
-                'subscription_plan_id': self.uuid,
+                'subscription_plan_id': str(self.subscription_plan.uuid) ,
             }
         )
         license_to_be_activated = self._create_license()
@@ -2440,7 +2440,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         mock_onboarding_email_task.assert_called_with(
             self.enterprise_customer_uuid,
             self.user.email,
-            self.uuid, 
+            str(self.subscription_plan.uuid), 
         )
 
     def test_license_already_activated_returns_204(self):
