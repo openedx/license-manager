@@ -271,8 +271,54 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
 
 class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, viewsets.GenericViewSet):
     """
-    This Viewset allows read operations of all Licenses for a given user-customer pair.
-    /learner-licenses
+    This Viewset allows read operations of all Licenses associated with the email address
+    of the requesting user that are associated with a given enterprise customer UUID.
+
+    Query Parameters:
+      - enterprise_customer_uuid (UUID string): More or less required, will return an empty list without a valid value.
+      This endpoint will filter for License records associated with SubscriptionPlans associated
+      with this enterprise customer UUID.
+
+      - active_plans_only (boolean): Defaults to true.  Will filter for only Licenses
+      associated with SubscriptionPlans that have `is_active=true` if true.  Will not
+      do any filtering based on `is_active` if false.
+
+      - current_plans_only (boolean): Defaults to true.  Will filter for only Licenses
+      associated with SubscriptionPlans where the current date is between the plan's
+      `start_date` and `expiration_date` (inclusive) if true.  Will not do any filtering
+      based on the (start, expiration) date range if false.
+
+    Example Request:
+      GET /api/v1/learner-licenses?enterprise_customer_uuid=the-uuid&active_plans_only=true&current_plans_only=false
+
+    Example Response:
+    {
+      count: 1
+      next: null
+      previous: null
+      results: [
+        activation_date: "2021-04-08T19:30:55Z"
+        activation_key: null
+        last_remind_date: null
+        status: "activated"
+        subscription_plan: {
+          days_until_expiration: 1
+          days_until_expiration_including_renewals: 367
+          enterprise_catalog_uuid: "7467c9d2-433c-4f7e-ba2e-c5c7798527b2"
+          enterprise_customer_uuid: "378d5bf0-f67d-4bf7-8b2a-cbbc53d0f772"
+          expiration_date: "2021-06-30"
+          is_active: true
+          is_revocation_cap_enabled: false
+          licenses: {total: 1, allocated: 1}
+          revocations: null
+          start_date: "2020-12-01"
+          title: "Pied Piper - Plan A"
+          uuid: "fe9cc40e-24a7-47a0-b800-9a11288b3ec2"
+        }
+        user_email: "edx@example.com"
+        uuid: "4e03efb7-b4ea-4a52-9cfc-11519920a40a"
+      ]
+    }
     """
     authentication_classes = [JwtAuthentication]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -329,15 +375,16 @@ class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, 
             return License.objects.none()
 
         user_email = self.request.user.email
-        subscriptions = SubscriptionPlan.objects.filter(
-            customer_agreement__enterprise_customer_uuid=self.enterprise_customer_uuid,
-            is_active=True,
-        )
-        return License.objects.filter(
-            subscription_plan__in=subscriptions,
+        active_plans_only = self.request.query_params.get('active_plans_only', 'true').lower() == 'true'
+        current_plans_only = self.request.query_params.get('current_plans_only', 'true').lower() == 'true'
+
+        return License.for_email_and_customer(
             user_email=user_email,
+            enterprise_customer_uuid=self.enterprise_customer_uuid,
+            active_plans_only=active_plans_only,
+            current_plans_only=current_plans_only,
         ).exclude(
-            status=constants.REVOKED
+            status=constants.REVOKED,
         ).order_by('status', '-subscription_plan__expiration_date')
 
 
