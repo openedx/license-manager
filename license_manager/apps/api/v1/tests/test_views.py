@@ -1690,13 +1690,16 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         super().setUpTestData()
         cls.base_url = reverse('api:v1:learner-licenses-list')
 
-    def _get_url_with_customer_uuid(self, enterprise_customer_uuid):
+    def _get_url_with_customer_uuid(self, enterprise_customer_uuid, active_plans_only=True, current_plans_only=True):
         """
         Private helper method to make a get request to the base URL
         using the enterprise_customer_uuid query parameter.
         """
         query_params = QueryDict(mutable=True)
         query_params['enterprise_customer_uuid'] = enterprise_customer_uuid
+        query_params['active_plans_only'] = active_plans_only
+        query_params['current_plans_only'] = current_plans_only
+
         url = self.base_url + '?' + query_params.urlencode()
         return self.api_client.get(url)
 
@@ -1850,6 +1853,51 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         for expected, actual in zip(expected_response, response.json()['results']):
             # Ensure UUIDs are in expected order
             assert str(expected.uuid) == actual['uuid']
+
+    def test_endpoint_respects_active_only_query_parameter(self):
+        self._assign_learner_roles()
+
+        # The license in this subscription should be listed first in the
+        # response results, because it's plan's expiration date is the furthest away.
+        active_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            expiration_date=self.now + datetime.timedelta(weeks=20),
+            is_active=True,
+        )
+        active_sub_license = self._create_license(
+            activation_date=self.now,
+            status=constants.ACTIVATED,
+            subscription_plan=active_sub,
+        )
+        inactive_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            expiration_date=self.now + datetime.timedelta(weeks=10),
+            is_active=False,
+        )
+        inactive_sub_license = self._create_license(
+            activation_date=self.now,
+            subscription_plan=inactive_sub,
+            status=constants.ACTIVATED,
+        )
+
+        # We should get licenses from both the active and inactive plan if active_plans_only is false.
+        response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid, active_plans_only=False)
+        expected_license_uuids = [
+            str(active_sub_license.uuid),
+            str(inactive_sub_license.uuid),
+        ]
+        actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
+        self.assertEqual(actual_license_uuids, expected_license_uuids)
+
+        # We should get licenses from only the active plan if active_plans_only is true.
+        response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid, active_plans_only=True)
+        expected_license_uuids = [
+            str(active_sub_license.uuid),
+        ]
+        actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
+        self.assertEqual(actual_license_uuids, expected_license_uuids)
 
 
 class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
