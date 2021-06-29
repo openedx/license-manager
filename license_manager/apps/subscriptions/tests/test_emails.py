@@ -1,17 +1,21 @@
 from unittest import mock
 from uuid import uuid4
 
+import factory
+
 from django.core import mail
 from django.test import TestCase
 
 from license_manager.apps.subscriptions import constants, emails
 from license_manager.apps.subscriptions.tests.utils import make_test_email_data
+from license_manager.apps.subscriptions.tests.factories import SubscriptionPlanFactory
 
 
 class EmailTests(TestCase):
     def setUp(self):
-        super().setUp()
+        super().setUp()        
         test_email_data = make_test_email_data()
+        self.subscription = SubscriptionPlanFactory.create()
         self.user_email = 'emailtest@example.com'
         self.subscription_plan = test_email_data['subscription_plan']
         self.licenses = test_email_data['licenses']
@@ -22,7 +26,7 @@ class EmailTests(TestCase):
         self.enterprise_name = 'Mock Enterprise'
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
         self.reply_to_email = 'edx@example.com'
-        self.subscription_uuid = uuid4()
+        self.subscription_uuid = self.subscription.uuid
 
     def test_send_activation_emails(self):
         """

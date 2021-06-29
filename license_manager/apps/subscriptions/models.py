@@ -190,20 +190,7 @@ class PlanEmailTemplates(models.Model):
         null=False,
     )
     def __str__(self):
-        return self.label
-
-    def render_html_template(self, kwargs):
-        """
-        Render just the HTML template and return it as a string.
-        """
-        return self.render_template(mark_safe(self.html_template), kwargs)
-
-    def render_plaintext_template(self, kwargs):
-        """
-        Render just the plaintext template and return it as a string.
-        """
-        return self.render_template(self.plaintext_template, kwargs)
-
+        return self.template_type
 
 class SubscriptionPlan(TimeStampedModel):
     """

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core import mail
 from django.db.models.query_utils import Q
-from django.template.loader import get_template
+from django.template import Template, Context
 
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
@@ -152,22 +152,51 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
             connection.send_messages(email_chunk)
 
 
-def _get_rendered_template_content(template_name, context):
+def _get_plan_email_template_row(template_name, context):
     """
-    Returns the rendered content from the Plan Email Templates model 
+    Returns the subject and rendered content from the Plan Email Templates model 
     """
     sub_plan_id = context['SUBSCRIPTION_PLAN_ID'] 
-    print(sub_plan_id)
-    sub = SubscriptionPlan.objects.filter(uuid=sub_plan_id)
-    print(sub)
-    plan_type_id = sub.plan_type_id
-    plan_email_template = PlanEmailTemplates.objects.filter(
-        template_type__exact=template_name, plan_type__exact=plan_type_id)
-    print(plan_email_template)
-    plaintext_template = plan_email_template.render_plaintext_template
-    html_template = plan_email_template.render_html_template
 
-    return plaintext_template, html_template
+
+    sub = SubscriptionPlan.objects.filter(uuid=sub_plan_id).get()
+    plan_type_id = sub.plan_type_id
+
+    plan_email_template = PlanEmailTemplates.objects.filter(
+        template_type=template_name, plan_type=plan_type_id).get()
+    # print(plan_email_template)
+
+    # plaintext = _template_from_string(plan_email_template.plaintext_template, context)   
+    # html = _template_from_string(plan_email_template.html_template, context)   
+
+
+    # plaintext_template = plan_email_template.render_plaintext_template
+    # html_template = plan_email_template.render_html_template
+
+    # plaintext_template = from_string(plan_email_template.plaintext_template)
+    plaintext_template = Template(plan_email_template.html_template)
+    html_template = Template(plan_email_template.html_template)
+
+    # print(type(plaintext_template))
+    subject = plan_email_template.subject_line
+    # str1 = getTemaplteplaintext_template.render(context)
+    return subject, plaintext_template.render(Context(context)), html_template.render(Context(context))
+
+# def _template_from_string(template_string, context):
+#     """
+#     Convert a string into a template object rendered with context
+#     """
+#     # This function is based on django.template.loader.get_template, 
+#     # but uses Engine.from_string instead of Engine.get_template.
+#     chain = []
+#     engine_list = engines.all()
+#     for engine in engine_list:
+#         try:
+#             template = engine.from_string(template_string)
+#             return template.render(context)
+#         except TemplateSyntaxError as e:
+#             chain.append(e)
+#     raise TemplateSyntaxError(template_string, chain=chain)
 
 
 def _message_from_context_and_template(context, sender_alias, reply_to_email):
@@ -182,15 +211,13 @@ def _message_from_context_and_template(context, sender_alias, reply_to_email):
     Returns:
         EmailMultiAlternative: an individual message constructed from the information provided, not yet sent
     """
-    # Update context to be used for Django template rendering
-    context.update({
-        'UNSUBSCRIBE_LINK': settings.EMAIL_UNSUBSCRIBE_LINK,
-    })
-
-    # Render the message contents using Django templates
     template_name = context['template_name']
-    txt_content, html_content = _get_rendered_template_content(template_name, context)
+    subject, txt_content, html_content = _get_plan_email_template_row(template_name, context)
 
+    context.update({
+        'subject': subject,
+    })
+    
     # Display sender name in addition to the email address
     from_email_string = '"{sender_alias}" <{from_email}>'.format(
         sender_alias=sender_alias,

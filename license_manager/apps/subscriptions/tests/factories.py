@@ -70,6 +70,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     enterprise_catalog_uuid = factory.LazyFunction(uuid4)
     netsuite_product_id = factory.Faker('random_int')
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
+    plan_type_id = '1'
 
 
 class SubscriptionPlanRenewalFactory(factory.django.DjangoModelFactory):
