@@ -1870,9 +1870,14 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
             status=constants.ACTIVATED,
             subscription_plan=active_sub,
         )
+        # Create a plan that starts in the future - we'll
+        # later make our request with current_plans_only=false,
+        # and we want to ensure that we will get this non-current
+        # plan in the response results.
         inactive_sub = SubscriptionPlanFactory.create(
             customer_agreement=self.customer_agreement,
             enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            start_date=self.now + datetime.timedelta(weeks=1),
             expiration_date=self.now + datetime.timedelta(weeks=10),
             is_active=False,
         )
@@ -1883,7 +1888,9 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         )
 
         # We should get licenses from both the active and inactive plan if active_plans_only is false.
-        response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid, active_plans_only=False)
+        response = self._get_url_with_customer_uuid(
+            self.enterprise_customer_uuid, active_plans_only=False, current_plans_only=False,
+        )
         expected_license_uuids = [
             str(active_sub_license.uuid),
             str(inactive_sub_license.uuid),
@@ -1892,9 +1899,62 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         self.assertEqual(actual_license_uuids, expected_license_uuids)
 
         # We should get licenses from only the active plan if active_plans_only is true.
-        response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid, active_plans_only=True)
+        response = self._get_url_with_customer_uuid(
+            self.enterprise_customer_uuid, active_plans_only=True, current_plans_only=False,
+        )
         expected_license_uuids = [
             str(active_sub_license.uuid),
+        ]
+        actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
+        self.assertEqual(actual_license_uuids, expected_license_uuids)
+
+    def test_endpoint_respects_current_only_query_parameter(self):
+        self._assign_learner_roles()
+
+        # The license in this subscription should be listed first in the
+        # response results, because it's plan's expiration date is the furthest away.
+        current_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            start_date=self.now - datetime.timedelta(weeks=1),
+            expiration_date=self.now + datetime.timedelta(weeks=20),
+            is_active=True,
+        )
+        current_sub_license = self._create_license(
+            activation_date=self.now,
+            status=constants.ACTIVATED,
+            subscription_plan=current_sub,
+        )
+        non_current_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            start_date=self.now + datetime.timedelta(weeks=1),
+            expiration_date=self.now + datetime.timedelta(weeks=10),
+            is_active=False,
+        )
+        non_current_sub_license = self._create_license(
+            activation_date=self.now,
+            subscription_plan=non_current_sub,
+            status=constants.ACTIVATED,
+        )
+
+        # We should get licenses from both the current and non-current plan if current_plans_only is false.
+        response = self._get_url_with_customer_uuid(
+            self.enterprise_customer_uuid, current_plans_only=False, active_plans_only=False,
+        )
+        expected_license_uuids = [
+            str(current_sub_license.uuid),
+            str(non_current_sub_license.uuid),
+        ]
+        actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
+        self.assertEqual(actual_license_uuids, expected_license_uuids)
+
+        # We should get licenses from only the current plan if current_plans_only and active_plans_only are true
+        response = self._get_url_with_customer_uuid(
+            self.enterprise_customer_uuid, current_plans_only=True, active_plans_only=True,
+        )
+        expected_license_uuids = [
+            str(current_sub_license.uuid),
         ]
         actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
         self.assertEqual(actual_license_uuids, expected_license_uuids)
