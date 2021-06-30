@@ -13,7 +13,7 @@ from license_manager.apps.subscriptions.tests.factories import SubscriptionPlanF
 
 class EmailTests(TestCase):
     def setUp(self):
-        super().setUp()        
+        super().setUp()
         test_email_data = make_test_email_data()
         self.subscription = SubscriptionPlanFactory.create()
         self.user_email = 'emailtest@example.com'

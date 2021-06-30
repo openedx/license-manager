@@ -2511,7 +2511,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         mock_onboarding_email_task.assert_called_with(
             self.enterprise_customer_uuid,
             self.user.email,
-            self.active_subscription_for_customer.uuid, 
+            self.active_subscription_for_customer.uuid,
         )
 
     def test_license_already_activated_returns_204(self):

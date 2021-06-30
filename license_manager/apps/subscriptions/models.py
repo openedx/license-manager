@@ -161,6 +161,7 @@ class PlanType(models.Model):
     def __str__(self):
         return self.label
 
+
 class PlanEmailTemplates(models.Model):
     """
     Stores email templates associated with each enterprise Subscription plan type.
@@ -189,8 +190,10 @@ class PlanEmailTemplates(models.Model):
         blank=False,
         null=False,
     )
+
     def __str__(self):
         return self.template_type
+
 
 class SubscriptionPlan(TimeStampedModel):
     """

@@ -33,7 +33,7 @@ def send_revocation_cap_notification_email(subscription_plan, enterprise_name, e
         'NUM_REVOCATIONS_APPLIED': subscription_plan.num_revocations_applied,
         'RECIPIENT_EMAIL': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
         'HIDE_EMAIL_FOOTER_MARKETING': True,
-        'SUBSCRIPTION_PLAN_ID': subscription_plan.uuid,
+        'SUBSCRIPTION_PLAN_UUID': subscription_plan.uuid,
     }
     email = _message_from_context_and_template(context, enterprise_sender_alias, reply_to_email)
     email.send()
@@ -47,7 +47,7 @@ def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_uui
         enterprise_customer_uuid (UUID): unique identifier of the EnterpriseCustomer
             that is linked to the SubscriptionPlan associated with the activated license
         user_email (str): email of the learner whose license has just been activated
-        subscription_uuid: unique identifier to uuid of specific plan type 
+        subscription_uuid: unique identifier to uuid of specific plan type
     """
     enterprise_customer = EnterpriseApiClient().get_enterprise_customer_data(enterprise_customer_uuid)
     enterprise_name = enterprise_customer.get('name')
@@ -57,7 +57,7 @@ def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_uui
 
     context = {
         'template_name': ONBOARDING_EMAIL_TEMPLATE,
-        'SUBSCRIPTION_PLAN_ID': subscription_uuid,
+        'SUBSCRIPTION_PLAN_UUID': subscription_uuid,
         'ENTERPRISE_NAME': enterprise_name,
         'ENTERPRISE_SLUG': enterprise_slug,
         'HELP_CENTER_URL': settings.SUPPORT_SITE_URL,
@@ -97,7 +97,7 @@ def send_activation_emails(
     """
     context = {
         'template_name': LICENSE_REMINDER_EMAIL_TEMPLATE if is_reminder else LICENSE_ACTIVATION_EMAIL_TEMPLATE,
-        'SUBSCRIPTION_PLAN_ID': subscription_uuid,
+        'SUBSCRIPTION_PLAN_UUID': subscription_uuid,
         'TEMPLATE_CLOSING': custom_template_text['closing'],
         'TEMPLATE_GREETING': custom_template_text['greeting'],
         'ENTERPRISE_NAME': enterprise_name,
@@ -154,49 +154,20 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
 
 def _get_plan_email_template_row(template_name, context):
     """
-    Returns the subject and rendered content from the Plan Email Templates model 
+    Returns the subject and rendered content from the Plan Email Templates model
     """
-    sub_plan_id = context['SUBSCRIPTION_PLAN_ID'] 
-
+    sub_plan_id = context['SUBSCRIPTION_PLAN_UUID']
 
     sub = SubscriptionPlan.objects.filter(uuid=sub_plan_id).get()
     plan_type_id = sub.plan_type_id
 
     plan_email_template = PlanEmailTemplates.objects.filter(
         template_type=template_name, plan_type=plan_type_id).get()
-    # print(plan_email_template)
-
-    # plaintext = _template_from_string(plan_email_template.plaintext_template, context)   
-    # html = _template_from_string(plan_email_template.html_template, context)   
-
-
-    # plaintext_template = plan_email_template.render_plaintext_template
-    # html_template = plan_email_template.render_html_template
-
-    # plaintext_template = from_string(plan_email_template.plaintext_template)
     plaintext_template = Template(plan_email_template.html_template)
     html_template = Template(plan_email_template.html_template)
 
-    # print(type(plaintext_template))
     subject = plan_email_template.subject_line
-    # str1 = getTemaplteplaintext_template.render(context)
     return subject, plaintext_template.render(Context(context)), html_template.render(Context(context))
-
-# def _template_from_string(template_string, context):
-#     """
-#     Convert a string into a template object rendered with context
-#     """
-#     # This function is based on django.template.loader.get_template, 
-#     # but uses Engine.from_string instead of Engine.get_template.
-#     chain = []
-#     engine_list = engines.all()
-#     for engine in engine_list:
-#         try:
-#             template = engine.from_string(template_string)
-#             return template.render(context)
-#         except TemplateSyntaxError as e:
-#             chain.append(e)
-#     raise TemplateSyntaxError(template_string, chain=chain)
 
 
 def _message_from_context_and_template(context, sender_alias, reply_to_email):
@@ -217,7 +188,7 @@ def _message_from_context_and_template(context, sender_alias, reply_to_email):
     context.update({
         'subject': subject,
     })
-    
+
     # Display sender name in addition to the email address
     from_email_string = '"{sender_alias}" <{from_email}>'.format(
         sender_alias=sender_alias,
