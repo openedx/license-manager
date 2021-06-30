@@ -7,6 +7,7 @@ from unittest import mock
 from uuid import uuid4
 
 import ddt
+import factory
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -32,7 +33,6 @@ from license_manager.apps.api.v1.tests.constants import (
 )
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
-from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
     License,
     SubscriptionsFeatureRole,
@@ -46,6 +46,7 @@ from license_manager.apps.subscriptions.tests.factories import (
     UserFactory,
 )
 from license_manager.apps.subscriptions.tests.utils import (
+    assert_date_fields_correct,
     assert_historical_pii_cleared,
     assert_license_fields_cleared,
     assert_pii_cleared,
@@ -258,7 +259,6 @@ def _iso_8601_format(datetime):
 def _get_date_string(date):
     """
     Helper to get the string associated with a date, or None if it doesn't exist.
-
     Returns:
         string or None: The string representation of the date if it exists.
     """
@@ -526,7 +526,6 @@ def test_subscription_plan_list_staff_user_200(api_client, staff_user, boolean_t
     """
     Verify that the subscription list view for staff users gives the correct response
     when the staff user is granted implicit permission to access the enterprise customer.
-
     Additionally checks that the staff user only sees the subscription plans associated with the enterprise customer as
     specified by the query parameter.
     """
@@ -929,10 +928,12 @@ def _create_subscription_with_renewal(enterprise_customer_uuid):
     return subscription
 
 
-class LicenseViewSetActionMixin:
+@ddt.ddt
+class LicenseViewSetActionTests(TestCase):
     """
-    Mixin of common functionality for LicenseViewSet action tests.
+    Tests for special actions on the LicenseViewSet.
     """
+
     def setUp(self):
         super().setUp()
 
@@ -950,11 +951,30 @@ class LicenseViewSetActionMixin:
         # Set up a couple of users
         cls.user = UserFactory()
         cls.super_user = UserFactory(is_staff=True, is_superuser=True)
-        cls.subscription_plan = SubscriptionPlanFactory()
-
         cls.test_email = 'test@example.com'
         cls.greeting = 'Hello'
         cls.closing = 'Goodbye'
+
+        # Routes setup
+        cls.subscription_plan = SubscriptionPlanFactory()
+        cls.assign_url = reverse('api:v1:licenses-assign', kwargs={'subscription_uuid': cls.subscription_plan.uuid})
+        cls.remind_url = reverse('api:v1:licenses-remind', kwargs={'subscription_uuid': cls.subscription_plan.uuid})
+        cls.remind_all_url = reverse(
+            'api:v1:licenses-remind-all',
+            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
+        )
+        cls.license_overview_url = reverse(
+            'api:v1:licenses-overview',
+            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
+        )
+        cls.revoke_license_url = reverse(
+            'api:v1:licenses-revoke',
+            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
+        )
+        cls.licenses_csv_url = reverse(
+            'api:v1:licenses-csv',
+            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
+        )
 
     def _setup_request_jwt(self, user=None, enterprise_customer_uuid=None):
         """
@@ -992,32 +1012,6 @@ class LicenseViewSetActionMixin:
         response = self.api_client.post(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
         mock_task.assert_not_called()
-
-
-@ddt.ddt
-class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
-    """
-    Tests for special actions on the LicenseViewSet.
-    """
-    @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
-
-        # Routes setup
-        cls.assign_url = reverse('api:v1:licenses-assign', kwargs={'subscription_uuid': cls.subscription_plan.uuid})
-        cls.remind_url = reverse('api:v1:licenses-remind', kwargs={'subscription_uuid': cls.subscription_plan.uuid})
-        cls.remind_all_url = reverse(
-            'api:v1:licenses-remind-all',
-            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
-        )
-        cls.license_overview_url = reverse(
-            'api:v1:licenses-overview',
-            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
-        )
-        cls.licenses_csv_url = reverse(
-            'api:v1:licenses-csv',
-            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
-        )
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
@@ -1096,7 +1090,6 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
     def test_assign_already_associated_email(self, mock_activation_task, mock_link_learners_task):
         """
         Verify the assign endpoint returns a 200 if there is already a license associated with a provided email.
-
         Verify the activation data returned in the response is correct and the new email is successfully assigned.
         """
         self._create_available_licenses()
@@ -1127,7 +1120,6 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
     def test_assign(self, use_superuser, mock_activation_task, mock_link_learners_task):
         """
         Verify the assign endpoint assigns licenses to the provided emails and sends activation emails.
-
         Also verifies that a greeting and closing can be sent.
         """
         self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
@@ -1370,6 +1362,255 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         actual_response = response.data
         assert expected_response == actual_response
 
+    @ddt.data(
+        {
+            'license_state': constants.ACTIVATED,
+            'expected_status': status.HTTP_204_NO_CONTENT,
+            'use_superuser': True,
+            'revoked_date_should_update': True,
+            'should_reach_revocation_cap': True,
+            'is_revocation_cap_enabled': True,
+        },
+        {
+            'license_state': constants.ACTIVATED,
+            'expected_status': status.HTTP_204_NO_CONTENT,
+            'use_superuser': False,
+            'revoked_date_should_update': True,
+            'should_reach_revocation_cap': False,
+            'is_revocation_cap_enabled': True,
+        },
+        {
+            'license_state': constants.ASSIGNED,
+            'expected_status': status.HTTP_204_NO_CONTENT,
+            'use_superuser': True,
+            'revoked_date_should_update': True,
+            'should_reach_revocation_cap': False,
+            'is_revocation_cap_enabled': True,
+        },
+        {
+            'license_state': constants.ASSIGNED,
+            'expected_status': status.HTTP_204_NO_CONTENT,
+            'use_superuser': False,
+            'revoked_date_should_update': True,
+            'should_reach_revocation_cap': False,
+            'is_revocation_cap_enabled': True,
+        },
+        {
+            'license_state': constants.ACTIVATED,
+            'expected_status': status.HTTP_204_NO_CONTENT,
+            'use_superuser': False,
+            'revoked_date_should_update': True,
+            'should_reach_revocation_cap': False,
+            'is_revocation_cap_enabled': False,
+        },
+        {
+            'license_state': constants.REVOKED,
+            'expected_status': status.HTTP_404_NOT_FOUND,
+            'use_superuser': True,
+            'revoked_date_should_update': False,
+            'should_reach_revocation_cap': False,
+            'is_revocation_cap_enabled': True,
+        },
+        {
+            'license_state': constants.REVOKED,
+            'expected_status': status.HTTP_404_NOT_FOUND,
+            'use_superuser': False,
+            'revoked_date_should_update': False,
+            'should_reach_revocation_cap': False,
+            'is_revocation_cap_enabled': True,
+        },
+        {
+            'license_state': constants.ACTIVATED,
+            'expected_status': status.HTTP_400_BAD_REQUEST,
+            'use_superuser': False,
+            'revoked_date_should_update': False,
+            'should_reach_revocation_cap': False,
+            'is_revocation_cap_enabled': True,
+        },
+    )
+    @ddt.unpack
+    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
+    def test_revoke_license_states(
+        self,
+        mock_send_revocation_cap_notification_email_task,
+        mock_revoke_course_enrollments_for_user_task,
+        license_state,
+        expected_status,
+        use_superuser,
+        revoked_date_should_update,
+        should_reach_revocation_cap,
+        is_revocation_cap_enabled,
+    ):
+        """
+        Test that revoking a license behaves correctly for different initial license states
+        """
+        self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
+        original_license = LicenseFactory.create(user_email=self.test_email, status=license_state)
+        self.subscription_plan.licenses.set([original_license])
+
+        self.subscription_plan.is_revocation_cap_enabled = is_revocation_cap_enabled
+        self.subscription_plan.save()
+
+        # Force a license revocation limit reached error
+        if expected_status == status.HTTP_400_BAD_REQUEST and is_revocation_cap_enabled:
+            self.subscription_plan.revoke_max_percentage = 0
+            self.subscription_plan.save()
+        elif not should_reach_revocation_cap:
+            # Only one revoke is allowed by default on self.subscription_plan, so
+            # if we don't want to reach the revocation cap, more licenses must be added.
+            LicenseFactory.create_batch(
+                15,
+                user_email=factory.Faker('email'),
+                status=license_state,
+                subscription_plan=self.subscription_plan,
+            )
+            self.subscription_plan.revoke_max_percentage = 50
+            self.subscription_plan.save()
+
+        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
+        assert response.status_code == expected_status
+        revoked_license = self.subscription_plan.licenses.get(uuid=original_license.uuid)
+        if expected_status == status.HTTP_400_BAD_REQUEST:
+            assert revoked_license.status == constants.ACTIVATED
+        else:
+            assert revoked_license.status == constants.REVOKED
+
+        if license_state == constants.ACTIVATED and expected_status != status.HTTP_400_BAD_REQUEST:
+            mock_revoke_course_enrollments_for_user_task.assert_called()
+
+            if is_revocation_cap_enabled and should_reach_revocation_cap:
+                mock_send_revocation_cap_notification_email_task.assert_called_with(
+                    subscription_uuid=self.subscription_plan.uuid,
+                )
+            else:
+                mock_send_revocation_cap_notification_email_task.assert_not_called()
+        else:
+            mock_revoke_course_enrollments_for_user_task.assert_not_called()
+            mock_send_revocation_cap_notification_email_task.assert_not_called()
+
+        # Verify the revoked date is updated if the license was revoked
+        assert_date_fields_correct([revoked_license], ['revoked_date'], revoked_date_should_update)
+
+    def test_revoke_no_license(self):
+        """
+        Tests revoking a license when the user doesn't have a license
+        """
+        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @ddt.data(True, False)
+    def test_revoke_non_admin_user(self, user_is_staff):
+        """
+        Verify the revoke endpoint returns a 403 if a non-superuser with no
+        admin roles makes the request, even if they're staff (for good measure).
+        """
+        self.user.is_staff = user_is_staff
+        completely_different_customer_uuid = uuid4()
+        self._setup_request_jwt(enterprise_customer_uuid=completely_different_customer_uuid)
+        response = self.api_client.post(self.revoke_license_url, {'user_email': 'foo@bar.com'})
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @ddt.data(
+        {'is_revocation_cap_enabled': True},
+        {'is_revocation_cap_enabled': False},
+    )
+    @ddt.unpack
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
+    def test_assign_after_license_revoke(
+        self,
+        mock_activation_task,
+        mock_send_revocation_cap_notification_email_task,
+        mock_revoke_course_enrollments_for_user_task,
+        mock_link_learners_task,
+        is_revocation_cap_enabled,
+    ):
+        """
+        Verifies that assigning a license after revoking one works
+        """
+        original_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
+        self.subscription_plan.licenses.set([original_license])
+        self.subscription_plan.is_revocation_cap_enabled = is_revocation_cap_enabled
+        self.subscription_plan.save()
+
+        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        mock_revoke_course_enrollments_for_user_task.assert_called()
+        if is_revocation_cap_enabled:
+            mock_send_revocation_cap_notification_email_task.assert_called_with(
+                subscription_uuid=self.subscription_plan.uuid,
+            )
+        else:
+            mock_send_revocation_cap_notification_email_task.assert_not_called()
+
+        self._create_available_licenses()
+        user_emails = ['bb8@mit.edu', self.test_email]
+        response = self.api_client.post(
+            self.assign_url,
+            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        self._assert_licenses_assigned(user_emails)
+
+        # Verify the activation email task was called with the correct args
+        task_args, _ = mock_activation_task.call_args
+        actual_template_text, actual_emails, actual_subscription_uuid = task_args
+        assert ['bb8@mit.edu', self.test_email] == sorted(actual_emails)
+        assert str(self.subscription_plan.uuid) == actual_subscription_uuid
+        assert self.greeting == actual_template_text['greeting']
+        assert self.closing == actual_template_text['closing']
+
+        mock_link_learners_task.assert_called_with(
+            actual_emails,
+            self.subscription_plan.customer_agreement.enterprise_customer_uuid
+        )
+
+    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
+    def test_revoke_total_and_allocated_count(
+        self,
+        mock_send_revocation_cap_notification_email_task,
+        mock_revoke_course_enrollments_for_user_task,
+    ):
+        """
+        Verifies revoking a license keeps the `total` license count the same, and the `allocated` count decreases by 1.
+        """
+        # Create some allocated licenses
+        assigned_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
+        activated_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
+        allocated_licenses = assigned_licenses + [activated_license]
+        # Create one non allocated license
+        unassigned_license = LicenseFactory.create(status=constants.UNASSIGNED)
+        self.subscription_plan.licenses.set([unassigned_license] + allocated_licenses)
+
+        # Verify the original `total` and `allocated` counts are correct
+        response = _subscriptions_detail_request(self.api_client, self.super_user, self.subscription_plan.uuid)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()['licenses'] == {
+            'total': len(allocated_licenses) + 1,
+            'allocated': len(allocated_licenses),
+        }
+
+        # Revoke the activated license and verify the counts change appropriately
+        revoke_response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
+        assert revoke_response.status_code == status.HTTP_204_NO_CONTENT
+        mock_revoke_course_enrollments_for_user_task.assert_called()
+
+        second_detail_response = _subscriptions_detail_request(
+            self.api_client,
+            self.super_user,
+            self.subscription_plan.uuid,
+        )
+        assert second_detail_response.status_code == status.HTTP_200_OK
+        assert second_detail_response.json()['licenses'] == {
+            'total': len(allocated_licenses) + 1,
+            # There should be 1 fewer allocated license now that we revoked the activated license
+            'allocated': len(allocated_licenses) - 1,
+        }
+
     @staticmethod
     def _get_csv_data_rows(response):
         """
@@ -1436,182 +1677,6 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         assert num_allocated_licenses == len(rows) - 1
 
 
-@ddt.ddt
-class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
-    """
-    Tests for the license revoke action.
-    """
-    @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
-
-        cls.revoke_license_url = reverse(
-            'api:v1:licenses-revoke',
-            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
-        )
-        cls.assign_url = reverse(
-            'api:v1:licenses-assign',
-            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
-        )
-
-    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_revoke_happy_path(self, mock_revoke_license):
-        """
-        Test that we can revoke a license from the revoke action.
-        """
-        self._setup_request_jwt(user=self.user)
-        original_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
-        self.subscription_plan.licenses.set([original_license])
-
-        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
-
-        assert response.status_code == status.HTTP_204_NO_CONTENT
-        mock_revoke_license.assert_called_once_with(original_license)
-
-    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_revoke_revocation_error(self, mock_revoke_license):
-        """
-        Test that we can revoke a license from the revoke action.
-        """
-        self._setup_request_jwt(user=self.user)
-        original_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
-        self.subscription_plan.licenses.set([original_license])
-        mock_revoke_license.side_effect = LicenseRevocationError(
-            original_license.uuid,
-            failure_reason='Revocation fail',
-        )
-
-        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        mock_revoke_license.assert_called_once_with(original_license)
-        self.assertEqual(response.json(), 'Revocation fail')
-
-    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_revoke_no_license(self, mock_revoke_license):
-        """
-        Tests revoking a license when the user doesn't have a license
-        """
-        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
-
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-        self.assertFalse(mock_revoke_license.called)
-
-    @ddt.data(True, False)
-    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_revoke_non_admin_user(self, user_is_staff, mock_revoke_license):
-        """
-        Verify the revoke endpoint returns a 403 if a non-superuser with no
-        admin roles makes the request, even if they're staff (for good measure).
-        """
-        self.user.is_staff = user_is_staff
-        completely_different_customer_uuid = uuid4()
-        self._setup_request_jwt(enterprise_customer_uuid=completely_different_customer_uuid)
-
-        response = self.api_client.post(self.revoke_license_url, {'user_email': 'foo@bar.com'})
-
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        self.assertFalse(mock_revoke_license.called)
-
-    @ddt.data(
-        {'is_revocation_cap_enabled': True},
-        {'is_revocation_cap_enabled': False},
-    )
-    @ddt.unpack
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
-    def test_assign_after_license_revoke_end_to_end(
-        self,
-        mock_activation_task,
-        mock_send_revocation_cap_notification_email_task,
-        mock_revoke_course_enrollments_for_user_task,
-        mock_link_learners_task,
-        is_revocation_cap_enabled,
-    ):
-        """
-        Verifies that assigning a license after revoking one works
-        """
-        original_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
-        self.subscription_plan.licenses.set([original_license])
-        self.subscription_plan.is_revocation_cap_enabled = is_revocation_cap_enabled
-        self.subscription_plan.save()
-
-        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
-        assert response.status_code == status.HTTP_204_NO_CONTENT
-        mock_revoke_course_enrollments_for_user_task.assert_called()
-        if is_revocation_cap_enabled:
-            mock_send_revocation_cap_notification_email_task.assert_called_with(
-                subscription_uuid=self.subscription_plan.uuid,
-            )
-        else:
-            mock_send_revocation_cap_notification_email_task.assert_not_called()
-
-        self._create_available_licenses()
-        user_emails = ['bb8@mit.edu', self.test_email]
-        response = self.api_client.post(
-            self.assign_url,
-            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails},
-        )
-        assert response.status_code == status.HTTP_200_OK
-        self._assert_licenses_assigned(user_emails)
-
-        # Verify the activation email task was called with the correct args
-        task_args, _ = mock_activation_task.call_args
-        actual_template_text, actual_emails, actual_subscription_uuid = task_args
-        assert ['bb8@mit.edu', self.test_email] == sorted(actual_emails)
-        assert str(self.subscription_plan.uuid) == actual_subscription_uuid
-        assert self.greeting == actual_template_text['greeting']
-        assert self.closing == actual_template_text['closing']
-
-        mock_link_learners_task.assert_called_with(
-            actual_emails,
-            self.subscription_plan.customer_agreement.enterprise_customer_uuid
-        )
-
-    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
-    def test_revoke_total_and_allocated_count_end_to_end(
-        self,
-        mock_revoke_course_enrollments_for_user_task,
-    ):
-        """
-        Verifies revoking a license keeps the `total` license count the same, and the `allocated` count decreases by 1.
-        """
-        # Create some allocated licenses
-        assigned_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
-        activated_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
-        allocated_licenses = assigned_licenses + [activated_license]
-        # Create one non allocated license
-        unassigned_license = LicenseFactory.create(status=constants.UNASSIGNED)
-        self.subscription_plan.licenses.set([unassigned_license] + allocated_licenses)
-
-        # Verify the original `total` and `allocated` counts are correct
-        response = _subscriptions_detail_request(self.api_client, self.super_user, self.subscription_plan.uuid)
-        assert response.status_code == status.HTTP_200_OK
-        assert response.json()['licenses'] == {
-            'total': len(allocated_licenses) + 1,
-            'allocated': len(allocated_licenses),
-        }
-
-        # Revoke the activated license and verify the counts change appropriately
-        revoke_response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
-        assert revoke_response.status_code == status.HTTP_204_NO_CONTENT
-        mock_revoke_course_enrollments_for_user_task.assert_called()
-
-        second_detail_response = _subscriptions_detail_request(
-            self.api_client,
-            self.super_user,
-            self.subscription_plan.uuid,
-        )
-        assert second_detail_response.status_code == status.HTTP_200_OK
-        assert second_detail_response.json()['licenses'] == {
-            'total': len(allocated_licenses) + 1,
-            # There should be 1 fewer allocated license now that we revoked the activated license
-            'allocated': len(allocated_licenses) - 1,
-        }
-
-
 class LicenseViewTestMixin:
     def setUp(self):
         super().setUp()
@@ -1631,7 +1696,6 @@ class LicenseViewTestMixin:
         cls.lms_user_id = 1
         cls.now = localized_utcnow()
         cls.activation_key = uuid4()
-        cls.uuid = uuid4()
 
         cls.customer_agreement = CustomerAgreementFactory(
             enterprise_customer_uuid=cls.enterprise_customer_uuid,
@@ -1768,7 +1832,6 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         """
         Test that the appropriate response is returned when the enterprise_customer_uuid
         query param isn't included in the request with existing learner/admin roles.
-
         Note: role assignment is needed because 403 would be returned otherwise.
         """
         _assign_role_via_jwt_or_db(
@@ -1787,7 +1850,6 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         """
         Test the ordering of responses from the endpoint matches the following:
             ORDER BY License.status ASC, License.SubscriptionPlan.expiration_date DESC
-
         Licenses are created as follows:
          - Activated, expires in future
          - Activated, expires before ^
@@ -2339,7 +2401,6 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
     def _post_request(self, activation_key):
         """
         Helper to make the POST request to the license activation endpoint.
-
         Will update the test client's cookies to contain an lms_user_id and email,
         which can be overridden from those defined in the class ``setUpTestData()``
         method with the optional params provided here.
@@ -2393,6 +2454,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
 
@@ -2411,6 +2473,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
 
@@ -2424,7 +2487,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
-                'subscription_plan_id': str(self.subscription_plan.uuid) ,
+                'subscription_uuid': str(self.active_subscription_for_customer.uuid),
             }
         )
         license_to_be_activated = self._create_license()
@@ -2440,7 +2503,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         mock_onboarding_email_task.assert_called_with(
             self.enterprise_customer_uuid,
             self.user.email,
-            str(self.subscription_plan.uuid), 
+            self.active_subscription_for_customer.plan_type.id,
         )
 
     def test_license_already_activated_returns_204(self):
@@ -2448,6 +2511,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
         already_activated_license = self._create_license(
@@ -2468,6 +2532,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
         revoked_license = self._create_license(
@@ -2525,7 +2590,6 @@ class UserRetirementViewTests(TestCase):
     def _post_request(self, lms_user_id, original_username):
         """
         Helper to make the POST request to the license activation endpoint.
-
         Will update the test client's cookies to contain an lms_user_id and email,
         which can be overridden from those defined in the class ``setUpTestData()``
         method with the optional params provided here.
