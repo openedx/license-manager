@@ -1,17 +1,19 @@
 from django.conf import settings
 from django.core import mail
-from django.db.models.query_utils import Q
-from django.template import Template, Context
+from django.template import Context, Template
 
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
-    LICENSE_BULK_OPERATION_BATCH_SIZE,
     LICENSE_ACTIVATION_EMAIL_TEMPLATE,
+    LICENSE_BULK_OPERATION_BATCH_SIZE,
     LICENSE_REMINDER_EMAIL_TEMPLATE,
     ONBOARDING_EMAIL_TEMPLATE,
     REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE,
 )
-from license_manager.apps.subscriptions.models import PlanEmailTemplates, SubscriptionPlan
+from license_manager.apps.subscriptions.models import (
+    PlanEmailTemplates,
+    SubscriptionPlan,
+)
 from license_manager.apps.subscriptions.utils import (
     chunks,
     get_enterprise_reply_to_email,

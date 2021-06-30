@@ -6,7 +6,6 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
-from django.utils.safestring import mark_safe
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rbac.utils import ALL_ACCESS_CONTEXT
 from model_utils.models import TimeStampedModel
