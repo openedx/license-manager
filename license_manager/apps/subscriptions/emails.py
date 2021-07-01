@@ -12,7 +12,6 @@ from license_manager.apps.subscriptions.constants import (
 )
 from license_manager.apps.subscriptions.models import (
     PlanEmailTemplates,
-    SubscriptionPlan,
 )
 from license_manager.apps.subscriptions.utils import (
     chunks,
@@ -29,19 +28,19 @@ def send_revocation_cap_notification_email(subscription_plan, enterprise_name, e
     revocation cap, and that action may be necessary to help the customer add more licenses.
     """
     context = {
-        'template_name': REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE,
+        'template_type': REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE,
         'SUBSCRIPTION_TITLE': subscription_plan.title,
         'ENTERPRISE_NAME': enterprise_name,
         'NUM_REVOCATIONS_APPLIED': subscription_plan.num_revocations_applied,
         'RECIPIENT_EMAIL': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
         'HIDE_EMAIL_FOOTER_MARKETING': True,
-        'SUBSCRIPTION_PLAN_UUID': subscription_plan.uuid,
+        'SUBSCRIPTION_PLAN_TYPE': subscription_plan.plan_type,
     }
     email = _message_from_context_and_template(context, enterprise_sender_alias, reply_to_email)
     email.send()
 
 
-def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_uuid):
+def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_plan_type):
     """
     Sends onboarding email to learner. Intended for use following license activation.
 
@@ -49,7 +48,7 @@ def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_uui
         enterprise_customer_uuid (UUID): unique identifier of the EnterpriseCustomer
             that is linked to the SubscriptionPlan associated with the activated license
         user_email (str): email of the learner whose license has just been activated
-        subscription_uuid: unique identifier to uuid of specific plan type
+        subscription_plan_type: specific plan type for subscription (OCE, Trials, etc)
     """
     enterprise_customer = EnterpriseApiClient().get_enterprise_customer_data(enterprise_customer_uuid)
     enterprise_name = enterprise_customer.get('name')
@@ -58,8 +57,8 @@ def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_uui
     reply_to_email = get_enterprise_reply_to_email(enterprise_customer)
 
     context = {
-        'template_name': ONBOARDING_EMAIL_TEMPLATE,
-        'SUBSCRIPTION_PLAN_UUID': subscription_uuid,
+        'template_type': ONBOARDING_EMAIL_TEMPLATE,
+        'SUBSCRIPTION_PLAN_TYPE': subscription_plan_type,
         'ENTERPRISE_NAME': enterprise_name,
         'ENTERPRISE_SLUG': enterprise_slug,
         'HELP_CENTER_URL': settings.SUPPORT_SITE_URL,
@@ -79,7 +78,7 @@ def send_activation_emails(
     enterprise_name,
     enterprise_sender_alias,
     reply_to_email,
-    subscription_uuid,
+    subscription_plan_type,
     is_reminder=False
 ):
     """
@@ -94,12 +93,12 @@ def send_activation_emails(
         enterprise_slug (str): The slug associated with an enterprise to uniquely identify it
         enterprise_sender_alias (str): Sender alias of the enterprise customer
         reply_to_email (str): Reply to email of the enterprise customer
-        subscription_uuid (int): unique identifier of enterprise subscription
+        subscription_plan_type (int): plan type associated with enterprise subscription
         is_reminder (bool): whether this is a reminder activation email being sent
     """
     context = {
-        'template_name': LICENSE_REMINDER_EMAIL_TEMPLATE if is_reminder else LICENSE_ACTIVATION_EMAIL_TEMPLATE,
-        'SUBSCRIPTION_PLAN_UUID': subscription_uuid,
+        'template_type': LICENSE_REMINDER_EMAIL_TEMPLATE if is_reminder else LICENSE_ACTIVATION_EMAIL_TEMPLATE,
+        'SUBSCRIPTION_PLAN_TYPE': subscription_plan_type,
         'TEMPLATE_CLOSING': custom_template_text['closing'],
         'TEMPLATE_GREETING': custom_template_text['greeting'],
         'ENTERPRISE_NAME': enterprise_name,
@@ -154,18 +153,17 @@ def _send_email_with_activation(email_activation_key_map, context, enterprise_sl
             connection.send_messages(email_chunk)
 
 
-def _get_plan_email_template_row(template_name, context):
+def _get_plan_email_template_row(template_type, context):
     """
     Returns the subject and rendered content from the Plan Email Templates model
     """
-    sub_plan_id = context['SUBSCRIPTION_PLAN_UUID']
-
-    sub = SubscriptionPlan.objects.filter(uuid=sub_plan_id).get()
-    plan_type_id = sub.plan_type_id
+    plan_type_id = context['SUBSCRIPTION_PLAN_TYPE']
+    print(plan_type_id)
+    print(type(plan_type_id))
 
     plan_email_template = PlanEmailTemplates.objects.filter(
-        template_type=template_name, plan_type=plan_type_id).get()
-    plaintext_template = Template(plan_email_template.html_template)
+        template_type=template_type, plan_type=plan_type_id).get()
+    plaintext_template = Template(plan_email_template.plaintext_template)
     html_template = Template(plan_email_template.html_template)
 
     subject = plan_email_template.subject_line
@@ -184,10 +182,11 @@ def _message_from_context_and_template(context, sender_alias, reply_to_email):
     Returns:
         EmailMultiAlternative: an individual message constructed from the information provided, not yet sent
     """
-    template_name = context['template_name']
-    subject, txt_content, html_content = _get_plan_email_template_row(template_name, context)
+    template_type = context['template_type']
+    subject, txt_content, html_content = _get_plan_email_template_row(template_type, context)
 
     context.update({
+        'UNSUBSCRIBE_LINK': settings.EMAIL_UNSUBSCRIBE_LINK,
         'subject': subject,
     })
 
