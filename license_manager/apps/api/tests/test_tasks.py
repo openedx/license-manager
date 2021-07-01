@@ -47,7 +47,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         tasks.activation_email_task(
             self.custom_template_text,
             self.email_recipient_list,
-            self.subscription_plan_type
+            self.subscription_plan.uuid
         )
 
         send_email_args, _ = mock_send_emails.call_args
@@ -74,7 +74,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
             tasks.activation_email_task(
                 self.custom_template_text,
                 self.email_recipient_list,
-                self.subscription_plan_type
+                self.subscription_plan.uuid
             )
 
         mock_logger.error.assert_called_once()
@@ -94,7 +94,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         tasks.send_reminder_email_task(
             self.custom_template_text,
             self.email_recipient_list,
-            self.subscription_plan_type
+            self.subscription_plan.uuid
         )
 
         send_email_args, _ = mock_send_emails.call_args
@@ -121,7 +121,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
             tasks.send_reminder_email_task(
                 self.custom_template_text,
                 self.email_recipient_list,
-                self.subscription_plan_type
+                self.subscription_plan.uuid
             )
             send_email_args, _ = mock_send_emails.call_args
             assert_date_fields_correct(send_email_args[1], ['last_remind_date'], False)

@@ -2494,7 +2494,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
-                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
+                'subscription_uuid': self.active_subscription_for_customer,
             }
         )
         license_to_be_activated = self._create_license()
