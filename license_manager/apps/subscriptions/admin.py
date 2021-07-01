@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from simple_history.admin import SimpleHistoryAdmin
 
 from license_manager.apps.subscriptions.forms import (
     SubscriptionPlanForm,
@@ -57,7 +58,7 @@ class LicenseAdmin(admin.ModelAdmin):
 
 
 @admin.register(SubscriptionPlan)
-class SubscriptionPlanAdmin(admin.ModelAdmin):
+class SubscriptionPlanAdmin(SimpleHistoryAdmin):
     form = SubscriptionPlanForm
     # This is not to be confused with readonly_fields of the BaseModelAdmin class
     read_only_fields = (
@@ -77,6 +78,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         'is_revocation_cap_enabled',
         'is_active',
         'for_internal_use_only',
+        'change_reason'
     )
     fields = writable_fields + read_only_fields
     list_display = (
@@ -112,6 +114,9 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     )
 
     def save_model(self, request, obj, form, change):
+        # Record change reason for simple history
+        obj._change_reason = form.cleaned_data.get('change_reason')  # pylint: disable=protected-access
+
         # If a uuid is not specified on the subscription itself, use the default one for the CustomerAgreement
         customer_agreement_catalog = obj.customer_agreement.default_enterprise_catalog_uuid
         obj.enterprise_catalog_uuid = (obj.enterprise_catalog_uuid or customer_agreement_catalog)

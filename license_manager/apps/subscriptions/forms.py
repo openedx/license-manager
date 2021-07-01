@@ -8,6 +8,7 @@ from django import forms
 from license_manager.apps.subscriptions.constants import (
     MAX_NUM_LICENSES,
     MIN_NUM_LICENSES,
+    SubscriptionPlanChangeReasonChoices,
 )
 from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
@@ -29,6 +30,13 @@ class SubscriptionPlanForm(forms.ModelForm):
     num_revocations_remaining = forms.IntegerField(
         required=False,
         widget=forms.HiddenInput()
+    )
+
+    # Extra form field to set reason for changing a subscription plan, data saved in simple history record
+    change_reason = forms.ChoiceField(
+        choices=SubscriptionPlanChangeReasonChoices.CHOICES,
+        required=True,
+        label="Reason for change",
     )
 
     def is_valid(self):

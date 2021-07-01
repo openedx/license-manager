@@ -26,6 +26,24 @@ class LicenseTypesToRenew:
     )
 
 
+class SubscriptionPlanChangeReasonChoices:
+    NONE = None
+    NEW = "new"
+    INCORRECT_USER_INPUT = "incorrect_user_input"
+    DELAYED_PAYMENT = "delayed_payment"
+    ORGANIZATION_REQUESTED_CHANGE = "organization_requested_change"
+    OTHER = "other"
+
+    CHOICES = (
+        (NONE, "Select Reason"),
+        (NEW, "New Subscription"),
+        (INCORRECT_USER_INPUT, "Incorrect User Input"),
+        (DELAYED_PAYMENT, "Delayed Payment"),
+        (ORGANIZATION_REQUESTED_CHANGE, "Organization Request Change"),
+        (OTHER, "Other"),
+    )
+
+
 # Subject lines used for emails
 LICENSE_ACTIVATION_EMAIL_SUBJECT = 'Start your edX Subscription'
 LICENSE_REMINDER_EMAIL_SUBJECT = 'Your edX License is pending'
