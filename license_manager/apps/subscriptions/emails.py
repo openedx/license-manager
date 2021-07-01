@@ -12,6 +12,7 @@ from license_manager.apps.subscriptions.constants import (
 )
 from license_manager.apps.subscriptions.models import (
     PlanEmailTemplates,
+    PlanType,
 )
 from license_manager.apps.subscriptions.utils import (
     chunks,
@@ -34,7 +35,7 @@ def send_revocation_cap_notification_email(subscription_plan, enterprise_name, e
         'NUM_REVOCATIONS_APPLIED': subscription_plan.num_revocations_applied,
         'RECIPIENT_EMAIL': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
         'HIDE_EMAIL_FOOTER_MARKETING': True,
-        'SUBSCRIPTION_PLAN_TYPE': subscription_plan.plan_type,
+        'SUBSCRIPTION_PLAN_TYPE': subscription_plan.plan_type.id,
     }
     email = _message_from_context_and_template(context, enterprise_sender_alias, reply_to_email)
     email.send()
@@ -48,7 +49,7 @@ def send_onboarding_email(enterprise_customer_uuid, user_email, subscription_pla
         enterprise_customer_uuid (UUID): unique identifier of the EnterpriseCustomer
             that is linked to the SubscriptionPlan associated with the activated license
         user_email (str): email of the learner whose license has just been activated
-        subscription_plan_type: specific plan type for subscription (OCE, Trials, etc)
+        subscription_plan_type: specific id of plan type for subscription (OCE, Trials, etc)
     """
     enterprise_customer = EnterpriseApiClient().get_enterprise_customer_data(enterprise_customer_uuid)
     enterprise_name = enterprise_customer.get('name')
@@ -158,11 +159,10 @@ def _get_plan_email_template_row(template_type, context):
     Returns the subject and rendered content from the Plan Email Templates model
     """
     plan_type_id = context['SUBSCRIPTION_PLAN_TYPE']
-    print(plan_type_id)
-    print(type(plan_type_id))
+    plan_type = PlanType.objects.filter(id=plan_type_id).get()
 
     plan_email_template = PlanEmailTemplates.objects.filter(
-        template_type=template_type, plan_type=plan_type_id).get()
+        template_type=template_type, plan_type=plan_type).get()
     plaintext_template = Template(plan_email_template.plaintext_template)
     html_template = Template(plan_email_template.html_template)
 

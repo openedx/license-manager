@@ -1700,7 +1700,6 @@ class LicenseViewTestMixin:
         cls.lms_user_id = 1
         cls.now = localized_utcnow()
         cls.activation_key = uuid4()
-        cls.uuid = uuid4()
 
         cls.customer_agreement = CustomerAgreementFactory(
             enterprise_customer_uuid=cls.enterprise_customer_uuid,
@@ -2462,7 +2461,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
-                'subscription_plan_type': self.active_subscription_for_customer.plan_type,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
 
@@ -2481,7 +2480,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
-                'subscription_plan_type': self.active_subscription_for_customer.plan_type,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
 
@@ -2495,7 +2494,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
-                'subscription_plan_type': self.active_subscription_for_customer.plan_type,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
         license_to_be_activated = self._create_license()
@@ -2511,7 +2510,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         mock_onboarding_email_task.assert_called_with(
             self.enterprise_customer_uuid,
             self.user.email,
-            self.active_subscription_for_customer.plan_type,
+            self.active_subscription_for_customer.plan_type.id,
         )
 
     def test_license_already_activated_returns_204(self):
@@ -2519,7 +2518,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
-                'subscription_plan_type': self.active_subscription_for_customer.plan_type,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
         already_activated_license = self._create_license(
@@ -2540,7 +2539,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
-                'subscription_plan_type': self.active_subscription_for_customer.plan_type,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
         revoked_license = self._create_license(

@@ -26,7 +26,7 @@ class EmailTests(TestCase):
         self.enterprise_name = 'Mock Enterprise'
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
         self.reply_to_email = 'edx@example.com'
-        self.subscription_uuid = self.subscription.uuid
+        self.subscription_plan_type = self.subscription.plan_type.id
 
     def test_send_activation_emails(self):
         """
@@ -39,7 +39,7 @@ class EmailTests(TestCase):
             self.enterprise_name,
             self.enterprise_sender_alias,
             self.reply_to_email,
-            self.subscription_uuid,
+            self.subscription_plan_type,
         )
         self.assertEqual(
             len(mail.outbox),
@@ -62,7 +62,7 @@ class EmailTests(TestCase):
             self.enterprise_name,
             self.enterprise_sender_alias,
             self.reply_to_email,
-            self.subscription_uuid,
+            self.subscription_plan_type,
             is_reminder=True,
         )
         self.assertEqual(len(mail.outbox), 1)
@@ -76,7 +76,7 @@ class EmailTests(TestCase):
         """
         Tests that onboarding emails are correctly sent.
         """
-        emails.send_onboarding_email(self.enterprise_uuid, self.user_email, self.subscription_uuid)
+        emails.send_onboarding_email(self.enterprise_uuid, self.user_email, self.subscription_plan_type)
         mock_enterprise_api_client.return_value.get_enterprise_customer_data.assert_called_with(self.enterprise_uuid)
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, constants.ONBOARDING_EMAIL_SUBJECT)

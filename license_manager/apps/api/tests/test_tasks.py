@@ -29,7 +29,7 @@ class LicenseManagerCeleryTaskTests(TestCase):
         self.enterprise_name = 'Mock Enterprise'
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
         self.reply_to_email = 'edx@example.com'
-        self.subscription_plan_type = self.subscription_plan.plan_type
+        self.subscription_plan_type = self.subscription_plan.plan_type.id
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.send_activation_emails')
