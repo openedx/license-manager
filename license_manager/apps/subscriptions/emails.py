@@ -158,16 +158,22 @@ def _get_plan_email_template_row(template_type, context):
     """
     Returns the subject and rendered content from the Plan Email Templates model
     """
-    plan_type_id = context['SUBSCRIPTION_PLAN_TYPE']
-    plan_type = PlanType.objects.filter(id=plan_type_id).get()
+    import pdb; pdb.set_trace()
 
-    plan_email_template = PlanEmailTemplates.objects.filter(
-        template_type=template_type, plan_type=plan_type).get()
+    if template_type == REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE:
+        plan_email_template = PlanEmailTemplates.objects.filter(
+            template_type=template_type).get()
+    else:
+        plan_type_id = context.get('SUBSCRIPTION_PLAN_TYPE', None)
+        plan_type = PlanType.objects.filter(id=plan_type_id).get()
+        plan_email_template = PlanEmailTemplates.objects.filter(
+            template_type=template_type, plan_type=plan_type).get()
+
     plaintext_template = Template(plan_email_template.plaintext_template)
     html_template = Template(plan_email_template.html_template)
 
     subject = plan_email_template.subject_line
-    return subject, plaintext_template.render(Context(context)), html_template.render(Context(context))
+    return subject, plaintext_template.render(Context(context)), None
 
 
 def _message_from_context_and_template(context, sender_alias, reply_to_email):
