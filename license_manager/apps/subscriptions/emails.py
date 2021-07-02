@@ -166,9 +166,8 @@ def _get_plan_email_template_row(template_type, context):
 
     plaintext_template = Template(plan_email_template.plaintext_template)
     html_template = Template(plan_email_template.html_template)
-
     subject = plan_email_template.subject_line
-    return subject, plaintext_template.render(Context(context)), html_template.render(Context(context))
+    return subject, plaintext_template.render(Context(context)), None
 
 
 def _message_from_context_and_template(context, sender_alias, reply_to_email):
