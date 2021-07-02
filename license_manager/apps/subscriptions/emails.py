@@ -158,8 +158,6 @@ def _get_plan_email_template_row(template_type, context):
     """
     Returns the subject and rendered content from the Plan Email Templates model
     """
-    import pdb; pdb.set_trace()
-
     if template_type == REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE:
         plan_email_template = PlanEmailTemplates.objects.filter(
             template_type=template_type).get()
@@ -173,7 +171,7 @@ def _get_plan_email_template_row(template_type, context):
     html_template = Template(plan_email_template.html_template)
 
     subject = plan_email_template.subject_line
-    return subject, plaintext_template.render(Context(context)), None
+    return subject, plaintext_template.render(Context(context)), html_template.render(Context(context))
 
 
 def _message_from_context_and_template(context, sender_alias, reply_to_email):
