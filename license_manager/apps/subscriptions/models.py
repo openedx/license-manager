@@ -161,6 +161,82 @@ class PlanType(models.Model):
         return self.label
 
 
+class PlanEmailTemplates(models.Model):
+    """
+    Stores email templates associated with each enterprise Subscription plan type.
+    .. no_pii: This model has no PII
+    """
+    plaintext_template = models.TextField(
+        blank=False,
+    )
+    html_template = models.TextField(
+        blank=False,
+    )
+    subject_line = models.CharField(
+        max_length=100,
+        blank=False,
+        null=False,
+    )
+    plan_type = models.ForeignKey(
+        PlanType,
+        related_name='subscriptions',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
+    template_type = models.TextField(
+        blank=False,
+        null=False,
+    )
+
+    def __str__(self):
+        return self.label
+
+    def render_html_template(self, kwargs):
+        """
+        Render just the HTML template and return it as a string.
+        """
+        return self.render_template(mark_safe(self.html_template), kwargs)
+
+    def render_plaintext_template(self, kwargs):
+        """
+        Render just the plaintext template and return it as a string.
+        """
+        return self.render_template(self.plaintext_template, kwargs)
+
+
+class PlanEmailTemplates(models.Model):
+    """
+    Stores email templates associated with each enterprise Subscription plan type.
+    .. no_pii: This model has no PII
+    """
+    plaintext_template = models.TextField(
+        blank=False,
+    )
+    html_template = models.TextField(
+        blank=False,
+    )
+    subject_line = models.CharField(
+        max_length=100,
+        blank=False,
+        null=False,
+    )
+    plan_type = models.ForeignKey(
+        PlanType,
+        related_name='subscriptions',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
+    template_type = models.TextField(
+        blank=False,
+        null=False,
+    )
+
+    def __str__(self):
+        return self.template_type
+
+
 class SubscriptionPlan(TimeStampedModel):
     """
     Stores top-level information related to an enterprise Subscriptions purchase.
