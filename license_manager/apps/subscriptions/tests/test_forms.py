@@ -8,6 +8,7 @@ from pytest import mark
 from license_manager.apps.subscriptions.constants import (
     MAX_NUM_LICENSES,
     MIN_NUM_LICENSES,
+    SubscriptionPlanChangeReasonChoices,
 )
 from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.models import SubscriptionPlan
@@ -61,6 +62,19 @@ class TestSubscriptionPlanForm(TestCase):
             customer_agreement_has_default_catalog=customer_agreement_has_default_catalog,
         )
         assert form.is_valid() is is_valid
+
+    def test_change_reason_is_required(self):
+        """
+        Verify subscription plan form is invalid if reason for change is None or outside the set of options
+        """
+        valid_form = make_bound_subscription_form(change_reason=SubscriptionPlanChangeReasonChoices.NEW)
+        assert valid_form.is_valid() is True
+
+        not_valid_form = make_bound_subscription_form(change_reason=SubscriptionPlanChangeReasonChoices.NONE)
+        assert not_valid_form.is_valid() is False
+
+        not_valid_form = make_bound_subscription_form(change_reason="koala")
+        assert not_valid_form.is_valid() is False
 
 
 @mark.django_db

@@ -45,6 +45,7 @@ THIRD_PARTY_APPS = (
     'rest_framework',
     'rest_framework_swagger',
     'rules.apps.AutodiscoverRulesConfig',
+    'simple_history',
     'social_django',
     'waffle',
 )
@@ -86,6 +87,9 @@ MIDDLEWARE = (
 
     # Ensures proper DRF permissions in support of JWTs
     'edx_rest_framework_extensions.auth.jwt.middleware.EnsureJWTAuthSettingsMiddleware',
+
+    # Lets simple history track which user made changes
+    'simple_history.middleware.HistoryRequestMiddleware',
 )
 
 # Enable CORS
