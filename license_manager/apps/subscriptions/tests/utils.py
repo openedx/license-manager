@@ -36,6 +36,7 @@ def make_bound_subscription_form(
     for_internal_use_only=False,
     has_customer_agreement=True,
     customer_agreement_has_default_catalog=True,
+    change_reason="new"
 ):
     """
     Builds a bound SubscriptionPlanForm
@@ -56,6 +57,7 @@ def make_bound_subscription_form(
         'is_active': is_active,
         'for_internal_use_only': for_internal_use_only,
         'customer_agreement': str(customer_agreement.uuid) if has_customer_agreement else None,
+        'change_reason': change_reason
     }
     return SubscriptionPlanForm(form_data)
 
