@@ -11,6 +11,12 @@ from license_manager.apps.subscriptions.tests.factories import (
 from license_manager.apps.subscriptions.tests.utils import make_test_email_data
 
 
+LICENSE_ACTIVATION_EMAIL_SUBJECT = 'Start your edX Subscription'
+LICENSE_REMINDER_EMAIL_SUBJECT = 'Your edX License is pending'
+ONBOARDING_EMAIL_SUBJECT = 'Welcome to edX Subscriptions!'
+REVOCATION_CAP_NOTIFICATION_EMAIL_SUBJECT = 'REVOCATION CAP REACHED: {}'
+
+
 class EmailTests(TestCase):
     def setUp(self):
         super().setUp()
@@ -47,7 +53,7 @@ class EmailTests(TestCase):
         )
         # Verify the contents of the first message
         message = mail.outbox[0]
-        self.assertEqual(message.subject, constants.LICENSE_ACTIVATION_EMAIL_SUBJECT)
+        self.assertEqual(message.subject, LICENSE_ACTIVATION_EMAIL_SUBJECT)
         self.assertTrue('Activate' in message.body)
 
     def test_send_reminder_email(self):
@@ -68,7 +74,7 @@ class EmailTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         # Verify the contents of the first message
         message = mail.outbox[0]
-        self.assertEqual(message.subject, constants.LICENSE_REMINDER_EMAIL_SUBJECT)
+        self.assertEqual(message.subject, LICENSE_REMINDER_EMAIL_SUBJECT)
         self.assertFalse('Activate' in message.body)
 
     @mock.patch('license_manager.apps.subscriptions.emails.EnterpriseApiClient')
@@ -79,4 +85,4 @@ class EmailTests(TestCase):
         emails.send_onboarding_email(self.enterprise_uuid, self.user_email, self.subscription_plan_type)
         mock_enterprise_api_client.return_value.get_enterprise_customer_data.assert_called_with(self.enterprise_uuid)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, constants.ONBOARDING_EMAIL_SUBJECT)
+        self.assertEqual(mail.outbox[0].subject, ONBOARDING_EMAIL_SUBJECT)

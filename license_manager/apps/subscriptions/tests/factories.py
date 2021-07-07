@@ -72,7 +72,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
     # By default, all the subscription plans created are Standard Paid type,
     # though this can be overridden to test others
-    plan_type_id = '1'
+    plan_type_id = 1
 
 
 class SubscriptionPlanRenewalFactory(factory.django.DjangoModelFactory):
