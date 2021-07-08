@@ -42,12 +42,6 @@ class SubscriptionPlanChangeReasonChoices:
     )
 
 
-# Subject lines used for emails
-LICENSE_ACTIVATION_EMAIL_SUBJECT = 'Start your edX Subscription'
-LICENSE_REMINDER_EMAIL_SUBJECT = 'Your edX License is pending'
-ONBOARDING_EMAIL_SUBJECT = 'Welcome to edX Subscriptions!'
-REVOCATION_CAP_NOTIFICATION_EMAIL_SUBJECT = 'REVOCATION CAP REACHED: {}'
-
 # Template names used for emails
 LICENSE_ACTIVATION_EMAIL_TEMPLATE = 'activation'
 LICENSE_REMINDER_EMAIL_TEMPLATE = 'reminder'

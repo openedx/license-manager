@@ -2500,6 +2500,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
 
@@ -2518,6 +2519,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
 
@@ -2531,6 +2533,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
+                'subscription_uuid': str(self.active_subscription_for_customer.uuid),
             }
         )
         license_to_be_activated = self._create_license()
@@ -2546,6 +2549,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         mock_onboarding_email_task.assert_called_with(
             self.enterprise_customer_uuid,
             self.user.email,
+            self.active_subscription_for_customer.plan_type.id,
         )
 
     def test_license_already_activated_returns_204(self):
@@ -2553,6 +2557,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
         already_activated_license = self._create_license(
@@ -2573,6 +2578,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
                 'email': self.user.email,
+                'subscription_plan_type': self.active_subscription_for_customer.plan_type.id,
             }
         )
         revoked_license = self._create_license(
