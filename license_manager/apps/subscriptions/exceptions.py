@@ -20,3 +20,21 @@ class LicenseRevocationError(Exception):
             self.license_uuid,
             self.failure_reason,
         )
+
+
+class LicenseNotFoundError(Exception):
+    """
+    Raised when no license exists for a given (email, subscription_plan, statuses) combination.
+    """
+    def __init__(self, user_email, subscription_plan, license_statuses):
+        super().__init__()
+        self.user_email = user_email
+        self.subscription_plan = subscription_plan
+        self.license_statuses = license_statuses
+
+    def __str__(self):
+        return "No license for email {} exists in plan {} with a status in {}".format(
+            self.user_email,
+            self.subscription_plan.uuid,
+            self.license_statuses,
+        )

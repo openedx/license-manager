@@ -36,7 +36,10 @@ from license_manager.apps.api.tasks import (
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.api import revoke_license
-from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
+from license_manager.apps.subscriptions.exceptions import (
+    LicenseNotFoundError,
+    LicenseRevocationError,
+)
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
@@ -51,6 +54,19 @@ from license_manager.apps.subscriptions.utils import (
 
 
 logger = logging.getLogger(__name__)
+
+
+STATUS_CODES_BY_EXCEPTION = {
+    LicenseNotFoundError: status.HTTP_404_NOT_FOUND,
+    LicenseRevocationError: status.HTTP_400_BAD_REQUEST,
+}
+
+
+def get_http_status_for_exception(exc):
+    return STATUS_CODES_BY_EXCEPTION.get(
+        exc.__class__,
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
 
 
 class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
@@ -239,6 +255,8 @@ class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnly
             return serializers.CustomTextSerializer
         if self.action == 'revoke':
             return serializers.SingleEmailSerializer
+        if self.action == 'bulk_revoke':
+            return serializers.MultipleEmailsSerializer
         return serializers.LicenseSerializer
 
     @property
@@ -625,32 +643,138 @@ class LicenseViewSet(LearnerLicenseViewSet):
         return Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
-    def revoke(self, request, subscription_uuid=None):  # pylint: disable=unused-argument
+    def revoke(self, request, subscription_uuid=None):
+        """
+        Revokes one license in a subscription plan,
+        given an email address with which the license is associated.
+        This will result in any existing enrollments for the revoked user
+        being moved to the audit enrollment mode.
+
+        POST /api/v1/subscriptions/{subscription_uuid}/licenses/revoke/
+
+        Request payload:
+          {
+            "user_email": "alice@example.com"
+          }
+
+        Response:
+          204 No Content - The revocation was successful.
+          400 Bad Request - Some error occurred when processing the revocation. An error
+            message is included in the response.
+          404 Not Found - No license exists in the plan for the given email address,
+            or the license is not in an assigned or activated state.  An error message
+            is included in the response.
+        """
         self._validate_data(request.data)
-        # Find the active or pending license for the user
+
         user_email = request.data.get('user_email')
         subscription_plan = self._get_subscription_plan()
+
+        if not subscription_plan:
+            msg = 'No SubscriptionPlan identified by {} exists'.format(subscription_uuid)
+            return Response(msg, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            self._revoke_by_email_and_plan(user_email, subscription_plan)
+        except (LicenseNotFoundError, LicenseRevocationError) as exc:
+            return Response(
+                str(exc),
+                status=get_http_status_for_exception(exc),
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['post'])
+    def bulk_revoke(self, request, subscription_uuid=None):
+        """
+        Revokes one or more licenses in a subscription plan,
+        given a list of email addresses with which the licenses are associated.
+        This will result in any existing enrollments for the revoked users
+        being moved to the audit enrollment mode.
+
+        POST /api/v1/subscriptions/{subscription_uuid}/licenses/bulk_revoke/
+
+        Request payload:
+          {
+            "user_emails": [
+              "alice@example.com",
+              "carol@example.com"
+            ]
+          }
+
+        Response:
+          204 No Content - All revocations were successful.
+          400 Bad Request - Some error occurred when processing one of the revocations.
+            An error response payload is provided.
+          404 Not Found - No license exists in the plan for one of the given email addresses,
+            or the license is not in an assigned or activated state.
+            An error response payload is provided.
+
+        Error Response Payload:
+          {
+            "status": "failure",
+            "processed_revocations": ["alice@example.com"],
+            "error_message": "No license for email carol@example.com exists in plan {subscription_plan_uuid} "
+              "with a status in ['activated', 'assigned']"
+          }
+
+        In error/failure cases, some licenses might have been successfully revoked, but
+        no licenses corresponding to emails in the `user_emails` list after the error
+        are revoked.
+        """
+        self._validate_data(request.data)
+
+        user_emails = request.data.get('user_emails')
+        subscription_plan = self._get_subscription_plan()
+
+        error_payload = {
+            'status': 'failure',
+            'processed_revocations': [],
+            'error_message': '',
+        }
+
+        if not subscription_plan:
+            error_payload['error_message'] = 'No SubscriptionPlan identified by {} exists'.format(
+                subscription_uuid,
+            )
+            return Response(error_payload, status=status.HTTP_404_NOT_FOUND)
+
+        if len(user_emails) > subscription_plan.num_revocations_remaining:
+            error_payload['error_message'] = 'Plan does not have enough revocations remaining.'
+            return Response(error_payload, status=status.HTTP_400_BAD_REQUEST)
+
+        for user_email in user_emails:
+            try:
+                self._revoke_by_email_and_plan(user_email, subscription_plan)
+            except (LicenseNotFoundError, LicenseRevocationError) as exc:
+                error_payload['error_message'] = str(exc)
+                return Response(
+                    error_payload,
+                    status=get_http_status_for_exception(exc),
+                )
+            error_payload['processed_revocations'].append(user_email)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _revoke_by_email_and_plan(self, user_email, subscription_plan):
+        """
+        Helper method to revoke a single license.
+        """
+        revocable_statuses = [constants.ACTIVATED, constants.ASSIGNED]
         try:
             user_license = subscription_plan.licenses.get(
                 user_email=user_email,
-                status__in=[constants.ACTIVATED, constants.ASSIGNED]
+                status__in=revocable_statuses,
             )
-        except ObjectDoesNotExist:
-            msg = 'Could not find any active licenses that are associated with the email: {}'.format(
-                user_email,
-            )
-            return Response(msg, status=status.HTTP_404_NOT_FOUND)
+        except License.DoesNotExist as exc:
+            logger.error(exc)
+            raise LicenseNotFoundError(user_email, subscription_plan, revocable_statuses) from exc
 
         try:
             revoke_license(user_license)
         except LicenseRevocationError as exc:
             logger.error(exc)
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST,
-                data=exc.failure_reason,
-            )
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            raise
 
     @action(detail=False, methods=['get'])
     def overview(self, request, subscription_uuid=None):  # pylint: disable=unused-argument
