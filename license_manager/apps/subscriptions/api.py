@@ -1,6 +1,7 @@
 """
 Python APIs exposed by the Subscriptions app to other in-process apps.
 """
+import logging
 from datetime import datetime
 
 from django.db import transaction
@@ -13,6 +14,9 @@ from .constants import ACTIVATED, ASSIGNED, UNASSIGNED, LicenseTypesToRenew
 from .exceptions import LicenseRevocationError
 from .models import License, SubscriptionPlan, SubscriptionPlanRenewal
 from .utils import localized_datetime_from_date, localized_utcnow
+
+
+logger = logging.getLogger(__name__)
 
 
 def revoke_license(user_license):
@@ -60,6 +64,7 @@ def revoke_license(user_license):
 
     # Revoke the license
     user_license.revoke()
+    logger.info('License {} has been revoked'.format(user_license.uuid))
     # Create new license to add to the unassigned license pool
     user_license.subscription_plan.increase_num_licenses(1)
 

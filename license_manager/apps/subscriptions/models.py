@@ -1,4 +1,4 @@
-from math import ceil
+from math import ceil, inf
 from operator import itemgetter
 from uuid import uuid4
 
@@ -287,8 +287,7 @@ class SubscriptionPlan(TimeStampedModel):
     @property
     def has_revocations_remaining(self):
         """
-        Gets whether there are any revocations remaining for this SubscriptionPlan. If the revocation cap is enabled,
-        returns whether there is at least one revocation remaining.
+        Returns true if there are any revocations remaining for this SubscriptionPlan, false otherwise.
         """
         if not self.is_revocation_cap_enabled:
             return True
@@ -297,12 +296,14 @@ class SubscriptionPlan(TimeStampedModel):
     @property
     def num_revocations_remaining(self):
         """
-        Gets the number of revocations that can still be made against this SubscriptionPlan. The
-        revocation cap must be enabled for a count that decrements per revocation. Note: This value
-        is rounded up.
+        When the revocation cap is enabled for this plan,
+        returns the number of revocations that can still be made against this plan.
 
-        When the revocation cap is not enabled for this SubscriptionPlan, ``None``is returned.
+        When the revocation cap is not enabled for this plan, positive infinity is returned.
         """
+        if not self.is_revocation_cap_enabled:
+            return inf
+
         num_revocations_allowed = ceil(self.num_licenses * (self.revoke_max_percentage / 100))
         return num_revocations_allowed - self.num_revocations_applied
     num_revocations_remaining.fget.short_description = "Number of Revocations Remaining"

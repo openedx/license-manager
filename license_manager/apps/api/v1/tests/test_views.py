@@ -1449,6 +1449,10 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             'api:v1:licenses-revoke',
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
+        cls.bulk_revoke_license_url = reverse(
+            'api:v1:licenses-bulk-revoke',
+            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
+        )
         cls.assign_url = reverse(
             'api:v1:licenses-assign',
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
@@ -1485,7 +1489,10 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         mock_revoke_license.assert_called_once_with(original_license)
-        self.assertEqual(response.json(), 'Revocation fail')
+        expected_msg = 'Attempted license revocation FAILED for License [{}]. Reason: Revocation fail'.format(
+            original_license.uuid,
+        )
+        self.assertEqual(response.json(), expected_msg)
 
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
     def test_revoke_no_license(self, mock_revoke_license):
@@ -1495,6 +1502,12 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
+        expected_msg = 'No license for email {} exists in plan {} with a status in {}'.format(
+            self.test_email,
+            self.subscription_plan.uuid,
+            [constants.ACTIVATED, constants.ASSIGNED],
+        )
+        self.assertEqual(response.json(), expected_msg)
         self.assertFalse(mock_revoke_license.called)
 
     @ddt.data(True, False)
@@ -1512,6 +1525,174 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
         self.assertFalse(mock_revoke_license.called)
+
+    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
+    def test_bulk_revoke_happy_path(self, mock_revoke_license):
+        """
+        Test that we can revoke multiple licenses from the bulk_revoke action.
+        """
+        self._setup_request_jwt(user=self.user)
+        alice_license = LicenseFactory.create(user_email='alice@example.com', status=constants.ACTIVATED)
+        bob_license = LicenseFactory.create(user_email='bob@example.com', status=constants.ACTIVATED)
+        self.subscription_plan.licenses.set([alice_license, bob_license])
+
+        request_payload = {
+            'user_emails': [
+                'alice@example.com',
+                'bob@example.com',
+            ],
+        }
+        response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        mock_revoke_license.assert_has_calls([
+            mock.call(alice_license),
+            mock.call(bob_license),
+        ])
+
+    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
+    def test_bulk_revoke_no_valid_subscription_plan(self, mock_revoke_license):
+        """
+        Test that calls to bulk_revoke fail with a 403 if no valid subscription plan uuid
+        is provided, for requests made by a regular user.  A 403 is expected because our
+        test user has an admin role assigned for a specific, existing enterprise, but (obviously)
+        there is no role assignment for an enterprise/subscription plan that does not exist.
+        """
+        self._setup_request_jwt(user=self.user)
+
+        request_payload = {
+            'user_emails': [
+                'alice@example.com',
+                'bob@example.com',
+            ],
+        }
+        non_existent_uuid = uuid4()
+        request_url = reverse(
+            'api:v1:licenses-bulk-revoke',
+            kwargs={'subscription_uuid': non_existent_uuid},
+        )
+        response = self.api_client.post(request_url, request_payload)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        self.assertFalse(mock_revoke_license.called)
+
+    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
+    def test_bulk_revoke_no_valid_subscription_plan_superuser(self, mock_revoke_license):
+        """
+        Test that calls to bulk_revoke fail with a 404 if no valid subscription plan uuid
+        is provided, for requests made by a superuser.
+        """
+        self._setup_request_jwt(user=self.super_user)
+
+        request_payload = {
+            'user_emails': [
+                'alice@example.com',
+                'bob@example.com',
+            ],
+        }
+        non_existent_uuid = uuid4()
+        request_url = reverse(
+            'api:v1:licenses-bulk-revoke',
+            kwargs={'subscription_uuid': non_existent_uuid},
+        )
+        response = self.api_client.post(request_url, request_payload)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        expected_response_message = 'No SubscriptionPlan identified by {} exists'.format(non_existent_uuid)
+        self.assertEqual(expected_response_message, response.json())
+        self.assertFalse(mock_revoke_license.called)
+
+    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
+    def test_bulk_revoke_not_enough_revocations_remaining(self, mock_revoke_license):
+        """
+        Test that calls to bulk_revoke fail with a 400 if the plan does not have enough
+        revocations remaining.
+        """
+        plan = SubscriptionPlanFactory.create(
+            is_revocation_cap_enabled=True,
+            revoke_max_percentage=0,
+        )
+        _ = LicenseFactory.create(
+            subscription_plan=plan,
+            user_email='alice@example.com',
+            status=constants.ACTIVATED,
+        )
+
+        self._setup_request_jwt(self.user, plan.enterprise_customer_uuid)
+        request_payload = {
+            'user_emails': ['alice@example.com'],
+        }
+        request_url = reverse(
+            'api:v1:licenses-bulk-revoke',
+            kwargs={'subscription_uuid': plan.uuid},
+        )
+        response = self.api_client.post(request_url, request_payload)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        expected_response_message = 'Plan does not have enough revocations remaining.'
+        self.assertEqual(expected_response_message, response.json())
+        self.assertFalse(mock_revoke_license.called)
+
+    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
+    def test_bulk_revoke_license_not_found(self, mock_revoke_license):
+        """
+        Test that calls to bulk_revoke fail with a 404 if the plan does not have enough
+        revocations remaining.
+        """
+        self._setup_request_jwt(self.user)
+
+        alice_license = LicenseFactory.create(
+            subscription_plan=self.subscription_plan,
+            user_email='alice@example.com',
+            status=constants.ACTIVATED,
+        )
+
+        request_payload = {
+            'user_emails': [
+                'alice@example.com',
+                'bob@example.com',  # There's no license for bob
+            ],
+        }
+        response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        expected_error_msg = (
+            "No license for email bob@example.com exists in plan "
+            "{} with a status in ['activated', 'assigned']".format(self.subscription_plan.uuid)
+        )
+        self.assertEqual(expected_error_msg, response.json())
+        mock_revoke_license.assert_called_once_with(alice_license)
+
+    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
+    def test_bulk_revoke_license_revocation_error(self, mock_revoke_license):
+        """
+        Test that calls to bulk_revoke fail with a 400 if some error occurred during
+        the actual revocation process.
+        """
+        self._setup_request_jwt(self.user)
+
+        alice_license = LicenseFactory.create(
+            subscription_plan=self.subscription_plan,
+            user_email='alice@example.com',
+            status=constants.ACTIVATED,
+        )
+
+        mock_revoke_license.side_effect = LicenseRevocationError(alice_license.uuid, 'floor is lava')
+
+        request_payload = {
+            'user_emails': [
+                'alice@example.com',
+            ],
+        }
+        response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        expected_error_msg = "Attempted license revocation FAILED for License [{}]. Reason: {}".format(
+            alice_license.uuid,
+            'floor is lava',
+        )
+        self.assertEqual(expected_error_msg, response.json())
+        mock_revoke_license.assert_called_once_with(alice_license)
 
     @ddt.data(
         {'is_revocation_cap_enabled': True},
