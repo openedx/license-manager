@@ -78,13 +78,13 @@ subscription_router = NestedSimpleRouter(
 )
 subscription_router.register(
     r'licenses',
-    views.LicenseViewSet,
+    views.LicenseAdminViewSet,
     basename='licenses',
 )
 
 subscription_router.register(
     r'license(?![^\/])',
-    views.LearnerLicenseViewSet,
+    views.BaseLicenseViewSet,
     basename='license',
 )
 

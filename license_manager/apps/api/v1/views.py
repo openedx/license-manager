@@ -207,87 +207,6 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
         return queryset.order_by('-start_date')
 
 
-class LearnerLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
-    """
-    Viewset for learner read operations on Licenses.
-
-    Note: This Viewset's endpoint is part of the subscription SimpleNestedRouter - it is
-    only intended for retrieving a single License. To obtain all Licenses for a given user
-    customer pair, use LearnerLicensesViewSet.
-    """
-    authentication_classes = [JwtAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    ordering_fields = [
-        'user_email',
-        'status',
-        'activation_date',
-        'last_remind_date',
-    ]
-    search_fields = ['user_email']
-    filterset_class = LicenseStatusFilter
-    permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
-
-    # The fields that control permissions for 'list' actions.
-    # Roles are granted on specific enterprise identifiers, so we have to join
-    # from this model to SubscriptionPlan to find the corresponding customer identifier.
-    list_lookup_field = 'subscription_plan__customer_agreement__enterprise_customer_uuid'
-    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
-    role_assignment_class = SubscriptionsRoleAssignment
-
-    def get_permission_object(self):
-        """
-        The requesting user needs access to the license's SubscriptionPlan
-        in order to access the license.
-        """
-        subscription_plan = self._get_subscription_plan()
-        if not subscription_plan:
-            return None
-
-        return subscription_plan.customer_agreement.enterprise_customer_uuid
-
-    def get_serializer_class(self):
-        if self.action == 'assign':
-            return serializers.CustomTextWithMultipleEmailsSerializer
-        if self.action == 'remind':
-            return serializers.CustomTextWithSingleEmailSerializer
-        if self.action == 'remind_all':
-            return serializers.CustomTextSerializer
-        if self.action == 'revoke':
-            return serializers.SingleEmailSerializer
-        if self.action == 'bulk_revoke':
-            return serializers.MultipleEmailsSerializer
-        return serializers.LicenseSerializer
-
-    @property
-    def base_queryset(self):
-        """
-        Required by the `PermissionRequiredForListingMixin`.
-        For non-list actions, this is what's returned by `get_queryset()`.
-        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
-        """
-        return License.objects.filter(
-            subscription_plan=self._get_subscription_plan(),
-            user_email=self.request.user.email,
-        ).exclude(
-            status=constants.REVOKED
-        ).order_by('status', '-subscription_plan__expiration_date')
-
-    def _get_subscription_plan(self):
-        """
-        Helper that returns the subscription plan specified by `subscription_uuid` in the request.
-        """
-        subscription_uuid = self.kwargs.get('subscription_uuid')
-        if not subscription_uuid:
-            return None
-
-        try:
-            return SubscriptionPlan.objects.get(uuid=subscription_uuid)
-        except SubscriptionPlan.DoesNotExist:
-            return None
-
-
 class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, viewsets.GenericViewSet):
     """
     This Viewset allows read operations of all Licenses associated with the email address
@@ -426,10 +345,100 @@ class LicensePagination(PageNumberPaginationWithCount):
     max_page_size = 500
 
 
-class LicenseViewSet(LearnerLicenseViewSet):
+class BaseLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
+    """
+    Base Viewset for read operations on individual licenses in a given subscription plan.
+    It's nested under a subscriptions router, so requests for (at most) one license in a given
+    plan can be made, for example:
+
+    GET /api/v1/subscriptions/504b1735-9d3a-4000-848d-6ae7a56e6350/license/
+
+    would return the license associated with the requesting user in plan 504b1735-9d3a-4000-848d-6ae7a56e6350.
+    """
+    authentication_classes = [JwtAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    ordering_fields = [
+        'user_email',
+        'status',
+        'activation_date',
+        'last_remind_date',
+    ]
+    search_fields = ['user_email']
+    filterset_class = LicenseStatusFilter
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
+
+    # The fields that control permissions for 'list' actions.
+    # Roles are granted on specific enterprise identifiers, so we have to join
+    # from this model to SubscriptionPlan to find the corresponding customer identifier.
+    list_lookup_field = 'subscription_plan__customer_agreement__enterprise_customer_uuid'
+    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
+    role_assignment_class = SubscriptionsRoleAssignment
+
+    def get_permission_object(self):
+        """
+        The requesting user needs access to the license's SubscriptionPlan
+        in order to access the license.
+        """
+        subscription_plan = self._get_subscription_plan()
+        if not subscription_plan:
+            return None
+
+        return subscription_plan.customer_agreement.enterprise_customer_uuid
+
+    def get_serializer_class(self):
+        if self.action == 'assign':
+            return serializers.CustomTextWithMultipleEmailsSerializer
+        if self.action == 'remind':
+            return serializers.CustomTextWithSingleEmailSerializer
+        if self.action == 'remind_all':
+            return serializers.CustomTextSerializer
+        if self.action == 'revoke':
+            return serializers.SingleEmailSerializer
+        if self.action == 'bulk_revoke':
+            return serializers.MultipleEmailsSerializer
+        return serializers.LicenseSerializer
+
+    @property
+    def base_queryset(self):
+        """
+        Required by the `PermissionRequiredForListingMixin`.
+        For non-list actions, this is what's returned by `get_queryset()`.
+        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
+        """
+        return License.objects.filter(
+            subscription_plan=self._get_subscription_plan(),
+            user_email=self.request.user.email,
+        ).exclude(
+            status=constants.REVOKED
+        ).order_by('status', '-subscription_plan__expiration_date')
+
+    def _get_subscription_plan(self):
+        """
+        Helper that returns the subscription plan specified by `subscription_uuid` in the request.
+        """
+        subscription_uuid = self.kwargs.get('subscription_uuid')
+        if not subscription_uuid:
+            return None
+
+        try:
+            return SubscriptionPlan.objects.get(uuid=subscription_uuid)
+        except SubscriptionPlan.DoesNotExist:
+            return None
+
+
+class LicenseAdminViewSet(BaseLicenseViewSet):
     """
     Viewset for Admin read operations on Licenses.
-    /subscriptions/<EnterpriseUuid>/licenses
+
+    Example requests:
+    GET /api/v1/subscriptions/{subscription_plan_uuid}/licenses/
+    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
+    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/remind/
+    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/remind_all/
+    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/revoke/
+    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/bulk_revoke/
     """
     lookup_field = 'uuid'
     lookup_url_kwarg = 'license_uuid'
