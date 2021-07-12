@@ -1598,12 +1598,8 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(request_url, request_payload)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        expected_response_payload = {
-            'error_message': 'No SubscriptionPlan identified by {} exists'.format(non_existent_uuid),
-            'status': 'failure',
-            'processed_revocations': [],
-        }
-        self.assertEqual(expected_response_payload, response.json())
+        expected_response_message = 'No SubscriptionPlan identified by {} exists'.format(non_existent_uuid)
+        self.assertEqual(expected_response_message, response.json())
         self.assertFalse(mock_revoke_license.called)
 
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
@@ -1633,12 +1629,8 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(request_url, request_payload)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        expected_response_payload = {
-            'error_message': 'Plan does not have enough revocations remaining.',
-            'status': 'failure',
-            'processed_revocations': [],
-        }
-        self.assertEqual(expected_response_payload, response.json())
+        expected_response_message = 'Plan does not have enough revocations remaining.'
+        self.assertEqual(expected_response_message, response.json())
         self.assertFalse(mock_revoke_license.called)
 
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
@@ -1668,12 +1660,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             "No license for email bob@example.com exists in plan "
             "{} with a status in ['activated', 'assigned']".format(self.subscription_plan.uuid)
         )
-        expected_response_payload = {
-            'error_message': expected_error_msg,
-            'status': 'failure',
-            'processed_revocations': ['alice@example.com'],
-        }
-        self.assertEqual(expected_response_payload, response.json())
+        self.assertEqual(expected_error_msg, response.json())
         mock_revoke_license.assert_called_once_with(alice_license)
 
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
@@ -1704,12 +1691,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             alice_license.uuid,
             'floor is lava',
         )
-        expected_response_payload = {
-            'error_message': expected_error_msg,
-            'status': 'failure',
-            'processed_revocations': [],
-        }
-        self.assertEqual(expected_response_payload, response.json())
+        self.assertEqual(expected_error_msg, response.json())
         mock_revoke_license.assert_called_once_with(alice_license)
 
     @ddt.data(

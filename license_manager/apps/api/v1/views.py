@@ -6,6 +6,7 @@ from uuid import uuid4
 from celery import chain
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.db.models import Count
 from django.utils.functional import cached_property
 from django_filters.rest_framework import DjangoFilterBackend
@@ -704,55 +705,48 @@ class LicenseViewSet(LearnerLicenseViewSet):
 
         Response:
           204 No Content - All revocations were successful.
-          400 Bad Request - Some error occurred when processing one of the revocations.
-            An error response payload is provided.
+          400 Bad Request - Some error occurred when processing one of the revocations, no revocations
+            were committed. An error message is provided.
           404 Not Found - No license exists in the plan for one of the given email addresses,
             or the license is not in an assigned or activated state.
-            An error response payload is provided.
+            An error message is provided.
 
-        Error Response Payload:
-          {
-            "status": "failure",
-            "processed_revocations": ["alice@example.com"],
-            "error_message": "No license for email carol@example.com exists in plan {subscription_plan_uuid} "
-              "with a status in ['activated', 'assigned']"
-          }
+        Error Response Message:
+            "No license for email carol@example.com exists in plan {subscription_plan_uuid} "
+            "with a status in ['activated', 'assigned']"
 
-        In error/failure cases, some licenses might have been successfully revoked, but
-        no licenses corresponding to emails in the `user_emails` list after the error
-        are revoked.
+        The revocation of licenses is atomic: if an error occurs while processing any of the license revocations,
+        no status change is committed for any of the licenses.
         """
         self._validate_data(request.data)
 
         user_emails = request.data.get('user_emails')
         subscription_plan = self._get_subscription_plan()
 
-        error_payload = {
-            'status': 'failure',
-            'processed_revocations': [],
-            'error_message': '',
-        }
+        error_message = ''
+        error_response_status = None
 
         if not subscription_plan:
-            error_payload['error_message'] = 'No SubscriptionPlan identified by {} exists'.format(
+            error_message = 'No SubscriptionPlan identified by {} exists'.format(
                 subscription_uuid,
             )
-            return Response(error_payload, status=status.HTTP_404_NOT_FOUND)
+            return Response(error_message, status=status.HTTP_404_NOT_FOUND)
 
         if len(user_emails) > subscription_plan.num_revocations_remaining:
-            error_payload['error_message'] = 'Plan does not have enough revocations remaining.'
-            return Response(error_payload, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Plan does not have enough revocations remaining.'
+            return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
 
-        for user_email in user_emails:
-            try:
-                self._revoke_by_email_and_plan(user_email, subscription_plan)
-            except (LicenseNotFoundError, LicenseRevocationError) as exc:
-                error_payload['error_message'] = str(exc)
-                return Response(
-                    error_payload,
-                    status=get_http_status_for_exception(exc),
-                )
-            error_payload['processed_revocations'].append(user_email)
+        with transaction.atomic():
+            for user_email in user_emails:
+                try:
+                    self._revoke_by_email_and_plan(user_email, subscription_plan)
+                except (LicenseNotFoundError, LicenseRevocationError) as exc:
+                    error_message = str(exc)
+                    error_response_status = get_http_status_for_exception(exc)
+                    break
+
+        if error_response_status:
+            return Response(error_message, status=error_response_status)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
