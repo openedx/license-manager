@@ -926,7 +926,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                 key=lambda user_license: user_license.subscription_plan.expiration_date,
                 reverse=True,
             )
-            for course_key in self.requested_course_run_keys:
+            for course_key in set(self.requested_course_run_keys):
                 plan_found = False
                 for user_license in ordered_licenses_by_expiration:
                     subscription_plan = user_license.subscription_plan

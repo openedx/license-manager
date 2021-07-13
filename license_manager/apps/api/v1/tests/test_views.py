@@ -1807,6 +1807,8 @@ class LicenseViewTestMixin:
         super().setUpTestData()
 
         cls.user = UserFactory()
+        cls.user2 = UserFactory()
+        cls.users = [cls.user, cls.user2]
         cls.enterprise_customer_uuid = uuid4()
         cls.enterprise_catalog_uuid = uuid4()
         cls.course_key = 'testX'
@@ -1840,6 +1842,21 @@ class LicenseViewTestMixin:
             subscriptions_role=constants.SUBSCRIPTIONS_LEARNER_ROLE,
             jwt_payload_extra=jwt_payload_extra,
         )
+
+    def _assign_multi_learner_roles(self, alternate_customer=None, jwt_payload_extra=None):
+        """
+        Helper that assigns the correct learner role via JWT to the user.
+        """
+        for user in self.users:
+            _assign_role_via_jwt_or_db(
+                self.api_client,
+                user,
+                alternate_customer or self.enterprise_customer_uuid,
+                assign_via_jwt=True,
+                system_role=constants.SYSTEM_ENTERPRISE_LEARNER_ROLE,
+                subscriptions_role=constants.SUBSCRIPTIONS_LEARNER_ROLE,
+                jwt_payload_extra=jwt_payload_extra,
+            )
 
     def _create_license(
         self,
@@ -2423,6 +2440,48 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         response = self.api_client.post(url, empty_email_data)
         assert response.status_code == 400
         assert response.json() == "Missing the following required request data: ['emails']"
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_enroll_no_dup_catalog_calls(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+        """
+        Test that we don't generate extraneous calls to catalog service due to:
+         - duplicate emails in list or
+         - increased no. of learners. the call count should only be a function of the course count
+        """
+        mock_contains_content.return_value = True
+        # Mock the bulk enterprise enrollment endpoint's results
+        mock_enrollment_response = mock.Mock(spec=models.Response)
+        mock_enrollment_response.json.return_value = {
+            'successes': [{'email': self.user.email, 'course_run_key': self.course_key}],
+            'pending': [],
+            'failures': []
+        }
+        mock_enrollment_response.status_code = 201
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+
+        self._assign_multi_learner_roles()
+
+        payload = {
+            'emails': [self.user.email, self.user2.email, self.user.email],
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params()
+        self.api_client.post(url, payload)
+
+        assert mock_contains_content.call_count == 1
+
+        mock_contains_content.reset_mock()
+        payload2 = {
+            'emails': [self.user.email, self.user2.email, self.user.email, self.user.email],
+            'course_run_keys': [self.course_key, self.course_key + '__random_suffix'],
+            'notify': True,
+        }
+        url = self._get_url_with_params()
+        self.api_client.post(url, payload2)
+
+        assert mock_contains_content.call_count == 2
 
 
 @ddt.ddt
