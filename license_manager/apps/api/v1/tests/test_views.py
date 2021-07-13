@@ -933,6 +933,7 @@ class LicenseViewSetActionMixin:
     """
     Mixin of common functionality for LicenseViewSet action tests.
     """
+
     def setUp(self):
         super().setUp()
 
@@ -2264,6 +2265,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
             expected_enterprise_enrollment_request_options
         )
         mock_contains_content.assert_called_with([self.course_key])
+        assert mock_contains_content.call_count == 1
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')

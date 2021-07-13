@@ -914,7 +914,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         '''
         subscription_plan_course_map = {}
 
-        for email in self.requested_user_emails:
+        for email in set(self.requested_user_emails):
             filtered_licenses = License.objects.filter(
                 subscription_plan__in=customer_agreement.subscriptions.all(),
                 user_email=email,
@@ -934,7 +934,8 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                     if plan_key in subscription_plan_course_map:
                         plan_contains_content = subscription_plan_course_map.get(plan_key)
                     else:
-                        subscription_plan_course_map[plan_key] = subscription_plan.contains_content([course_key])
+                        plan_contains_content = subscription_plan.contains_content([course_key])
+                        subscription_plan_course_map[plan_key] = plan_contains_content
 
                     if plan_contains_content:
                         licensed_enrollment_info.append({
@@ -967,7 +968,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                 course_run_keys: ['course-v1:edX+DemoX+Demo_Course', 'course-v2:edX+The+Second+DemoX+Demo_Course', ... ]
             - emails (string): A single string of multiple learner emails separated with a newline character
             Example:
-                emails: 'testuser@abc.com\\nlearner@example.com\\newuser@wow.com'
+                emails: ['testuser@abc.com','learner@example.com','newuser@wow.com']
             - enterprise_customer_uuid (string): the uuid of the associated enterprise customer provided as a query
             params.
         Expected Return Values:
