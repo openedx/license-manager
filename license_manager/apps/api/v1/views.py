@@ -933,11 +933,9 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                     plan_key = f'{subscription_plan.uuid}_{course_key}'
                     if plan_key in subscription_plan_course_map:
                         plan_contains_content = subscription_plan_course_map.get(plan_key)
-                        logger.info('Plan with uuid: %s already contains course with key: %s', subscription_plan.uuid, course_key)
                     else:
                         plan_contains_content = subscription_plan.contains_content([course_key])
                         subscription_plan_course_map[plan_key] = plan_contains_content
-                        logger.info('Plan with uuid: %s does not contain course with key: %s. Adding...', subscription_plan.uuid, course_key)
 
                     if plan_contains_content:
                         licensed_enrollment_info.append({
