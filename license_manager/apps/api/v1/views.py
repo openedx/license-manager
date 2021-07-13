@@ -330,6 +330,7 @@ class PageNumberPaginationWithCount(PageNumberPagination):
     """
     A PageNumber paginator that adds the total number of pages to the paginated response.
     """
+
     def get_paginated_response(self, data):
         """ Adds a ``num_pages`` field into the paginated response. """
         response = super().get_paginated_response(data)
@@ -904,6 +905,15 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         missing_subscriptions = {}
         licensed_enrollment_info = []
 
+        '''
+        This map will track:
+            <plan_key>: <plan_contains_course>
+        where, plan_key = {subscription_plan.uuid}_{course_key}
+        This will help us memoize the value of the subscription_plan.contains_content([course_key])
+        to avoid repeated requests to the enterprise catalog endpoint for the same information
+        '''
+        subscription_plan_course_map = {}
+
         for email in self.requested_user_emails:
             filtered_licenses = License.objects.filter(
                 subscription_plan__in=customer_agreement.subscriptions.all(),
@@ -920,7 +930,16 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                 plan_found = False
                 for user_license in ordered_licenses_by_expiration:
                     subscription_plan = user_license.subscription_plan
-                    if subscription_plan.contains_content([course_key]):
+                    plan_key = f'{subscription_plan.uuid}_{course_key}'
+                    if plan_key in subscription_plan_course_map:
+                        plan_contains_content = subscription_plan_course_map.get(plan_key)
+                        logger.info('Plan with uuid: %s already contains course with key: %s', subscription_plan.uuid, course_key)
+                    else:
+                        plan_contains_content = subscription_plan.contains_content([course_key])
+                        subscription_plan_course_map[plan_key] = plan_contains_content
+                        logger.info('Plan with uuid: %s does not contain course with key: %s. Adding...', subscription_plan.uuid, course_key)
+
+                    if plan_contains_content:
                         licensed_enrollment_info.append({
                             'email': email,
                             'course_run_key': course_key,
