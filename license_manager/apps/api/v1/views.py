@@ -934,8 +934,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                     if plan_key in subscription_plan_course_map:
                         plan_contains_content = subscription_plan_course_map.get(plan_key)
                     else:
-                        plan_contains_content = subscription_plan.contains_content([course_key])
-                        subscription_plan_course_map[plan_key] = plan_contains_content
+                        subscription_plan_course_map[plan_key] = subscription_plan.contains_content([course_key])
 
                     if plan_contains_content:
                         licensed_enrollment_info.append({
