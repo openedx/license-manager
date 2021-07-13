@@ -202,7 +202,6 @@ def send_revocation_cap_notification_email_task(subscription_uuid):
             enterprise_name,
             enterprise_sender_alias,
             reply_to_email,
-            subscription_plan_type,
         )
     except SMTPException:
         logger.error('Revocation cap notification email sending received an exception.', exc_info=True)
