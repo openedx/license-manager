@@ -154,4 +154,8 @@ class LicenseManagerCeleryTaskTests(TestCase):
         Tests that the onboarding email task sends the email
         """
         tasks.send_onboarding_email_task(self.enterprise_uuid, self.user_email, self.subscription_plan_type)
-        mock_send_onboarding_email.assert_called_with(self.enterprise_uuid, self.user_email, self.subscription_plan_type)
+        mock_send_onboarding_email.assert_called_with(
+            self.enterprise_uuid,
+            self.user_email,
+            self.subscription_plan_type,
+        )
