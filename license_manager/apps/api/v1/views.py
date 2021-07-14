@@ -901,17 +901,16 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         """
         Helper function to check that each of the provided learners has a valid subscriptions license for the provided
         courses.
-        """
-        missing_subscriptions = {}
-        licensed_enrollment_info = []
 
-        '''
-        This map will track:
+        Uses a map to track:
             <plan_key>: <plan_contains_course>
         where, plan_key = {subscription_plan.uuid}_{course_key}
         This will help us memoize the value of the subscription_plan.contains_content([course_key])
         to avoid repeated requests to the enterprise catalog endpoint for the same information
-        '''
+        """
+        missing_subscriptions = {}
+        licensed_enrollment_info = []
+
         subscription_plan_course_map = {}
 
         for email in set(self.requested_user_emails):
