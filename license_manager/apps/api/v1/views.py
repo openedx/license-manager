@@ -330,6 +330,7 @@ class PageNumberPaginationWithCount(PageNumberPagination):
     """
     A PageNumber paginator that adds the total number of pages to the paginated response.
     """
+
     def get_paginated_response(self, data):
         """ Adds a ``num_pages`` field into the paginated response. """
         response = super().get_paginated_response(data)
@@ -900,11 +901,19 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         """
         Helper function to check that each of the provided learners has a valid subscriptions license for the provided
         courses.
+
+        Uses a map to track:
+            <plan_key>: <plan_contains_course>
+        where, plan_key = {subscription_plan.uuid}_{course_key}
+        This will help us memoize the value of the subscription_plan.contains_content([course_key])
+        to avoid repeated requests to the enterprise catalog endpoint for the same information
         """
         missing_subscriptions = {}
         licensed_enrollment_info = []
 
-        for email in self.requested_user_emails:
+        subscription_plan_course_map = {}
+
+        for email in set(self.requested_user_emails):
             filtered_licenses = License.objects.filter(
                 subscription_plan__in=customer_agreement.subscriptions.all(),
                 user_email=email,
@@ -916,11 +925,18 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                 key=lambda user_license: user_license.subscription_plan.expiration_date,
                 reverse=True,
             )
-            for course_key in self.requested_course_run_keys:
+            for course_key in set(self.requested_course_run_keys):
                 plan_found = False
                 for user_license in ordered_licenses_by_expiration:
                     subscription_plan = user_license.subscription_plan
-                    if subscription_plan.contains_content([course_key]):
+                    plan_key = f'{subscription_plan.uuid}_{course_key}'
+                    if plan_key in subscription_plan_course_map:
+                        plan_contains_content = subscription_plan_course_map.get(plan_key)
+                    else:
+                        plan_contains_content = subscription_plan.contains_content([course_key])
+                        subscription_plan_course_map[plan_key] = plan_contains_content
+
+                    if plan_contains_content:
                         licensed_enrollment_info.append({
                             'email': email,
                             'course_run_key': course_key,
@@ -951,7 +967,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                 course_run_keys: ['course-v1:edX+DemoX+Demo_Course', 'course-v2:edX+The+Second+DemoX+Demo_Course', ... ]
             - emails (string): A single string of multiple learner emails separated with a newline character
             Example:
-                emails: 'testuser@abc.com\\nlearner@example.com\\newuser@wow.com'
+                emails: ['testuser@abc.com','learner@example.com','newuser@wow.com']
             - enterprise_customer_uuid (string): the uuid of the associated enterprise customer provided as a query
             params.
         Expected Return Values:
