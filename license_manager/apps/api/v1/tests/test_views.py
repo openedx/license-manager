@@ -11,6 +11,7 @@ import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import DatabaseError
 from django.http import QueryDict
 from django.test import TestCase
 from django.urls import reverse
@@ -1153,6 +1154,36 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
             actual_emails,
             self.subscription_plan.customer_agreement.enterprise_customer_uuid
         )
+
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.License.bulk_update')
+    def test_assign_is_atomic(self, mock_bulk_update, mock_activation_task, mock_link_learners_task):
+        """
+        Verify that license assignment is atomic and no updates
+        are made if an error occurs.
+        """
+        self._setup_request_jwt(user=self.user)
+        self._create_available_licenses()
+
+        mock_bulk_update.side_effect = DatabaseError('fail')
+
+        user_emails = ['bb8@mit.edu', self.test_email]
+
+        response = self.api_client.post(
+            self.assign_url,
+            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails},
+        )
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        self.assertEqual(
+            'Database error occurred while assigning licenses, no assignments were completed',
+            response.json(),
+        )
+        self.assertFalse(mock_activation_task.called)
+        self.assertFalse(mock_link_learners_task.called)
+        for _license in self.subscription_plan.licenses.all():
+            self.assertEqual(constants.UNASSIGNED, _license.status)
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')

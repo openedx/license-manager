@@ -196,7 +196,6 @@ def send_revocation_cap_notification_email_task(subscription_uuid):
     reply_to_email = get_enterprise_reply_to_email(enterprise_customer)
 
     try:
-        # pylint: disable=too-many-function-args
         send_revocation_cap_notification_email(
             subscription_plan,
             enterprise_name,
