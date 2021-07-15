@@ -6,7 +6,7 @@ from uuid import uuid4
 from celery import chain
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import Count
 from django.utils.functional import cached_property
 from django_filters.rest_framework import DjangoFilterBackend
@@ -490,7 +490,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         serializer.is_valid(raise_exception=True)
 
     @action(detail=False, methods=['post'])
-    def assign(self, request, subscription_uuid=None):
+    def assign(self, request, subscription_uuid=None):  # pylint: disable=unused-argument
         """
         Given a list of emails, assigns a license to those user emails and sends an activation email.
 
@@ -499,21 +499,16 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         """
         # Validate the user_emails and text sent in the data
         self._validate_data(request.data)
+
         # Dedupe all lowercase emails before turning back into a list for indexing
         user_emails = list({email.lower() for email in request.data.get('user_emails', [])})
 
         subscription_plan = self._get_subscription_plan()
 
-        # Find any emails that have already been associated with a non-revoked license in the subscription
-        # and remove from user_emails list
-        already_associated_licenses = subscription_plan.licenses.filter(
-            user_email__in=user_emails,
-            status__in=[constants.ASSIGNED, constants.ACTIVATED],
+        user_emails, already_associated_emails = self._trim_already_associated_emails(
+            subscription_plan,
+            user_emails,
         )
-        if already_associated_licenses:
-            already_associated_emails = list(already_associated_licenses.values_list('user_email', flat=True))
-            for email in already_associated_emails:
-                user_emails.remove(email.lower())
 
         # Get the revoked licenses that are attempting to be assigned to
         revoked_licenses_for_assignment = subscription_plan.licenses.filter(
@@ -521,22 +516,80 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             user_email__in=user_emails,
         )
 
-        # Make sure there are enough licenses that we can assign to
-        num_user_emails = len(user_emails)
-        num_unassigned_licenses = subscription_plan.unassigned_licenses.count()
-        # Since we flip the status of revoked licenses when admins attempt to re-assign that learner to a new
-        # license, we check that there are enough unassigned licenses when combined with the revoked licenses that
-        # will have their status change
-        num_potential_unassigned_licenses = num_unassigned_licenses + revoked_licenses_for_assignment.count()
-        if num_user_emails > num_potential_unassigned_licenses:
-            msg = (
+        enough_open_licenses, num_potential_unassigned_licenses = self._enough_open_licenses_for_assignment(
+            subscription_plan,
+            user_emails,
+            revoked_licenses_for_assignment,
+        )
+        if not enough_open_licenses:
+            response_message = (
                 'There are not enough licenses that can be assigned to complete your request.'
                 'You attempted to assign {} licenses, but there are only {} potentially available.'
-            ).format(num_user_emails, num_potential_unassigned_licenses)
-            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+            ).format(len(user_emails), num_potential_unassigned_licenses)
+            return Response(response_message, status=status.HTTP_400_BAD_REQUEST)
 
-        # Flip all revoked licenses that were associated with emails that we are assigning to unassigned, and clear
-        # all the old data on the license.
+        try:
+            with transaction.atomic():
+                self._reassign_revoked_licenses(
+                    subscription_plan, revoked_licenses_for_assignment,
+                )
+                self._assign_new_licenses(
+                    subscription_plan, user_emails,
+                )
+        except DatabaseError:
+            error_message = 'Database error occurred while assigning licenses, no assignments were completed'
+            logger.exception(error_message)
+            return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        else:
+            self._link_and_notify_assigned_emails(
+                request.data,
+                subscription_plan,
+                user_emails,
+            )
+
+        response_data = {
+            'num_successful_assignments': len(user_emails),
+            'num_already_associated': len(already_associated_emails)
+        }
+        return Response(data=response_data, status=status.HTTP_200_OK)
+
+    def _trim_already_associated_emails(self, subscription_plan, user_emails):
+        """
+        Find any emails that have already been associated with a non-revoked license in the subscription
+        and remove from user_emails list.
+        """
+        trimmed_emails = user_emails.copy()
+
+        already_associated_licenses = subscription_plan.licenses.filter(
+            user_email__in=user_emails,
+            status__in=[constants.ASSIGNED, constants.ACTIVATED],
+        )
+        already_associated_emails = []
+        if already_associated_licenses:
+            already_associated_emails = list(
+                already_associated_licenses.values_list('user_email', flat=True)
+            )
+            for email in already_associated_emails:
+                trimmed_emails.remove(email.lower())
+
+        return trimmed_emails, already_associated_emails
+
+    def _enough_open_licenses_for_assignment(self, subscription_plan, user_emails, revoked_licenses_for_assignment):
+        """
+        Make sure there are enough licenses that we can assign to.
+        Since we flip the status of revoked licenses when admins attempt to re-assign that learner to a new
+        license, we check that there are enough unassigned licenses when combined with the revoked licenses that
+        will have their status change.
+        """
+        num_unassigned_licenses = subscription_plan.unassigned_licenses.count()
+        num_potential_unassigned_licenses = num_unassigned_licenses + revoked_licenses_for_assignment.count()
+        return len(user_emails) <= num_potential_unassigned_licenses, num_potential_unassigned_licenses
+
+    def _reassign_revoked_licenses(self, subscription_plan, revoked_licenses_for_assignment):
+        """
+        Flip all revoked licenses that were associated with emails that we are assigning to unassigned,
+        and clear all the old data on the license.
+        """
         for revoked_license in revoked_licenses_for_assignment:
             revoked_license.reset_to_unassigned()
 
@@ -554,14 +607,16 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             ],
         )
 
-        # Get a queryset of only the number of licenses we need to assign
-        unassigned_licenses = subscription_plan.unassigned_licenses[:num_user_emails]
+    def _assign_new_licenses(self, subscription_plan, user_emails):
+        """
+        Assign licenses for the given user_emails (that have not already been revoked).
+        """
+        unassigned_licenses = subscription_plan.unassigned_licenses[:len(user_emails)]
         for unassigned_license, email in zip(unassigned_licenses, user_emails):
             # Assign each email to a license and mark the license as assigned
             unassigned_license.user_email = email
             unassigned_license.status = constants.ASSIGNED
-            activation_key = str(uuid4())
-            unassigned_license.activation_key = activation_key
+            unassigned_license.activation_key = str(uuid4())
             unassigned_license.assigned_date = localized_utcnow()
             unassigned_license.last_remind_date = localized_utcnow()
 
@@ -570,9 +625,12 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             ['user_email', 'status', 'activation_key', 'assigned_date', 'last_remind_date'],
         )
 
-        # Create async chains of the pending learners and activation emails tasks with each batch of users
-        # The task signatures are immutable, hence the `si()` - we don't want the result of the
-        # link_learners_to_enterprise_task passed to the "child" activation_email_task.
+    def _link_and_notify_assigned_emails(self, request_data, subscription_plan, user_emails):
+        """
+        Helper to create async chains of the pending learners and activation emails tasks with each batch of users
+        The task signatures are immutable, hence the `si()` - we don't want the result of the
+        link_learners_to_enterprise_task passed to the "child" activation_email_task.
+        """
         for pending_learner_batch in chunks(user_emails, constants.PENDING_ACCOUNT_CREATION_BATCH_SIZE):
             chain(
                 link_learners_to_enterprise_task.si(
@@ -580,18 +638,11 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                     subscription_plan.enterprise_customer_uuid,
                 ),
                 activation_email_task.si(
-                    self._get_custom_text(request.data),
+                    self._get_custom_text(request_data),
                     pending_learner_batch,
-                    subscription_uuid,
+                    str(subscription_plan.uuid),
                 )
             ).apply_async()
-
-        # Pass email assignment data back to frontend for display
-        response_data = {
-            'num_successful_assignments': len(user_emails),
-            'num_already_associated': len(already_associated_licenses)
-        }
-        return Response(data=response_data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
     def remind(self, request, subscription_uuid=None):
