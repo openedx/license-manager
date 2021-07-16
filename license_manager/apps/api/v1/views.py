@@ -585,6 +585,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         num_potential_unassigned_licenses = num_unassigned_licenses + revoked_licenses_for_assignment.count()
         return len(user_emails) <= num_potential_unassigned_licenses, num_potential_unassigned_licenses
 
+    # pylint: disable=unused-argument
     def _reassign_revoked_licenses(self, subscription_plan, revoked_licenses_for_assignment):
         """
         Flip all revoked licenses that were associated with emails that we are assigning to unassigned,
