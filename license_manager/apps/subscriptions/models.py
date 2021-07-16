@@ -28,6 +28,7 @@ from license_manager.apps.subscriptions.constants import (
     UNASSIGNED,
     LicenseTypesToRenew,
 )
+from license_manager.apps.subscriptions.exceptions import LicenseUnrevokeError
 from license_manager.apps.subscriptions.utils import (
     days_until,
     get_license_activation_link,
@@ -749,6 +750,22 @@ class License(TimeStampedModel):
         """
         self.status = REVOKED
         self.revoked_date = localized_utcnow()
+        self.save()
+
+    def unrevoke(self):
+        """
+        Moves a revoked license's status back to ASSIGNED and
+        sets its revoked_date to null.
+        """
+        if self.status != REVOKED:
+            raise LicenseUnrevokeError(self.uuid, 'status does not equal REVOKED')
+
+        now = localized_utcnow()
+        self.status = ASSIGNED
+        self.revoked_date = None
+        self.activation_date = None
+        self.assigned_date = now
+        self.last_remind_date = now
         self.save()
 
     @staticmethod
