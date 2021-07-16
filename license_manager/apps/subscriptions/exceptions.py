@@ -3,23 +3,43 @@ Exceptions raised by functions exposed by the Subscriptions app.
 """
 
 
-class LicenseRevocationError(Exception):
+class LicenseError(Exception):
+    """
+    General exception about some license action
+    that accepts a license UUID and some failure reason.
+    """
+    action = None
 
     def __init__(self, license_uuid, failure_reason):
         """
         Arguments:
             license_uuid (uuid4): the unique identifier for a license
-            failure_reason (str): the reason for the license revocation error
+            failure_reason (str): the reason for the license-related failure
         """
         super().__init__()
         self.license_uuid = license_uuid
         self.failure_reason = failure_reason
 
     def __str__(self):
-        return "Attempted license revocation FAILED for License [{}]. Reason: {}".format(
+        return "Action: {} failed for license: {} because: {}".format(
+            self.action,
             self.license_uuid,
             self.failure_reason,
         )
+
+
+class LicenseRevocationError(LicenseError):
+    """
+    Exception raised for failed license revocations.
+    """
+    action = 'license revocation'
+
+
+class LicenseUnrevokeError(Exception):
+    """
+    Exception raised for failed license un-revocations.
+    """
+    action = 'license un-revocation'
 
 
 class LicenseNotFoundError(Exception):

@@ -530,11 +530,14 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         try:
             with transaction.atomic():
-                self._reassign_revoked_licenses(
-                    subscription_plan, revoked_licenses_for_assignment,
+                user_emails_ex_revoked = self._reassign_revoked_licenses(
+                    user_emails, revoked_licenses_for_assignment,
                 )
                 self._assign_new_licenses(
-                    subscription_plan, user_emails,
+                    subscription_plan, user_emails_ex_revoked,
+                )
+                self._delete_unentitled_unassigned_licenses(
+                    subscription_plan, len(revoked_licenses_for_assignment),
                 )
         except DatabaseError:
             error_message = 'Database error occurred while assigning licenses, no assignments were completed'
@@ -585,28 +588,25 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         num_potential_unassigned_licenses = num_unassigned_licenses + revoked_licenses_for_assignment.count()
         return len(user_emails) <= num_potential_unassigned_licenses, num_potential_unassigned_licenses
 
-    # pylint: disable=unused-argument
-    def _reassign_revoked_licenses(self, subscription_plan, revoked_licenses_for_assignment):
+    def _delete_unentitled_unassigned_licenses(self, subscription_plan, num_to_delete):
         """
-        Flip all revoked licenses that were associated with emails that we are assigning to unassigned,
-        and clear all the old data on the license.
+        Deletes unassigned licenses to which the plan should not be entitled.
+        See ADR 0005.
         """
-        for revoked_license in revoked_licenses_for_assignment:
-            revoked_license.reset_to_unassigned()
+        for unassigned_license in subscription_plan.unassigned_licenses[:num_to_delete]:
+            unassigned_license.delete()
 
-        License.bulk_update(
-            revoked_licenses_for_assignment,
-            [
-                'status',
-                'user_email',
-                'lms_user_id',
-                'last_remind_date',
-                'activation_date',
-                'activation_key',
-                'assigned_date',
-                'revoked_date',
-            ],
-        )
+    def _reassign_revoked_licenses(self, user_emails, revoked_licenses_for_assignment):
+        """
+        Unrevoke licenses for user emails associated with previously revoked licenses.
+        Returns a copy of the user_emails list with such emails removed.
+        """
+        user_emails_ex_revoked = user_emails.copy()
+        for revoked_license in revoked_licenses_for_assignment:
+            revoked_license.unrevoke()
+            user_emails_ex_revoked.remove(revoked_license.user_email)
+
+        return user_emails_ex_revoked
 
     def _assign_new_licenses(self, subscription_plan, user_emails):
         """

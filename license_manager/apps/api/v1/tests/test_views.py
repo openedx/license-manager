@@ -1237,29 +1237,64 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
     @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_to_revoked_user(self, mock_activation_task, mock_link_learners_task):
         """
-        Verify that the assign endpoint allows assigning a license to a user who previously had a license revoked.
+        Verify that the assign endpoint allows assigning a license to a user
+        who previously had a license revoked.  The existing revoked license
+        should switch back to ASSIGNED.  Since we're unrevoking here,
+        an existing unassigned license in the plan should be deleted as part
+        of the assignment action.
         """
+        original_timestamp = localized_utcnow() - datetime.timedelta(days=10)
+        unrevoke_timestamp = localized_utcnow()
+        original_activation_key = uuid4()
         revoked_license = LicenseFactory.create(
+            subscription_plan=self.subscription_plan,
             user_email=self.test_email,
             status=constants.REVOKED,
             lms_user_id=1,
-            last_remind_date=localized_utcnow(),
-            activation_date=localized_utcnow(),
-            assigned_date=localized_utcnow(),
-            revoked_date=localized_utcnow(),
+            last_remind_date=original_timestamp,
+            activation_date=original_timestamp,
+            assigned_date=original_timestamp,
+            revoked_date=original_timestamp,
+            activation_key=original_activation_key,
         )
-        original_activation_key = revoked_license.activation_key
-        self.subscription_plan.licenses.set([revoked_license])
 
-        response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
+        # Create a batch of unassigned licenses for this plan - we should
+        # see the count of these decrease by 1 after assignment.
+        original_num_unassigned_licenses = 10
+        LicenseFactory.create_batch(
+            original_num_unassigned_licenses,
+            subscription_plan=self.subscription_plan,
+            status=constants.UNASSIGNED,
+        )
+
+        # Do a pre-check that there are 11 total licenses in our plan.
+        self.assertEqual(
+            self.subscription_plan.licenses.all().count(),
+            original_num_unassigned_licenses + 1,
+        )
+
+        with freeze_time(unrevoke_timestamp):
+            response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
+
         assert response.status_code == status.HTTP_200_OK
-
         # Verify all the attributes on the formerly revoked license are correct
         revoked_license.refresh_from_db()
-        self._assert_licenses_assigned([self.test_email])
-        assert_license_fields_cleared(revoked_license)
-        # Verify the activation key has been switched
-        assert revoked_license.activation_key is not original_activation_key
+
+        self.assertEqual(revoked_license.user_email, self.test_email)
+        self.assertEqual(revoked_license.status, constants.ASSIGNED)
+        self.assertEqual(revoked_license.lms_user_id, 1)
+        self.assertEqual(revoked_license.activation_key, original_activation_key)
+        self.assertEqual(revoked_license.last_remind_date, unrevoke_timestamp)
+        self.assertEqual(revoked_license.assigned_date, unrevoke_timestamp)
+        self.assertIsNone(revoked_license.activation_date)
+        self.assertIsNone(revoked_license.revoked_date)
+
+        # Assert that one of the unassigned licenses went away
+        self.assertEqual(
+            self.subscription_plan.unassigned_licenses.count(),
+            original_num_unassigned_licenses - 1,
+        )
+
         mock_activation_task.assert_called_with(
             {'greeting': '', 'closing': ''},
             [self.test_email],
@@ -1521,7 +1556,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         mock_revoke_license.assert_called_once_with(original_license)
-        expected_msg = 'Attempted license revocation FAILED for License [{}]. Reason: Revocation fail'.format(
+        expected_msg = 'Action: license revocation failed for license: {} because: Revocation fail'.format(
             original_license.uuid,
         )
         self.assertEqual(response.json(), expected_msg)
@@ -1719,7 +1754,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        expected_error_msg = "Attempted license revocation FAILED for License [{}]. Reason: {}".format(
+        expected_error_msg = "Action: license revocation failed for license: {} because: {}".format(
             alice_license.uuid,
             'floor is lava',
         )
