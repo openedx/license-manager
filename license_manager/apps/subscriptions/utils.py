@@ -9,6 +9,7 @@ from license_manager.apps.subscriptions.constants import (
 )
 
 
+# pylint: disable=no-value-for-parameter
 def localized_utcnow():
     """Helper function to return localized utcnow()."""
     return UTC.localize(datetime.utcnow())  # pylint: disable=no-value-for-parameter

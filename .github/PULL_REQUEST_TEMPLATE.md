@@ -1,6 +1,3 @@
-**WARNING**: Please run `make lint` locally, as this repository is currently blocked from running pylint
-automatically via Github Actions.
-
 ## Description
 
 Description of changes made

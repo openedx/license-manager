@@ -189,21 +189,6 @@ class PlanEmailTemplates(models.Model):
         null=False,
     )
 
-    def __str__(self):
-        return self.label
-
-    def render_html_template(self, kwargs):
-        """
-        Render just the HTML template and return it as a string.
-        """
-        return self.render_template(mark_safe(self.html_template), kwargs)
-
-    def render_plaintext_template(self, kwargs):
-        """
-        Render just the plaintext template and return it as a string.
-        """
-        return self.render_template(self.plaintext_template, kwargs)
-
 
 class SubscriptionPlan(TimeStampedModel):
     """
@@ -720,6 +705,7 @@ class License(TimeStampedModel):
         """
         Helper to get any existing licenses this license was renewed from.
         """
+        # pylint: disable=no-member
         try:
             return self._renewed_from
         except License._renewed_from.RelatedObjectDoesNotExist:

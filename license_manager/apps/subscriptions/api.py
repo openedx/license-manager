@@ -2,7 +2,6 @@
 Python APIs exposed by the Subscriptions app to other in-process apps.
 """
 import logging
-from datetime import datetime
 
 from django.db import transaction
 
@@ -12,7 +11,7 @@ from ..api.tasks import (
 )
 from .constants import ACTIVATED, ASSIGNED, UNASSIGNED, LicenseTypesToRenew
 from .exceptions import LicenseRevocationError
-from .models import License, SubscriptionPlan, SubscriptionPlanRenewal
+from .models import License, SubscriptionPlan
 from .utils import localized_datetime_from_date, localized_utcnow
 
 
@@ -112,7 +111,7 @@ def renew_subscription(subscription_plan_renewal):
 
     # Are there any licenses in the renewed plan that aren't UNASSIGNED?
     # because there shouldn't be
-    if any([_license.status != UNASSIGNED for _license in licenses_for_renewal]):
+    if any(_license.status != UNASSIGNED for _license in licenses_for_renewal):
         raise RenewalProcessingError(
             "Renewal can't be processed; there are existing licenses "
             "in the renewed plan that are activated/assigned/revoked."
