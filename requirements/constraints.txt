@@ -35,3 +35,6 @@ MarkupSafe<2.0
 
 # Not sure why but this seems to be needed too
 click<8.0
+
+# latest version causing issues.
+pylint==2.8.3

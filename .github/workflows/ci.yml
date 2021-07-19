@@ -8,13 +8,14 @@ on:
 
 jobs:
   build:
-
+    name: Tests
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       max-parallel: 4
       matrix:
         python-version: ['py38']
-        django-version: ['django22']
+        django-version: ['django22', 'django30', 'django31', 'django32']
 
     steps:
     - uses: actions/checkout@v2
