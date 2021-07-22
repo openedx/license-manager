@@ -161,12 +161,20 @@ def _get_plan_email_template_row(context):
     template_type = context['template_type']
     if template_type == REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE:
         plan_email_template = PlanEmailTemplates.objects.filter(
-            template_type=template_type).get()
+            template_type=template_type,
+        ).get()
     else:
         plan_type_id = context.get('SUBSCRIPTION_PLAN_TYPE', None)
-        plan_type = PlanType.objects.get(id=plan_type_id)
+        # TODO: this can go away once every subscription plan is guaranteed to have an associated plan type
+        if not plan_type_id:
+            plan_type = PlanType.objects.get(label='Standard Paid')
+        else:
+            plan_type = PlanType.objects.get(id=plan_type_id)
+
         plan_email_template = PlanEmailTemplates.objects.get(
-            template_type=template_type, plan_type=plan_type)
+            template_type=template_type,
+            plan_type=plan_type,
+        )
 
     plaintext_template = Template(plan_email_template.plaintext_template)
     html_template = Template(plan_email_template.html_template)
