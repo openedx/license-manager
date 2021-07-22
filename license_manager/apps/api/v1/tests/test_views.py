@@ -1282,12 +1282,12 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
 
         self.assertEqual(revoked_license.user_email, self.test_email)
         self.assertEqual(revoked_license.status, constants.ASSIGNED)
-        self.assertEqual(revoked_license.lms_user_id, 1)
+        self.assertIsNone(revoked_license.lms_user_id)
+        self.assertIsNone(revoked_license.activation_date)
+        self.assertIsNone(revoked_license.revoked_date)
         self.assertEqual(revoked_license.activation_key, original_activation_key)
         self.assertEqual(revoked_license.last_remind_date, unrevoke_timestamp)
         self.assertEqual(revoked_license.assigned_date, unrevoke_timestamp)
-        self.assertIsNone(revoked_license.activation_date)
-        self.assertIsNone(revoked_license.revoked_date)
 
         # Assert that one of the unassigned licenses went away
         self.assertEqual(

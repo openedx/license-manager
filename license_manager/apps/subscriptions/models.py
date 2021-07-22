@@ -762,6 +762,7 @@ class License(TimeStampedModel):
 
         now = localized_utcnow()
         self.status = ASSIGNED
+        self.lms_user_id = None
         self.revoked_date = None
         self.activation_date = None
         self.assigned_date = now

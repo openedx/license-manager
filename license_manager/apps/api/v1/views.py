@@ -494,8 +494,22 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         """
         Given a list of emails, assigns a license to those user emails and sends an activation email.
 
-        This endpoint allows assigning licenses to users who have previously had a license revoked, by removing their
-        association to the revoked licenses and then assigning them to unassigned licenses.
+        This endpoint allows the assignment of licenses to users who have previously had a license revoked.
+        We re-assign the currently associated revoked license to the user email.
+        Furthermore, we delete an existing ``unassigned`` license from the plan's pool, to account
+        for the fact that we previously added an additional license to the pool during the revoke action.
+        See ADR 0005-unrevoking-licenses.rst for further details.
+
+        Example request:
+          POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
+
+        Payload:
+          {
+            'user_emails': [
+              'alice@example.com',
+              'bob@example.com'
+            ]
+          }
         """
         # Validate the user_emails and text sent in the data
         self._validate_data(request.data)
@@ -510,26 +524,26 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             user_emails,
         )
 
-        # Get the revoked licenses that are attempting to be assigned to
-        revoked_licenses_for_assignment = subscription_plan.licenses.filter(
-            status=constants.REVOKED,
-            user_email__in=user_emails,
-        )
-
-        enough_open_licenses, num_potential_unassigned_licenses = self._enough_open_licenses_for_assignment(
-            subscription_plan,
-            user_emails,
-            revoked_licenses_for_assignment,
-        )
-        if not enough_open_licenses:
-            response_message = (
-                'There are not enough licenses that can be assigned to complete your request.'
-                'You attempted to assign {} licenses, but there are only {} potentially available.'
-            ).format(len(user_emails), num_potential_unassigned_licenses)
-            return Response(response_message, status=status.HTTP_400_BAD_REQUEST)
-
         try:
             with transaction.atomic():
+                # Get the revoked licenses that are attempting to be assigned to
+                revoked_licenses_for_assignment = subscription_plan.licenses.filter(
+                    status=constants.REVOKED,
+                    user_email__in=user_emails,
+                )
+
+                enough_open_licenses, num_potential_unassigned_licenses = self._enough_open_licenses_for_assignment(
+                    subscription_plan,
+                    user_emails,
+                    revoked_licenses_for_assignment,
+                )
+                if not enough_open_licenses:
+                    response_message = (
+                        'There are not enough licenses that can be assigned to complete your request.'
+                        'You attempted to assign {} licenses, but there are only {} potentially available.'
+                    ).format(len(user_emails), num_potential_unassigned_licenses)
+                    return Response(response_message, status=status.HTTP_400_BAD_REQUEST)
+
                 user_emails_ex_revoked = self._reassign_revoked_licenses(
                     user_emails, revoked_licenses_for_assignment,
                 )
