@@ -1221,10 +1221,14 @@ class LicenseActivationView(LicenseBaseView):
 
             # Following successful license activation, send learner an email
             # to help them get started using the Enterprise Learner Portal.
+            plan_type_id = None
+            if user_license.subscription_plan.plan_type:
+                plan_type_id = user_license.subscription_plan.plan_type.id
+
             send_onboarding_email_task.delay(
                 user_license.subscription_plan.enterprise_customer_uuid,
                 user_license.user_email,
-                user_license.subscription_plan.plan_type.id,
+                plan_type_id,
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
