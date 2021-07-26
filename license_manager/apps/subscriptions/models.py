@@ -309,6 +309,7 @@ class SubscriptionPlan(TimeStampedModel):
         )
     )
 
+
     for_internal_use_only = models.BooleanField(
         default=False,
         help_text=_(
@@ -316,7 +317,12 @@ class SubscriptionPlan(TimeStampedModel):
         )
     )
 
-    plan_type = models.ForeignKey(PlanType, on_delete=models.CASCADE, null=True, blank=True)
+    plan_type = models.ForeignKey(
+        PlanType,
+        on_delete=models.DO_NOTHING,
+        null=False,
+        blank=False
+    )
 
     @property
     def enterprise_customer_uuid(self):

@@ -111,6 +111,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'enterprise_catalog_uuid',
         'salesforce_opportunity_id',
         'netsuite_product_id',
+        'plan_type',
         'revoke_max_percentage',
         'is_revocation_cap_enabled',
         'is_active',
