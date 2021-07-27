@@ -31,6 +31,7 @@ from license_manager.apps.api.v1.tests.constants import (
     LEARNER_ROLES,
     SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
 )
+from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
@@ -2300,6 +2301,25 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.json() == {'failed_license_checks': {self.user.email: [self.course_key]}}
+
+    def test_bulk_enroll_called_with_timeout(self):
+        mock_api_client = mock.MagicMock()
+        instance = EnterpriseApiClient()
+        instance.client = mock_api_client
+        enterprise_id = 'an_id'
+        options = {}
+        enrollment_url = '{}{}/enroll_learners_in_courses/'.format(
+            instance.enterprise_customer_endpoint,
+            enterprise_id,
+        )
+
+        instance.bulk_enroll_enterprise_learners(enterprise_id, options)
+
+        mock_api_client.post.assert_called_once_with(
+            enrollment_url,
+            json=options,
+            timeout=settings.BULK_ENROLL_REQUEST_TIMEOUT_SECONDS,
+        )
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')

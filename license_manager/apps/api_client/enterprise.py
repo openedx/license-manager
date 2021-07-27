@@ -120,4 +120,4 @@ class EnterpriseApiClient(BaseOAuthClient):
         Calls the Enterprise Bulk Enrollment API to enroll learners in courses.
         """
         enrollment_url = '{}{}/enroll_learners_in_courses/'.format(self.enterprise_customer_endpoint, enterprise_id)
-        return self.client.post(enrollment_url, json=options)
+        return self.client.post(enrollment_url, json=options, timeout=settings.BULK_ENROLL_REQUEST_TIMEOUT_SECONDS)
