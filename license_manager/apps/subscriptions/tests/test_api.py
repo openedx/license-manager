@@ -376,7 +376,7 @@ class RevocationTests(TestCase):
 
 class SubscriptionFreezeTests(TestCase):
     """
-    Tests for the freezing of a Subscription Plan where all unassiged licenses are deleted.
+    Tests for the freezing of a Subscription Plan where all unassigned licenses are deleted.
     """
     def test_cannot_freeze_plan_with_freezing_unsupported(self):
         subscription_plan = SubscriptionPlanFactory()

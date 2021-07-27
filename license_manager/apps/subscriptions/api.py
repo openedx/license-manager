@@ -234,7 +234,10 @@ def expire_plan_post_renewal(subscription_plan):
 
 def delete_unused_licenses_post_freeze(subscription_plan):
     """
-    TODO
+    Processes a "freeze" request on a SubscriptionPlan. Any unassigned licenses will be deleted, but
+    licenses in other states (e.g., activated, assigned, revoked) will persist.
+
+    The ability for a Subscription Plan to be "freezed" relies on a configurable toggle.
     """
     if not subscription_plan.can_freeze_unused_licenses:
         raise UnprocessableSubscriptionPlanFreezeError(
