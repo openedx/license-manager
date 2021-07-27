@@ -6,6 +6,7 @@ from simple_history.admin import SimpleHistoryAdmin
 from license_manager.apps.subscriptions.api import (
     expire_plan_post_renewal,
     renew_subscription,
+    delete_unused_licenses_post_freeze,
 )
 from license_manager.apps.subscriptions.forms import (
     SubscriptionPlanForm,
@@ -103,6 +104,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'num_licenses',
         'expiration_processed',
         'customer_agreement',
+        'last_freeze_timestamp',
     )
     writable_fields = (
         'title',
@@ -116,7 +118,8 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'is_revocation_cap_enabled',
         'is_active',
         'for_internal_use_only',
-        'change_reason'
+        'change_reason',
+        'can_freeze_unused_licenses',
     )
     fields = writable_fields + read_only_fields
     list_display = (
@@ -133,6 +136,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
     list_filter = (
         'is_active',
         'for_internal_use_only',
+        'can_freeze_unused_licenses',
     )
     search_fields = (
         'uuid__startswith',
@@ -150,7 +154,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'start_date',
         'expiration_date',
     )
-    actions = ['process_expiration_post_renewal']
+    actions = ['process_expiration_post_renewal', 'process_unused_licenses_post_freeze']
 
     def save_model(self, request, obj, form, change):
         # Record change reason for simple history
@@ -191,7 +195,12 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
     def process_expiration_post_renewal(self, request, queryset):
         for subscription_plan in queryset:
             expire_plan_post_renewal(subscription_plan)
-    process_expiration_post_renewal.short_description = 'Process the post-renewal expiration of selected records'
+    process_expiration_post_renewal.short_description = 'Process post-renewal expiration of selected records'
+
+    def process_unused_licenses_post_freeze(self, request, queryset):
+        for subscription_plan in queryset:
+            delete_unused_licenses_post_freeze(subscription_plan)
+    process_unused_licenses_post_freeze.short_description = 'Freeze selected Subscription Plans to delete unused licenses'
 
 
 @admin.register(CustomerAgreement)
