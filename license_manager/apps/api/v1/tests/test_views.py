@@ -2315,7 +2315,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
 
         instance.bulk_enroll_enterprise_learners(enterprise_id, options)
 
-        mock_api_client.post.assert_called_with(
+        mock_api_client.post.assert_called_once_with(
             enrollment_url,
             json=options,
             timeout=settings.BULK_ENROLL_REQUEST_TIMEOUT_SECONDS,
