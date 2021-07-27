@@ -13,6 +13,7 @@ from license_manager.apps.subscriptions.constants import (
 from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.models import SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (
+    PlanTypeFactory,
     SubscriptionPlanFactory,
 )
 from license_manager.apps.subscriptions.tests.utils import (
@@ -42,7 +43,9 @@ class TestSubscriptionPlanForm(TestCase):
         """
         Test to check validation conditions for the num_licenses field
         """
-        form = make_bound_subscription_form(num_licenses=num_licenses, for_internal_use_only=for_internal_use)
+        plan_type = PlanTypeFactory.create()
+        form = make_bound_subscription_form(
+            num_licenses=num_licenses, for_internal_use_only=for_internal_use,plan_type=plan_type)
         assert form.is_valid() is is_valid
 
     @ddt.data(
@@ -52,7 +55,8 @@ class TestSubscriptionPlanForm(TestCase):
         {'catalog_uuid': uuid4(), 'customer_agreement_has_default_catalog': True, 'is_valid': True},
     )
     @ddt.unpack
-    def test_catalog_uuid(self, catalog_uuid, customer_agreement_has_default_catalog, is_valid):
+    def test_catalog_uuid(
+        self, catalog_uuid, customer_agreement_has_default_catalog, is_valid, plan_type=PlanTypeFactory()):
         """
         Verify that a subscription form is invalid if it neither specifies a catalog_uuid nor has a customer agreement
         with a default catalog.
@@ -60,20 +64,23 @@ class TestSubscriptionPlanForm(TestCase):
         form = make_bound_subscription_form(
             enterprise_catalog_uuid=catalog_uuid,
             customer_agreement_has_default_catalog=customer_agreement_has_default_catalog,
+            plan_type=plan_type,
         )
         assert form.is_valid() is is_valid
-
-    def test_change_reason_is_required(self):
+    def test_change_reason_is_required(self, plan_type=PlanTypeFactory()):
         """
         Verify subscription plan form is invalid if reason for change is None or outside the set of options
         """
-        valid_form = make_bound_subscription_form(change_reason=SubscriptionPlanChangeReasonChoices.NEW)
+        valid_form = make_bound_subscription_form(
+            change_reason=SubscriptionPlanChangeReasonChoices.NEW, plan_type=plan_type)
         assert valid_form.is_valid() is True
 
-        not_valid_form = make_bound_subscription_form(change_reason=SubscriptionPlanChangeReasonChoices.NONE)
+        not_valid_form = make_bound_subscription_form(
+            change_reason=SubscriptionPlanChangeReasonChoices.NONE, plan_type=plan_type)
         assert not_valid_form.is_valid() is False
 
-        not_valid_form = make_bound_subscription_form(change_reason="koala")
+        not_valid_form = make_bound_subscription_form(
+            change_reason="koala", plan_type=PlanTypeFactory())
         assert not_valid_form.is_valid() is False
 
 

@@ -14,6 +14,7 @@ from license_manager.apps.subscriptions.constants import (
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
+    PlanType,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
@@ -49,6 +50,21 @@ class CustomerAgreementFactory(factory.django.DjangoModelFactory):
     default_enterprise_catalog_uuid = factory.LazyFunction(uuid4)
 
 
+class PlanTypeFactory(factory.django.DjangoModelFactory):
+    """
+    Test factory for the `PlanType` model.
+    """
+    label='Test'
+    description='Internal edX subscription testing'
+    is_paid_subscription=False
+    ns_id_required=False
+    sf_id_required=False
+    internal_use_only=True
+
+    class Meta:
+        model = PlanType
+
+
 class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     """
     Test factory for the `SubscriptionPlan` model.
@@ -70,9 +86,9 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     enterprise_catalog_uuid = factory.LazyFunction(uuid4)
     netsuite_product_id = factory.Faker('random_int')
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
-    # By default, all the subscription plans created are Standard Paid type,
+    # By default, all the subscription plans created are Test type,
     # though this can be overridden to test others
-    plan_type_id = 1
+    plan_type_id = factory.SubFactory(PlanTypeFactory)
 
 
 class SubscriptionPlanRenewalFactory(factory.django.DjangoModelFactory):
