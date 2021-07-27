@@ -1,12 +1,13 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from simple_history.admin import SimpleHistoryAdmin
 
 from license_manager.apps.subscriptions.api import (
+    UnprocessableSubscriptionPlanFreezeError,
+    delete_unused_licenses_post_freeze,
     expire_plan_post_renewal,
     renew_subscription,
-    delete_unused_licenses_post_freeze,
 )
 from license_manager.apps.subscriptions.forms import (
     SubscriptionPlanForm,
@@ -198,8 +199,12 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
     process_expiration_post_renewal.short_description = 'Process post-renewal expiration of selected records'
 
     def process_unused_licenses_post_freeze(self, request, queryset):
-        for subscription_plan in queryset:
-            delete_unused_licenses_post_freeze(subscription_plan)
+        try:
+            for subscription_plan in queryset:
+                delete_unused_licenses_post_freeze(subscription_plan)
+            messages.add_message(request, messages.SUCCESS, 'Successfully froze selected Subscription Plans.')
+        except UnprocessableSubscriptionPlanFreezeError as exc:
+            messages.add_message(request, messages.ERROR, exc)
     process_unused_licenses_post_freeze.short_description = 'Freeze selected Subscription Plans to delete unused licenses'
 
 

@@ -7,8 +7,8 @@ import ddt
 import freezegun
 from django.test import TestCase
 from pytz import UTC
-from license_manager.apps import subscriptions
 
+from license_manager.apps import subscriptions
 from license_manager.apps.subscriptions import api, constants, exceptions, utils
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
