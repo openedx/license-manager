@@ -190,6 +190,7 @@ class UnprocessableSubscriptionPlanExpirationError(Exception):
     expiration cannot be processed.
     """
 
+
 class UnprocessableSubscriptionPlanFreezeError(Exception):
     """
     An exception indicating that a subscription plan cannot be
