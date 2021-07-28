@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 from simple_history.admin import SimpleHistoryAdmin
 
 from license_manager.apps.subscriptions.api import (
+    UnprocessableSubscriptionPlanExpirationError,
     UnprocessableSubscriptionPlanFreezeError,
     delete_unused_licenses_post_freeze,
     expire_plan_post_renewal,
@@ -194,8 +195,16 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def process_expiration_post_renewal(self, request, queryset):
-        for subscription_plan in queryset:
-            expire_plan_post_renewal(subscription_plan)
+        try:
+            for subscription_plan in queryset:
+                expire_plan_post_renewal(subscription_plan)
+            messages.add_message(
+                request,
+                messages.SUCCESS,
+                'Successfully processed expiration of selected Subscription Plans'
+            )
+        except UnprocessableSubscriptionPlanExpirationError as exc:
+            messages.add_message(request, messages.ERROR, exc)
     process_expiration_post_renewal.short_description = 'Process post-renewal expiration of selected records'
 
     def process_unused_licenses_post_freeze(self, request, queryset):
