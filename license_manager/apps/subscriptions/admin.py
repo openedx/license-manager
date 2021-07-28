@@ -205,7 +205,9 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
             messages.add_message(request, messages.SUCCESS, 'Successfully froze selected Subscription Plans.')
         except UnprocessableSubscriptionPlanFreezeError as exc:
             messages.add_message(request, messages.ERROR, exc)
-    process_unused_licenses_post_freeze.short_description = 'Freeze selected Subscription Plans to delete unused licenses'
+    process_unused_licenses_post_freeze.short_description = (
+        'Freeze selected Subscription Plans (deletes unused licenses)'
+    )
 
 
 @admin.register(CustomerAgreement)

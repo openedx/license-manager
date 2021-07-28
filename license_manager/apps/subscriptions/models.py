@@ -329,7 +329,8 @@ class SubscriptionPlan(TimeStampedModel):
     can_freeze_unused_licenses = models.BooleanField(
         default=False,
         help_text=_(
-            "Whether this Subscription Plan supports freezing licenses, where unused licenses (not including previously revoked licenses) are deleted."
+            "Whether this Subscription Plan supports freezing licenses, where unused licenses"
+            " (not including previously revoked licenses) are deleted."
         )
     )
 
