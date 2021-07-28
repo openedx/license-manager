@@ -45,7 +45,7 @@ class TestSubscriptionPlanForm(TestCase):
         """
         plan_type = PlanTypeFactory.create()
         form = make_bound_subscription_form(
-            num_licenses=num_licenses, for_internal_use_only=for_internal_use,plan_type=plan_type)
+            num_licenses=num_licenses, for_internal_use_only=for_internal_use, plan_type=plan_type)
         assert form.is_valid() is is_valid
 
     @ddt.data(
@@ -55,22 +55,24 @@ class TestSubscriptionPlanForm(TestCase):
         {'catalog_uuid': uuid4(), 'customer_agreement_has_default_catalog': True, 'is_valid': True},
     )
     @ddt.unpack
-    def test_catalog_uuid(
-        self, catalog_uuid, customer_agreement_has_default_catalog, is_valid, plan_type=PlanTypeFactory()):
+    def test_catalog_uuid(self, catalog_uuid, customer_agreement_has_default_catalog, is_valid):
         """
         Verify that a subscription form is invalid if it neither specifies a catalog_uuid nor has a customer agreement
         with a default catalog.
         """
+        plan_type = PlanTypeFactory.create()
         form = make_bound_subscription_form(
             enterprise_catalog_uuid=catalog_uuid,
             customer_agreement_has_default_catalog=customer_agreement_has_default_catalog,
             plan_type=plan_type,
         )
         assert form.is_valid() is is_valid
-    def test_change_reason_is_required(self, plan_type=PlanTypeFactory()):
+
+    def test_change_reason_is_required(self):
         """
         Verify subscription plan form is invalid if reason for change is None or outside the set of options
         """
+        plan_type = PlanTypeFactory.create()
         valid_form = make_bound_subscription_form(
             change_reason=SubscriptionPlanChangeReasonChoices.NEW, plan_type=plan_type)
         assert valid_form.is_valid() is True
@@ -80,8 +82,64 @@ class TestSubscriptionPlanForm(TestCase):
         assert not_valid_form.is_valid() is False
 
         not_valid_form = make_bound_subscription_form(
-            change_reason="koala", plan_type=PlanTypeFactory())
+            change_reason="koala", plan_type=plan_type)
         assert not_valid_form.is_valid() is False
+
+    def test_plan_type_validation(self):
+        """
+        Verify that the selected plan type has properly associated ids populated
+        """
+        plan_type_1 = PlanTypeFactory.create(label='Standard Paid', ns_id_required=True, sf_id_required=True)
+        valid_standard_paid_form = make_bound_subscription_form(
+            plan_type=plan_type_1,
+        )
+        assert valid_standard_paid_form.is_valid() is True
+
+        invalid_standard_paid_form_1 = make_bound_subscription_form(
+            plan_type=plan_type_1,
+            salesforce_opportunity_id=None,
+        )
+        assert invalid_standard_paid_form_1.is_valid() is False
+
+        invalid_standard_paid_form_2 = make_bound_subscription_form(
+            plan_type=plan_type_1,
+            netsuite_product_id=None,
+        )
+        assert invalid_standard_paid_form_2.is_valid() is False
+
+        plan_type_2 = PlanTypeFactory.create(label='OCE', sf_id_required=True)
+        valid_oce_form = make_bound_subscription_form(
+            plan_type=plan_type_2,
+            netsuite_product_id=None,
+        )
+        assert valid_oce_form.is_valid() is True
+
+        invalid_oce_form = make_bound_subscription_form(
+            plan_type=plan_type_2,
+            salesforce_opportunity_id=None,
+        )
+        assert invalid_oce_form.is_valid() is False
+
+        plan_type_3 = PlanTypeFactory.create(label='Trials', sf_id_required=True)
+        valid_trails_form = make_bound_subscription_form(
+            plan_type=plan_type_3,
+            netsuite_product_id=None,
+        )
+        assert valid_trails_form.is_valid() is True
+
+        invalid_trials_form = make_bound_subscription_form(
+            plan_type=plan_type_3,
+            salesforce_opportunity_id=None,
+        )
+        assert invalid_trials_form.is_valid() is False
+
+        plan_type_4 = PlanTypeFactory.create()
+        valid_test_form = make_bound_subscription_form(
+            plan_type=plan_type_4,
+            netsuite_product_id=None,
+            salesforce_opportunity_id=None,
+        )
+        assert valid_test_form.is_valid() is True
 
 
 @mark.django_db

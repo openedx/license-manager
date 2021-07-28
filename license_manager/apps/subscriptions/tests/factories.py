@@ -54,12 +54,12 @@ class PlanTypeFactory(factory.django.DjangoModelFactory):
     """
     Test factory for the `PlanType` model.
     """
-    label='Test'
-    description='Internal edX subscription testing'
-    is_paid_subscription=False
-    ns_id_required=False
-    sf_id_required=False
-    internal_use_only=True
+    label = 'Test'
+    description = 'Internal edX subscription testing'
+    is_paid_subscription = False
+    ns_id_required = False
+    sf_id_required = False
+    internal_use_only = True
 
     class Meta:
         model = PlanType
@@ -88,7 +88,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
     # By default, all the subscription plans created are Test type,
     # though this can be overridden to test others
-    plan_type_id = factory.SubFactory(PlanTypeFactory)
+    plan_type_id = 4
 
 
 class SubscriptionPlanRenewalFactory(factory.django.DjangoModelFactory):
