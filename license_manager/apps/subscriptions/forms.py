@@ -70,6 +70,21 @@ class SubscriptionPlanForm(forms.ModelForm):
             self.add_error('revoke_max_percentage', 'Must be a valid percentage (0-100).')
             return False
 
+        # Ensure plan_type has appropriate ids
+        plan_type = self.cleaned_data.get('plan_type')
+        if plan_type.sf_id_required and self.cleaned_data.get('salesforce_opportunity_id') is None:
+            self.add_error(
+                'plan_type',
+                'You must specify Salesforce ID for selected plan type.',
+            )
+            return False
+        elif plan_type.ns_id_required and self.cleaned_data.get('netsuite_product_id') is None:
+            self.add_error(
+                'plan_type',
+                'You must specify Netsuite ID for selected plan type.',
+            )
+            return False
+
         return True
 
     class Meta:

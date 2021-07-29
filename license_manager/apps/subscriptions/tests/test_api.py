@@ -233,6 +233,7 @@ class RenewalProcessingTests(TestCase):
             prior_subscription_plan=prior_plan,
             renewed_subscription_plan=future_plan,
             number_of_licenses=10,
+
         )
 
         with freezegun.freeze_time(NOW):

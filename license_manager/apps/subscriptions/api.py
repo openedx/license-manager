@@ -100,6 +100,7 @@ def renew_subscription(subscription_plan_renewal):
             is_active=original_plan.is_active,
             netsuite_product_id=original_plan.netsuite_product_id,
             salesforce_opportunity_id=subscription_plan_renewal.salesforce_opportunity_id,
+            plan_type_id=subscription_plan_renewal.prior_subscription_plan.plan_type_id
         )
 
     # When creating SubscriptionPlans in Django admin, we create enough
