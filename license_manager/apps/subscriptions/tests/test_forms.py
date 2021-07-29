@@ -121,11 +121,11 @@ class TestSubscriptionPlanForm(TestCase):
         assert invalid_oce_form.is_valid() is False
 
         plan_type_3 = PlanTypeFactory.create(label='Trials', sf_id_required=True)
-        valid_trails_form = make_bound_subscription_form(
+        valid_trials_form = make_bound_subscription_form(
             plan_type=plan_type_3,
             netsuite_product_id=None,
         )
-        assert valid_trails_form.is_valid() is True
+        assert valid_trials_form.is_valid() is True
 
         invalid_trials_form = make_bound_subscription_form(
             plan_type=plan_type_3,

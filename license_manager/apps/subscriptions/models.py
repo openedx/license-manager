@@ -299,18 +299,16 @@ class SubscriptionPlan(TimeStampedModel):
         validators=[MinLengthValidator(SALESFORCE_ID_LENGTH)],
         blank=True,
         null=True,
-        help_text=str(_(
-            "Locate the appropriate Salesforce Opportunity record and copy the Opportunity ID "
-            "field (18 characters). Required by Standard Paid, OCE, and Trials plan types.")
+        help_text=_(
+            "Locate the appropriate Salesforce Opportunity record and copy the Opportunity ID field (18 characters)."
         )
     )
 
     netsuite_product_id = models.IntegerField(
         blank=True,
         null=True,
-        help_text=str(_(
+        help_text=_(
             "Locate the Sales Order record in NetSuite and copy the Product ID field (numeric)."
-            "Required by Standard Paid plan")
         )
     )
 

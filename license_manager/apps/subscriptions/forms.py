@@ -75,13 +75,13 @@ class SubscriptionPlanForm(forms.ModelForm):
         if plan_type.sf_id_required and self.cleaned_data.get('salesforce_opportunity_id') is None:
             self.add_error(
                 'plan_type',
-                'You must specify Salesforce ID for all plan types besides Test.',
+                'You must specify Salesforce ID for selected plan type.',
             )
             return False
         elif plan_type.ns_id_required and self.cleaned_data.get('netsuite_product_id') is None:
             self.add_error(
                 'plan_type',
-                'You must specify Netsuite ID for Standard Paid plan type.',
+                'You must specify Netsuite ID for selected plan type.',
             )
             return False
 

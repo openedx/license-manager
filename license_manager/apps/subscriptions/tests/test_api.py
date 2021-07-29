@@ -229,8 +229,6 @@ class RenewalProcessingTests(TestCase):
             subscription_plan=future_plan,
             status=constants.UNASSIGNED,
         )
-        # import pdb;
-        # pdb.set_trace()
         renewal = SubscriptionPlanRenewalFactory(
             prior_subscription_plan=prior_plan,
             renewed_subscription_plan=future_plan,
