@@ -337,7 +337,7 @@ class SubscriptionPlan(TimeStampedModel):
     last_freeze_timestamp = models.DateTimeField(
         blank=True,
         null=True,
-        help_text=_("The time at which the Subscription Plan was last freezed."),
+        help_text=_("The time at which the Subscription Plan was last frozen."),
     )
 
     @property

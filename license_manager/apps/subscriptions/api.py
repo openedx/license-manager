@@ -194,7 +194,7 @@ class UnprocessableSubscriptionPlanExpirationError(Exception):
 class UnprocessableSubscriptionPlanFreezeError(Exception):
     """
     An exception indicating that a subscription plan cannot be
-    freezed to delete unused licenses.
+    frozen to delete unused licenses.
     """
 
 
@@ -238,7 +238,7 @@ def delete_unused_licenses_post_freeze(subscription_plan):
     Processes a "freeze" request on a SubscriptionPlan. Any unassigned licenses will be deleted, but
     licenses in other states (e.g., activated, assigned, revoked) will persist.
 
-    The ability for a Subscription Plan to be "freezed" relies on a configurable toggle.
+    The ability for a Subscription Plan to be "frozen" relies on a configurable toggle.
     """
     if not subscription_plan.can_freeze_unused_licenses:
         raise UnprocessableSubscriptionPlanFreezeError(

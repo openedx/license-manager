@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+from django.db import transaction
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from simple_history.admin import SimpleHistoryAdmin
@@ -196,22 +197,24 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
 
     def process_expiration_post_renewal(self, request, queryset):
         try:
-            for subscription_plan in queryset:
-                expire_plan_post_renewal(subscription_plan)
-            messages.add_message(
-                request,
-                messages.SUCCESS,
-                'Successfully processed expiration of selected Subscription Plans'
-            )
+            with transaction.atomic():
+                for subscription_plan in queryset:
+                    expire_plan_post_renewal(subscription_plan)
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    'Successfully processed expiration of selected Subscription Plans'
+                )
         except UnprocessableSubscriptionPlanExpirationError as exc:
             messages.add_message(request, messages.ERROR, exc)
     process_expiration_post_renewal.short_description = 'Process post-renewal expiration of selected records'
 
     def process_unused_licenses_post_freeze(self, request, queryset):
         try:
-            for subscription_plan in queryset:
-                delete_unused_licenses_post_freeze(subscription_plan)
-            messages.add_message(request, messages.SUCCESS, 'Successfully froze selected Subscription Plans.')
+            with transaction.atomic():
+                for subscription_plan in queryset:
+                    delete_unused_licenses_post_freeze(subscription_plan)
+                messages.add_message(request, messages.SUCCESS, 'Successfully froze selected Subscription Plans.')
         except UnprocessableSubscriptionPlanFreezeError as exc:
             messages.add_message(request, messages.ERROR, exc)
     process_unused_licenses_post_freeze.short_description = (
