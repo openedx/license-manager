@@ -8,6 +8,7 @@ import freezegun
 from django.test import TestCase
 from pytz import UTC
 
+from license_manager.apps import subscriptions
 from license_manager.apps.subscriptions import api, constants, exceptions, utils
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
@@ -371,3 +372,42 @@ class RevocationTests(TestCase):
         )
         # There should now be 1 unassigned license
         self.assertEqual(subscription_plan.unassigned_licenses.count(), 1)
+
+
+class SubscriptionFreezeTests(TestCase):
+    """
+    Tests for the freezing of a Subscription Plan where all unassigned licenses are deleted.
+    """
+    def test_cannot_freeze_plan_with_freezing_unsupported(self):
+        subscription_plan = SubscriptionPlanFactory()
+
+        expected_message = 'The plan does not support freezing unused licenses.'
+        with self.assertRaisesRegex(api.UnprocessableSubscriptionPlanFreezeError, expected_message):
+            api.delete_unused_licenses_post_freeze(subscription_plan)
+
+    def test_delete_unassigned_licenses_post_freeze(self):
+        subscription_plan = SubscriptionPlanFactory(can_freeze_unused_licenses=True)
+        LicenseFactory.create_batch(
+            5,
+            subscription_plan=subscription_plan,
+            status=constants.UNASSIGNED,
+        )
+        LicenseFactory.create_batch(
+            2,
+            subscription_plan=subscription_plan,
+            status=constants.ASSIGNED,
+        )
+        LicenseFactory.create_batch(
+            1,
+            subscription_plan=subscription_plan,
+            status=constants.ACTIVATED,
+        )
+
+        with freezegun.freeze_time(NOW):
+            api.delete_unused_licenses_post_freeze(subscription_plan)
+
+        assert subscription_plan.unassigned_licenses.count() == 0
+        assert subscription_plan.assigned_licenses.count() == 2
+        assert subscription_plan.activated_licenses.count() == 1
+
+        assert subscription_plan.last_freeze_timestamp == NOW

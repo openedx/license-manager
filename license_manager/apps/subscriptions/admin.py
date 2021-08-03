@@ -1,9 +1,13 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.db import transaction
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from simple_history.admin import SimpleHistoryAdmin
 
 from license_manager.apps.subscriptions.api import (
+    UnprocessableSubscriptionPlanExpirationError,
+    UnprocessableSubscriptionPlanFreezeError,
+    delete_unused_licenses_post_freeze,
     expire_plan_post_renewal,
     renew_subscription,
 )
@@ -103,6 +107,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'num_licenses',
         'expiration_processed',
         'customer_agreement',
+        'last_freeze_timestamp',
     )
     writable_fields = (
         'title',
@@ -116,7 +121,8 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'is_revocation_cap_enabled',
         'is_active',
         'for_internal_use_only',
-        'change_reason'
+        'change_reason',
+        'can_freeze_unused_licenses',
     )
     fields = writable_fields + read_only_fields
     list_display = (
@@ -133,6 +139,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
     list_filter = (
         'is_active',
         'for_internal_use_only',
+        'can_freeze_unused_licenses',
     )
     search_fields = (
         'uuid__startswith',
@@ -150,7 +157,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'start_date',
         'expiration_date',
     )
-    actions = ['process_expiration_post_renewal']
+    actions = ['process_expiration_post_renewal', 'process_unused_licenses_post_freeze']
 
     def save_model(self, request, obj, form, change):
         # Record change reason for simple history
@@ -189,9 +196,30 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def process_expiration_post_renewal(self, request, queryset):
-        for subscription_plan in queryset:
-            expire_plan_post_renewal(subscription_plan)
-    process_expiration_post_renewal.short_description = 'Process the post-renewal expiration of selected records'
+        try:
+            with transaction.atomic():
+                for subscription_plan in queryset:
+                    expire_plan_post_renewal(subscription_plan)
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    'Successfully processed expiration of selected Subscription Plans'
+                )
+        except UnprocessableSubscriptionPlanExpirationError as exc:
+            messages.add_message(request, messages.ERROR, exc)
+    process_expiration_post_renewal.short_description = 'Process post-renewal expiration of selected records'
+
+    def process_unused_licenses_post_freeze(self, request, queryset):
+        try:
+            with transaction.atomic():
+                for subscription_plan in queryset:
+                    delete_unused_licenses_post_freeze(subscription_plan)
+                messages.add_message(request, messages.SUCCESS, 'Successfully froze selected Subscription Plans.')
+        except UnprocessableSubscriptionPlanFreezeError as exc:
+            messages.add_message(request, messages.ERROR, exc)
+    process_unused_licenses_post_freeze.short_description = (
+        'Freeze selected Subscription Plans (deletes unused licenses)'
+    )
 
 
 @admin.register(CustomerAgreement)

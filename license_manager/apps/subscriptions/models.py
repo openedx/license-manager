@@ -326,6 +326,20 @@ class SubscriptionPlan(TimeStampedModel):
         blank=False
     )
 
+    can_freeze_unused_licenses = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Whether this Subscription Plan supports freezing licenses, where unused licenses"
+            " (not including previously revoked licenses) are deleted."
+        )
+    )
+
+    last_freeze_timestamp = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_("The time at which the Subscription Plan was last frozen."),
+    )
+
     @property
     def enterprise_customer_uuid(self):
         """
@@ -345,6 +359,16 @@ class SubscriptionPlan(TimeStampedModel):
             Queryset
         """
         return self.licenses.filter(status=UNASSIGNED)
+
+    @property
+    def assigned_licenses(self):
+        """
+        Gets all of the assigned licenses associated with the subscription.
+
+        Returns:
+            Queryset
+        """
+        return self.licenses.filter(status=ASSIGNED)
 
     @property
     def activated_licenses(self):

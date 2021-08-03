@@ -89,6 +89,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     # By default, all the subscription plans created are Test type,
     # though this can be overridden to test others
     plan_type_id = 4
+    can_freeze_unused_licenses = False
 
 
 class SubscriptionPlanRenewalFactory(factory.django.DjangoModelFactory):

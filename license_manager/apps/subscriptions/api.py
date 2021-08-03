@@ -191,6 +191,13 @@ class UnprocessableSubscriptionPlanExpirationError(Exception):
     """
 
 
+class UnprocessableSubscriptionPlanFreezeError(Exception):
+    """
+    An exception indicating that a subscription plan cannot be
+    frozen to delete unused licenses.
+    """
+
+
 def expire_plan_post_renewal(subscription_plan):
     """
     Expires an old plan and marks its associated licenses
@@ -223,4 +230,20 @@ def expire_plan_post_renewal(subscription_plan):
         )
 
     subscription_plan.expiration_processed = True
+    subscription_plan.save()
+
+
+def delete_unused_licenses_post_freeze(subscription_plan):
+    """
+    Processes a "freeze" request on a SubscriptionPlan. Any unassigned licenses will be deleted, but
+    licenses in other states (e.g., activated, assigned, revoked) will persist.
+
+    The ability for a Subscription Plan to be "frozen" relies on a configurable toggle.
+    """
+    if not subscription_plan.can_freeze_unused_licenses:
+        raise UnprocessableSubscriptionPlanFreezeError(
+            f"Cannot freeze {subscription_plan}. The plan does not support freezing unused licenses."
+        )
+    subscription_plan.unassigned_licenses.delete()
+    subscription_plan.last_freeze_timestamp = localized_utcnow()
     subscription_plan.save()
