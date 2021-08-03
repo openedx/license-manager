@@ -23,11 +23,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.18.1
+boto3==1.18.12
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.21.1
+botocore==1.21.12
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -47,7 +47,7 @@ cffi==1.14.6
     #   cryptography
 chardet==4.0.0
     # via diff-cover
-charset-normalizer==2.0.3
+charset-normalizer==2.0.4
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -64,7 +64,7 @@ click-log==0.3.2
     # via
     #   -r requirements/validation.txt
     #   edx-lint
-code-annotations==1.1.2
+code-annotations==1.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -95,7 +95,7 @@ defusedxml==0.7.1
     #   -r requirements/validation.txt
     #   python3-openid
     #   social-auth-core
-diff-cover==6.2.0
+diff-cover==6.2.1
     # via -r requirements/dev.in
 django==2.2.24
     # via
@@ -144,7 +144,7 @@ django-model-utils==4.1.1
     #   edx-rbac
 django-rest-swagger==2.2.0
     # via -r requirements/validation.txt
-django-ses==2.1.1
+django-ses==2.2.0
     # via -r requirements/validation.txt
 django-simple-history==3.0.0
     # via -r requirements/validation.txt
@@ -183,7 +183,7 @@ edx-drf-extensions==6.6.0
     # via
     #   -r requirements/validation.txt
     #   edx-rbac
-edx-i18n-tools==0.5.3
+edx-i18n-tools==0.7.0
     # via -r requirements/validation.txt
 edx-lint==5.0.0
     # via -r requirements/validation.txt
@@ -226,7 +226,7 @@ iniconfig==1.1.1
     # via
     #   -r requirements/validation.txt
     #   pytest
-isort==5.9.2
+isort==5.9.3
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -272,7 +272,7 @@ mccabe==0.6.1
     #   pylint
 mysqlclient==2.0.3
     # via -r requirements/validation.txt
-newrelic==6.4.4.161
+newrelic==6.6.0.162
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -289,11 +289,7 @@ packaging==21.0
     # via
     #   -r requirements/validation.txt
     #   pytest
-path==16.0.0
-    # via
-    #   -r requirements/validation.txt
-    #   path.py
-path.py==12.5.0
+path==16.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
@@ -508,7 +504,7 @@ toml==0.10.2
     #   pylint
     #   pytest
     #   pytest-cov
-tomli==1.0.4
+tomli==1.2.0
     # via
     #   -r requirements/pip-tools.txt
     #   pep517

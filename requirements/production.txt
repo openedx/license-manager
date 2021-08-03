@@ -14,11 +14,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.18.1
+boto3==1.18.12
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.21.1
+botocore==1.21.12
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -36,7 +36,7 @@ cffi==1.14.6
     # via
     #   -r requirements/base.txt
     #   cryptography
-charset-normalizer==2.0.3
+charset-normalizer==2.0.4
     # via
     #   -r requirements/base.txt
     #   requests
@@ -97,7 +97,7 @@ django-model-utils==4.1.1
     #   edx-rbac
 django-rest-swagger==2.2.0
     # via -r requirements/base.txt
-django-ses==2.1.1
+django-ses==2.2.0
     # via -r requirements/base.txt
 django-simple-history==3.0.0
     # via -r requirements/base.txt
@@ -191,7 +191,7 @@ markupsafe==1.1.1
     #   jinja2
 mysqlclient==2.0.3
     # via -r requirements/base.txt
-newrelic==6.4.4.161
+newrelic==6.6.0.162
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
