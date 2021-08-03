@@ -12,6 +12,7 @@ from license_manager.apps.subscriptions.api import (
     renew_subscription,
 )
 from license_manager.apps.subscriptions.forms import (
+    CustomerAgreementAdminForm,
     SubscriptionPlanForm,
     SubscriptionPlanRenewalForm,
 )
@@ -224,6 +225,8 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
 
 @admin.register(CustomerAgreement)
 class CustomerAgreementAdmin(admin.ModelAdmin):
+    form = CustomerAgreementAdminForm
+
     read_only_fields = (
         'enterprise_customer_uuid',
     )
@@ -231,6 +234,7 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'default_enterprise_catalog_uuid',
         'enterprise_customer_slug',
         'disable_expiration_notifications',
+        'license_duration_before_purge',
     )
     fields = read_only_fields + writable_fields
     list_display = (

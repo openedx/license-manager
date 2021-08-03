@@ -88,6 +88,7 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   django-cors-headers
     #   django-crum
+    #   django-durationwidget
     #   django-extensions
     #   django-filter
     #   django-model-utils
@@ -110,6 +111,8 @@ django-crum==0.7.9
     #   -r requirements/base.txt
     #   edx-django-utils
     #   edx-rbac
+django-durationwidget==1.0.5
+    # via -r requirements/base.txt
 django-dynamic-fixture==3.1.1
     # via -r requirements/test.in
 django-extensions==3.1.3
@@ -386,6 +389,7 @@ social-auth-app-django==4.0.0
     #   edx-auth-backends
 social-auth-core==4.0.2
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   edx-auth-backends
