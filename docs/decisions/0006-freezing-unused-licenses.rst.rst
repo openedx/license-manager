@@ -39,7 +39,7 @@ Consequences
 * We assume usage-based billing should be for allocated licenses (activated + assigned) as opposed to just activated, as there
   is no configurable way to change which licenses are deleted from a "frozen" subscription plan as it solely deletes unassigned
   licenses.
-* Related, our definiton of a "used" license solely means it was activated by a learner; it does not indicate the license was used
+* Related, our definition of a "used" license solely means it was activated by a learner; it does not indicate the license was used
   to enroll in one or more courses in the assciated subscription catalog.
 * After freezing a subscription plan, unassigned licenses are deleted with no way to manually "undo" the freeze action.
 
