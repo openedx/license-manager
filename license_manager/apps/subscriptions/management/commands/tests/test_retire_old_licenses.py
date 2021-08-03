@@ -158,7 +158,7 @@ class RetireOldLicensesCommandTests(TestCase):
                 assert_historical_pii_cleared(assigned_license)
                 assert assigned_license.activation_key is None
                 assert assigned_license.status == UNASSIGNED
-            message = 'Retired {} previously assigned licenses with uuids: {}'.format(
+            message = 'Retired {} assigned licenses that exceeded their inactivation duration with uuids: {}'.format(
                 self.num_assigned_licenses_to_retire,
                 sorted([assigned_license.uuid for assigned_license in self.assigned_licenses_ready_for_retirement]),
             )

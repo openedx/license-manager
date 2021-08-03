@@ -4,6 +4,8 @@ Forms to be used in the subscriptions django app.
 from datetime import datetime
 
 from django import forms
+from django.utils.translation import gettext as _
+from durationwidget.widgets import TimeDurationWidget
 
 from license_manager.apps.subscriptions.constants import (
     MAX_NUM_LICENSES,
@@ -11,6 +13,7 @@ from license_manager.apps.subscriptions.constants import (
     SubscriptionPlanChangeReasonChoices,
 )
 from license_manager.apps.subscriptions.models import (
+    CustomerAgreement,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
@@ -139,3 +142,27 @@ class SubscriptionPlanRenewalForm(forms.ModelForm):
     class Meta:
         model = SubscriptionPlanRenewal
         fields = '__all__'
+
+
+class CustomerAgreementAdminForm(forms.ModelForm):
+    """
+    Helps convert the unuseful database value, stored in microseconds,
+    of ``license_duration_before_purge`` to a useful value, and vica versa.
+    """
+    class Meta:
+        model = CustomerAgreement
+        fields = '__all__'
+
+    license_duration_before_purge = forms.DurationField(
+        widget=TimeDurationWidget(
+            show_days=True,
+            show_hours=False,
+            show_minutes=False,
+            show_seconds=False,
+        ),
+        help_text=_(
+            "The number of days after which unclaimed, revoked, or expired (due to plan expiration) licenses "
+            "associated with this customer agreement will have user data retired "
+            "and the license status reset to UNASSIGNED."
+        ),
+    )

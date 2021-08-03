@@ -1,7 +1,9 @@
+from datetime import timedelta
 from math import ceil, inf
 from operator import itemgetter
 from uuid import uuid4
 
+from django.conf import settings
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.functional import cached_property
@@ -78,6 +80,19 @@ class CustomerAgreement(TimeStampedModel):
         help_text=_(
             "Used in MFEs to disable subscription expiration notifications"
         )
+    )
+
+    # In MySQL, the value of this field is stored as a bigint of microseconds
+    # https://docs.djangoproject.com/en/2.2/ref/models/fields/#django.db.models.DurationField
+    # We use a DurationField because it makes subtracting from a datetime using an F()
+    # expression simpler in the ``retire_old_licenses`` management command.
+    license_duration_before_purge = models.DurationField(
+        default=timedelta(days=settings.DEFAULT_DAYS_BEFORE_LICENSE_PURGE),
+        help_text=_(
+            "The number of days after which unclaimed, revoked, or expired (due to plan expiration) licenses "
+            "associated with this customer agreement will have user data retired "
+            "and the license status reset to UNASSIGNED."
+        ),
     )
 
     history = HistoricalRecords()
@@ -877,6 +892,38 @@ class License(TimeStampedModel):
             kwargs['subscription_plan__expiration_date__gte'] = today
 
         return queryset.filter(**kwargs)
+
+    @classmethod
+    def get_licenses_exceeding_purge_duration(cls, date_field_to_compare, **kwargs):
+        """
+        Returns all licenses with non-null ``user_email`` values
+        that have exceeded the purge duration specified by the related
+        plan's ``CustomerAgreement.license_duration_before_purge`` value.
+
+        The ``date_field_to_compare`` argument is compared to this value to determine
+        if the duration has been exceeded.  It can be the name of any valid
+        field for a queryset that filters on ``License`` or a related
+        ``SubscriptionPlan`` or ``CustomerAgreement`` - for example:
+
+          'activation_date'
+          'revoked_date'
+          'subscription_plan__expiration_date'
+          'subscription_plan__start_date'
+        """
+        duration_before_purge_field = 'subscription_plan__customer_agreement__license_duration_before_purge'
+        date_field = date_field_to_compare + '__lt'
+        date_field_is_null = date_field_to_compare + '__isnull'
+
+        kwargs.update({
+            'user_email__isnull': False,
+            date_field_is_null: False,
+            date_field: localized_utcnow().date() - models.F(duration_before_purge_field),
+        })
+
+        return License.objects.filter(**kwargs).select_related(
+            'subscription_plan',
+            'subscription_plan__customer_agreement',
+        )
 
 
 class SubscriptionsFeatureRole(UserRole):
