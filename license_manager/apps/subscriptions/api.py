@@ -100,7 +100,10 @@ def renew_subscription(subscription_plan_renewal):
             is_active=original_plan.is_active,
             netsuite_product_id=original_plan.netsuite_product_id,
             salesforce_opportunity_id=subscription_plan_renewal.salesforce_opportunity_id,
-            plan_type_id=subscription_plan_renewal.prior_subscription_plan.plan_type_id
+            plan_type_id=subscription_plan_renewal.prior_subscription_plan.plan_type_id,
+            is_revocation_cap_enabled=subscription_plan_renewal.prior_subscription_plan.is_revocation_cap_enabled,
+            revoke_max_percentage=subscription_plan_renewal.prior_subscription_plan.revoke_max_percentage,
+            for_internal_use_only=subscription_plan_renewal.prior_subscription_plan.for_internal_use_only,
         )
 
     # When creating SubscriptionPlans in Django admin, we create enough
@@ -150,6 +153,7 @@ def _renew_all_licenses(original_licenses, future_plan):
         future_license.status = original_license.status
         future_license.user_email = original_license.user_email
         future_license.lms_user_id = original_license.lms_user_id
+        future_license.activation_key = original_license.activation_key
         future_license.assigned_date = localized_utcnow()
         if original_license.status == ACTIVATED:
             future_license.activation_date = localized_datetime_from_date(future_plan.start_date)
