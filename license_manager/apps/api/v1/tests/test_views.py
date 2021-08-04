@@ -277,6 +277,7 @@ def _assert_customer_agreement_response_correct(response, customer_agreement):
     assert response['enterprise_customer_slug'] == customer_agreement.enterprise_customer_slug
     assert response['default_enterprise_catalog_uuid'] == str(customer_agreement.default_enterprise_catalog_uuid)
     assert response['ordered_subscription_plan_expirations'] == customer_agreement.ordered_subscription_plan_expirations
+    assert response['net_days_until_expiration'] == customer_agreement.net_days_until_expiration
     for response_subscription, agreement_subscription in zip(
         response['subscriptions'],
         customer_agreement.subscriptions.all()

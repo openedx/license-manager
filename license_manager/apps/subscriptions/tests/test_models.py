@@ -3,6 +3,7 @@ from datetime import date
 from unittest import mock
 
 import ddt
+import freezegun
 from django.test import TestCase
 
 from license_manager.apps.subscriptions.constants import REVOKED, UNASSIGNED
@@ -225,3 +226,25 @@ class LicenseModelTests(TestCase):
         )
 
         self.assertCountEqual(actual_licenses, expected_licenses)
+
+
+class CustomerAgreementTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.customer_agreement = CustomerAgreementFactory()
+        cls.subscription_plan_a = SubscriptionPlanFactory(
+            expiration_date=date(2020, 1, 1),
+            customer_agreement=cls.customer_agreement,
+        )
+        cls.subscription_plan_b = SubscriptionPlanFactory(
+            expiration_date=date(2021, 1, 1),
+            customer_agreement=cls.customer_agreement
+        )
+
+    def test_net_days_until_expiration(self):
+        today = date(2020, 1, 1)
+        with freezegun.freeze_time(today):
+            expected_days = (self.subscription_plan_b.expiration_date - today).days
+            assert self.customer_agreement.net_days_until_expiration == expected_days
