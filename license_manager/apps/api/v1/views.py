@@ -1209,13 +1209,17 @@ class LicenseActivationView(LicenseBaseView):
         """
         activation_key_uuid = utils.get_activation_key_from_request(request)
         try:
-            user_license = License.objects.get(
-                activation_key=activation_key_uuid,
-                user_email=self.user_email,
-                subscription_plan__is_active=True,
-            )
+            today = localized_utcnow().date()
+            kwargs = {
+                'activation_key': activation_key_uuid,
+                'user_email': self.user_email,
+                'subscription_plan__is_active': True,
+                'subscription_plan__start_date__lte': today,
+                'subscription_plan__expiration_date__gte': today,
+            }
+            user_license = License.objects.get(**kwargs)
         except License.DoesNotExist:
-            msg = 'No license exists for the email {} with activation key {}'.format(
+            msg = 'No current license exists for the email {} with activation key {}'.format(
                 self.user_email,
                 activation_key_uuid,
             )

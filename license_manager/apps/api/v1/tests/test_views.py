@@ -37,6 +37,7 @@ from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
     License,
+    SubscriptionPlan,
     SubscriptionsFeatureRole,
     SubscriptionsRoleAssignment,
 )
@@ -2921,6 +2922,47 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         assert constants.REVOKED == revoked_license.status
         assert self.lms_user_id == revoked_license.lms_user_id
         assert self.now == revoked_license.activation_date
+
+    @mock.patch('license_manager.apps.api.v1.views.send_onboarding_email_task.delay')
+    def test_activating_renewed_assigned_license(self, mock_onboarding_email_task):
+        # create an expired plan and a current plan
+        subscription_plan_original = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            is_active=True,
+            start_date=datetime.date.today() - datetime.timedelta(days=366),
+            expiration_date=datetime.date.today() - datetime.timedelta(days=1),
+        )
+        subscription_plan_renewed = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            is_active=True,
+        )
+
+        self._assign_learner_roles(
+            jwt_payload_extra={
+                'user_id': self.lms_user_id,
+                'email': self.user.email,
+                'subscription_plan_type': subscription_plan_original.plan_type.id,
+            }
+        )
+
+        prior_assigned_license = self._create_license(subscription_plan=subscription_plan_original)
+        current_assigned_license = self._create_license(subscription_plan=subscription_plan_renewed)
+
+        with freeze_time(self.now):
+            response = self._post_request(str(self.activation_key))
+
+        assert status.HTTP_204_NO_CONTENT == response.status_code
+        current_assigned_license.refresh_from_db()
+        prior_assigned_license.refresh_from_db()
+        assert prior_assigned_license.activation_date != self.now
+        assert current_assigned_license.activation_date == self.now
+        mock_onboarding_email_task.assert_called_with(
+            self.enterprise_customer_uuid,
+            self.user.email,
+            subscription_plan_original.plan_type.id,
+        )
 
 
 @ddt.ddt

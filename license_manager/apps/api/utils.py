@@ -6,6 +6,7 @@ from edx_rbac.utils import get_decoded_jwt
 from rest_framework.exceptions import ParseError
 
 from license_manager.apps.subscriptions.models import CustomerAgreement, License
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 def get_customer_agreement_from_request_enterprise_uuid(request):
@@ -76,10 +77,13 @@ def get_context_from_subscription_plan_by_activation_key(request):
 
     Returns: The ``enterprise_customer_uuid`` associated with the user's license.
     """
+    today = localized_utcnow().date()
     user_license = get_object_or_404(
         License,
         activation_key=get_activation_key_from_request(request),
         user_email=get_email_from_request(request),
         subscription_plan__is_active=True,
+        subscription_plan__start_date__lte=today,
+        subscription_plan__expiration_date__gte=today,
     )
     return user_license.subscription_plan.customer_agreement.enterprise_customer_uuid
