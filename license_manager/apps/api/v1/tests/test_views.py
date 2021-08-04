@@ -2946,7 +2946,12 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             }
         )
 
-        prior_assigned_license = self._create_license(subscription_plan=subscription_plan_original)
+        prior_assigned_license = self._create_license(
+            subscription_plan=subscription_plan_original,
+            # explicitly set activation_date to assert that this license
+            # is *not* the one that gets activated during the POST request.
+            activation_date=datetime.date.today() - datetime.timedelta(days=1),
+        )
         current_assigned_license = self._create_license(subscription_plan=subscription_plan_renewed)
 
         with freeze_time(self.now):
