@@ -37,7 +37,6 @@ from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
     License,
-    SubscriptionPlan,
     SubscriptionsFeatureRole,
     SubscriptionsRoleAssignment,
 )
