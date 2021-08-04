@@ -2,9 +2,9 @@ name: Django CI
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
-    branches: [master]
+    branches: [ master ]
 
 jobs:
   build:
@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
-        python-version: '3.8'
+        python-version: "3.8"
         architecture: x64
     - name: Start container
       run: |

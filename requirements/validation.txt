@@ -28,12 +28,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.18.12
+boto3==1.18.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.21.12
+botocore==1.21.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -55,7 +55,7 @@ cffi==1.14.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   cryptography
-charset-normalizer==2.0.4
+charset-normalizer==2.0.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -73,7 +73,7 @@ click-log==0.3.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-lint
-code-annotations==1.2.0
+code-annotations==1.1.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -160,7 +160,7 @@ django-rest-swagger==2.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-ses==2.2.0
+django-ses==2.1.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -216,7 +216,7 @@ edx-drf-extensions==6.6.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-rbac
-edx-i18n-tools==0.7.0
+edx-i18n-tools==0.5.3
     # via -r requirements/validation.in
 edx-lint==5.0.0
     # via
@@ -261,7 +261,7 @@ iniconfig==1.1.1
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==5.9.3
+isort==5.9.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -314,7 +314,7 @@ mysqlclient==2.0.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==6.6.0.162
+newrelic==6.4.4.161
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -334,7 +334,9 @@ packaging==21.0
     # via
     #   -r requirements/test.txt
     #   pytest
-path==16.2.0
+path==16.0.0
+    # via path.py
+path.py==12.5.0
     # via edx-i18n-tools
 pathlib2==2.3.6
     # via -r requirements/validation.in

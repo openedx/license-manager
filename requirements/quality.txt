@@ -18,11 +18,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.18.12
+boto3==1.18.1
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.21.12
+botocore==1.21.1
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -40,7 +40,7 @@ cffi==1.14.6
     # via
     #   -r requirements/base.txt
     #   cryptography
-charset-normalizer==2.0.4
+charset-normalizer==2.0.3
     # via
     #   -r requirements/base.txt
     #   requests
@@ -52,7 +52,7 @@ click==7.1.2
     #   edx-lint
 click-log==0.3.2
     # via edx-lint
-code-annotations==1.2.0
+code-annotations==1.1.2
     # via edx-lint
 coreapi==2.3.3
     # via
@@ -112,7 +112,7 @@ django-model-utils==4.1.1
     #   edx-rbac
 django-rest-swagger==2.2.0
     # via -r requirements/base.txt
-django-ses==2.2.0
+django-ses==2.1.1
     # via -r requirements/base.txt
 django-simple-history==3.0.0
     # via -r requirements/base.txt
@@ -173,7 +173,7 @@ idna==3.2
     # via
     #   -r requirements/base.txt
     #   requests
-isort==5.9.3
+isort==5.9.2
     # via
     #   -r requirements/quality.in
     #   pylint
@@ -211,7 +211,7 @@ mccabe==0.6.1
     # via pylint
 mysqlclient==2.0.3
     # via -r requirements/base.txt
-newrelic==6.6.0.162
+newrelic==6.4.4.161
     # via
     #   -r requirements/base.txt
     #   edx-django-utils

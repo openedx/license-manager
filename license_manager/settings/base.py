@@ -185,7 +185,6 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': (
                 'django.contrib.auth.context_processors.auth',
-                'django.template.context_processors.request',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.media',
@@ -372,7 +371,3 @@ RETIREMENT_SERVICE_WORKER_USERNAME = "replace with valid username"
 FEATURES = {
     EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API: False,
 }
-
-
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
-DEFAULT_HASHING_ALGORITHM = "sha1"
