@@ -42,6 +42,7 @@ THIRD_PARTY_APPS = (
     'corsheaders',
     'csrf.apps.CsrfAppConfig',  # Enables frontend apps to retrieve CSRF tokens
     'django_filters',
+    'durationwidget',
     'rest_framework',
     'rest_framework_swagger',
     'rules.apps.AutodiscoverRulesConfig',
@@ -371,3 +372,6 @@ RETIREMENT_SERVICE_WORKER_USERNAME = "replace with valid username"
 FEATURES = {
     EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API: False,
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+DEFAULT_HASHING_ALGORITHM = "sha1"

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.core.management.base import BaseCommand
 
@@ -23,13 +23,10 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        # Any license that was assigned but not activated or revoked but not reassigned before this date should
-        # have its data scrubbed.
-        ready_for_retirement_date = datetime.today().date() - timedelta(DAYS_TO_RETIRE)
+        ready_for_retirement_date = localized_utcnow().date() - timedelta(DAYS_TO_RETIRE)
 
-        expired_licenses_for_retirement = License.objects.filter(
-            user_email__isnull=False,
-            subscription_plan__expiration_date__lt=ready_for_retirement_date,
+        expired_licenses_for_retirement = License.get_licenses_exceeding_purge_duration(
+            'subscription_plan__expiration_date',
         )
         # Scrub all piii on licenses whose subscription expired over 90 days ago, and mark the licenses as revoked
         for expired_license in expired_licenses_for_retirement:
@@ -43,11 +40,9 @@ class Command(BaseCommand):
         message = 'Retired {} expired licenses with uuids: {}'.format(len(expired_license_uuids), expired_license_uuids)
         logger.info(message)
 
-        revoked_licenses_for_retirement = License.objects.filter(
+        revoked_licenses_for_retirement = License.get_licenses_exceeding_purge_duration(
+            'revoked_date',
             status=REVOKED,
-            user_email__isnull=False,
-            revoked_date__isnull=False,
-            revoked_date__date__lt=ready_for_retirement_date,
         )
         # Scrub all pii on the revoked licenses, but they should stay revoked and keep their other info as we currently
         # add an unassigned license to the subscription's license pool whenever one is revoked.
@@ -60,10 +55,11 @@ class Command(BaseCommand):
         message = 'Retired {} revoked licenses with uuids: {}'.format(len(revoked_license_uuids), revoked_license_uuids)
         logger.info(message)
 
-        assigned_licenses_for_retirement = License.objects.filter(
+        # Any license that was assigned but not activated before the associated agreement's
+        # ``unactivated_license_duration`` elapsed should have its data scrubbed.
+        assigned_licenses_for_retirement = License.get_licenses_exceeding_purge_duration(
+            'assigned_date',
             status=ASSIGNED,
-            assigned_date__isnull=False,
-            assigned_date__date__lt=ready_for_retirement_date,
         )
         # We place previously assigned licenses that are now retired back into the unassigned license pool, so we scrub
         # all data on them.
@@ -75,7 +71,7 @@ class Command(BaseCommand):
         assigned_license_uuids = sorted(
             [assigned_license.uuid for assigned_license in assigned_licenses_for_retirement],
         )
-        message = 'Retired {} previously assigned licenses with uuids: {}'.format(
+        message = 'Retired {} assigned licenses that exceeded their inactivation duration with uuids: {}'.format(
             len(assigned_license_uuids),
             assigned_license_uuids,
         )

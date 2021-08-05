@@ -6,6 +6,7 @@ backoff
 celery
 Django
 django-cors-headers
+django-durationwidget
 django-extensions
 django-filter
 django-model-utils
