@@ -11,12 +11,14 @@ from django.utils.translation import gettext as _
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rbac.utils import ALL_ACCESS_CONTEXT
 from model_utils.models import TimeStampedModel
+from requests.exceptions import HTTPError
 from simple_history.models import HistoricalRecords
 from simple_history.utils import (
     bulk_create_with_history,
     bulk_update_with_history,
 )
 
+from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.api_client.enterprise_catalog import (
     EnterpriseCatalogApiClient,
 )
@@ -30,7 +32,10 @@ from license_manager.apps.subscriptions.constants import (
     UNASSIGNED,
     LicenseTypesToRenew,
 )
-from license_manager.apps.subscriptions.exceptions import LicenseUnrevokeError
+from license_manager.apps.subscriptions.exceptions import (
+    CustomerAgreementException,
+    LicenseUnrevokeError,
+)
 from license_manager.apps.subscriptions.utils import (
     days_until,
     get_license_activation_link,
@@ -61,8 +66,8 @@ class CustomerAgreement(TimeStampedModel):
 
     enterprise_customer_slug = models.CharField(
         max_length=128,
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
         unique=True,
     )
 
@@ -123,6 +128,29 @@ class CustomerAgreement(TimeStampedModel):
         for plan in self.subscriptions.all():
             net_days = max(net_days, plan.days_until_expiration_including_renewals)
         return net_days
+
+    def save(self, *args, **kwargs):
+        """
+        Before saving this CustomerAgreement instance, if the enterprise_customer_slug
+        is not present, try to fetch it using the EnterpriseApiClient, then save it.
+
+        Raises a ``requests.exceptions.HTTPError`` if the slug was not present
+        and there was an error while fetching it.
+        """
+        if not self.enterprise_customer_slug:
+            try:
+                customer_data = EnterpriseApiClient().get_enterprise_customer_data(
+                    self.enterprise_customer_uuid,
+                )
+                self.enterprise_customer_slug = customer_data.get('slug')
+            except HTTPError as exc:
+                error_message = (
+                    'CustomerAgreement was not saved - '
+                    'could not fetch customer slug field from the enterprise API because {}'.format(exc)
+                )
+                raise CustomerAgreementException(error_message) from exc
+
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = _("Customer Agreement")

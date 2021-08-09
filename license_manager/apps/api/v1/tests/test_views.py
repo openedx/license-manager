@@ -54,6 +54,7 @@ from license_manager.apps.subscriptions.tests.utils import (
 )
 from license_manager.apps.subscriptions.utils import (
     localized_datetime,
+    localized_datetime_from_date,
     localized_utcnow,
 )
 
@@ -2925,13 +2926,14 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
 
     @mock.patch('license_manager.apps.api.v1.views.send_onboarding_email_task.delay')
     def test_activating_renewed_assigned_license(self, mock_onboarding_email_task):
+        yesterday = localized_utcnow().date() - datetime.timedelta(days=1)
         # create an expired plan and a current plan
         subscription_plan_original = SubscriptionPlanFactory.create(
             customer_agreement=self.customer_agreement,
             enterprise_catalog_uuid=self.enterprise_catalog_uuid,
             is_active=True,
-            start_date=datetime.date.today() - datetime.timedelta(days=366),
-            expiration_date=datetime.date.today() - datetime.timedelta(days=1),
+            start_date=localized_utcnow().date() - datetime.timedelta(days=366),
+            expiration_date=yesterday,
         )
         subscription_plan_renewed = SubscriptionPlanFactory.create(
             customer_agreement=self.customer_agreement,
@@ -2951,7 +2953,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             subscription_plan=subscription_plan_original,
             # explicitly set activation_date to assert that this license
             # is *not* the one that gets activated during the POST request.
-            activation_date=datetime.date.today() - datetime.timedelta(days=1),
+            activation_date=localized_datetime_from_date(yesterday),
         )
         current_assigned_license = self._create_license(subscription_plan=subscription_plan_renewed)
 
