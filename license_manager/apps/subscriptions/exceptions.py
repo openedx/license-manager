@@ -3,6 +3,12 @@ Exceptions raised by functions exposed by the Subscriptions app.
 """
 
 
+class CustomerAgreementException(Exception):
+    """
+    A general exception dealing with CustomerAgreements.
+    """
+
+
 class LicenseError(Exception):
     """
     General exception about some license action

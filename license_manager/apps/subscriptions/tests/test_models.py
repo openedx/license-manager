@@ -5,8 +5,12 @@ from unittest import mock
 import ddt
 import freezegun
 from django.test import TestCase
+from requests.exceptions import HTTPError
 
 from license_manager.apps.subscriptions.constants import REVOKED, UNASSIGNED
+from license_manager.apps.subscriptions.exceptions import (
+    CustomerAgreementException,
+)
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
@@ -228,7 +232,11 @@ class LicenseModelTests(TestCase):
         self.assertCountEqual(actual_licenses, expected_licenses)
 
 
-class CustomerAgreementTest(TestCase):
+class CustomerAgreementTests(TestCase):
+    """
+    Test for the CustomerAgreement model.
+    """
+
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -248,3 +256,42 @@ class CustomerAgreementTest(TestCase):
         with freezegun.freeze_time(today):
             expected_days = (self.subscription_plan_b.expiration_date - today).days
             assert self.customer_agreement.net_days_until_expiration == expected_days
+
+    @mock.patch('license_manager.apps.subscriptions.models.EnterpriseApiClient', autospec=True)
+    def test_save_with_slug(self, mock_client):
+        self.customer_agreement.save()
+
+        self.assertFalse(mock_client.called)
+
+    @mock.patch('license_manager.apps.subscriptions.models.EnterpriseApiClient', autospec=True)
+    def test_save_without_slug(self, mock_client):
+        agreement = CustomerAgreementFactory()
+        agreement.enterprise_customer_slug = None
+        client = mock_client.return_value
+        client.get_enterprise_customer_data.return_value = {
+            'slug': 'new-slug',
+        }
+
+        agreement.save()
+
+        self.assertTrue(mock_client.called)
+        client.get_enterprise_customer_data.assert_called_once_with(
+            agreement.enterprise_customer_uuid
+        )
+        self.assertEqual('new-slug', agreement.enterprise_customer_slug)
+
+    @mock.patch('license_manager.apps.subscriptions.models.EnterpriseApiClient', autospec=True)
+    def test_save_without_slug_http_error(self, mock_client):
+        agreement = CustomerAgreementFactory()
+        agreement.enterprise_customer_slug = None
+        client = mock_client.return_value
+        client.get_enterprise_customer_data.side_effect = HTTPError('some error')
+
+        with self.assertRaisesRegex(CustomerAgreementException, 'some error'):
+            agreement.save()
+
+        self.assertTrue(mock_client.called)
+        client.get_enterprise_customer_data.assert_called_once_with(
+            agreement.enterprise_customer_uuid
+        )
+        self.assertIsNone(agreement.enterprise_customer_slug)

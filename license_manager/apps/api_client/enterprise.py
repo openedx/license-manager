@@ -30,7 +30,17 @@ class EnterpriseApiClient(BaseOAuthClient):
             response (dict): JSON response data
         """
         endpoint = '{}{}/'.format(self.enterprise_customer_endpoint, str(enterprise_customer_uuid))
-        return self.client.get(endpoint).json()
+        try:
+            response = self.client.get(endpoint)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as exc:
+            logger.error(
+                'Failed to fetch enterprise customer data for %r because %r',
+                enterprise_customer_uuid,
+                response.text,
+            )
+            raise exc
 
     def create_pending_enterprise_users(self, enterprise_customer_uuid, user_emails):
         """

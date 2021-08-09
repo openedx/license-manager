@@ -11,6 +11,9 @@ from license_manager.apps.subscriptions.api import (
     expire_plan_post_renewal,
     renew_subscription,
 )
+from license_manager.apps.subscriptions.exceptions import (
+    CustomerAgreementException,
+)
 from license_manager.apps.subscriptions.forms import (
     CustomerAgreementAdminForm,
     SubscriptionPlanForm,
@@ -229,10 +232,10 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
 
     read_only_fields = (
         'enterprise_customer_uuid',
+        'enterprise_customer_slug',
     )
     writable_fields = (
         'default_enterprise_catalog_uuid',
-        'enterprise_customer_slug',
         'disable_expiration_notifications',
         'license_duration_before_purge',
     )
@@ -255,14 +258,29 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'enterprise_customer_slug__startswith',
     )
 
+    def save_model(self, request, obj, form, change):
+        """
+        Saves the CustomerAgreement instance.
+
+        Adds a Django error message a ``CustomerAgreementException`` occurred.
+        Notably, this happens when the slug field was
+        not present and could not be fetched from the enterprise API.
+        """
+        try:
+            super().save_model(request, obj, form, change)
+        except CustomerAgreementException as exc:
+            messages.error(request, exc)
+
     def get_readonly_fields(self, request, obj=None):
         """
-        If the Customer Agreement already exists, make all fields but enterprise_customer_slug
-        and default_enterprise_catalog_uuid read-only
+        If creating a new CustomerAgreement, all fields but ``enterprise_customer_slug``
+        and ``license_duration_before_purge`` should be writable.
+        Note that we fetch the slug from the enterprise API before saving (if it's
+        not already set).
         """
         if obj:
             return self.read_only_fields
-        return ()
+        return ('enterprise_customer_slug', 'license_duration_before_purge')
 
     def get_subscription_plan_links(self, obj):
         links = []
