@@ -117,6 +117,13 @@ class CustomerAgreement(TimeStampedModel):
 
         return ordered_subscription_plan_data
 
+    @property
+    def net_days_until_expiration(self):
+        net_days = 0
+        for plan in self.subscriptions.all():
+            net_days = max(net_days, plan.days_until_expiration_including_renewals)
+        return net_days
+
     class Meta:
         verbose_name = _("Customer Agreement")
         verbose_name_plural = _("Customer Agreements")
