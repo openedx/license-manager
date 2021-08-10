@@ -67,6 +67,7 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
             'ordered_subscription_plan_expirations',
             'subscriptions',
             'disable_expiration_notifications',
+            'net_days_until_expiration',
         ]
 
 

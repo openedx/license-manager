@@ -8,17 +8,21 @@ amqp==2.6.1
     # via
     #   -r requirements/base.txt
     #   kombu
-backoff==1.11.1
+analytics-python==1.4.0
     # via -r requirements/base.txt
+backoff==1.10.0
+    # via
+    #   -r requirements/base.txt
+    #   analytics-python
 billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.18.12
+boto3==1.18.19
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.21.12
+botocore==1.21.19
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -100,7 +104,7 @@ django-model-utils==4.1.1
     #   edx-rbac
 django-rest-swagger==2.2.0
     # via -r requirements/base.txt
-django-ses==2.2.0
+django-ses==2.2.1
     # via -r requirements/base.txt
 django-simple-history==3.0.0
     # via -r requirements/base.txt
@@ -128,7 +132,9 @@ drf-jwt==1.19.0
 drf-nested-routers==0.93.3
     # via -r requirements/base.txt
 edx-auth-backends==3.4.0
-    # via -r requirements/base.txt
+    # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
+    #   -r requirements/base.txt
 edx-celeryutils==1.1.0
     # via -r requirements/base.txt
 edx-django-utils==4.2.0
@@ -137,6 +143,7 @@ edx-django-utils==4.2.0
     #   edx-drf-extensions
 edx-drf-extensions==6.6.0
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/base.txt
     #   edx-rbac
 edx-opaque-keys==2.2.2
@@ -155,9 +162,9 @@ future==0.18.2
     #   django-ses
     #   edx-celeryutils
     #   pyjwkest
-gevent==21.1.2
+gevent==21.8.0
     # via -r requirements/production.in
-greenlet==1.1.0
+greenlet==1.1.1
     # via gevent
 gunicorn==20.1.0
     # via -r requirements/production.in
@@ -192,9 +199,13 @@ markupsafe==1.1.1
     #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   jinja2
+monotonic==1.6
+    # via
+    #   -r requirements/base.txt
+    #   analytics-python
 mysqlclient==2.0.3
     # via -r requirements/base.txt
-newrelic==6.6.0.162
+newrelic==6.8.0.163
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -242,6 +253,7 @@ pymongo==3.12.0
 python-dateutil==2.8.2
     # via
     #   -r requirements/base.txt
+    #   analytics-python
     #   botocore
     #   edx-drf-extensions
 python-memcached==1.59
@@ -265,6 +277,7 @@ redis==3.5.3
 requests==2.26.0
     # via
     #   -r requirements/base.txt
+    #   analytics-python
     #   coreapi
     #   edx-drf-extensions
     #   edx-rest-api-client
@@ -297,6 +310,7 @@ simplejson==3.17.3
 six==1.16.0
     # via
     #   -r requirements/base.txt
+    #   analytics-python
     #   djangorestframework-csv
     #   edx-auth-backends
     #   edx-drf-extensions
@@ -312,6 +326,7 @@ slumber==0.7.1
     #   edx-rest-api-client
 social-auth-app-django==4.0.0
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/base.txt
     #   edx-auth-backends
 social-auth-core==4.0.2
