@@ -6,11 +6,13 @@ Management command for assigning enterprise roles to existing enterprise users.
 import logging
 
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.utils.timezone import now
+from datetime import timedelta
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 
 
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan, CustomerAgreement
+from license_manager.apps.subscriptions.models import License, SubscriptionPlan, CustomerAgreement, PlanType
 from license_manager.apps.subscriptions.utils import chunks
 
 logger = logging.getLogger(__name__)
@@ -18,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     """
-    Management command for populating License Manager with an enterprise customer agreement, subscriptions, and licenses.
+    Management command for populating License Manager with enterprise customer agreement, subscriptions, and licenses.
 
     Example usage:
         $ ./manage.py seed_enterprise_devstack_data --enterprise-customer "CUSTOMER-UUID-HERE"
@@ -46,7 +48,8 @@ class Command(BaseCommand):
             enterprise_api_client = EnterpriseApiClient()
 
             # Query endpoint by name instead of UUID:
-            endpoint = '{}?name={}'.format(enterprise_api_client.enterprise_customer_endpoint, str(enterprise_customer_name))
+            endpoint = '{}?name={}'.format(enterprise_api_client.enterprise_customer_endpoint,
+                                           str(enterprise_customer_name))
             response = enterprise_api_client.client.get(endpoint).json()
             if response.get('count'):
                 return response.get('results')[0]
@@ -73,18 +76,32 @@ class Command(BaseCommand):
             }
         )
         if customer_agreement:
-            logger.info('\nCustomerAgreement created on {} found: {}'.format(customer_agreement.created, customer_agreement.uuid))
+            logger.info('\nCustomerAgreement created on {} found: {}'.
+                        format(customer_agreement.created, customer_agreement.uuid))
 
         return customer_agreement
 
-    def create_subscription_plan(self, enterprise_uuid):
-        """ 
+    def create_subscription_plan(self, customer_agreement, num_licenses=1, plan_type="Standard Paid"):
+        """
         Creates a SubscriptionPlan for a customer.
         """
-        pass
-
-    def create_licenses(self, subscription_plan_id, num_licenses=100):
-        pass
+        timestamp = now()
+        new_plan = SubscriptionPlan(
+            title='Seed Generated Plan from {} {}'.format(customer_agreement, timestamp),
+            customer_agreement=customer_agreement,
+            enterprise_catalog_uuid = customer_agreement.default_enterprise_catalog_uuid,
+            start_date=timestamp,
+            expiration_date=timestamp+timedelta(days=365),
+            is_active=True,
+            salesforce_opportunity_id=123456789123456789,
+            plan_type=PlanType.objects.get(label=plan_type),
+        )
+        with transaction.atomic():
+            new_plan.save()
+            new_plan.increase_num_licenses(
+                num_licenses
+            )
+        return new_plan
 
     def handle(self, *args, **options):
         """
@@ -96,6 +113,7 @@ class Command(BaseCommand):
         self.enterprise_customer = self.get_enterprise_customer(
             enterprise_customer_name,
         )
-        if (self.enterprise_customer):
-            logger.info(self.enterprise_customer)
-            self.get_or_create_customer_agreement(self.enterprise_customer)
+        logger.info(self.enterprise_customer)
+        customer_agreement = self.get_or_create_customer_agreement(self.enterprise_customer)
+        new_plan = self.create_subscription_plan(customer_agreement, num_licenses=1)
+        logger.info(new_plan)
