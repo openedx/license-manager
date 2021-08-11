@@ -57,6 +57,35 @@ class Command(BaseCommand):
             logger.error('No enterprise customer found.')
             return None
 
+    def get_or_create_customer_agreement(self, enterprise_customer):
+        """
+        Gets or creates a CustomerAgreement for a customer.
+        """
+        logger.info('\nFetching/Creating enterprise CustomerAgreement ...')
+
+        customer_agreement, _ = CustomerAgreement.objects.get_or_create(
+            enterprise_customer_slug=enterprise_customer.get('slug'),
+            defaults={
+                'enterprise_customer_uuid': enterprise_customer.get('uuid'),
+                'enterprise_customer_slug': enterprise_customer.get('slug'),
+                'default_enterprise_catalog_uuid': enterprise_customer.get('enterprise_customer_catalogs')[0]
+
+            }
+        )
+        if customer_agreement:
+            logger.info('\nCustomerAgreement created on {} found: {}'.format(customer_agreement.created, customer_agreement.uuid))
+
+        return customer_agreement
+
+    def create_subscription_plan(self, enterprise_uuid):
+        """ 
+        Creates a SubscriptionPlan for a customer.
+        """
+        pass
+
+    def create_licenses(self, subscription_plan_id, num_licenses=100):
+        pass
+
     def handle(self, *args, **options):
         """
         Entry point for managment command execution.
@@ -67,4 +96,6 @@ class Command(BaseCommand):
         self.enterprise_customer = self.get_enterprise_customer(
             enterprise_customer_name,
         )
-        logger.info(self.enterprise_customer)
+        if (self.enterprise_customer):
+            logger.info(self.enterprise_customer)
+            self.get_or_create_customer_agreement(self.enterprise_customer)
