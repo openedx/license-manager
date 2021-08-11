@@ -40,6 +40,14 @@ class Command(BaseCommand):
             help='Friendly name of an existing enterprise customer.',
             type=str,
         )
+        parser.add_argument(
+            '--num-licenses',
+            action='store',
+            dest='num_licenses',
+            default=10,
+            help='Specify the number of licenses you want on this subscription. Defaults to 10.',
+            type=int,
+        )
 
     def get_enterprise_customer(self, enterprise_customer_name):
         """ Returns an enterprise customer """
@@ -115,5 +123,6 @@ class Command(BaseCommand):
         )
         logger.info(self.enterprise_customer)
         customer_agreement = self.get_or_create_customer_agreement(self.enterprise_customer)
-        new_plan = self.create_subscription_plan(customer_agreement, num_licenses=1)
+        new_plan = self.create_subscription_plan(customer_agreement, num_licenses=options['num_licenses'])
         logger.info(new_plan)
+        logger.info('Licenses created: {}'.format(License.objects.filter(subscription_plan=new_plan)))
