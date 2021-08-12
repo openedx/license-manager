@@ -33,11 +33,11 @@ billiard==3.6.4.0
     #   celery
 bleach==4.0.0
     # via readme-renderer
-boto3==1.18.19
+boto3==1.18.20
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.21.19
+botocore==1.21.20
     # via
     #   -r requirements/test.txt
     #   boto3

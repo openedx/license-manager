@@ -14,9 +14,9 @@ backoff==1.10.0
     #   analytics-python
 billiard==3.6.4.0
     # via celery
-boto3==1.18.19
+boto3==1.18.20
     # via django-ses
-botocore==1.21.19
+botocore==1.21.20
     # via
     #   boto3
     #   s3transfer
