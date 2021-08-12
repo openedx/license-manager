@@ -2729,7 +2729,7 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
         assert response.status_code == status.HTTP_404_NOT_FOUND
         mock_contains_content.assert_called_with([self.course_key])
 
-    def _assert_correct_subsidy_response(self, response):
+    def _assert_correct_subsidy_response(self, response, expected_checksum):
         """
         Verifies the license subsidy endpoint returns the correct response.
         """
@@ -2741,11 +2741,13 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
             'subsidy_id': str(self.activated_license.uuid),
             'start_date': str(self.active_subscription_for_customer.start_date),
             'expiration_date': str(self.active_subscription_for_customer.expiration_date),
+            'subsidy_checksum': expected_checksum,
         }
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
-    def test_get_subsidy(self, mock_get_decoded_jwt, mock_contains_content):
+    @mock.patch('license_manager.apps.api.v1.views.get_subsidy_checksum', return_value='some-hash', autospec=True)
+    def test_get_subsidy(self, mock_get_subsidy_checksum, mock_get_decoded_jwt, mock_contains_content):
         """
         Verify the view returns the correct response for a course in the user's subscription's catalog.
         """
@@ -2756,8 +2758,13 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
 
         url = self._get_url_with_params()
         response = self.api_client.get(url)
-        self._assert_correct_subsidy_response(response)
+        self._assert_correct_subsidy_response(response, mock_get_subsidy_checksum.return_value)
         mock_contains_content.assert_called_with([self.course_key])
+        mock_get_subsidy_checksum.assert_called_once_with(
+            self.activated_license.lms_user_id,
+            self.course_key,
+            self.activated_license.uuid,
+        )
 
 
 class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):

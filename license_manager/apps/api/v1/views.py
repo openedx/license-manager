@@ -50,6 +50,7 @@ from license_manager.apps.subscriptions.models import (
 from license_manager.apps.subscriptions.utils import (
     chunks,
     get_license_activation_link,
+    get_subsidy_checksum,
     localized_utcnow,
 )
 
@@ -1158,6 +1159,16 @@ class LicenseSubsidyView(LicenseBaseView):
             if not course_in_catalog:
                 continue
 
+            # If this license/subsidy is used for enrollment, the enrollment
+            # endpoint can verify the checksum to ensure that a user is not,
+            # for example, making a request with the same format and values
+            # as below, but with a course_key that is NOT in their catalog.
+            checksum_for_license = get_subsidy_checksum(
+                user_license.lms_user_id,
+                self.requested_course_key,
+                user_license.uuid,
+            )
+
             ordered_data = OrderedDict({
                 'discount_type': constants.PERCENTAGE_DISCOUNT_TYPE,
                 'discount_value': constants.LICENSE_DISCOUNT_VALUE,
@@ -1165,6 +1176,7 @@ class LicenseSubsidyView(LicenseBaseView):
                 'subsidy_id': user_license.uuid,
                 'start_date': subscription_plan.start_date,
                 'expiration_date': subscription_plan.expiration_date,
+                'subsidy_checksum': checksum_for_license,
             })
             return Response(ordered_data)
 

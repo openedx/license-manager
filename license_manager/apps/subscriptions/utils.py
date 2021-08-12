@@ -1,4 +1,7 @@
 """ Utility functions for the subscriptions app. """
+import hashlib
+import hmac
+from base64 import b64encode
 from datetime import date, datetime
 
 from django.conf import settings
@@ -78,3 +81,22 @@ def get_enterprise_reply_to_email(enterprise_customer):
     Returns the configured reply_to email for an enterprise, if configured.
     """
     return enterprise_customer.get('reply_to') or ''
+
+
+def get_subsidy_checksum(lms_user_id, course_key, license_uuid):
+    """
+    Hashes the (lms_user_id, course_key, license_uuid)
+    and returns a base64-encoded string of the hash digest.
+
+    Used for license subsidy verification during licensed-enrollment.
+    """
+    digest_function = getattr(hashlib, settings.ENTERPRISE_SUBSIDY_CHECKSUM_ALGORITHM, 'sha256')
+    key = settings.ENTERPRISE_SUBSIDY_CHECKSUM_SECRET_KEY.encode()
+    message = settings.ENTERPRISE_SUBSIDY_CHECKSUM_MESSAGE_FORMAT.format(
+        lms_user_id=str(lms_user_id),
+        course_key=str(course_key),
+        license_uuid=str(license_uuid),
+    ).encode()
+
+    digest = hmac.digest(key, message, digest_function)
+    return b64encode(digest).decode()
