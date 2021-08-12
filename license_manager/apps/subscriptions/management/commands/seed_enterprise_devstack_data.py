@@ -84,6 +84,12 @@ class Command(BaseCommand):
             }
         )
         if customer_agreement:
+            # Data sync for running command multiple times:
+            # update the uuid with the latest that matches the slug:
+            customer_agreement.enterprise_customer_uuid = enterprise_customer.get('uuid')
+            customer_agreement.default_enterprise_catalog_uuid = enterprise_customer.get('enterprise_customer_catalogs')[0]
+            customer_agreement.save()
+
             logger.info('\nCustomerAgreement created on {} found: {}'.
                         format(customer_agreement.created, customer_agreement.uuid))
 
