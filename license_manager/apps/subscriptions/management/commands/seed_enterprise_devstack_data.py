@@ -1,19 +1,18 @@
 """
-Management command for assigning enterprise roles to existing enterprise users.
+Management command for seeding devstack with licenses and subscriptions for development. 
 """
 
 
 import logging
+from datetime import timedelta
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.utils.timezone import now
-from datetime import timedelta
+from license_manager.apps.subscriptions.utils import localized_utcnow
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 
-
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan, CustomerAgreement, PlanType
-from license_manager.apps.subscriptions.utils import chunks
+
 
 logger = logging.getLogger(__name__)
 
@@ -23,21 +22,19 @@ class Command(BaseCommand):
     Management command for populating License Manager with enterprise customer agreement, subscriptions, and licenses.
 
     Example usage:
-        $ ./manage.py seed_enterprise_devstack_data --enterprise-customer "CUSTOMER-UUID-HERE"
+        $ ./manage.py seed_enterprise_devstack_data --enterprise-customer-slug "CUSTOMER-SLUG-HERE"
     """
 
-    enterprise_customer = None
-    enterprise_catalog = None
     help = 'Seeds an enterprise customer agreement, subscription and licenses for an existing enterprise customer.'
 
     def add_arguments(self, parser):
         """ Adds argument(s) to the the command """
         parser.add_argument(
-            '--enterprise-customer-name',
+            '--enterprise-customer-slug',
             action='store',
-            dest='enterprise_customer_name',
+            dest='enterprise_customer_slug',
             required=True,
-            help='Friendly name of an existing enterprise customer.',
+            help='Enterprise slug of an existing enterprise customer (e.g. "test-enterprise").',
             type=str,
         )
         parser.add_argument(
@@ -49,15 +46,15 @@ class Command(BaseCommand):
             type=int,
         )
 
-    def get_enterprise_customer(self, enterprise_customer_name):
+    def get_enterprise_customer(self, enterprise_customer_slug):
         """ Returns an enterprise customer """
-        logger.info('\nFetching an enterprise customer {} name ...'.format(enterprise_customer_name))
+        logger.info('\nFetching an enterprise customer {} name ...'.format(enterprise_customer_slug))
         try:
             enterprise_api_client = EnterpriseApiClient()
 
             # Query endpoint by name instead of UUID:
-            endpoint = '{}?name={}'.format(enterprise_api_client.enterprise_customer_endpoint,
-                                           str(enterprise_customer_name))
+            endpoint = '{}?slug={}'.format(enterprise_api_client.enterprise_customer_endpoint,
+                                           str(enterprise_customer_slug))
             response = enterprise_api_client.client.get(endpoint).json()
             if response.get('count'):
                 return response.get('results')[0]
@@ -83,32 +80,31 @@ class Command(BaseCommand):
 
             }
         )
-        if customer_agreement:
-            # Data sync for running command multiple times:
-            # update the uuid with the latest that matches the slug:
-            customer_agreement.enterprise_customer_uuid = enterprise_customer.get('uuid')
-            customer_agreement.default_enterprise_catalog_uuid = enterprise_customer.get('enterprise_customer_catalogs')[0]
-            customer_agreement.save()
 
-            logger.info('\nCustomerAgreement created on {} found: {}'.
-                        format(customer_agreement.created, customer_agreement.uuid))
+        # Data sync for running command multiple times:
+        # update the uuid with the latest that matches the slug:
+        customer_agreement.enterprise_customer_uuid = enterprise_customer.get('uuid')
+        customer_agreement.default_enterprise_catalog_uuid = enterprise_customer.get('enterprise_customer_catalogs')[0]
+        customer_agreement.save()
 
         return customer_agreement
 
-    def create_subscription_plan(self, customer_agreement, num_licenses=1, plan_type="Standard Paid"):
+    def create_subscription_plan(self, customer_agreement, num_licenses=1):
         """
         Creates a SubscriptionPlan for a customer.
         """
-        timestamp = now()
+        timestamp = localized_utcnow()
         new_plan = SubscriptionPlan(
             title='Seed Generated Plan from {} {}'.format(customer_agreement, timestamp),
             customer_agreement=customer_agreement,
-            enterprise_catalog_uuid = customer_agreement.default_enterprise_catalog_uuid,
+            enterprise_catalog_uuid=customer_agreement.default_enterprise_catalog_uuid,
             start_date=timestamp,
-            expiration_date=timestamp+timedelta(days=365),
+            expiration_date=timestamp + timedelta(days=365),
             is_active=True,
+            for_internal_use_only=True,
+            netsuite_product_id=0,
             salesforce_opportunity_id=123456789123456789,
-            plan_type=PlanType.objects.get(label=plan_type),
+            plan_type=PlanType.objects.get(label="Standard Paid"),
         )
         with transaction.atomic():
             new_plan.save()
@@ -121,14 +117,23 @@ class Command(BaseCommand):
         """
         Entry point for managment command execution.
         """
-        enterprise_customer_name = options['enterprise_customer_name']
+        enterprise_customer = None
+
+        enterprise_customer_slug = options['enterprise_customer_slug']
 
         # Fetch enterprise customer
-        self.enterprise_customer = self.get_enterprise_customer(
-            enterprise_customer_name,
+        enterprise_customer = self.get_enterprise_customer(
+            enterprise_customer_slug,
         )
-        logger.info(self.enterprise_customer)
-        customer_agreement = self.get_or_create_customer_agreement(self.enterprise_customer)
+        if not enterprise_customer:
+            logger.error('\nNo EnterpriseCustomer found with slug "{}".'.format(enterprise_customer_slug))
+            return
+
+        logger.info('\nEnterpriseCustomer found to apply new licenses for: {} {}.'
+                    .format(enterprise_customer['name'], enterprise_customer['uuid']))
+        customer_agreement = self.get_or_create_customer_agreement(enterprise_customer)
         new_plan = self.create_subscription_plan(customer_agreement, num_licenses=options['num_licenses'])
+        logger.info('\nCustomerAgreement created on {} used for this subscription plan: {}'.
+                    format(customer_agreement.created, customer_agreement.uuid))
         logger.info(new_plan)
         logger.info('Licenses created: {}'.format(License.objects.filter(subscription_plan=new_plan)))
