@@ -1,5 +1,5 @@
 """
-Management command for seeding devstack with licenses and subscriptions for development. 
+Management command for seeding devstack with licenses and subscriptions for development.
 """
 
 
@@ -8,10 +8,15 @@ from datetime import timedelta
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from license_manager.apps.subscriptions.utils import localized_utcnow
-from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan, CustomerAgreement, PlanType
+from license_manager.apps.api_client.enterprise import EnterpriseApiClient
+from license_manager.apps.subscriptions.models import (
+    CustomerAgreement,
+    License,
+    PlanType,
+    SubscriptionPlan,
+)
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 logger = logging.getLogger(__name__)
@@ -52,7 +57,7 @@ class Command(BaseCommand):
         try:
             enterprise_api_client = EnterpriseApiClient()
 
-            # Query endpoint by name instead of UUID:
+            # Query endpoint by slug for easy dev CLI experience
             endpoint = '{}?slug={}'.format(enterprise_api_client.enterprise_customer_endpoint,
                                            str(enterprise_customer_slug))
             response = enterprise_api_client.client.get(endpoint).json()
@@ -86,7 +91,6 @@ class Command(BaseCommand):
         customer_agreement.enterprise_customer_uuid = enterprise_customer.get('uuid')
         customer_agreement.default_enterprise_catalog_uuid = enterprise_customer.get('enterprise_customer_catalogs')[0]
         customer_agreement.save()
-
         return customer_agreement
 
     def create_subscription_plan(self, customer_agreement, num_licenses=1):
