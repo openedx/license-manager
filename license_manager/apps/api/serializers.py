@@ -2,6 +2,8 @@ from django.conf import settings
 from rest_framework import serializers
 
 from license_manager.apps.subscriptions.constants import (
+    ACTIVATED,
+    ASSIGNED,
     EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API,
 )
 from license_manager.apps.subscriptions.models import (
@@ -36,12 +38,29 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
         ]
 
     def get_licenses(self, obj):
-        return {
-            'total': obj.num_licenses,
-            'allocated': obj.num_allocated_licenses,
-        }
+        """
+        Returns the number of licenses that are currently
+        associated with the plan (obj), assigned or activated in the plan,
+        or revoked in the plan.
+
+        Returns a dictionary with keys 'activated', 'allocated', 'assigned',
+        'revoked', 'total', and 'unassigned'.  Note that 'total' does not include
+        revoked licenses in its count - see the docstring of `num_licenses()` for
+        more details.
+        """
+        count_by_status = obj.license_count_by_status()
+        count_by_status['total'] = obj.num_licenses
+        count_by_status['allocated'] = count_by_status[ASSIGNED] + count_by_status[ACTIVATED]
+        return count_by_status
 
     def get_revocations(self, obj):
+        """
+        If the revocation cap is enabled for the plan (obj),
+        returns a count of the number of revocations ever applied
+        and how many are remaining before the cap is reached.
+
+        If the revocation cap is not enabled for the plan, returns null.
+        """
         if not obj.is_revocation_cap_enabled:
             return None
 
