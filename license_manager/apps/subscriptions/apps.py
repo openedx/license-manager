@@ -1,9 +1,8 @@
-import analytics
+import logging
 
+import analytics
 from django.apps import AppConfig
 from django.conf import settings
-
-import logging
 
 
 logger = logging.getLogger(__name__)
@@ -14,7 +13,6 @@ class SubscriptionsConfig(AppConfig):
     default = False
 
     def ready(self):
-        if settings.SEGMENT_KEY:
+        if getattr(settings, 'SEGMENT_KEY', None):
             logger.debug("Found segment key, setting up")
             analytics.write_key = settings.SEGMENT_KEY
-

@@ -3,3 +3,5 @@ SOCIAL_AUTH_EDX_OAUTH2_SECRET = 'replace-me'
 SOCIAL_AUTH_EDX_OAUTH2_URL_ROOT = 'http://127.0.0.1:8000/oauth'
 BACKEND_SERVICE_EDX_OAUTH2_KEY = 'license_manager-backend-service-key'
 BACKEND_SERVICE_EDX_OAUTH2_SECRET = 'license_manager-backend-service-secret'
+
+SEGMENT_KEY = 'replace-me'
