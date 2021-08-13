@@ -300,6 +300,10 @@ def _assert_subscription_response_correct(response, subscription, expected_days_
     assert response['licenses'] == {
         'total': subscription.num_licenses,
         'allocated': subscription.num_allocated_licenses,
+        'assigned': subscription.assigned_licenses.count(),
+        'activated': subscription.activated_licenses.count(),
+        'revoked': subscription.revoked_licenses.count(),
+        'unassigned': subscription.unassigned_licenses.count(),
     }
     days_until_expiration = (subscription.expiration_date - datetime.date.today()).days
     assert response['days_until_expiration'] == days_until_expiration
@@ -1843,6 +1847,10 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         assert response.json()['licenses'] == {
             'total': len(allocated_licenses) + 1,
             'allocated': len(allocated_licenses),
+            'revoked': 0,
+            'activated': 1,
+            'assigned': len(assigned_licenses),
+            'unassigned': 1,
         }
 
         # Revoke the activated license and verify the counts change appropriately
@@ -1860,6 +1868,12 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             'total': len(allocated_licenses) + 1,
             # There should be 1 fewer allocated license now that we revoked the activated license
             'allocated': len(allocated_licenses) - 1,
+            # ...and we create a new, unassigned license on revocation, so there should
+            # now be 2 unassigned licenses in this plan
+            'unassigned': 2,
+            'revoked': 1,
+            'activated': 0,
+            'assigned': len(assigned_licenses),
         }
 
 

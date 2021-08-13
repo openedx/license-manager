@@ -247,7 +247,7 @@ class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, 
           expiration_date: "2021-06-30"
           is_active: true
           is_revocation_cap_enabled: false
-          licenses: {total: 1, allocated: 1}
+          licenses: {total: 1, allocated: 1, revoked: 4}
           revocations: null
           start_date: "2020-12-01"
           title: "Pied Piper - Plan A"

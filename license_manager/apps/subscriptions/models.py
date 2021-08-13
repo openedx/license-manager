@@ -428,6 +428,13 @@ class SubscriptionPlan(TimeStampedModel):
         return self.licenses.filter(status=ACTIVATED)
 
     @property
+    def revoked_licenses(self):
+        """
+        Returns all revoked licenses for this subscription plan.
+        """
+        return self.licenses.filter(status=REVOKED)
+
+    @property
     def num_licenses(self):
         """
         Gets the number of licenses associated with the subscription excluding revoked licenses.
@@ -488,6 +495,23 @@ class SubscriptionPlan(TimeStampedModel):
         except ValueError:
             # A value error indicates that there were no renewals
             return self.days_until_expiration
+
+    def license_count_by_status(self):
+        """
+        Returns a dictionary keyed by each license status
+        and valued by a count of the licenses with that status
+        in this plan.
+        """
+        count_by_status = {status_choice[0]: 0 for status_choice in LICENSE_STATUS_CHOICES}
+
+        queryset = self.licenses.all().values('status').annotate(
+            count=models.Count('status'),
+        ).order_by('status')
+
+        for item in queryset:
+            count_by_status[item['status']] = item['count']
+
+        return count_by_status
 
     def get_renewal(self):
         """
