@@ -33,7 +33,6 @@ def make_bound_subscription_form(
     salesforce_opportunity_id=get_random_salesforce_id(),
     num_licenses=0,
     is_active=False,
-    for_internal_use_only=False,
     plan_type=None,
     has_customer_agreement=True,
     customer_agreement_has_default_catalog=True,
@@ -57,7 +56,6 @@ def make_bound_subscription_form(
         'salesforce_opportunity_id': salesforce_opportunity_id,
         'num_licenses': num_licenses,
         'is_active': is_active,
-        'for_internal_use_only': for_internal_use_only,
         'customer_agreement': str(customer_agreement.uuid) if has_customer_agreement else None,
         'change_reason': change_reason
     }

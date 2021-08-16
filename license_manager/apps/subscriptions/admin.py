@@ -124,7 +124,6 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'revoke_max_percentage',
         'is_revocation_cap_enabled',
         'is_active',
-        'for_internal_use_only',
         'change_reason',
         'can_freeze_unused_licenses',
     )
@@ -138,11 +137,9 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'get_customer_agreement_link',
         'enterprise_customer_uuid',
         'enterprise_catalog_uuid',
-        'for_internal_use_only',
     )
     list_filter = (
         'is_active',
-        'for_internal_use_only',
         'can_freeze_unused_licenses',
     )
     search_fields = (

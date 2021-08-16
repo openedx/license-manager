@@ -61,7 +61,7 @@ class SubscriptionPlanForm(forms.ModelForm):
 
         form_num_licenses = self.cleaned_data.get('num_licenses', 0)
         # Only internal use subscription plans to have more than the maximum number of licenses
-        if form_num_licenses > MAX_NUM_LICENSES and not self.instance.for_internal_use_only:
+        if form_num_licenses > MAX_NUM_LICENSES and not self.instance.plan_type.internal_use_only:
             self.add_error(
                 'num_licenses',
                 f'Non-test subscriptions may not have more than {MAX_NUM_LICENSES} licenses',

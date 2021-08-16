@@ -21,10 +21,11 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        breakpoint()
         # Filter any subscriptions that have expired or are FIUO
         customer_subs = SubscriptionPlan.objects.filter(
             expiration_processed=False,
-            for_internal_use_only=False,
+            plan_type__internal_use_only=False,
         )
         distinct_catalog_uuids = [
             str(uuid) for uuid in customer_subs.values_list('enterprise_catalog_uuid', flat=True).distinct()

@@ -103,7 +103,6 @@ def renew_subscription(subscription_plan_renewal):
             plan_type_id=subscription_plan_renewal.prior_subscription_plan.plan_type_id,
             is_revocation_cap_enabled=subscription_plan_renewal.prior_subscription_plan.is_revocation_cap_enabled,
             revoke_max_percentage=subscription_plan_renewal.prior_subscription_plan.revoke_max_percentage,
-            for_internal_use_only=subscription_plan_renewal.prior_subscription_plan.for_internal_use_only,
         )
 
     # When creating SubscriptionPlans in Django admin, we create enough

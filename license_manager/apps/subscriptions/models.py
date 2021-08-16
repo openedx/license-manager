@@ -362,13 +362,6 @@ class SubscriptionPlan(TimeStampedModel):
         )
     )
 
-    for_internal_use_only = models.BooleanField(
-        default=False,
-        help_text=_(
-            "Whether this SubscriptionPlan is only for internal use (e.g. a test Subscription record)."
-        )
-    )
-
     plan_type = models.ForeignKey(
         PlanType,
         on_delete=models.DO_NOTHING,
@@ -565,11 +558,9 @@ class SubscriptionPlan(TimeStampedModel):
         """
         return (
             "<SubscriptionPlan with Title '{title}' "
-            "for EnterpriseCustomer '{enterprise_customer_uuid}'"
-            "{internal_use}>".format(
+            "for EnterpriseCustomer '{enterprise_customer_uuid}'".format(
                 title=self.title,
                 enterprise_customer_uuid=self.enterprise_customer_uuid,
-                internal_use=' (for internal use only)' if self.for_internal_use_only else '',
             )
         )
 

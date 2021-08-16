@@ -43,9 +43,9 @@ class TestSubscriptionPlanForm(TestCase):
         """
         Test to check validation conditions for the num_licenses field
         """
-        plan_type = PlanTypeFactory.create()
+        plan_type = PlanTypeFactory.create(internal_use_only=for_internal_use)
         form = make_bound_subscription_form(
-            num_licenses=num_licenses, for_internal_use_only=for_internal_use, plan_type=plan_type)
+            num_licenses=num_licenses, plan_type=plan_type)
         assert form.is_valid() is is_valid
 
     @ddt.data(
@@ -147,6 +147,7 @@ class TestSubscriptionPlanRenewalForm(TestCase):
     """
     Unit tests for the SubscriptionPlanRenewalForm
     """
+
     def test_valid_start_and_expiration_dates(self):
         prior_subscription_plan = SubscriptionPlanFactory.create()
         form = make_bound_subscription_plan_renewal_form(

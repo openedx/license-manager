@@ -88,8 +88,9 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
     # By default, all the subscription plans created are Test type,
     # though this can be overridden to test others
-    plan_type_id = 4
+    # plan_type_id = 4
     can_freeze_unused_licenses = False
+    plan_type = factory.SubFactory(PlanTypeFactory)
 
 
 class SubscriptionPlanRenewalFactory(factory.django.DjangoModelFactory):
