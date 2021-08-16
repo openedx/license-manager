@@ -21,7 +21,6 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        breakpoint()
         # Filter any subscriptions that have expired or are FIUO
         customer_subs = SubscriptionPlan.objects.filter(
             expiration_processed=False,
