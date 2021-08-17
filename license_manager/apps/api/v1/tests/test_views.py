@@ -43,6 +43,7 @@ from license_manager.apps.subscriptions.models import (
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
+    PlanTypeFactory,
     SubscriptionPlanFactory,
     SubscriptionPlanRenewalFactory,
     UserFactory,
@@ -2948,6 +2949,9 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
     @mock.patch('license_manager.apps.api.v1.views.send_onboarding_email_task.delay')
     def test_activating_renewed_assigned_license(self, mock_onboarding_email_task):
         yesterday = localized_utcnow().date() - datetime.timedelta(days=1)
+
+        # so we don't end up with two different plan_type values used for the original and new plan
+        plan_type = PlanTypeFactory()
         # create an expired plan and a current plan
         subscription_plan_original = SubscriptionPlanFactory.create(
             customer_agreement=self.customer_agreement,
@@ -2955,11 +2959,13 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             is_active=True,
             start_date=localized_utcnow().date() - datetime.timedelta(days=366),
             expiration_date=yesterday,
+            plan_type=plan_type,
         )
         subscription_plan_renewed = SubscriptionPlanFactory.create(
             customer_agreement=self.customer_agreement,
             enterprise_catalog_uuid=self.enterprise_catalog_uuid,
             is_active=True,
+            plan_type=plan_type,
         )
 
         self._assign_learner_roles(
