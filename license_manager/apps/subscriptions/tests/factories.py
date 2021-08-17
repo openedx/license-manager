@@ -8,12 +8,14 @@ from faker import Faker
 
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions.constants import (
+    ONBOARDING_EMAIL_TEMPLATE,
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
 )
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
+    PlanEmailTemplates,
     PlanType,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
@@ -65,6 +67,17 @@ class PlanTypeFactory(factory.django.DjangoModelFactory):
         model = PlanType
 
 
+class PlanEmailTemplatesFactory(factory.django.DjangoModelFactory):
+    """
+    Test factory for generating PlanEmailTemplates
+    """
+    class Meta:
+        model = PlanEmailTemplates
+
+    plan_type = factory.SubFactory(PlanTypeFactory)
+    template_type = ONBOARDING_EMAIL_TEMPLATE
+
+
 class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     """
     Test factory for the `SubscriptionPlan` model.
@@ -86,9 +99,6 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     enterprise_catalog_uuid = factory.LazyFunction(uuid4)
     netsuite_product_id = factory.Faker('random_int')
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
-    # By default, all the subscription plans created are Test type,
-    # though this can be overridden to test others
-    # plan_type_id = 4
     can_freeze_unused_licenses = False
     plan_type = factory.SubFactory(PlanTypeFactory)
 

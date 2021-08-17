@@ -6,6 +6,7 @@ from django.test import TestCase
 
 from license_manager.apps.subscriptions import constants, emails
 from license_manager.apps.subscriptions.tests.factories import (
+    PlanEmailTemplatesFactory,
     SubscriptionPlanFactory,
 )
 from license_manager.apps.subscriptions.tests.utils import make_test_email_data
@@ -38,6 +39,13 @@ class EmailTests(TestCase):
         """
         Tests that activation emails are correctly sent.
         """
+        email_template = PlanEmailTemplatesFactory(
+            plan_type=self.subscription.plan_type,
+            subject_line=LICENSE_ACTIVATION_EMAIL_SUBJECT,
+            template_type='activation',
+            plaintext_template='Activate <abc><def>',
+            html_template='<abc><def>',
+        )
         emails.send_activation_emails(
             self.custom_template_text,
             [license for license in self.licenses if license.status == constants.ASSIGNED],
@@ -53,13 +61,20 @@ class EmailTests(TestCase):
         )
         # Verify the contents of the first message
         message = mail.outbox[0]
-        self.assertEqual(message.subject, LICENSE_ACTIVATION_EMAIL_SUBJECT)
+        self.assertEqual(message.subject, email_template.subject_line)
         self.assertTrue('Activate' in message.body)
 
     def test_send_reminder_email(self):
         """
         Tests that reminder emails are correctly sent.
         """
+        email_template = PlanEmailTemplatesFactory(
+            plan_type=self.subscription.plan_type,
+            subject_line=LICENSE_REMINDER_EMAIL_SUBJECT,
+            template_type='reminder',
+            plaintext_template='Remind <abc><def>',
+            html_template='<abc><def>',
+        )
         lic = self.licenses[0]
         emails.send_activation_emails(
             self.custom_template_text,
@@ -74,7 +89,7 @@ class EmailTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         # Verify the contents of the first message
         message = mail.outbox[0]
-        self.assertEqual(message.subject, LICENSE_REMINDER_EMAIL_SUBJECT)
+        self.assertEqual(message.subject, email_template.subject_line)
         self.assertFalse('Activate' in message.body)
 
     @mock.patch('license_manager.apps.subscriptions.emails.EnterpriseApiClient')
@@ -82,7 +97,12 @@ class EmailTests(TestCase):
         """
         Tests that onboarding emails are correctly sent.
         """
+        email_template = PlanEmailTemplatesFactory(
+            plan_type=self.subscription.plan_type,
+            subject_line=ONBOARDING_EMAIL_SUBJECT,
+            template_type='onboarding',
+        )
         emails.send_onboarding_email(self.enterprise_uuid, self.user_email, self.subscription_plan_type)
         mock_enterprise_api_client.return_value.get_enterprise_customer_data.assert_called_with(self.enterprise_uuid)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, ONBOARDING_EMAIL_SUBJECT)
+        self.assertEqual(mail.outbox[0].subject, email_template.subject_line)
