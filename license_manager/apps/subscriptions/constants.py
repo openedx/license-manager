@@ -89,6 +89,8 @@ EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API = 'expose_license_activation_key_over_api
 # Default sender alias for emails
 DEFAULT_EMAIL_SENDER_ALIAS = 'edX Support Team'
 
+# Error messages
+BULK_ENROLL_TOO_MANY_ENROLLMENTS = 'Too many provided enrollments, please try a smaller request.'
 
 # Deprecated Constants #
 DEACTIVATED = 'deactivated'  # Deprecated for REVOKED

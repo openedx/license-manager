@@ -4,6 +4,7 @@ from collections import OrderedDict
 from uuid import uuid4
 
 from celery import chain
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, transaction
@@ -1055,6 +1056,13 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         param_validation = self._validate_request_params()
         if param_validation:
             return Response(param_validation, status=status.HTTP_400_BAD_REQUEST)
+
+        if settings.BULK_ENROLL_REQUEST_LIMIT < len(self.requested_course_run_keys) * len(self.requested_user_emails):
+            logger.error(constants.BULK_ENROLL_TOO_MANY_ENROLLMENTS)
+            return Response(
+                constants.BULK_ENROLL_TOO_MANY_ENROLLMENTS,
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         results = {}
         customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
