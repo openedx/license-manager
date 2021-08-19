@@ -3,6 +3,8 @@
 Tests for the Subscription and License V1 API view sets.
 """
 import datetime
+import random
+from math import ceil, sqrt
 from unittest import mock
 from uuid import uuid4
 
@@ -2584,6 +2586,22 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         self.api_client.post(url, payload2)
 
         assert mock_contains_content.call_count == 2
+
+    def test_bulk_enroll_too_many_enrollments(self):
+        # Unnecessary math time!
+        enrollment_split = ceil(sqrt(settings.BULK_ENROLL_REQUEST_LIMIT)) + 1
+
+        self._assign_multi_learner_roles()
+
+        payload = {
+            'emails': random.sample(range(1, 100), enrollment_split),
+            'course_run_keys': random.sample(range(1, 100), enrollment_split),
+            'notify': True,
+        }
+        url = self._get_url_with_params()
+        response = self.api_client.post(url, payload)
+        assert response.status_code == 400
+        assert response.json() == constants.BULK_ENROLL_TOO_MANY_ENROLLMENTS
 
 
 @ddt.ddt
