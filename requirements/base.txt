@@ -113,10 +113,8 @@ drf-jwt==1.19.0
     #   edx-drf-extensions
 drf-nested-routers==0.93.3
     # via -r requirements/base.in
-edx-auth-backends==3.4.0
-    # via
-    #   -c requirements/common_constraints.txt
-    #   -r requirements/base.in
+edx-auth-backends==4.0.0
+    # via -r requirements/base.in
 edx-celeryutils==1.1.0
     # via -r requirements/base.in
 edx-django-utils==4.4.0
@@ -124,9 +122,8 @@ edx-django-utils==4.4.0
     #   -r requirements/base.in
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==6.6.0
+edx-drf-extensions==7.0.1
     # via
-    #   -c requirements/common_constraints.txt
     #   -r requirements/base.in
     #   edx-rbac
 edx-opaque-keys==2.2.2
@@ -182,11 +179,11 @@ pycryptodomex==3.10.1
     # via pyjwkest
 pyjwkest==1.4.2
     # via edx-drf-extensions
-pyjwt[crypto]==1.7.1
+pyjwt[crypto]==2.1.0
     # via
-    #   -c requirements/common_constraints.txt
     #   drf-jwt
     #   edx-auth-backends
+    #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
 pymongo==3.12.0
@@ -238,16 +235,14 @@ six==1.16.0
     #   pyjwkest
     #   python-dateutil
     #   social-auth-app-django
-    #   social-auth-core
 slumber==0.7.1
     # via edx-rest-api-client
 social-auth-app-django==4.0.0
     # via
     #   -c requirements/common_constraints.txt
     #   edx-auth-backends
-social-auth-core==4.0.2
+social-auth-core==4.1.0
     # via
-    #   -c requirements/common_constraints.txt
     #   edx-auth-backends
     #   social-auth-app-django
 sqlparse==0.4.1

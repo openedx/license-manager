@@ -212,9 +212,8 @@ drf-nested-routers==0.93.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-auth-backends==3.4.0
+edx-auth-backends==4.0.0
     # via
-    #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
 edx-celeryutils==1.1.0
@@ -227,9 +226,8 @@ edx-django-utils==4.4.0
     #   -r requirements/test.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==6.6.0
+edx-drf-extensions==7.0.1
     # via
-    #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-rbac
@@ -398,13 +396,13 @@ pyjwkest==1.4.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-pyjwt[crypto]==1.7.1
+pyjwt[crypto]==2.1.0
     # via
-    #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   drf-jwt
     #   edx-auth-backends
+    #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
 pylint==2.8.3
@@ -544,7 +542,6 @@ six==1.16.0
     #   pyjwkest
     #   python-dateutil
     #   social-auth-app-django
-    #   social-auth-core
 slumber==0.7.1
     # via
     #   -r requirements/quality.txt
@@ -560,9 +557,8 @@ social-auth-app-django==4.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.0.2
+social-auth-core==4.1.0
     # via
-    #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
