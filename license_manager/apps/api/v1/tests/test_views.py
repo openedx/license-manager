@@ -312,6 +312,7 @@ def _assert_subscription_response_correct(response, subscription, expected_days_
     # If `expected_days_until_renewal_expiration` is None, there is no renewal
     assert response['days_until_expiration_including_renewals'] == (
         expected_days_until_renewal_expiration or days_until_expiration)
+    assert response['prior_renewals'] == subscription.prior_renewals
 
 
 def _assert_license_response_correct(response, subscription_license):
