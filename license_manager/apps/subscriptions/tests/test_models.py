@@ -16,6 +16,7 @@ from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
     SubscriptionPlanFactory,
+    SubscriptionPlanRenewalFactory,
 )
 from license_manager.apps.subscriptions.utils import (
     localized_datetime_from_date,
@@ -45,6 +46,19 @@ class SubscriptionsModelTests(TestCase):
             self.subscription_plan.enterprise_catalog_uuid,
             content_ids,
         )
+
+    def test_prior_renewals(self):
+        renewed_subscription_plan_1 = SubscriptionPlanFactory.create()
+        renewed_subscription_plan_2 = SubscriptionPlanFactory.create()
+        renewal_1 = SubscriptionPlanRenewalFactory.create(
+            prior_subscription_plan=self.subscription_plan,
+            renewed_subscription_plan=renewed_subscription_plan_1
+        )
+        renewal_2 = SubscriptionPlanRenewalFactory.create(
+            prior_subscription_plan=renewed_subscription_plan_1,
+            renewed_subscription_plan=renewed_subscription_plan_2
+        )
+        self.assertEqual(renewed_subscription_plan_2.prior_renewals, [renewal_1, renewal_2])
 
 
 class LicenseModelTests(TestCase):

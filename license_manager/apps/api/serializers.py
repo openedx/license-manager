@@ -10,7 +10,31 @@ from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
     SubscriptionPlan,
+    SubscriptionPlanRenewal,
 )
+
+
+class SubscriptionPlanRenewalSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the `SubscriptionPlanRenewal` model.
+    """
+    prior_subscription_plan_start_date = serializers.SerializerMethodField()
+    renewed_subscription_plan_start_date = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SubscriptionPlanRenewal
+        fields = [
+            'prior_subscription_plan_id',
+            'prior_subscription_plan_start_date',
+            'renewed_subscription_plan_id',
+            'renewed_subscription_plan_start_date',
+        ]
+
+    def get_prior_subscription_plan_start_date(self, obj):
+        return obj.prior_subscription_plan.start_date
+
+    def get_renewed_subscription_plan_start_date(self, obj):
+        return obj.renewed_subscription_plan.start_date
 
 
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
@@ -19,6 +43,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
     """
     licenses = serializers.SerializerMethodField()
     revocations = serializers.SerializerMethodField()
+    prior_renewals = SubscriptionPlanRenewalSerializer(many=True)
 
     class Meta:
         model = SubscriptionPlan
@@ -35,6 +60,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'revocations',
             'days_until_expiration',
             'days_until_expiration_including_renewals',
+            'prior_renewals'
         ]
 
     def get_licenses(self, obj):

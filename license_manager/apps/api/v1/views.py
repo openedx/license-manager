@@ -253,7 +253,15 @@ class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, 
           revocations: null
           start_date: "2020-12-01"
           title: "Pied Piper - Plan A"
-          uuid: "fe9cc40e-24a7-47a0-b800-9a11288b3ec2"
+          uuid: "fe9cc40e-24a7-47a0-b800-9a11288b3ec2",
+          prior_renewals: [
+            {
+                "prior_subscription_plan_id": "14c80170-737b-42c5-bbce-007f6ec0a557",
+                "prior_subscription_plan_start_date": "2020-10-31",
+                "renewed_subscription_plan_id": "fe9cc40e-24a7-47a0-b800-9a11288b3ec2",
+                "renewed_subscription_plan_start_date": "2020-12-01"
+            }
+          ]
         }
         user_email: "edx@example.com"
         uuid: "4e03efb7-b4ea-4a52-9cfc-11519920a40a"

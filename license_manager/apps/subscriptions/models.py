@@ -464,6 +464,20 @@ class SubscriptionPlan(TimeStampedModel):
         return self.licenses.filter(status__in=(ACTIVATED, ASSIGNED)).count()
 
     @property
+    def prior_renewals(self):
+        """
+        Returns all of the prior renewals associated with a subscription ordered from oldest to most recent
+        """
+        prior_renewals = []
+        origin_renewal = self.get_origin_renewal()
+
+        while origin_renewal:
+            prior_renewals.append(origin_renewal)
+            origin_renewal = origin_renewal.prior_subscription_plan.get_origin_renewal()
+
+        return prior_renewals[::-1]
+
+    @property
     def future_renewals(self):
         """
         Returns all of the future renewals associated with a subscription.
@@ -519,6 +533,15 @@ class SubscriptionPlan(TimeStampedModel):
         """
         try:
             return self.renewal  # pylint: disable=no-member
+        except SubscriptionPlanRenewal.DoesNotExist:
+            return None
+
+    def get_origin_renewal(self):
+        """
+        Helper to safely return the origin renewal associated with the subscription, or None if one does not exist.
+        """
+        try:
+            return self.origin_renewal  # pylint: disable=no-member
         except SubscriptionPlanRenewal.DoesNotExist:
             return None
 
