@@ -77,7 +77,7 @@ def get_context_from_subscription_plan_by_activation_key(request):
 
     Returns: The ``enterprise_customer_uuid`` associated with the user's license.
     """
-    today = localized_utcnow().date()
+    today = localized_utcnow()
     user_license = get_object_or_404(
         License,
         activation_key=get_activation_key_from_request(request),

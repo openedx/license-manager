@@ -12,6 +12,10 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
+from license_manager.apps.subscriptions.utils import (
+    hours_until,
+    localized_utcnow,
+)
 
 
 class SubscriptionPlanRenewalSerializer(serializers.ModelSerializer):
@@ -44,6 +48,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
     licenses = serializers.SerializerMethodField()
     revocations = serializers.SerializerMethodField()
     prior_renewals = SubscriptionPlanRenewalSerializer(many=True)
+    is_locked_for_renewal_processing = serializers.SerializerMethodField()
 
     class Meta:
         model = SubscriptionPlan
@@ -61,6 +66,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'days_until_expiration',
             'days_until_expiration_including_renewals',
             'prior_renewals'
+            'is_locked_for_renewal_processing',
         ]
 
     def get_licenses(self, obj):
@@ -94,6 +100,20 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'applied': obj.num_revocations_applied,
             'remaining': obj.num_revocations_remaining,
         }
+
+    def get_is_locked_for_renewal_processing(self, obj):
+        """
+        If there is an existing renewal tied to the plan (obj), returns whether it is within
+        the renewal processing window.
+
+        If there is no existing renewal, returns null.
+        """
+        subscription_plan_renewal = obj.get_renewal()
+        if not subscription_plan_renewal:
+            return None
+
+        is_plan_locked_for_renewal = hours_until(subscription_plan_renewal.effective_date) < settings.SUBSCRIPTION_PLAN_RENEWAL_LOCK_PERIOD_HOURS
+        return is_plan_locked_for_renewal
 
 
 class CustomerAgreementSerializer(serializers.ModelSerializer):

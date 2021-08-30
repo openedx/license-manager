@@ -265,9 +265,9 @@ class SubscriptionPlan(TimeStampedModel):
         editable=False
     )
 
-    start_date = models.DateField()
+    start_date = models.DateTimeField()
 
-    expiration_date = models.DateField()
+    expiration_date = models.DateTimeField()
 
     expiration_processed = models.BooleanField(
         default=False
@@ -511,7 +511,9 @@ class SubscriptionPlan(TimeStampedModel):
         """
         renewal_expiration_dates = [renewal.renewed_expiration_date for renewal in self.future_renewals]
         try:
-            return days_until(max(renewal_expiration_dates))
+            oof = days_until(max(renewal_expiration_dates))
+            print('OOOOOF!!!', oof)
+            return oof
         except ValueError:
             # A value error indicates that there were no renewals
             return self.days_until_expiration
@@ -642,13 +644,13 @@ class SubscriptionPlanRenewal(TimeStampedModel):
         help_text=_("Number of licenses to renew the linked subscription for."),
     )
 
-    effective_date = models.DateField(
+    effective_date = models.DateTimeField(
         blank=False,
         null=False,
         help_text=_("The date that the subscription renewal will take place on."),
     )
 
-    renewed_expiration_date = models.DateField(
+    renewed_expiration_date = models.DateTimeField(
         blank=False,
         null=False,
         help_text=_("The date that the renewed subscription should expire on."),
@@ -989,7 +991,7 @@ class License(TimeStampedModel):
         if active_plans_only:
             kwargs['subscription_plan__is_active'] = True
         if current_plans_only:
-            today = localized_utcnow().date()
+            today = localized_utcnow()
             kwargs['subscription_plan__start_date__lte'] = today
             kwargs['subscription_plan__expiration_date__gte'] = today
 
@@ -1019,7 +1021,7 @@ class License(TimeStampedModel):
         kwargs.update({
             'user_email__isnull': False,
             date_field_is_null: False,
-            date_field: localized_utcnow().date() - models.F(duration_before_purge_field),
+            date_field: localized_utcnow() - models.F(duration_before_purge_field),
         })
 
         return License.objects.filter(**kwargs).select_related(

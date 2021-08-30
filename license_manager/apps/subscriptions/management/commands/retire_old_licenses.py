@@ -27,7 +27,7 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        ready_for_retirement_date = localized_utcnow().date() - timedelta(DAYS_TO_RETIRE)
+        ready_for_retirement_date = localized_utcnow() - timedelta(DAYS_TO_RETIRE)
 
         expired_licenses_for_retirement = License.get_licenses_exceeding_purge_duration(
             'subscription_plan__expiration_date',

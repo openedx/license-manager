@@ -17,6 +17,7 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 class SubscriptionPlanForm(forms.ModelForm):
@@ -115,7 +116,7 @@ class SubscriptionPlanRenewalForm(forms.ModelForm):
         form_effective_date = self.cleaned_data.get('effective_date')
         form_renewed_expiration_date = self.cleaned_data.get('renewed_expiration_date')
 
-        if form_effective_date < datetime.today().date():
+        if form_effective_date < localized_utcnow():
             self.add_error(
                 'effective_date',
                 'A subscription renewal can not be scheduled to become effective in the past.',

@@ -36,8 +36,17 @@ def days_until(end_date):
     """
     Helper to return the number of days until the end date.
     """
-    diff = end_date - date.today()
+    diff = end_date - localized_utcnow()
     return diff.days
+
+def hours_until(effective_date):
+    """
+    Helper to return the number of hours until the effective date.
+    """
+    duration_until_effective_date =  effective_date - localized_utcnow()
+    duration_until_effective_date_s = duration_until_effective_date.total_seconds()
+    duration_until_effective_date_h = divmod(duration_until_effective_date_s, 3600)[0]  # Seconds in an hour = 3600
+    return duration_until_effective_date_h
 
 
 def chunks(a_list, chunk_size):

@@ -19,6 +19,7 @@ from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
     get_random_salesforce_id,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 faker = FakerFactory.create()
@@ -26,8 +27,8 @@ faker = FakerFactory.create()
 
 def make_bound_subscription_form(
     title=faker.pystr(min_chars=1, max_chars=127),
-    start_date=date.today(),
-    expiration_date=date.today() + timedelta(days=366),
+    start_date=localized_utcnow(),
+    expiration_date=localized_utcnow() + timedelta(days=366),
     enterprise_catalog_uuid=faker.uuid4(),
     netsuite_product_id=faker.random_int(),
     salesforce_opportunity_id=get_random_salesforce_id(),
@@ -132,7 +133,8 @@ def assert_date_fields_correct(licenses, date_field_names, should_be_updated):
         license_obj.refresh_from_db()
         if should_be_updated:
             for field_name in date_field_names:
-                assert getattr(license_obj, field_name).date() == date.today()
+                print('assertion!!!', getattr(license_obj, field_name), localized_utcnow())
+                assert getattr(license_obj, field_name) == localized_utcnow()
         else:
             for field_name in date_field_names:
                 assert getattr(license_obj, field_name) is None
