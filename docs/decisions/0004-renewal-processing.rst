@@ -4,8 +4,10 @@
 Status
 ======
 
-Proposed May 2021
-Accepted June 2021
+* Proposed May 2021
+* Accepted June 2021
+* Updated to match reality August 2021
+(This is all implemented and in production circa August 2021)
 
 Context
 =======
@@ -95,15 +97,24 @@ Which licenses in the original plan should be "copied" to new licenses in the fu
   is processed (e.g. was it "assigned" or "activated" before the renewal happened?).
   It will also let us directly reference an original license from a future license, or the converse.
 
-Expire original plans and mark its licenses as transferred
-----------------------------------------------------------
+The original licenses retain their status
+-----------------------------------------
 
-At some time after the future plan becomes effective, the original plan should be marked as expired,
-probably by a cron job.  "Marked as expired" means that the original plan's ``expiration_processed`` field
-is set to ``True``.
-We'll introduce a process to routinely look for expired plans associated with a renewal and do the following:
+With the changes documented above, licensed learners may be in a state where they have
+multiple licenses assigned to them - perhaps one in a current active plan, and another
+in a "future" subscription plan that is active but not current - that is,
+the future plan's ``start_date`` is in the future.
 
-* Set the original plan's expiration date
+We'll modify the ``LearnerLicensesViewSet.base_queryset()`` method to lookup only
+licenses for the requesting user who's plans are both active (``is_active=True``)
+and current (the current date is within the plan's (start, expiration) date range) by default.
+We'll introduce ``current_plans_only`` and ``active_plans_only`` optional query params
+which allow the requester to disable that default behavior, so that licenses with
+inactive or non-current plans are included in the response payload.
+
+This modification also has the benefit of preventing the inclusion of certain licenses,
+whose subscription plan is still marked as active but has an expiration date is in the past,
+in the response payload this endpoint.
 
 No backfilling of data
 ----------------------
