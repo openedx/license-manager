@@ -133,7 +133,6 @@ def assert_date_fields_correct(licenses, date_field_names, should_be_updated):
         license_obj.refresh_from_db()
         if should_be_updated:
             for field_name in date_field_names:
-                print('assertion!!!', getattr(license_obj, field_name), localized_utcnow())
                 assert getattr(license_obj, field_name) == localized_utcnow()
         else:
             for field_name in date_field_names:

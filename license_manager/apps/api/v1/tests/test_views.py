@@ -301,8 +301,7 @@ def _assert_subscription_response_correct(response, subscription, expected_days_
     days_until_expiration = (subscription.expiration_date - localized_utcnow()).days
     assert response['days_until_expiration'] == days_until_expiration
 
-    renewal_expiration_dates = [_iso_8601_format(renewal.renewed_expiration_date) for renewal in subscription.future_renewals]
-    print('herro?!', localized_utcnow(), renewal_expiration_dates)
+    # renewal_expiration_dates = [_iso_8601_format(renewal.renewed_expiration_date) for renewal in subscription.future_renewals]
 
     # If `expected_days_until_renewal_expiration` is None, there is no renewal
     assert response['days_until_expiration_including_renewals'] == (
