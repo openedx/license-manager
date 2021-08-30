@@ -36,7 +36,7 @@ from license_manager.apps.api.tasks import (
     send_reminder_email_task,
 )
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
-from license_manager.apps.subscriptions import constants
+from license_manager.apps.subscriptions import constants, event_utils
 from license_manager.apps.subscriptions.api import revoke_license
 from license_manager.apps.subscriptions.exceptions import (
     LicenseNotFoundError,
@@ -641,6 +641,11 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             unassigned_licenses,
             ['user_email', 'status', 'activation_key', 'assigned_date', 'last_remind_date'],
         )
+        for newly_assigned in unassigned_licenses:
+            event_properties = event_utils.get_license_tracking_properties(newly_assigned)
+            event_utils.track_event(event_properties['user_id'],
+                                    'edx.server.license-manager.license-lifecycle.assigned',
+                                    event_properties)
 
     def _link_and_notify_assigned_emails(self, request_data, subscription_plan, user_emails):
         """
@@ -1256,6 +1261,11 @@ class LicenseActivationView(LicenseBaseView):
             user_license.activation_date = localized_utcnow()
             user_license.lms_user_id = self.lms_user_id
             user_license.save()
+
+            event_properties = event_utils.get_license_tracking_properties(user_license)
+            event_utils.track_event(event_properties['user_id'],
+                                    'edx.server.license-manager.license-lifecycle.activated',
+                                    event_properties)
 
             # Following successful license activation, send learner an email
             # to help them get started using the Enterprise Learner Portal.

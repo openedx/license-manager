@@ -5,6 +5,8 @@ import logging
 
 from django.db import transaction
 
+from license_manager.apps.subscriptions import event_utils
+
 from ..api.tasks import (
     revoke_course_enrollments_for_user_task,
     send_revocation_cap_notification_email_task,
@@ -161,7 +163,6 @@ def _renew_all_licenses(original_licenses, future_plan):
         future_licenses.append(future_license)
 
         original_license.renewed_to = future_license
-
     License.bulk_update(
         future_licenses,
         ['status', 'user_email', 'lms_user_id', 'activation_date', 'assigned_date'],
@@ -170,6 +171,11 @@ def _renew_all_licenses(original_licenses, future_plan):
         original_licenses,
         ['renewed_to'],
     )
+    for future_license in future_licenses:
+        event_properties = event_utils.get_license_tracking_properties(future_license)
+        event_utils.track_event(event_properties['user_id'],
+                                'edx.server.license-manager.license-lifecycle.renewed',
+                                event_properties)
 
 
 def _original_licenses_to_copy(original_plan, license_types_to_copy):
@@ -234,7 +240,7 @@ def expire_plan_post_renewal(subscription_plan):
         )
 
     subscription_plan.expiration_processed = True
-    subscription_plan.save()
+    subscription_plan.save(update_fields=['expiration_processed'])
 
 
 def delete_unused_licenses_post_freeze(subscription_plan):

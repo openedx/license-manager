@@ -9,6 +9,10 @@ from license_manager.apps.subscriptions.constants import (
     REVOKED,
     UNASSIGNED,
 )
+from license_manager.apps.subscriptions.event_utils import (
+    get_license_tracking_properties,
+    track_event,
+)
 from license_manager.apps.subscriptions.models import License
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
@@ -34,6 +38,12 @@ class Command(BaseCommand):
             expired_license.status = REVOKED
             expired_license.revoked_date = localized_utcnow()
             expired_license.save()
+
+            event_properties = get_license_tracking_properties(expired_license)
+            track_event(event_properties['user_id'],
+                        'edx.server.license-manager.license-lifecycle.revoked',
+                        event_properties)
+
             # Clear historical pii after removing pii from the license itself
             expired_license.clear_historical_pii()
         expired_license_uuids = sorted([expired_license.uuid for expired_license in expired_licenses_for_retirement])

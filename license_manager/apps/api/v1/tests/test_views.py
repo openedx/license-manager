@@ -1004,6 +1004,26 @@ class LicenseViewSetActionMixin:
         assert response.status_code == status.HTTP_403_FORBIDDEN
         mock_task.assert_not_called()
 
+    def _create_revoked_license(self):
+        """
+        Helper to create a revoked license
+        """
+        original_timestamp = localized_utcnow() - datetime.timedelta(days=10)
+        unrevoke_timestamp = localized_utcnow()
+        original_activation_key = uuid4()
+        revoked_license = LicenseFactory.create(
+            subscription_plan=self.subscription_plan,
+            user_email=self.test_email,
+            status=constants.REVOKED,
+            lms_user_id=1,
+            last_remind_date=original_timestamp,
+            activation_date=original_timestamp,
+            assigned_date=original_timestamp,
+            revoked_date=original_timestamp,
+            activation_key=original_activation_key,
+        )
+        return revoked_license, unrevoke_timestamp, original_activation_key
+
 
 @ddt.ddt
 class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
@@ -1252,20 +1272,7 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         an existing unassigned license in the plan should be deleted as part
         of the assignment action.
         """
-        original_timestamp = localized_utcnow() - datetime.timedelta(days=10)
-        unrevoke_timestamp = localized_utcnow()
-        original_activation_key = uuid4()
-        revoked_license = LicenseFactory.create(
-            subscription_plan=self.subscription_plan,
-            user_email=self.test_email,
-            status=constants.REVOKED,
-            lms_user_id=1,
-            last_remind_date=original_timestamp,
-            activation_date=original_timestamp,
-            assigned_date=original_timestamp,
-            revoked_date=original_timestamp,
-            activation_key=original_activation_key,
-        )
+        revoked_license, unrevoke_timestamp, original_activation_key = self._create_revoked_license()
 
         # Create a batch of unassigned licenses for this plan - we should
         # see the count of these decrease by 1 after assignment.

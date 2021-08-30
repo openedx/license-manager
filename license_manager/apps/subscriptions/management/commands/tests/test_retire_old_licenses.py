@@ -1,3 +1,4 @@
+from unittest import mock
 from datetime import datetime, timedelta
 
 from django.core.management import call_command
@@ -118,7 +119,8 @@ class RetireOldLicensesCommandTests(TestCase):
             subscription_plan=cls.expired_subscription_plan,
         )
 
-    def test_retire_old_licenses(self):
+    @mock.patch('license_manager.apps.subscriptions.event_utils.track_event') # Mock silences log outputs
+    def test_retire_old_licenses(self, _):
         """
         Verify that the command retires the correct licenses appropriately and logs messages about the retirement.
         """
