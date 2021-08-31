@@ -1,5 +1,5 @@
-from unittest import mock
 from datetime import datetime, timedelta
+from unittest import mock
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -12,6 +12,7 @@ from license_manager.apps.subscriptions.constants import (
     REVOKED,
     UNASSIGNED,
 )
+from license_manager.apps.subscriptions.models import License
 from license_manager.apps.subscriptions.tests.factories import (
     LicenseFactory,
     SubscriptionPlanFactory,
@@ -119,7 +120,15 @@ class RetireOldLicensesCommandTests(TestCase):
             subscription_plan=cls.expired_subscription_plan,
         )
 
-    @mock.patch('license_manager.apps.subscriptions.event_utils.track_event') # Mock silences log outputs
+    def tearDown(self):
+        """
+        Deletes all licenses after each test method is run.
+        """
+        super().tearDown()
+
+        License.objects.all().delete()
+
+    @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')  # Mock silences log outputs
     def test_retire_old_licenses(self, _):
         """
         Verify that the command retires the correct licenses appropriately and logs messages about the retirement.
