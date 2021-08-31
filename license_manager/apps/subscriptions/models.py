@@ -512,8 +512,7 @@ class SubscriptionPlan(TimeStampedModel):
         """
         renewal_expiration_dates = [renewal.renewed_expiration_date for renewal in self.future_renewals]
         try:
-            oof = days_until(max(renewal_expiration_dates))
-            return oof
+            return days_until(max(renewal_expiration_dates))
         except ValueError:
             # A value error indicates that there were no renewals
             return self.days_until_expiration

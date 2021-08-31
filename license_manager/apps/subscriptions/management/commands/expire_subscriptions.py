@@ -40,7 +40,7 @@ class Command(BaseCommand):
             action='store',
             dest='expiration_date_from',
             help='The oldest expiration date for subscriptions to be processed, can be used with --expired-before to '
-                 'set a date range formatted as %Y-%m-%d',
+                 'set a date range formatted as %Y-%m-%d %H:%M:%S',
             default=(localized_utcnow() - timedelta(days=1)).strftime(DATE_FORMAT)
         )
 
@@ -49,7 +49,7 @@ class Command(BaseCommand):
             action='store',
             dest='expiration_date_to',
             help='The most recent expiration date for subscriptions to be processed, can be used with --expired-after '
-                 'to set a date range formatted as %Y-%m-%d',
+                 'to set a date range formatted as %Y-%m-%d %H:%M:%S',
             default=localized_utcnow().strftime(DATE_FORMAT)
         )
 
