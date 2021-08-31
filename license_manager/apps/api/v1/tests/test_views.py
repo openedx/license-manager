@@ -2,7 +2,6 @@
 """
 Tests for the Subscription and License V1 API view sets.
 """
-import json
 import datetime
 import random
 from math import ceil, sqrt
@@ -55,11 +54,7 @@ from license_manager.apps.subscriptions.tests.utils import (
     assert_license_fields_cleared,
     assert_pii_cleared,
 )
-from license_manager.apps.subscriptions.utils import (
-    localized_datetime,
-    localized_datetime_from_date,
-    localized_utcnow,
-)
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 def _jwt_payload_from_role_context_pairs(user, role_context_pairs):
@@ -300,8 +295,6 @@ def _assert_subscription_response_correct(response, subscription, expected_days_
     }
     days_until_expiration = (subscription.expiration_date - localized_utcnow()).days
     assert response['days_until_expiration'] == days_until_expiration
-
-    # renewal_expiration_dates = [_iso_8601_format(renewal.renewed_expiration_date) for renewal in subscription.future_renewals]
 
     # If `expected_days_until_renewal_expiration` is None, there is no renewal
     assert response['days_until_expiration_including_renewals'] == (
@@ -2994,7 +2987,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             subscription_plan=subscription_plan_original,
             # explicitly set activation_date to assert that this license
             # is *not* the one that gets activated during the POST request.
-            activation_date=localized_datetime_from_date(yesterday),
+            activation_date=yesterday,
         )
         current_assigned_license = self._create_license(subscription_plan=subscription_plan_renewed)
 
@@ -3276,7 +3269,7 @@ class StaffLicenseLookupViewTests(LicenseViewTestMixin, TestCase):
                 'last_remind_date': None,
                 'revoked_date': None,
                 'status': constants.ACTIVATED,
-                'subscription_plan_expiration_date': _iso_8601_format(self.active_subscription_for_customer.expiration_date),
+                'subscription_plan_expiration_date': _iso_8601_format(self.active_subscription_for_customer.expiration_date),  # pylint: disable=line-too-long
                 'subscription_plan_title': self.active_subscription_for_customer.title,
             },
         ], response.json())

@@ -20,9 +20,7 @@ from license_manager.apps.subscriptions.tests.utils import (
     make_bound_subscription_form,
     make_bound_subscription_plan_renewal_form,
 )
-from license_manager.apps.subscriptions.utils import (
-    localized_utcnow,
-)
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 @mark.django_db

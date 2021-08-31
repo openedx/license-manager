@@ -6,6 +6,7 @@ from unittest import mock
 from uuid import uuid4
 
 from django.test import TestCase
+from freezegun import freeze_time
 
 from license_manager.apps.api import tasks
 from license_manager.apps.subscriptions import constants
@@ -13,6 +14,7 @@ from license_manager.apps.subscriptions.tests.utils import (
     assert_date_fields_correct,
     make_test_email_data,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 class LicenseManagerCeleryTaskTests(TestCase):
@@ -91,19 +93,20 @@ class LicenseManagerCeleryTaskTests(TestCase):
             'sender_alias': self.enterprise_sender_alias,
             'reply_to': self.reply_to_email,
         }
-        tasks.send_reminder_email_task(
-            self.custom_template_text,
-            self.email_recipient_list,
-            self.subscription_plan.uuid
-        )
+        with freeze_time(localized_utcnow()):
+            tasks.send_reminder_email_task(
+                self.custom_template_text,
+                self.email_recipient_list,
+                self.subscription_plan.uuid
+            )
 
-        send_email_args, _ = mock_send_emails.call_args
-        self._verify_mock_send_email_arguments(send_email_args)
-        mock_enterprise_client().get_enterprise_customer_data.assert_called_with(
-            self.subscription_plan.enterprise_customer_uuid
-        )
-        # Verify the 'last_remind_date' of all licenses have been updated
-        assert_date_fields_correct(send_email_args[1], ['last_remind_date'], True)
+            send_email_args, _ = mock_send_emails.call_args
+            self._verify_mock_send_email_arguments(send_email_args)
+            mock_enterprise_client().get_enterprise_customer_data.assert_called_with(
+                self.subscription_plan.enterprise_customer_uuid
+            )
+            # Verify the 'last_remind_date' of all licenses have been updated
+            assert_date_fields_correct(send_email_args[1], ['last_remind_date'], True)
 
     @mock.patch('license_manager.apps.api.tasks.send_activation_emails', side_effect=SMTPException)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())

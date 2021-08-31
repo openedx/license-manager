@@ -95,7 +95,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
         return {
             'applied': obj.num_revocations_applied,
             'remaining': obj.num_revocations_remaining,
-        }       
+        }
 
 
 class CustomerAgreementSerializer(serializers.ModelSerializer):

@@ -44,8 +44,8 @@ from license_manager.apps.subscriptions.exceptions import (
 )
 from license_manager.apps.subscriptions.utils import (
     days_until,
-    hours_until,
     get_license_activation_link,
+    hours_until,
     localized_utcnow,
 )
 

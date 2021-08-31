@@ -158,7 +158,7 @@ class RenewalProcessingTests(TestCase):
         """
         Helper to assert that future license fields are updated with expected values.
         """
-        expected_activation_datetime = utils.localized_datetime_from_date(future_plan.start_date)
+        expected_activation_datetime = future_plan.start_date
 
         future_licenses = future_plan.licenses.filter(
             status__in=(constants.ASSIGNED, constants.ACTIVATED)

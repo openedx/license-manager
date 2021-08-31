@@ -18,6 +18,13 @@ def localized_utcnow():
     return UTC.localize(datetime.utcnow())  # pylint: disable=no-value-for-parameter
 
 
+def localized_datetime_from_datetime(datetime_obj):
+    """
+    Helper to return a UTC-localized datetime from an existing datetime object.
+    """
+    return UTC.localize(datetime_obj)
+
+
 def localized_datetime(*args, **kwargs):
     """
     Helper to return a UTC-localized datetime.
@@ -39,11 +46,12 @@ def days_until(end_date):
     diff = end_date - localized_utcnow()
     return diff.days
 
+
 def hours_until(effective_date):
     """
     Helper to return the number of hours until the effective date.
     """
-    duration_until_effective_date =  effective_date - localized_utcnow()
+    duration_until_effective_date = effective_date - localized_utcnow()
     duration_until_effective_date_s = duration_until_effective_date.total_seconds()
     duration_until_effective_date_h = divmod(duration_until_effective_date_s, 3600)[0]  # Seconds in an hour = 3600
     return duration_until_effective_date_h
