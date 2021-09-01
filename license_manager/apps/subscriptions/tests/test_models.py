@@ -62,9 +62,9 @@ class SubscriptionsModelTests(TestCase):
         today = localized_utcnow()
         with freezegun.freeze_time(today):
             renewed_subscription_plan = SubscriptionPlanFactory.create(expiration_date=today)
-            renewal_kwargs = { 'prior_subscription_plan': renewed_subscription_plan }
+            renewal_kwargs = {'prior_subscription_plan': renewed_subscription_plan}
             if is_locked_for_renewal_processing:
-                renewal_kwargs.update({ 'effective_date': renewed_subscription_plan.expiration_date })
+                renewal_kwargs.update({'effective_date': renewed_subscription_plan.expiration_date})
             SubscriptionPlanRenewalFactory.create(**renewal_kwargs)
             self.assertEqual(renewed_subscription_plan.is_locked_for_renewal_processing, is_locked_for_renewal_processing)
 
