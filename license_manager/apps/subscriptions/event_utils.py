@@ -33,8 +33,8 @@ def track_event(user_id, event_name, properties):
     if hasattr(settings, "SEGMENT_KEY") and settings.SEGMENT_KEY:
         try:  # We should never raise an exception when not able to send a tracking event
             analytics.track(user_id, event_name, properties)
-        except Exception:  # pylint: disable=broad-except
-            logger.exception()
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.exception(exc)
     else:
         logger.warning("Event {} for user_id {} not tracked because SEGMENT_KEY not set". format(event_name, user_id))
 
@@ -68,7 +68,9 @@ def get_license_tracking_properties(license_obj):
         "expiration_processed": license_obj.subscription_plan.expiration_processed
     }
 
-    user_who_made_change = license_obj.history.latest().history_user
+    user_who_made_change = ''
+    if license_obj.history.latest().history_user:
+        user_who_made_change = license_obj.history.latest().history_user.id
     license_data.update({
         'user_id': (user_who_made_change or '')
     })
