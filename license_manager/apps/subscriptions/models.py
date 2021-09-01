@@ -1136,15 +1136,11 @@ def dispatch_license_expiration_event(sender, **kwargs):  # pylint: disable=unus
     # if we updated the expiration_processed field and it's true now:
     subscription_plan_obj = kwargs['instance']
     update_fields = kwargs.get('update_fields', None)
-    user_who_made_change = subscription_plan_obj.history.latest().history_user
 
     if subscription_plan_obj and update_fields and 'expiration_processed' in update_fields:
         for license_obj in subscription_plan_obj.licenses.all():
             if not license_obj.renewed_to:
                 license_properties = get_license_tracking_properties(license_obj)
-                license_properties.update({
-                    'user_id': user_who_made_change
-                })
-                track_event(user_who_made_change,
+                track_event(license_properties['user_id'],
                             'edx.server.license-manager.license-lifecycle.expired',
                             license_properties)
