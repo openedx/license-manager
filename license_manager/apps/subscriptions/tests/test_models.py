@@ -17,7 +17,10 @@ from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
     SubscriptionPlanRenewalFactory,
 )
-from license_manager.apps.subscriptions.utils import localized_datetime, localized_utcnow
+from license_manager.apps.subscriptions.utils import (
+    localized_datetime,
+    localized_utcnow,
+)
 
 
 @ddt.ddt

@@ -5,14 +5,15 @@ from unittest import mock
 import pytest
 from django.core.management import call_command
 from django.test import TestCase
-from rest_framework import status
 
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
     LICENSE_EXPIRATION_BATCH_SIZE,
     REVOKED,
-    UNASSIGNED,
+)
+from license_manager.apps.subscriptions.management.commands.expire_subscriptions import (
+    DATE_FORMAT,
 )
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (
@@ -20,7 +21,6 @@ from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
-from license_manager.apps.subscriptions.management.commands.expire_subscriptions import DATE_FORMAT
 
 
 @pytest.mark.django_db
