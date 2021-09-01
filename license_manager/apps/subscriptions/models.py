@@ -529,7 +529,13 @@ class SubscriptionPlan(TimeStampedModel):
         if not subscription_plan_renewal:
             return None
 
-        is_plan_locked_for_renewal = hours_until(subscription_plan_renewal.effective_date) < settings.SUBSCRIPTION_PLAN_RENEWAL_LOCK_PERIOD_HOURS
+        hours_until_effective_date = hours_until(subscription_plan_renewal.effective_date)
+        print('hours_until_effective_date!!!', localized_utcnow(), self.expiration_date, subscription_plan_renewal.effective_date, hours_until_effective_date)
+        # The renewal's effective_date has already passed
+        if hours_until_effective_date < 0:
+            return False
+
+        is_plan_locked_for_renewal = hours_until_effective_date < settings.SUBSCRIPTION_PLAN_RENEWAL_LOCK_PERIOD_HOURS
         return is_plan_locked_for_renewal
 
     def license_count_by_status(self):

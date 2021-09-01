@@ -17,7 +17,7 @@ from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
     SubscriptionPlanRenewalFactory,
 )
-from license_manager.apps.subscriptions.utils import localized_datetime
+from license_manager.apps.subscriptions.utils import localized_datetime, localized_utcnow
 
 
 @ddt.ddt
@@ -56,6 +56,17 @@ class SubscriptionsModelTests(TestCase):
             renewed_subscription_plan=renewed_subscription_plan_2
         )
         self.assertEqual(renewed_subscription_plan_2.prior_renewals, [renewal_1, renewal_2])
+
+    @ddt.data(True, False)
+    def test_is_locked_for_renewal_processing(self, is_locked_for_renewal_processing):
+        today = localized_utcnow()
+        with freezegun.freeze_time(today):
+            renewed_subscription_plan = SubscriptionPlanFactory.create(expiration_date=today)
+            renewal_kwargs = { 'prior_subscription_plan': renewed_subscription_plan }
+            if is_locked_for_renewal_processing:
+                renewal_kwargs.update({ 'effective_date': renewed_subscription_plan.expiration_date })
+            SubscriptionPlanRenewalFactory.create(**renewal_kwargs)
+            self.assertEqual(renewed_subscription_plan.is_locked_for_renewal_processing, is_locked_for_renewal_processing)
 
 
 class LicenseModelTests(TestCase):

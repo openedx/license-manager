@@ -20,9 +20,7 @@ from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
-
-
-DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+from license_manager.apps.subscriptions.management.commands.expire_subscriptions import DATE_FORMAT
 
 
 @pytest.mark.django_db
@@ -106,13 +104,13 @@ class ExpireSubscriptionsCommandTests(TestCase):
         Verifies that all expired subscriptions within the expired range have their license uuids sent to edx-enterprise
         """
         expired_subscription_1 = SubscriptionPlanFactory.create(
-            start_date=datetime.strptime('2013-1-01 00:00:00', DATE_FORMAT),
-            expiration_date=datetime.strptime('2014-1-01 00:00:00', DATE_FORMAT),
+            start_date=datetime.strptime('2013-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2014-1-01T00:00:00', DATE_FORMAT),
         )
 
         expired_subscription_2 = SubscriptionPlanFactory.create(
-            start_date=datetime.strptime('2015-1-01 00:00:00', DATE_FORMAT),
-            expiration_date=datetime.strptime('2016-1-01 00:00:00', DATE_FORMAT),
+            start_date=datetime.strptime('2015-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2016-1-01T00:00:00', DATE_FORMAT),
         )
 
         # Create an activated license on each subscription
@@ -121,8 +119,8 @@ class ExpireSubscriptionsCommandTests(TestCase):
 
         call_command(
             self.command_name,
-            "--expired-after=2013-1-01 00:00:00",
-            "--expired-before=2016-1-01 00:00:00"
+            "--expired-after=2013-1-01T00:00:00",
+            "--expired-before=2016-1-01T00:00:00"
         )
         actual_args = mock_license_expiration_task.call_args_list[0][0][0]
         assert sorted(actual_args) == sorted([str(expired_license_1.uuid), str(expired_license_2.uuid)])
