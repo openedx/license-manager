@@ -53,6 +53,10 @@ edx.server.license-manager.license-lifecycle.expired
 -----------------------------------------------------
 Emitted when an existing ``subscriptions.License`` is marked as expired.
 
+edx.server.license-manager.license-lifecycle.deleted
+-----------------------------------------------------
+Emitted when a ``subscriptions.License`` model is deleted from the database.
+
 
 Event Nested Data Field Specification
 -------------------------------------
@@ -63,18 +67,20 @@ All events contains these properties, though some may be empty:
 
 - **license_uuid**: The UUID linked to this license and storing in the License Manager DB. This value is always present.
 
-- **previous_license_uuid**: The UUID linked to the previous license that this license is a renewal for. Non-empty only on the edx.server.license-manager.license-lifecycle.renewed event.
+- **previous_license_uuid**: The UUID linked to the previous license that this license is a renewal for. Non-empty only on after the edx.server.license-manager.license-lifecycle.renewed event has occurred.
 
 - **assigned_date**: Formatted ISO-8601 Date String representing the date this license was most recently assigned to the assigned_email. May be empty.
 
 - **activation_date**: Formatted ISO-8601 Date String  this license was most recently activated for the assigned_email. May be empty.
 
-- **activated_lms_user_id**: The LMS User id of the user that this license 'belongs to'. Will be empty if this license is not activated yet.
+- **assigned_lms_user_id**: The LMS User id of the user that this license 'belongs to'. May be empty if this license is not activated yet.
 
 - **assigned_email**: The email assigned to this license. Will be empty if this license is not assigned to a learner yet.
 
-- **enterprise_uuid**: The Enterprise UUID associated with this license. 
+- **enterprise_customer_uuid**: The Enterprise Customer UUID associated with this license. 
 
+- **enterprise_customer_slug**: The Enterprise Customer slug associated with the license. Can be easily used in event for reconstructing any Enterprise portal URL links needed (e.g. in a Braze CTA)
+ 
 - **expiration_processed**: Boolean value of License 'expiration_processed' field, may be True or False. True means a license is expired.
 
-
+- **customer_agreement_uuid**: The active Customer Agreement UUID that this license is linked to.

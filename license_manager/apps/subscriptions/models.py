@@ -6,6 +6,8 @@ from uuid import uuid4
 from django.conf import settings
 from django.core.validators import MinLengthValidator
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from edx_rbac.models import UserRole, UserRoleAssignment
@@ -31,6 +33,10 @@ from license_manager.apps.subscriptions.constants import (
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
     LicenseTypesToRenew,
+)
+from license_manager.apps.subscriptions.event_utils import (
+    get_license_tracking_properties,
+    track_event,
 )
 from license_manager.apps.subscriptions.exceptions import (
     CustomerAgreementException,
@@ -742,7 +748,7 @@ class License(TimeStampedModel):
             "\nUnassigned: A license which has been created but does not have a learner assigned to it."
             "\nRevoked: A license which has been created but is no longer active (intentionally revoked or"
             " has expired). A license in this state may or may not have a learner assigned."
-            "\nTransferred for renwal: The license's subscription plan was renewed into a new plan,"
+            "\nTransferred for renewal: The license's subscription plan was renewed into a new plan,"
             " and the license transferred to a new, active license in the renewed plan."
         )
     )
@@ -879,6 +885,10 @@ class License(TimeStampedModel):
         self.status = REVOKED
         self.revoked_date = localized_utcnow()
         self.save()
+        event_properties = get_license_tracking_properties(self)
+        track_event(event_properties['user_id'],
+                    'edx.server.license-manager.license-lifecycle.revoked',
+                    event_properties)
 
     def unrevoke(self):
         """
@@ -896,6 +906,10 @@ class License(TimeStampedModel):
         self.assigned_date = now
         self.last_remind_date = now
         self.save()
+        event_properties = get_license_tracking_properties(self)
+        track_event(event_properties['user_id'],
+                    'edx.server.license-manager.license-lifecycle.assigned',
+                    event_properties)
 
     @staticmethod
     def set_date_fields_to_now(licenses, date_field_names):
@@ -922,6 +936,9 @@ class License(TimeStampedModel):
         https://django-simple-history.readthedocs.io/en/2.12.0/common_issues.html#bulk-creating-and-queryset-updating
         """
         bulk_create_with_history(license_objects, cls, batch_size=batch_size)
+        # Since bulk_create does not call post_save, handle tracking events manually:
+        for license_obj in license_objects:
+            dispatch_license_create_events(License, instance=license_obj, created=True)
 
     @classmethod
     def bulk_update(cls, license_objects, field_names, batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE):
@@ -934,6 +951,9 @@ class License(TimeStampedModel):
         https://django-simple-history.readthedocs.io/en/2.12.0/common_issues.html#bulk-creating-and-queryset-updating
         """
         bulk_update_with_history(license_objects, cls, field_names, batch_size=batch_size)
+        # Since bulk_update does not call post_save, handle tracking events manually:
+        for license_obj in license_objects:
+            dispatch_license_create_events(License, instance=license_obj, created=False)
 
     @classmethod
     def by_user_email(cls, user_email):
@@ -1065,3 +1085,66 @@ class SubscriptionsRoleAssignment(UserRoleAssignment):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+
+@receiver(post_delete, sender=License)
+def dispatch_license_delete_event(sender, **kwargs):  # pylint: disable=unused-argument
+    license_obj = kwargs['instance']
+    event_properties = get_license_tracking_properties(license_obj)
+    track_event(event_properties['user_id'],
+                'edx.server.license-manager.license-lifecycle.deleted',
+                event_properties)
+
+
+@receiver(post_save, sender=License)
+def dispatch_license_create_events(sender, **kwargs):  # pylint: disable=unused-argument
+    """ Post creation hook to handle tracking license lifecycle events
+    that could have been created in a variety of states. """
+    license_obj = kwargs['instance']
+    is_new_license = kwargs.get('created', False)
+
+    if not is_new_license:
+        # Update events are handled by more explicit tracking events around the codebase
+        # to map them more easily with the events we want to track.
+        return
+
+    event_properties = get_license_tracking_properties(license_obj)
+    # We always send a creation event.
+    track_event(event_properties['user_id'],
+                'edx.server.license-manager.license-lifecycle.created',
+                event_properties)
+
+    # If the license has extra statuses on creation that would normally fire events,
+    # then programmatically fire events for those also
+    if license_obj.status == ASSIGNED:
+        track_event(event_properties['user_id'],
+                    'edx.server.license-manager.license-lifecycle.assigned',
+                    event_properties)
+    if license_obj.status == ACTIVATED:
+        track_event(event_properties['user_id'],
+                    'edx.server.license-manager.license-lifecycle.activated',
+                    event_properties)
+
+
+@receiver(post_save, sender=SubscriptionPlan)
+def dispatch_license_expiration_event(sender, **kwargs):  # pylint: disable=unused-argument
+    """
+    Post save hook to handle tracking license lifecycle events:
+    Sends an expiration event for all linked licenses when a top level subscription plan is marked as
+    expired and individual license WASN'T renewed.
+    """
+    # if we updated the expiration_processed field and it's true now:
+    subscription_plan_obj = kwargs['instance']
+    update_fields = kwargs.get('update_fields', None)
+    user_who_made_change = subscription_plan_obj.history.latest().history_user
+
+    if subscription_plan_obj and update_fields and 'expiration_processed' in update_fields:
+        for license_obj in subscription_plan_obj.licenses.all():
+            if not license_obj.renewed_to:
+                license_properties = get_license_tracking_properties(license_obj)
+                license_properties.update({
+                    'user_id': user_who_made_change
+                })
+                track_event(user_who_made_change,
+                            'edx.server.license-manager.license-lifecycle.expired',
+                            license_properties)
