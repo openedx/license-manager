@@ -173,7 +173,7 @@ def _renew_all_licenses(original_licenses, future_plan):
     )
     for future_license in future_licenses:
         event_properties = event_utils.get_license_tracking_properties(future_license)
-        event_utils.track_event(event_properties['user_id'],
+        event_utils.track_event(future_license.lms_user_id,
                                 'edx.server.license-manager.license-lifecycle.renewed',
                                 event_properties)
 
