@@ -651,7 +651,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         )
         for newly_assigned in unassigned_licenses:
             event_properties = event_utils.get_license_tracking_properties(newly_assigned)
-            event_utils.track_event(event_properties['user_id'],
+            event_utils.track_event(None,  # track_event will handle users with unregistered emails
                                     'edx.server.license-manager.license-lifecycle.assigned',
                                     event_properties)
 
@@ -1271,7 +1271,7 @@ class LicenseActivationView(LicenseBaseView):
             user_license.save()
 
             event_properties = event_utils.get_license_tracking_properties(user_license)
-            event_utils.track_event(event_properties['user_id'],
+            event_utils.track_event(self.lms_user_id,
                                     'edx.server.license-manager.license-lifecycle.activated',
                                     event_properties)
 

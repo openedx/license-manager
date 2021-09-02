@@ -34,13 +34,17 @@ class Command(BaseCommand):
         )
         # Scrub all piii on licenses whose subscription expired over 90 days ago, and mark the licenses as revoked
         for expired_license in expired_licenses_for_retirement:
+            original_lms_user_id = expired_license.lms_user_id
+            # record event data BEFORE we clear the license data:
+            event_properties = get_license_tracking_properties(expired_license)
+
             expired_license.clear_pii()
             expired_license.status = REVOKED
             expired_license.revoked_date = localized_utcnow()
             expired_license.save()
 
             event_properties = get_license_tracking_properties(expired_license)
-            track_event(event_properties['user_id'],
+            track_event(original_lms_user_id,
                         'edx.server.license-manager.license-lifecycle.revoked',
                         event_properties)
 

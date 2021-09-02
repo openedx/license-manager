@@ -17,26 +17,32 @@ def _iso_8601_format_string(datetime):
     return datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
-def track_event(user_id, event_name, properties):
+def track_event(lms_user_id, event_name, properties):
     """
     Send a tracking event to segment
 
     Args:
-        user_id (str): ID of the user who generated this event
+        lms_user_id (str): LMS User ID of the user we want tracked with this event for cross-platform tracking.
+                           IF None, tracking will be attempted via unregistered learner email address.
         event_name (str): Name of the event in the format of: edx.server.license-manager.license-lifecycle.<new-status>
         properties (dict): All the properties of an event. See docs/segment_events.rst
 
     Returns:
         None
     """
+    if not lms_user_id:
+        # We dont have an LMS user id for this event, so we can't track it in segment right away.
+        # Log event with warning in preparation for being able to handle this as a future feature:
+        logger.warning("Event {} for License Manager not tracked because no LMS User Id provided. {}". format(event_name, properties))
+        return
 
     if hasattr(settings, "SEGMENT_KEY") and settings.SEGMENT_KEY:
         try:  # We should never raise an exception when not able to send a tracking event
-            analytics.track(user_id, event_name, properties)
+            analytics.track(lms_user_id, event_name, properties)
         except Exception as exc:  # pylint: disable=broad-except
             logger.exception(exc)
     else:
-        logger.warning("Event {} for user_id {} not tracked because SEGMENT_KEY not set". format(event_name, user_id))
+        logger.warning("Event {} for user_id {} not tracked because SEGMENT_KEY not set". format(event_name, lms_user_id))
 
 
 def get_license_tracking_properties(license_obj):

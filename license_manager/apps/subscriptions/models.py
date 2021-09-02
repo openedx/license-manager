@@ -907,7 +907,7 @@ class License(TimeStampedModel):
         self.revoked_date = localized_utcnow()
         self.save()
         event_properties = get_license_tracking_properties(self)
-        track_event(event_properties['user_id'],
+        track_event(self.lms_user_id,
                     'edx.server.license-manager.license-lifecycle.revoked',
                     event_properties)
 
@@ -919,6 +919,7 @@ class License(TimeStampedModel):
         if self.status != REVOKED:
             raise LicenseUnrevokeError(self.uuid, 'status does not equal REVOKED')
 
+        revoked_lms_user_id = self.lms_user_id
         now = localized_utcnow()
         self.status = ASSIGNED
         self.lms_user_id = None
@@ -928,7 +929,7 @@ class License(TimeStampedModel):
         self.last_remind_date = now
         self.save()
         event_properties = get_license_tracking_properties(self)
-        track_event(event_properties['user_id'],
+        track_event(revoked_lms_user_id,
                     'edx.server.license-manager.license-lifecycle.assigned',
                     event_properties)
 
@@ -1112,7 +1113,7 @@ class SubscriptionsRoleAssignment(UserRoleAssignment):
 def dispatch_license_delete_event(sender, **kwargs):  # pylint: disable=unused-argument
     license_obj = kwargs['instance']
     event_properties = get_license_tracking_properties(license_obj)
-    track_event(event_properties['user_id'],
+    track_event(license_obj.lms_user_id,
                 'edx.server.license-manager.license-lifecycle.deleted',
                 event_properties)
 
@@ -1131,18 +1132,18 @@ def dispatch_license_create_events(sender, **kwargs):  # pylint: disable=unused-
 
     event_properties = get_license_tracking_properties(license_obj)
     # We always send a creation event.
-    track_event(event_properties['user_id'],
+    track_event(license_obj.lms_user_id,
                 'edx.server.license-manager.license-lifecycle.created',
                 event_properties)
 
     # If the license has extra statuses on creation that would normally fire events,
     # then programmatically fire events for those also
     if license_obj.status == ASSIGNED:
-        track_event(event_properties['user_id'],
+        track_event(license_obj.lms_user_id,
                     'edx.server.license-manager.license-lifecycle.assigned',
                     event_properties)
     if license_obj.status == ACTIVATED:
-        track_event(event_properties['user_id'],
+        track_event(license_obj.lms_user_id,
                     'edx.server.license-manager.license-lifecycle.activated',
                     event_properties)
 
@@ -1162,6 +1163,6 @@ def dispatch_license_expiration_event(sender, **kwargs):  # pylint: disable=unus
         for license_obj in subscription_plan_obj.licenses.all():
             if not license_obj.renewed_to:
                 license_properties = get_license_tracking_properties(license_obj)
-                track_event(license_properties['user_id'],
+                track_event(license_obj.lms_user_id,
                             'edx.server.license-manager.license-lifecycle.expired',
                             license_properties)
