@@ -523,14 +523,13 @@ class SubscriptionPlan(TimeStampedModel):
         If there is an existing renewal tied to the plan (obj), returns whether it is within
         the renewal processing window.
 
-        If there is no existing renewal, returns null.
+        If there is no existing renewal, returns False.
         """
         subscription_plan_renewal = self.get_renewal()
         if not subscription_plan_renewal:
-            return None
+            return False
 
         hours_until_effective_date = hours_until(subscription_plan_renewal.effective_date)
-        print('hours_until_effective_date!!!', localized_utcnow(), self.expiration_date, subscription_plan_renewal.effective_date, hours_until_effective_date)
         # The renewal's effective_date has already passed
         if hours_until_effective_date < 0:
             return False
