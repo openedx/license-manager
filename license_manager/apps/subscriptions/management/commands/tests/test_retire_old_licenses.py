@@ -4,6 +4,7 @@ from unittest import mock
 from django.core.management import call_command
 from django.test import TestCase
 from faker import Factory as FakerFactory
+from freezegun import freeze_time
 
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
@@ -133,7 +134,7 @@ class RetireOldLicensesCommandTests(TestCase):
         """
         Verify that the command retires the correct licenses appropriately and logs messages about the retirement.
         """
-        with self.assertLogs(level='INFO') as log:
+        with freeze_time(localized_utcnow()), self.assertLogs(level='INFO') as log:
             call_command(self.command_name)
 
             # Verify all expired licenses that were ready for retirement have been retired correctly

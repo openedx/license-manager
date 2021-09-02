@@ -14,9 +14,7 @@ make validate_translations
 
 # TODO: enable pylint once we figure out mysterious AssignAttr attribute error.
 # When that's fixed, we can replace all of the below with `make validate`
-
-make validate
-# make test
-# make style
-# make isort_check
-# make pii_check
+make test
+make style
+make isort_check
+make pii_check

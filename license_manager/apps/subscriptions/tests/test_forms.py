@@ -20,6 +20,7 @@ from license_manager.apps.subscriptions.tests.utils import (
     make_bound_subscription_form,
     make_bound_subscription_plan_renewal_form,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 @mark.django_db
@@ -161,7 +162,7 @@ class TestSubscriptionPlanRenewalForm(TestCase):
         form = make_bound_subscription_plan_renewal_form(
             prior_subscription_plan=prior_subscription_plan,
             effective_date=prior_subscription_plan.expiration_date - timedelta(1),
-            renewed_expiration_date=date.today() + timedelta(366),
+            renewed_expiration_date=localized_utcnow() + timedelta(366),
         )
         assert not form.is_valid()
 
@@ -178,7 +179,7 @@ class TestSubscriptionPlanRenewalForm(TestCase):
         prior_subscription_plan = SubscriptionPlanFactory.create()
         form = make_bound_subscription_plan_renewal_form(
             prior_subscription_plan=prior_subscription_plan,
-            effective_date=date.today() - timedelta(1),
+            effective_date=localized_utcnow() - timedelta(1),
             renewed_expiration_date=prior_subscription_plan.expiration_date + timedelta(366),
         )
         assert not form.is_valid()

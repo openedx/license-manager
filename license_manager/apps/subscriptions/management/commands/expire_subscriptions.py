@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime, timedelta
 
@@ -12,12 +13,16 @@ from license_manager.apps.subscriptions.constants import (
     LICENSE_EXPIRATION_BATCH_SIZE,
 )
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
-from license_manager.apps.subscriptions.utils import chunks
+from license_manager.apps.subscriptions.utils import (
+    chunks,
+    localized_datetime_from_datetime,
+    localized_utcnow,
+)
 
 
 logger = logging.getLogger(__name__)
 
-DATE_FORMAT = '%Y-%m-%d'
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 
 class Command(BaseCommand):
@@ -35,8 +40,8 @@ class Command(BaseCommand):
             action='store',
             dest='expiration_date_from',
             help='The oldest expiration date for subscriptions to be processed, can be used with --expired-before to '
-                 'set a date range formatted as %Y-%m-%d',
-            default=(datetime.utcnow() - timedelta(days=1)).strftime(DATE_FORMAT)
+                 'set a date range formatted as %Y-%m-%dT%H:%M:%S',
+            default=(localized_utcnow() - timedelta(days=1)).strftime(DATE_FORMAT)
         )
 
         parser.add_argument(
@@ -44,8 +49,8 @@ class Command(BaseCommand):
             action='store',
             dest='expiration_date_to',
             help='The most recent expiration date for subscriptions to be processed, can be used with --expired-after '
-                 'to set a date range formatted as %Y-%m-%d',
-            default=datetime.utcnow().strftime(DATE_FORMAT)
+                 'to set a date range formatted as %Y-%m-%dT%H:%M:%S',
+            default=localized_utcnow().strftime(DATE_FORMAT)
         )
 
         parser.add_argument(
@@ -57,10 +62,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        expired_after_date = datetime.strptime(options['expiration_date_from'], DATE_FORMAT)
-        expired_before_date = datetime.strptime(options['expiration_date_to'], DATE_FORMAT)
+        expired_after_date = localized_datetime_from_datetime(datetime.strptime(options['expiration_date_from'], DATE_FORMAT))
+        expired_before_date = localized_datetime_from_datetime(datetime.strptime(options['expiration_date_to'], DATE_FORMAT))
 
-        today = datetime.utcnow()
+        today = localized_utcnow()
+
         if expired_after_date > today or expired_before_date > today:
             message = 'Subscriptions with expiration dates between {} and {} have not expired yet.'.format(
                 expired_after_date,

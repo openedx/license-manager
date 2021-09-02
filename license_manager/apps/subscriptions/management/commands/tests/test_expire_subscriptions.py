@@ -5,26 +5,28 @@ from unittest import mock
 import pytest
 from django.core.management import call_command
 from django.test import TestCase
-from rest_framework import status
 
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
     LICENSE_EXPIRATION_BATCH_SIZE,
     REVOKED,
-    UNASSIGNED,
+)
+from license_manager.apps.subscriptions.management.commands.expire_subscriptions import (
+    DATE_FORMAT,
 )
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (
     LicenseFactory,
     SubscriptionPlanFactory,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 @pytest.mark.django_db
 class ExpireSubscriptionsCommandTests(TestCase):
     command_name = 'expire_subscriptions'
-    today = datetime.now()
+    today = localized_utcnow()
 
     def tearDown(self):
         """
@@ -102,13 +104,13 @@ class ExpireSubscriptionsCommandTests(TestCase):
         Verifies that all expired subscriptions within the expired range have their license uuids sent to edx-enterprise
         """
         expired_subscription_1 = SubscriptionPlanFactory.create(
-            start_date=datetime.strptime('2013-1-01', '%Y-%m-%d'),
-            expiration_date=datetime.strptime('2014-1-01', '%Y-%m-%d'),
+            start_date=datetime.strptime('2013-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2014-1-01T00:00:00', DATE_FORMAT),
         )
 
         expired_subscription_2 = SubscriptionPlanFactory.create(
-            start_date=datetime.strptime('2015-1-01', '%Y-%m-%d'),
-            expiration_date=datetime.strptime('2016-1-01', '%Y-%m-%d'),
+            start_date=datetime.strptime('2015-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2016-1-01T00:00:00', DATE_FORMAT),
         )
 
         # Create an activated license on each subscription
@@ -117,8 +119,8 @@ class ExpireSubscriptionsCommandTests(TestCase):
 
         call_command(
             self.command_name,
-            "--expired-after=2013-1-01",
-            "--expired-before=2016-1-01"
+            "--expired-after=2013-1-01T00:00:00",
+            "--expired-before=2016-1-01T00:00:00"
         )
         actual_args = mock_license_expiration_task.call_args_list[0][0][0]
         assert sorted(actual_args) == sorted([str(expired_license_1.uuid), str(expired_license_2.uuid)])

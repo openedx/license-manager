@@ -18,6 +18,7 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 USER_PASSWORD = 'password'
@@ -79,9 +80,9 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     title = factory.LazyAttribute(lambda p: '{} {}'.format(FAKE.word(), random.randint(0, 1000000)))
     uuid = factory.LazyFunction(uuid4)
     is_active = True
-    start_date = date.today()
+    start_date = localized_utcnow()
     # Make the subscription expire in roughly a year and a day
-    expiration_date = date.today() + timedelta(days=366)
+    expiration_date = localized_utcnow() + timedelta(days=366)
     customer_agreement = factory.SubFactory(CustomerAgreementFactory)
     enterprise_catalog_uuid = factory.LazyFunction(uuid4)
     netsuite_product_id = factory.Faker('random_int')
@@ -104,7 +105,7 @@ class SubscriptionPlanRenewalFactory(factory.django.DjangoModelFactory):
     prior_subscription_plan = factory.SubFactory(SubscriptionPlanFactory)
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
     number_of_licenses = 5
-    effective_date = date.today() + timedelta(days=366)
+    effective_date = localized_utcnow() + timedelta(days=366)
     renewed_expiration_date = effective_date + timedelta(days=366)
     processed = False
 

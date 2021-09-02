@@ -60,7 +60,8 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'revocations',
             'days_until_expiration',
             'days_until_expiration_including_renewals',
-            'prior_renewals'
+            'prior_renewals',
+            'is_locked_for_renewal_processing',
         ]
 
     def get_licenses(self, obj):

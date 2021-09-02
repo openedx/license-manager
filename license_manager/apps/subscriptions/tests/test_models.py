@@ -1,5 +1,4 @@
 import uuid
-from datetime import date
 from unittest import mock
 
 import ddt
@@ -11,7 +10,7 @@ from license_manager.apps.subscriptions.constants import REVOKED, UNASSIGNED
 from license_manager.apps.subscriptions.exceptions import (
     CustomerAgreementException,
 )
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.models import License
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
@@ -19,7 +18,8 @@ from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanRenewalFactory,
 )
 from license_manager.apps.subscriptions.utils import (
-    localized_datetime_from_date,
+    localized_datetime,
+    localized_utcnow,
 )
 
 
@@ -60,6 +60,17 @@ class SubscriptionsModelTests(TestCase):
         )
         self.assertEqual(renewed_subscription_plan_2.prior_renewals, [renewal_1, renewal_2])
 
+    @ddt.data(True, False)
+    def test_is_locked_for_renewal_processing(self, is_locked_for_renewal_processing):
+        today = localized_utcnow()
+        with freezegun.freeze_time(today):
+            renewed_subscription_plan = SubscriptionPlanFactory.create(expiration_date=today)
+            renewal_kwargs = {'prior_subscription_plan': renewed_subscription_plan}
+            if is_locked_for_renewal_processing:
+                renewal_kwargs.update({'effective_date': renewed_subscription_plan.expiration_date})
+            SubscriptionPlanRenewalFactory.create(**renewal_kwargs)
+            self.assertEqual(renewed_subscription_plan.is_locked_for_renewal_processing, is_locked_for_renewal_processing)
+
 
 class LicenseModelTests(TestCase):
     """
@@ -72,7 +83,7 @@ class LicenseModelTests(TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
-        NOW = localized_datetime_from_date(date(2021, 7, 1))
+        NOW = localized_datetime(2021, 7, 1)
 
         cls.user_email = 'bob@example.com'
         cls.enterprise_customer_uuid = uuid.uuid4()
@@ -85,8 +96,8 @@ class LicenseModelTests(TestCase):
         cls.active_current_plan = SubscriptionPlanFactory.create(
             customer_agreement=cls.customer_agreement,
             is_active=True,
-            start_date=date(2021, 1, 1),
-            expiration_date=date(2021, 12, 31),
+            start_date=localized_datetime(2021, 1, 1),
+            expiration_date=localized_datetime(2021, 12, 31),
         )
         cls.active_current_license = LicenseFactory.create(
             user_email=cls.user_email,
@@ -96,8 +107,8 @@ class LicenseModelTests(TestCase):
         cls.inactive_current_plan = SubscriptionPlanFactory.create(
             customer_agreement=cls.customer_agreement,
             is_active=False,
-            start_date=date(2021, 1, 1),
-            expiration_date=date(2021, 12, 31),
+            start_date=localized_datetime(2021, 1, 1),
+            expiration_date=localized_datetime(2021, 12, 31),
         )
         cls.inactive_current_license = LicenseFactory.create(
             user_email=cls.user_email,
@@ -107,8 +118,8 @@ class LicenseModelTests(TestCase):
         cls.non_current_active_plan = SubscriptionPlanFactory.create(
             customer_agreement=cls.customer_agreement,
             is_active=True,
-            start_date=date(2022, 1, 1),
-            expiration_date=date(2022, 12, 31),
+            start_date=localized_datetime(2022, 1, 1),
+            expiration_date=localized_datetime(2022, 12, 31),
         )
         cls.non_current_active_license = LicenseFactory.create(
             user_email=cls.user_email,
@@ -118,8 +129,8 @@ class LicenseModelTests(TestCase):
         cls.non_current_inactive_plan = SubscriptionPlanFactory.create(
             customer_agreement=cls.customer_agreement,
             is_active=False,
-            start_date=date(2022, 1, 1),
-            expiration_date=date(2022, 12, 31),
+            start_date=localized_datetime(2022, 1, 1),
+            expiration_date=localized_datetime(2022, 12, 31),
         )
         cls.non_current_inactive_license = LicenseFactory.create(
             user_email=cls.user_email,
@@ -265,16 +276,16 @@ class CustomerAgreementTests(TestCase):
 
         cls.customer_agreement = CustomerAgreementFactory()
         cls.subscription_plan_a = SubscriptionPlanFactory(
-            expiration_date=date(2020, 1, 1),
+            expiration_date=localized_datetime(2020, 1, 1),
             customer_agreement=cls.customer_agreement,
         )
         cls.subscription_plan_b = SubscriptionPlanFactory(
-            expiration_date=date(2021, 1, 1),
+            expiration_date=localized_datetime(2021, 1, 1),
             customer_agreement=cls.customer_agreement
         )
 
     def test_net_days_until_expiration(self):
-        today = date(2020, 1, 1)
+        today = localized_datetime(2020, 1, 1)
         with freezegun.freeze_time(today):
             expected_days = (self.subscription_plan_b.expiration_date - today).days
             assert self.customer_agreement.net_days_until_expiration == expected_days

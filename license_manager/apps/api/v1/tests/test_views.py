@@ -54,11 +54,7 @@ from license_manager.apps.subscriptions.tests.utils import (
     assert_license_fields_cleared,
     assert_pii_cleared,
 )
-from license_manager.apps.subscriptions.utils import (
-    localized_datetime,
-    localized_datetime_from_date,
-    localized_utcnow,
-)
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 def _jwt_payload_from_role_context_pairs(user, role_context_pairs):
@@ -257,19 +253,9 @@ def _iso_8601_format(datetime):
     """
     Helper to return an ISO8601-formatted datetime string, with a trailing 'Z'.
     """
-    return datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
-
-
-def _get_date_string(date):
-    """
-    Helper to get the string associated with a date, or None if it doesn't exist.
-
-    Returns:
-        string or None: The string representation of the date if it exists.
-    """
-    if not date:
+    if not datetime:
         return None
-    return str(date)
+    return datetime.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 
 def _assert_customer_agreement_response_correct(response, customer_agreement):
@@ -295,8 +281,8 @@ def _assert_subscription_response_correct(response, subscription, expected_days_
     """
     assert response['enterprise_customer_uuid'] == subscription.enterprise_customer_uuid
     assert response['uuid'] == str(subscription.uuid)
-    assert response['start_date'] == _get_date_string(subscription.start_date)
-    assert response['expiration_date'] == _get_date_string(subscription.expiration_date)
+    assert response['start_date'] == _iso_8601_format(subscription.start_date)
+    assert response['expiration_date'] == _iso_8601_format(subscription.expiration_date)
     assert response['enterprise_catalog_uuid'] == str(subscription.enterprise_catalog_uuid)
     assert response['is_active'] == subscription.is_active
     assert response['licenses'] == {
@@ -307,12 +293,14 @@ def _assert_subscription_response_correct(response, subscription, expected_days_
         'revoked': subscription.revoked_licenses.count(),
         'unassigned': subscription.unassigned_licenses.count(),
     }
-    days_until_expiration = (subscription.expiration_date - datetime.date.today()).days
+    days_until_expiration = (subscription.expiration_date - localized_utcnow()).days
     assert response['days_until_expiration'] == days_until_expiration
+
     # If `expected_days_until_renewal_expiration` is None, there is no renewal
     assert response['days_until_expiration_including_renewals'] == (
         expected_days_until_renewal_expiration or days_until_expiration)
     assert response['prior_renewals'] == subscription.prior_renewals
+    assert response['is_locked_for_renewal_processing'] == subscription.is_locked_for_renewal_processing
 
 
 def _assert_license_response_correct(response, subscription_license):
@@ -322,8 +310,8 @@ def _assert_license_response_correct(response, subscription_license):
     assert response['uuid'] == str(subscription_license.uuid)
     assert response['status'] == subscription_license.status
     assert response['user_email'] == subscription_license.user_email
-    assert response['activation_date'] == _get_date_string(subscription_license.activation_date)
-    assert response['last_remind_date'] == _get_date_string(subscription_license.last_remind_date)
+    assert response['activation_date'] == _iso_8601_format(subscription_license.activation_date)
+    assert response['last_remind_date'] == _iso_8601_format(subscription_license.last_remind_date)
 
 
 @pytest.mark.django_db
@@ -930,12 +918,12 @@ def _create_subscription_with_renewal(enterprise_customer_uuid):
     """
     Helper method to create a subscription with a renewal associated with it.
     """
-    today = datetime.date.today()
+    today = localized_utcnow()
     customer_agreement = CustomerAgreementFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
     subscription = SubscriptionPlanFactory.create(customer_agreement=customer_agreement, expiration_date=today)
     SubscriptionPlanRenewalFactory.create(
         prior_subscription_plan=subscription,
-        renewed_expiration_date=today + datetime.timedelta(SUBSCRIPTION_RENEWAL_DAYS_OFFSET),
+        renewed_expiration_date=today + datetime.timedelta(days=SUBSCRIPTION_RENEWAL_DAYS_OFFSET + 1),
     )
     return subscription
 
@@ -2779,8 +2767,8 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
             'discount_value': constants.LICENSE_DISCOUNT_VALUE,
             'status': constants.ACTIVATED,
             'subsidy_id': str(self.activated_license.uuid),
-            'start_date': str(self.active_subscription_for_customer.start_date),
-            'expiration_date': str(self.active_subscription_for_customer.expiration_date),
+            'start_date': _iso_8601_format(self.active_subscription_for_customer.start_date),
+            'expiration_date': _iso_8601_format(self.active_subscription_for_customer.expiration_date),
             'subsidy_checksum': expected_checksum,
         }
 
@@ -2973,13 +2961,13 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
 
     @mock.patch('license_manager.apps.api.v1.views.send_onboarding_email_task.delay')
     def test_activating_renewed_assigned_license(self, mock_onboarding_email_task):
-        yesterday = localized_utcnow().date() - datetime.timedelta(days=1)
+        yesterday = localized_utcnow() - datetime.timedelta(days=1)
         # create an expired plan and a current plan
         subscription_plan_original = SubscriptionPlanFactory.create(
             customer_agreement=self.customer_agreement,
             enterprise_catalog_uuid=self.enterprise_catalog_uuid,
             is_active=True,
-            start_date=localized_utcnow().date() - datetime.timedelta(days=366),
+            start_date=localized_utcnow() - datetime.timedelta(days=366),
             expiration_date=yesterday,
         )
         subscription_plan_renewed = SubscriptionPlanFactory.create(
@@ -3000,7 +2988,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
             subscription_plan=subscription_plan_original,
             # explicitly set activation_date to assert that this license
             # is *not* the one that gets activated during the POST request.
-            activation_date=localized_datetime_from_date(yesterday),
+            activation_date=yesterday,
         )
         current_assigned_license = self._create_license(subscription_plan=subscription_plan_renewed)
 
@@ -3250,16 +3238,16 @@ class StaffLicenseLookupViewTests(LicenseViewTestMixin, TestCase):
         self.api_client.force_authenticate(user=self.admin_user)
 
         first_license = self._create_license(
-            assigned_date=localized_datetime(2020, 10, 31),
-            activation_date=localized_datetime(2020, 11, 1),
+            assigned_date=localized_utcnow() - datetime.timedelta(days=100),
+            activation_date=localized_utcnow() - datetime.timedelta(days=90),
             status=constants.ACTIVATED,
         )
         second_license = self._create_license(
             subscription_plan=self.other_subscription,
-            assigned_date=localized_datetime(2020, 12, 1),
-            activation_date=localized_datetime(2020, 12, 31),
+            assigned_date=localized_utcnow() - datetime.timedelta(days=120),
+            activation_date=localized_utcnow() - datetime.timedelta(days=110),
             status=constants.REVOKED,
-            revoked_date=localized_datetime(2021, 2, 1),
+            revoked_date=localized_utcnow() - datetime.timedelta(days=105),
         )
 
         response = self._post_request(self.user.email)
@@ -3272,7 +3260,7 @@ class StaffLicenseLookupViewTests(LicenseViewTestMixin, TestCase):
                 'last_remind_date': None,
                 'revoked_date': _iso_8601_format(second_license.revoked_date),
                 'status': constants.REVOKED,
-                'subscription_plan_expiration_date': str(self.other_subscription.expiration_date),
+                'subscription_plan_expiration_date': _iso_8601_format(self.other_subscription.expiration_date),
                 'subscription_plan_title': self.other_subscription.title,
             },
             {
@@ -3282,7 +3270,7 @@ class StaffLicenseLookupViewTests(LicenseViewTestMixin, TestCase):
                 'last_remind_date': None,
                 'revoked_date': None,
                 'status': constants.ACTIVATED,
-                'subscription_plan_expiration_date': str(self.active_subscription_for_customer.expiration_date),
+                'subscription_plan_expiration_date': _iso_8601_format(self.active_subscription_for_customer.expiration_date),  # pylint: disable=line-too-long
                 'subscription_plan_title': self.active_subscription_for_customer.title,
             },
         ], response.json())

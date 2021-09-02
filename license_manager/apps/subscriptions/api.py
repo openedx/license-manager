@@ -14,7 +14,7 @@ from ..api.tasks import (
 from .constants import ACTIVATED, ASSIGNED, UNASSIGNED, LicenseTypesToRenew
 from .exceptions import LicenseRevocationError
 from .models import License, SubscriptionPlan
-from .utils import localized_datetime_from_date, localized_utcnow
+from .utils import localized_utcnow
 
 
 logger = logging.getLogger(__name__)
@@ -158,7 +158,7 @@ def _renew_all_licenses(original_licenses, future_plan):
         future_license.activation_key = original_license.activation_key
         future_license.assigned_date = localized_utcnow()
         if original_license.status == ACTIVATED:
-            future_license.activation_date = localized_datetime_from_date(future_plan.start_date)
+            future_license.activation_date = future_plan.start_date
 
         future_licenses.append(future_license)
 
@@ -223,7 +223,7 @@ def expire_plan_post_renewal(subscription_plan):
             "Cannot expire {}. The plan's expiration is already marked as processed.".format(subscription_plan)
         )
 
-    if localized_datetime_from_date(subscription_plan.expiration_date) > localized_utcnow():
+    if subscription_plan.expiration_date > localized_utcnow():
         raise UnprocessableSubscriptionPlanExpirationError(
             "Cannot expire {}. The plan's expiration date is in the future.".format(subscription_plan)
         )

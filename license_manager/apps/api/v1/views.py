@@ -1242,7 +1242,7 @@ class LicenseActivationView(LicenseBaseView):
         """
         activation_key_uuid = utils.get_activation_key_from_request(request)
         try:
-            today = localized_utcnow().date()
+            today = localized_utcnow()
             kwargs = {
                 'activation_key': activation_key_uuid,
                 'user_email': self.user_email,

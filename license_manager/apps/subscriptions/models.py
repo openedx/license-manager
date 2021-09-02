@@ -45,6 +45,7 @@ from license_manager.apps.subscriptions.exceptions import (
 from license_manager.apps.subscriptions.utils import (
     days_until,
     get_license_activation_link,
+    hours_until,
     localized_utcnow,
 )
 
@@ -265,22 +266,13 @@ class SubscriptionPlan(TimeStampedModel):
         editable=False
     )
 
-    start_date = models.DateField()
+    start_date = models.DateTimeField()
 
-    expiration_date = models.DateField()
+    expiration_date = models.DateTimeField()
 
     expiration_processed = models.BooleanField(
         default=False
     )
-
-    @property
-    def days_until_expiration(self):
-        """
-        Returns the number of days remaining until a subscription expires.
-
-        Note: expiration_date is a required field so checking for None isn't needed.
-        """
-        return days_until(self.expiration_date)
 
     enterprise_catalog_uuid = models.UUIDField(
         blank=True,
@@ -325,30 +317,6 @@ class SubscriptionPlan(TimeStampedModel):
         verbose_name="Number of Revocations Applied",
         help_text="Number of revocations applied to Licenses for this SubscriptionPlan.",
     )
-
-    @property
-    def has_revocations_remaining(self):
-        """
-        Returns true if there are any revocations remaining for this SubscriptionPlan, false otherwise.
-        """
-        if not self.is_revocation_cap_enabled:
-            return True
-        return self.num_revocations_remaining > 0
-
-    @property
-    def num_revocations_remaining(self):
-        """
-        When the revocation cap is enabled for this plan,
-        returns the number of revocations that can still be made against this plan.
-
-        When the revocation cap is not enabled for this plan, positive infinity is returned.
-        """
-        if not self.is_revocation_cap_enabled:
-            return inf
-
-        num_revocations_allowed = ceil(self.num_licenses * (self.revoke_max_percentage / 100))
-        return num_revocations_allowed - self.num_revocations_applied
-    num_revocations_remaining.fget.short_description = "Number of Revocations Remaining"
 
     salesforce_opportunity_id = models.CharField(
         max_length=SALESFORCE_ID_LENGTH,
@@ -395,6 +363,39 @@ class SubscriptionPlan(TimeStampedModel):
         null=True,
         help_text=_("The time at which the Subscription Plan was last frozen."),
     )
+
+    @property
+    def days_until_expiration(self):
+        """
+        Returns the number of days remaining until a subscription expires.
+
+        Note: expiration_date is a required field so checking for None isn't needed.
+        """
+        return days_until(self.expiration_date)
+
+    @property
+    def has_revocations_remaining(self):
+        """
+        Returns true if there are any revocations remaining for this SubscriptionPlan, false otherwise.
+        """
+        if not self.is_revocation_cap_enabled:
+            return True
+        return self.num_revocations_remaining > 0
+
+    @property
+    def num_revocations_remaining(self):
+        """
+        When the revocation cap is enabled for this plan,
+        returns the number of revocations that can still be made against this plan.
+
+        When the revocation cap is not enabled for this plan, positive infinity is returned.
+        """
+        if not self.is_revocation_cap_enabled:
+            return inf
+
+        num_revocations_allowed = ceil(self.num_licenses * (self.revoke_max_percentage / 100))
+        return num_revocations_allowed - self.num_revocations_applied
+    num_revocations_remaining.fget.short_description = "Number of Revocations Remaining"
 
     @property
     def enterprise_customer_uuid(self):
@@ -515,6 +516,26 @@ class SubscriptionPlan(TimeStampedModel):
         except ValueError:
             # A value error indicates that there were no renewals
             return self.days_until_expiration
+
+    @property
+    def is_locked_for_renewal_processing(self):
+        """
+        If there is an existing renewal tied to the plan (obj), returns whether it is within
+        the renewal processing window.
+
+        If there is no existing renewal, returns False.
+        """
+        subscription_plan_renewal = self.get_renewal()
+        if not subscription_plan_renewal:
+            return False
+
+        hours_until_effective_date = hours_until(subscription_plan_renewal.effective_date)
+        # The renewal's effective_date has already passed
+        if hours_until_effective_date < 0:
+            return False
+
+        is_plan_locked_for_renewal = hours_until_effective_date < settings.SUBSCRIPTION_PLAN_RENEWAL_LOCK_PERIOD_HOURS
+        return is_plan_locked_for_renewal
 
     def license_count_by_status(self):
         """
@@ -642,13 +663,13 @@ class SubscriptionPlanRenewal(TimeStampedModel):
         help_text=_("Number of licenses to renew the linked subscription for."),
     )
 
-    effective_date = models.DateField(
+    effective_date = models.DateTimeField(
         blank=False,
         null=False,
         help_text=_("The date that the subscription renewal will take place on."),
     )
 
-    renewed_expiration_date = models.DateField(
+    renewed_expiration_date = models.DateTimeField(
         blank=False,
         null=False,
         help_text=_("The date that the renewed subscription should expire on."),
@@ -989,7 +1010,7 @@ class License(TimeStampedModel):
         if active_plans_only:
             kwargs['subscription_plan__is_active'] = True
         if current_plans_only:
-            today = localized_utcnow().date()
+            today = localized_utcnow()
             kwargs['subscription_plan__start_date__lte'] = today
             kwargs['subscription_plan__expiration_date__gte'] = today
 
@@ -1019,7 +1040,7 @@ class License(TimeStampedModel):
         kwargs.update({
             'user_email__isnull': False,
             date_field_is_null: False,
-            date_field: localized_utcnow().date() - models.F(duration_before_purge_field),
+            date_field: localized_utcnow() - models.F(duration_before_purge_field),
         })
 
         return License.objects.filter(**kwargs).select_related(
