@@ -94,3 +94,6 @@ BULK_ENROLL_TOO_MANY_ENROLLMENTS = 'Too many provided enrollments, please try a 
 
 # Deprecated Constants #
 DEACTIVATED = 'deactivated'  # Deprecated for REVOKED
+
+# Segment events
+PROCESS_SUBSCRIPTION_RENEWAL_AUTO_RENEWED = 'edx.server.license-manager.process_subscription_renewal.auto_renewed'

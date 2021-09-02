@@ -2,7 +2,7 @@
 import hashlib
 import hmac
 from base64 import b64encode
-from datetime import date, datetime
+from datetime import datetime
 
 from django.conf import settings
 from pytz import UTC
