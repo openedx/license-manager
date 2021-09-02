@@ -30,7 +30,7 @@ class ExpireSubscriptionsCommandTests(TestCase):
 
     def tearDown(self):
         """
-        Deletes all licenses and subscription after each test method is run.
+        Deletes all licenses and subscriptions after each test method is run.
         """
         super().tearDown()
         License.objects.all().delete()

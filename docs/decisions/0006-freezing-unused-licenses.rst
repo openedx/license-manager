@@ -1,4 +1,4 @@
-5. Freezing unused licenses on a subscription plan
+6. Freezing unused licenses on a subscription plan
 ======================
 
 Status

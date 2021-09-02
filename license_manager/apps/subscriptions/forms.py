@@ -1,7 +1,6 @@
 """
 Forms to be used in the subscriptions django app.
 """
-from datetime import datetime
 
 from django import forms
 from django.utils.translation import gettext as _
