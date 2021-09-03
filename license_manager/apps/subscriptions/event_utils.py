@@ -1,7 +1,11 @@
+import json
 import logging
 
 import analytics
+import requests
 from django.conf import settings
+
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 logger = logging.getLogger(__name__)
@@ -17,6 +21,57 @@ def _iso_8601_format_string(datetime):
     return datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
+def _track_event_via_braze_alias(email, event_name, properties):
+    """ Private helper to allow tracking for a user without an LMS User Id.
+        Should be called from inside the track_event module only for exception handling.
+    """
+    if not (hasattr(settings, "BRAZE_API_KEY") and hasattr(settings, "BRAZE_URL")
+            and settings.BRAZE_API_KEY and settings.BRAZE_URL):
+        logger.warning("Event {} not tracked because BRAZE_API_KEY and BRAZE_URL not set".format(event_name))
+        return
+
+    alias_url = "{}/users/alias/new".format(settings.BRAZE_URL)
+    payload = {
+        'user_aliases': [{
+            'alias_name': email,
+            'alias_label': 'Enterprise'  # Do Not change this, this is consistent with other uses across edX repos.
+        }]
+    }
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer {}'.format(settings.BRAZE_API_KEY),
+        'Accept-Encoding': 'identity'
+    }
+
+    alias_response = requests.request("POST", alias_url, headers=headers, data=json.dumps(payload))
+    logger.info('Added alias for pending learner to Braze for license {}, enterprise {}.\nResponse:{} {}'
+                .format(properties['license_uuid'],
+                        properties['enterprise_customer_slug'],
+                        alias_response.status_code,
+                        alias_response.json()))
+
+    track_url = "{}/users/track".format(settings.BRAZE_URL)
+    track_payload = {
+        "events": [
+            {
+                "user_alias": {
+                    'alias_name': email,
+                    'alias_label': 'Enterprise'
+                },
+                "name": event_name,
+                "time": _iso_8601_format_string(localized_utcnow()),
+                "properties": properties
+            }]
+    }
+    track_response = requests.request("POST", track_url, headers=headers, data=json.dumps(track_payload))
+    logger.info('Sent "{}" event to Braze for license {}, enterprise {}.\nResponse:{} {}'
+                .format(event_name,
+                        properties['license_uuid'],
+                        properties['enterprise_customer_slug'],
+                        track_response.status_code,
+                        track_response.json()))
+
+
 def track_event(lms_user_id, event_name, properties):
     """
     Send a tracking event to segment
@@ -30,15 +85,20 @@ def track_event(lms_user_id, event_name, properties):
     Returns:
         None
     """
-    if not lms_user_id:
-        # We dont have an LMS user id for this event, so we can't track it in segment right away.
-        # Log event with warning in preparation for being able to handle this as a future feature:
-        logger.warning("Event {} for License Manager not tracked because no LMS User Id provided. {}". format(event_name, properties))
-        return
-
     if hasattr(settings, "SEGMENT_KEY") and settings.SEGMENT_KEY:
         try:  # We should never raise an exception when not able to send a tracking event
-            analytics.track(lms_user_id, event_name, properties)
+            if not lms_user_id:
+                analytics.track(anonymous_id=('license_mgr_user_id_{}'.format(properties['user_id'])),
+                                event=event_name,
+                                properties=properties)
+                # We dont have an LMS user id for this event, so we can't track it in segment the same way.
+                logger.warning("Event {} for License Manager tracked without LMS User Id: {}". format(event_name, properties))
+                if properties['assigned_email']:
+                    _track_event_via_braze_alias(properties['assigned_email'], event_name, properties)
+
+                return
+
+            analytics.track(user_id=lms_user_id, event=event_name, properties=properties)
         except Exception as exc:  # pylint: disable=broad-except
             logger.exception(exc)
     else:
