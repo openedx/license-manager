@@ -402,7 +402,7 @@ class BaseLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMod
         if self.action == 'assign':
             return serializers.CustomTextWithMultipleEmailsSerializer
         if self.action == 'remind':
-            return serializers.CustomTextWithSingleEmailSerializer
+            return serializers.CustomTextWithMultipleOrSingleEmailSerializer
         if self.action == 'remind_all':
             return serializers.CustomTextSerializer
         if self.action == 'revoke':
@@ -677,33 +677,47 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
     @action(detail=False, methods=['post'])
     def remind(self, request, subscription_uuid=None):
         """
-        Given a single email in the POST data, sends a reminder email that they have a license pending activation.
+        Given a single email or a list of emails in the POST data, sends reminder email(s) that they have a license pending activation.
 
-        This endpoint reminds users by sending an email to the given email address, if there is a license which has not
-        yet been activated that is associated with that email address.
+        This endpoint reminds users by sending an email to the given email address(es), if there is a license which has not
+        yet been activated that is associated with the email address(es).
         """
         # Validate the user_email and text sent in the data
         self._validate_data(request.data)
 
-        # Make sure there is a license that is still pending activation associated with the given email
         user_email = request.data.get('user_email')
+        user_emails = request.data.get('user_emails')
+
+        if not user_emails and not user_email:
+            msg = "user_email or user_emails is required"
+            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+
+        emails_to_remind = []
+
+        if user_emails:
+            emails_to_remind.extend(user_emails)
+        else:
+            emails_to_remind.append(user_email)
+
+        # Make sure there is a license that is still pending activation associated with the given email
         subscription_plan = self._get_subscription_plan()
-        try:
-            License.objects.get(
-                subscription_plan=subscription_plan,
-                user_email=user_email,
-                status=constants.ASSIGNED,
-            )
-        except ObjectDoesNotExist:
-            msg = 'Could not find any licenses pending activation that are associated with the email: {}'.format(
-                user_email,
-            )
-            return Response(msg, status=status.HTTP_404_NOT_FOUND)
+        for email_item in emails_to_remind:
+            try:
+                License.objects.get(
+                    subscription_plan=subscription_plan,
+                    user_email=email_item,
+                    status=constants.ASSIGNED,
+                )
+            except ObjectDoesNotExist:
+                msg = 'Could not find any licenses pending activation that are associated with the email: {}'.format(
+                    email_item,
+                )
+                return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
         # Send activation reminder email
         send_reminder_email_task.delay(
             self._get_custom_text(request.data),
-            [user_email],
+            emails_to_remind,
             subscription_uuid,
         )
 
