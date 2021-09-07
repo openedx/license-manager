@@ -238,3 +238,36 @@ class CustomTextWithMultipleEmailsSerializer(MultipleEmailsSerializer, CustomTex
     """
     class Meta:
         fields = MultipleEmailsSerializer.Meta.fields + CustomTextSerializer.Meta.fields
+
+
+class MultipleOrSingleEmailSerializer(serializers.Serializer):  # pylint: disable=abstract-method
+    """
+    Serializer for specifying multiple or single email
+
+    Requires that valid emails are submitted.
+    """
+    user_email = serializers.EmailField(
+        allow_blank=True,
+        required=False,
+        write_only=True,
+    )
+
+    user_emails = serializers.ListField(
+        child=serializers.EmailField(
+            allow_blank=True,
+            write_only=True,
+        ),
+        allow_empty=True,
+        required=False,
+    )
+
+    class Meta:
+        fields = [
+            'user_email',
+            'user_emails',
+        ]
+
+
+class CustomTextWithMultipleOrSingleEmailSerializer(MultipleOrSingleEmailSerializer, CustomTextSerializer):
+    class Meta:
+        fields = MultipleOrSingleEmailSerializer.Meta.fields + CustomTextSerializer.Meta.fields
