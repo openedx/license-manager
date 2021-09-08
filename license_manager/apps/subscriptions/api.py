@@ -6,16 +6,14 @@ import logging
 from django.db import transaction
 from requests.exceptions import HTTPError
 
+import license_manager.apps.api.tasks as tasks
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import event_utils
 
-from ..api.tasks import (
-    revoke_course_enrollments_for_user_task,
-    send_revocation_cap_notification_email_task,
-)
 from .constants import (
     ACTIVATED,
     ASSIGNED,
+    REVOCABLE_LICENSE_STATUSES,
     UNASSIGNED,
     LicenseTypesToRenew,
     SegmentEvents,
@@ -51,7 +49,7 @@ def revoke_license(user_license):
             "License revocation limit has been reached."
         )
     # Only allow revocation for ASSIGNED and ACTIVATED licenses
-    if user_license.status not in [ACTIVATED, ASSIGNED]:
+    if user_license.status not in REVOCABLE_LICENSE_STATUSES:
         raise LicenseRevocationError(
             user_license.uuid,
             "License with status of {license_status} cannot be revoked.".format(
@@ -62,7 +60,7 @@ def revoke_license(user_license):
     if user_license.status == ACTIVATED:
         # We should only need to revoke enrollments if the License has an original
         # status of ACTIVATED, pending users shouldn't have any enrollments.
-        revoke_course_enrollments_for_user_task.delay(
+        tasks.revoke_course_enrollments_for_user_task.delay(
             user_id=user_license.lms_user_id,
             enterprise_id=str(user_license.subscription_plan.enterprise_customer_uuid),
         )
@@ -73,7 +71,7 @@ def revoke_license(user_license):
 
     if not user_license.subscription_plan.has_revocations_remaining:
         # Send email notification to ECS that the Subscription Plan has reached its revocation cap
-        send_revocation_cap_notification_email_task.delay(
+        tasks.send_revocation_cap_notification_email_task.delay(
             subscription_uuid=user_license.subscription_plan.uuid,
         )
 

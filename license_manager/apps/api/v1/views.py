@@ -32,6 +32,7 @@ from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_email_task,
     link_learners_to_enterprise_task,
+    revoke_all_licenses_task,
     send_onboarding_email_task,
     send_reminder_email_task,
 )
@@ -447,9 +448,10 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
     GET /api/v1/subscriptions/{subscription_plan_uuid}/licenses/
     POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
     POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/remind/
-    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/remind_all/
+    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/remind-all/
     POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/revoke/
-    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/bulk_revoke/
+    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/bulk_revoke/ #TODO: This should probably be renamed to bulk-revolk
+    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/revoke-all/
     """
     lookup_field = 'uuid'
     lookup_url_kwarg = 'license_uuid'
@@ -750,6 +752,25 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         return Response(status=status.HTTP_200_OK)
 
+    def _revoke_by_email_and_plan(self, user_email, subscription_plan):
+        """
+        Helper method to revoke a single license.
+        """
+        try:
+            user_license = subscription_plan.licenses.get(
+                user_email=user_email,
+                status__in=constants.REVOCABLE_LICENSE_STATUSES,
+            )
+        except License.DoesNotExist as exc:
+            logger.error(exc)
+            raise LicenseNotFoundError(user_email, subscription_plan, constants.REVOCABLE_LICENSE_STATUSES) from exc
+
+        try:
+            revoke_license(user_license)
+        except LicenseRevocationError as exc:
+            logger.error(exc)
+            raise
+
     @action(detail=False, methods=['post'])
     def revoke(self, request, subscription_uuid=None):
         """
@@ -857,25 +878,37 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def _revoke_by_email_and_plan(self, user_email, subscription_plan):
+    @action(detail=False, methods=['post'], url_path='revoke-all')
+    def revoke_all(self, _, subscription_uuid=None):
         """
-        Helper method to revoke a single license.
-        """
-        revocable_statuses = [constants.ACTIVATED, constants.ASSIGNED]
-        try:
-            user_license = subscription_plan.licenses.get(
-                user_email=user_email,
-                status__in=revocable_statuses,
-            )
-        except License.DoesNotExist as exc:
-            logger.error(exc)
-            raise LicenseNotFoundError(user_email, subscription_plan, revocable_statuses) from exc
+        Revokes all licenses in a subscription plan,
+        This will result in any existing enrollments for the revoked users
+        being moved to the audit enrollment mode.
 
-        try:
-            revoke_license(user_license)
-        except LicenseRevocationError as exc:
-            logger.error(exc)
-            raise
+        POST /api/v1/subscriptions/{subscription_uuid}/licenses/revoke-all/
+
+        Request payload: {}
+
+        Response:
+            204 No Content - Revocations will be processed
+            422 Unprocessable Entity - Revocation cap is enabled for the subscription plan, licenses will not be revoked
+                                       to prevent customers from receiving emails about exceeding the revocation cap
+
+        The revocation of licenses is atomic: if an error occurs while processing any of the license revocations,
+        no status change is committed for any of the licenses.
+        """
+        subscription_plan = self._get_subscription_plan()
+
+        if not subscription_plan:
+            return Response('No SubscriptionPlan identified by {} exists'.format(
+                            subscription_uuid), status=status.HTTP_404_NOT_FOUND)
+
+        if subscription_plan.is_revocation_cap_enabled:
+            return Response('Cannot revoke all licenses when revocation cap is enabled for the subscription plan',
+                            status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+        revoke_all_licenses_task.delay(subscription_uuid)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
     def overview(self, request, subscription_uuid=None):  # pylint: disable=unused-argument

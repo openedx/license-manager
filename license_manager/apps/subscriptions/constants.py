@@ -9,6 +9,7 @@ LICENSE_STATUS_CHOICES = (
     (UNASSIGNED, 'Unassigned'),
     (REVOKED, 'Revoked'),
 )
+REVOCABLE_LICENSE_STATUSES = [ACTIVATED, ASSIGNED]
 
 
 # Subscription/license renewals
