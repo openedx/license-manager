@@ -147,8 +147,8 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
-    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
     def test_bulk_revoked_event(self, *_):
         """
         Test that bulk revoking licenses  triggers the right set of events:
@@ -189,8 +189,8 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
-    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
     def test_license_revoked_event(self, *_):
         """ Test that revoking a license from a user triggers the right set of events:
          1 revoke event and 1 creation of a fresh license

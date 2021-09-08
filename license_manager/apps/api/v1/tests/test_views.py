@@ -1525,6 +1525,10 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             'api:v1:licenses-bulk-revoke',
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
+        cls.revoke_all_licenses_url = reverse(
+            'api:v1:licenses-revoke-all',
+            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
+        )
         cls.assign_url = reverse(
             'api:v1:licenses-assign',
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
@@ -1766,14 +1770,59 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         self.assertEqual(expected_error_msg, response.json())
         mock_revoke_license.assert_called_once_with(alice_license)
 
+    def test_revoke_all_no_valid_subscription_plan_superuser(self):
+        """
+        Test that calls to revoke-all fail with a 404 if no valid subscription plan uuid
+        is provided, for requests made by a superuser.
+        """
+        self._setup_request_jwt(user=self.super_user)
+
+        non_existent_uuid = uuid4()
+        request_url = reverse(
+            'api:v1:licenses-revoke-all',
+            kwargs={'subscription_uuid': non_existent_uuid},
+        )
+        response = self.api_client.post(request_url, {})
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        expected_response_message = 'No SubscriptionPlan identified by {} exists'.format(non_existent_uuid)
+        self.assertEqual(expected_response_message, response.json())
+
+    def test_revoke_all_revocation_cap_enabled(self):
+        """
+        Test that calls to revoke-all fail with a 422 if revocation cap is enabled
+        """
+        self._setup_request_jwt(user=self.super_user)
+
+        subscription_plan = SubscriptionPlanFactory.create(is_revocation_cap_enabled=True)
+        request_url = reverse(
+            'api:v1:licenses-revoke-all',
+            kwargs={'subscription_uuid': subscription_plan.uuid},
+        )
+        response = self.api_client.post(request_url, {})
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        expected_response_message = 'Cannot revoke all licenses when revocation cap is enabled for the subscription plan'
+        self.assertEqual(expected_response_message, response.json())
+
+    @mock.patch('license_manager.apps.api.tasks.revoke_all_licenses_task.delay')
+    def test_revoke_all_happy_path(self, mock_revoke_all_licenses_task):
+        """
+        Test that calls to revoke-all calls the revoke_all_licenses task
+        """
+        self._setup_request_jwt(user=self.super_user)
+        response = self.api_client.post(self.revoke_all_licenses_url, {})
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        mock_revoke_all_licenses_task.assert_called()
+
     @ddt.data(
         {'is_revocation_cap_enabled': True},
         {'is_revocation_cap_enabled': False},
     )
     @ddt.unpack
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
     @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
     def test_assign_after_license_revoke_end_to_end(
         self,
@@ -1823,7 +1872,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             self.subscription_plan.customer_agreement.enterprise_customer_uuid
         )
 
-    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
     def test_revoke_total_and_allocated_count_end_to_end(
         self,
         mock_revoke_course_enrollments_for_user_task,

@@ -295,8 +295,8 @@ class RevocationTests(TestCase):
         {'revoke_max_percentage': 0.74, 'number_licenses_to_create': 15},
     )
     @ddt.unpack
-    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
     def test_revocation_limit_reached_raises_error(
         self,
         mock_cap_email_delay,
@@ -344,8 +344,8 @@ class RevocationTests(TestCase):
         constants.REVOKED,
         constants.UNASSIGNED,
     )
-    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
     def test_cannot_revoke_license_if_not_assigned_or_activated(
             self, license_status, mock_cap_email_delay, mock_revoke_enrollments_delay
     ):
@@ -367,8 +367,8 @@ class RevocationTests(TestCase):
         self.assertFalse(mock_revoke_enrollments_delay.called)
 
     @ddt.data(True, False)
-    @mock.patch('license_manager.apps.subscriptions.api.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.send_revocation_cap_notification_email_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
     def test_activated_license_is_revoked(
         self, should_send_revocation_cap_email, mock_cap_email_delay, mock_revoke_enrollments_delay
     ):

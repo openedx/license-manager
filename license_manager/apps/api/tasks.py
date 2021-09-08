@@ -3,16 +3,20 @@ from smtplib import SMTPException
 
 from celery import shared_task
 from celery_utils.logged_task import LoggedTask
+from django.db import transaction
 
+import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
     PENDING_ACCOUNT_CREATION_BATCH_SIZE,
+    REVOCABLE_LICENSE_STATUSES,
 )
 from license_manager.apps.subscriptions.emails import (
     send_activation_emails,
     send_onboarding_email,
     send_revocation_cap_notification_email,
 )
+from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 from license_manager.apps.subscriptions.utils import (
     chunks,
@@ -203,3 +207,26 @@ def send_revocation_cap_notification_email_task(subscription_uuid):
         )
     except SMTPException:
         logger.error('Revocation cap notification email sending received an exception.', exc_info=True)
+
+
+@shared_task(base=LoggedTask)
+def revoke_all_licenses_task(subscription_uuid):
+    """
+    Revokes all licenses associated with a subscription plan.
+
+    Arguments:
+        subscription_uuid (str): UUID (string representation) of the subscription to revoke all licenses for.
+    """
+    subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
+
+    with transaction.atomic():
+        subscription_licenses = subscription_plan.licenses.filter(
+            status__in=REVOCABLE_LICENSE_STATUSES,
+        )
+
+        for sl in subscription_licenses:
+            try:
+                subscriptions_api.revoke_license(sl)
+            except Exception:  # pylint: disable=broad-except
+                logger.error('Could not revoke license with uuid {} during revoke_all_licenses_task'.format(sl.uuid), exc_info=True)
+                raise
