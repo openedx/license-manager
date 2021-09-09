@@ -7,7 +7,7 @@ from license_manager.apps.subscriptions.constants import (
     ASSIGNED,
     DAYS_TO_RETIRE,
     REVOKED,
-    UNASSIGNED,
+    SegmentEvents,
 )
 from license_manager.apps.subscriptions.event_utils import (
     get_license_tracking_properties,
@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
             event_properties = get_license_tracking_properties(expired_license)
             track_event(original_lms_user_id,
-                        'edx.server.license-manager.license-lifecycle.revoked',
+                        SegmentEvents.LICENSE_REVOKED,
                         event_properties)
 
             # Clear historical pii after removing pii from the license itself

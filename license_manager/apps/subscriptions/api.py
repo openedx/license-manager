@@ -13,7 +13,13 @@ from ..api.tasks import (
     revoke_course_enrollments_for_user_task,
     send_revocation_cap_notification_email_task,
 )
-from .constants import ACTIVATED, ASSIGNED, UNASSIGNED, LicenseTypesToRenew
+from .constants import (
+    ACTIVATED,
+    ASSIGNED,
+    UNASSIGNED,
+    LicenseTypesToRenew,
+    SegmentEvents,
+)
 from .exceptions import (
     CustomerAgreementError,
     LicenseRevocationError,
@@ -78,7 +84,7 @@ def revoke_license(user_license):
     user_license.subscription_plan.increase_num_licenses(1)
 
 
-def renew_subscription(subscription_plan_renewal):
+def renew_subscription(subscription_plan_renewal, is_auto_renewed=False):
     """
     Renew the subscription plan.
     """
@@ -136,6 +142,7 @@ def renew_subscription(subscription_plan_renewal):
         _renew_all_licenses(
             original_licenses,
             future_plan,
+            is_auto_renewed
         )
 
         subscription_plan_renewal.renewed_subscription_plan = future_plan
@@ -144,7 +151,7 @@ def renew_subscription(subscription_plan_renewal):
         subscription_plan_renewal.save()
 
 
-def _renew_all_licenses(original_licenses, future_plan):
+def _renew_all_licenses(original_licenses, future_plan, is_auto_renewed):
     """
     We assume at this point that the future plan has at least as many licenses
     as the number of licenses in the original plan.  Does a bulk update of
@@ -172,10 +179,12 @@ def _renew_all_licenses(original_licenses, future_plan):
         original_licenses,
         ['renewed_to'],
     )
+
     for future_license in future_licenses:
         event_properties = event_utils.get_license_tracking_properties(future_license)
+        event_properties['is_auto_renewed'] = is_auto_renewed
         event_utils.track_event(future_license.lms_user_id,
-                                'edx.server.license-manager.license-lifecycle.renewed',
+                                SegmentEvents.LICENSE_RENEWED,
                                 event_properties)
 
 

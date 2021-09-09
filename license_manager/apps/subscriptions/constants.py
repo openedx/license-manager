@@ -42,6 +42,17 @@ class SubscriptionPlanChangeReasonChoices:
     )
 
 
+# Segment events
+class SegmentEvents:
+    LICENSE_ACTIVATED = 'edx.server.license-manager.license-lifecycle.activated'
+    LICENSE_ASSIGNED = 'edx.server.license-manager.license-lifecycle.assigned'
+    LICENSE_CREATED = 'edx.server.license-manager.license-lifecycle.created'
+    LICENSE_DELETED = 'edx.server.license-manager.license-lifecycle.deleted'
+    LICENSE_EXPIRED = 'edx.server.license-manager.license-lifecycle.expired'
+    LICENSE_RENEWED = 'edx.server.license-manager.license-lifecycle.renewed'
+    LICENSE_REVOKED = 'edx.server.license-manager.license-lifecycle.revoked'
+
+
 # Template names used for emails
 LICENSE_ACTIVATION_EMAIL_TEMPLATE = 'activation'
 LICENSE_REMINDER_EMAIL_TEMPLATE = 'reminder'
@@ -94,6 +105,3 @@ BULK_ENROLL_TOO_MANY_ENROLLMENTS = 'Too many provided enrollments, please try a 
 
 # Deprecated Constants #
 DEACTIVATED = 'deactivated'  # Deprecated for REVOKED
-
-# Segment events
-PROCESS_SUBSCRIPTION_RENEWAL_AUTO_RENEWED = 'edx.server.license-manager.process_subscription_renewal.auto_renewed'

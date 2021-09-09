@@ -63,7 +63,7 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
             assert mock_track_event.call_count == num_licenses
             for call in mock_track_event.call_args_list:
                 # We should have events all called with the created event:
-                assert call[0][1] == 'edx.server.license-manager.license-lifecycle.created'
+                assert call[0][1] == constants.SegmentEvents.LICENSE_CREATED
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
@@ -94,10 +94,10 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
             assignment_call = mock_track_event.call_args_list[0]
             deletion_call = mock_track_event.call_args_list[1]
 
-            assert assignment_call[0][1] == 'edx.server.license-manager.license-lifecycle.assigned'
+            assert assignment_call[0][1] == constants.SegmentEvents.LICENSE_ASSIGNED
             assert assignment_call[0][2]['license_uuid'] == str(revoked_license.uuid)
 
-            assert deletion_call[0][1] == 'edx.server.license-manager.license-lifecycle.deleted'
+            assert deletion_call[0][1] == constants.SegmentEvents.LICENSE_DELETED
             assert deletion_call[0][2]['license_uuid'] == str(unassigned_licenses[0].uuid)
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
@@ -117,7 +117,7 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
             # We should only have fired an event for 1 assignment:
             assert mock_assign_track_event.call_count == 1
             for call in mock_assign_track_event.call_args_list:
-                assert call[0][1] == 'edx.server.license-manager.license-lifecycle.assigned'
+                assert call[0][1] == constants.SegmentEvents.LICENSE_ASSIGNED
             assert response.status_code == status.HTTP_200_OK
             self._assert_licenses_assigned([self.test_email])
 
@@ -132,7 +132,7 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
             self._create_available_licenses(num_licenses=5)
             assert mock_create_track_event.call_count == 5
             for call in mock_create_track_event.call_args_list:
-                assert call[0][1] == 'edx.server.license-manager.license-lifecycle.created'
+                assert call[0][1] == constants.SegmentEvents.LICENSE_CREATED
 
         with mock.patch('license_manager.apps.subscriptions.event_utils.track_event') as mock_assign_track_event:
             user_emails = ['bb8@mit.edu', self.test_email]
@@ -143,7 +143,7 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
             assert response.status_code == status.HTTP_200_OK
             assert mock_assign_track_event.call_count == 2
             for call in mock_assign_track_event.call_args_list:
-                assert call[0][1] == 'edx.server.license-manager.license-lifecycle.assigned'
+                assert call[0][1] == constants.SegmentEvents.LICENSE_ASSIGNED
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
@@ -172,19 +172,19 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
             assert response.status_code == status.HTTP_204_NO_CONTENT
             assert mock_revoke_track_event.call_count == 4
             assert (mock_revoke_track_event.call_args_list[0][0][1]
-                    == 'edx.server.license-manager.license-lifecycle.revoked')
+                    == constants.SegmentEvents.LICENSE_REVOKED)
             assert (mock_revoke_track_event.call_args_list[0][0][2]['assigned_email']
                     == 'alice@example.com')
             assert (mock_revoke_track_event.call_args_list[1][0][1]
-                    == 'edx.server.license-manager.license-lifecycle.created')
+                    == constants.SegmentEvents.LICENSE_CREATED)
             assert mock_revoke_track_event.call_args_list[1][0][2]['assigned_email'] == ''
 
             assert (mock_revoke_track_event.call_args_list[2][0][1]
-                    == 'edx.server.license-manager.license-lifecycle.revoked')
+                    == constants.SegmentEvents.LICENSE_REVOKED)
             assert (mock_revoke_track_event.call_args_list[2][0][2]['assigned_email']
                     == 'bob@example.com')
             assert (mock_revoke_track_event.call_args_list[3][0][1]
-                    == 'edx.server.license-manager.license-lifecycle.created')
+                    == constants.SegmentEvents.LICENSE_CREATED)
             assert mock_revoke_track_event.call_args_list[3][0][2]['assigned_email'] == ''
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
@@ -207,10 +207,10 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
 
             assert mock_revoke_track_event.call_count == 2
             assert (mock_revoke_track_event.call_args_list[0][0][1]
-                    == 'edx.server.license-manager.license-lifecycle.revoked')
+                    == constants.SegmentEvents.LICENSE_REVOKED)
             assert mock_revoke_track_event.call_args_list[0][0][2]['assigned_email'] == 'test@example.com'
             assert (mock_revoke_track_event.call_args_list[1][0][1]
-                    == 'edx.server.license-manager.license-lifecycle.created')
+                    == constants.SegmentEvents.LICENSE_CREATED)
             assert mock_revoke_track_event.call_args_list[1][0][2]['assigned_email'] == ''
 
     def test_license_renewed_events(self):
@@ -251,11 +251,11 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
                 renewal.refresh_from_db()
 
                 for call in mock_created_track_event.call_args_list[0:4]:
-                    assert call[0][1] == 'edx.server.license-manager.license-lifecycle.created'
+                    assert call[0][1] == constants.SegmentEvents.LICENSE_CREATED
                 assert mock_created_track_event.call_count == 4
 
                 for call in mock_renewed_track_event.call_args_list[0:4]:
-                    assert call[0][1] == 'edx.server.license-manager.license-lifecycle.renewed'
+                    assert call[0][1] == constants.SegmentEvents.LICENSE_RENEWED
                 assert mock_renewed_track_event.call_count == 4
 
     def test_activate_event(self):
@@ -288,7 +288,7 @@ class LicenseLearnerActionsEventTests(LicenseViewTestMixin, TestCase):
             assert mock_activated_track_event.call_count == 1
 
             assert (mock_activated_track_event.call_args_list[0][0][1]
-                    == 'edx.server.license-manager.license-lifecycle.activated')
+                    == constants.SegmentEvents.LICENSE_ACTIVATED)
             assert mock_activated_track_event.call_args_list[0][0][2]['assigned_email'] == self.user.email
             assert mock_activated_track_event.call_args_list[0][0][2]['assigned_lms_user_id'] == self.lms_user_id
             assert (mock_activated_track_event.call_args_list[0][0][2]['activation_date']

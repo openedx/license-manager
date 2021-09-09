@@ -245,6 +245,42 @@ class RenewalProcessingTests(TestCase):
         self.assertEqual(future_plan.num_licenses, renewal.number_of_licenses)
         self._assert_all_licenses_renewed(future_plan)
 
+    @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
+    def test_renewal_processed_segment_events(self, mock_track_event):
+        prior_plan = SubscriptionPlanFactory()
+        original_activated_licenses = [LicenseFactory.create(
+            subscription_plan=prior_plan,
+            status=constants.ACTIVATED,
+            user_email='activated_user_{}@example.com'
+        )]
+
+        renewal = SubscriptionPlanRenewalFactory(
+            prior_subscription_plan=prior_plan,
+            number_of_licenses=1,
+            license_types_to_copy=constants.LicenseTypesToRenew.ASSIGNED_AND_ACTIVATED
+        )
+        api.renew_subscription(renewal)
+        assert mock_track_event.call_count == len(original_activated_licenses)
+        self.assertFalse(mock_track_event.call_args_list[0].args[2]['is_auto_renewed'])
+
+    @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
+    def test_renewal_processed_segment_events_is_auto_renewed(self, mock_track_event):
+        prior_plan = SubscriptionPlanFactory()
+        original_activated_licenses = [LicenseFactory.create(
+            subscription_plan=prior_plan,
+            status=constants.ACTIVATED,
+            user_email='activated_user_{}@example.com'
+        )]
+
+        renewal = SubscriptionPlanRenewalFactory(
+            prior_subscription_plan=prior_plan,
+            number_of_licenses=1,
+            license_types_to_copy=constants.LicenseTypesToRenew.ASSIGNED_AND_ACTIVATED
+        )
+        api.renew_subscription(renewal, is_auto_renewed=True)
+        assert mock_track_event.call_count == len(original_activated_licenses)
+        self.assertTrue(mock_track_event.call_args_list[0].args[2]['is_auto_renewed'])
+
 
 @ddt.ddt
 class RevocationTests(TestCase):
