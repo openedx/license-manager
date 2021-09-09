@@ -8,9 +8,6 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from license_manager.apps.subscriptions.api import RenewalProcessingError
-from license_manager.apps.subscriptions.constants import (
-    PROCESS_SUBSCRIPTION_RENEWAL_AUTO_RENEWED,
-)
 from license_manager.apps.subscriptions.models import (
     License,
     SubscriptionPlan,
@@ -19,7 +16,6 @@ from license_manager.apps.subscriptions.models import (
 from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
     SubscriptionPlanRenewalFactory,
-    UserFactory,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
@@ -116,24 +112,3 @@ class ProcessRenewalsCommandTests(TestCase):
                 subscription_plan_1.uuid, subscription_plan_2.uuid) in log.output[0]
             assert "Could not automatically process renewal with id: {}".format(subscription_plan_1.renewal.id) in log.output[1]
             assert "Processed 1 renewals for subscriptions with uuids: ['{}']".format(subscription_plan_2.uuid) in log.output[2]
-
-    @mock.patch('license_manager.apps.subscriptions.management.commands.process_renewals.renew_subscription')
-    @mock.patch('license_manager.apps.subscriptions.management.commands.process_renewals.track_event')
-    def test_track_subscription_renewal(self, mock_track_event, mock_renew_subscription):
-        """
-        Verify that a segment event is sent if the license_manager_worker user exists and a subscription is renewed
-        """
-        subscription_plan_1 = self.create_subscription_with_renewal(
-            self.now + timedelta(hours=settings.SUBSCRIPTION_PLAN_RENEWAL_LOCK_PERIOD_HOURS))
-
-        worker = UserFactory.create(username='license_manager_worker')
-
-        with freezegun.freeze_time(self.now):
-            call_command(self.command_name)
-            assert mock_renew_subscription.call_count == 1
-            assert mock_track_event.call_count == 1
-            mock_track_event.assert_called_with(worker.id, PROCESS_SUBSCRIPTION_RENEWAL_AUTO_RENEWED, {
-                'user_id': worker.id,
-                'prior_subscription_plan_id': str(subscription_plan_1.uuid),
-                'renewed_subscription_plan_id': str(subscription_plan_1.renewal.renewed_subscription_plan.uuid)
-            })

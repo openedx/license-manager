@@ -652,7 +652,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         for newly_assigned in unassigned_licenses:
             event_properties = event_utils.get_license_tracking_properties(newly_assigned)
             event_utils.track_event(None,  # track_event will handle users with unregistered emails
-                                    'edx.server.license-manager.license-lifecycle.assigned',
+                                    constants.SegmentEvents.LICENSE_ASSIGNED,
                                     event_properties)
 
     def _link_and_notify_assigned_emails(self, request_data, subscription_plan, user_emails):
@@ -1288,7 +1288,7 @@ class LicenseActivationView(LicenseBaseView):
 
             event_properties = event_utils.get_license_tracking_properties(user_license)
             event_utils.track_event(self.lms_user_id,
-                                    'edx.server.license-manager.license-lifecycle.activated',
+                                    constants.SegmentEvents.LICENSE_ACTIVATED,
                                     event_properties)
 
             # Following successful license activation, send learner an email

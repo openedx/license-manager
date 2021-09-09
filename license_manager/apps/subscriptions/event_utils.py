@@ -79,7 +79,7 @@ def track_event(lms_user_id, event_name, properties):
     Args:
         lms_user_id (str): LMS User ID of the user we want tracked with this event for cross-platform tracking.
                            IF None, tracking will be attempted via unregistered learner email address.
-        event_name (str): Name of the event in the format of: edx.server.license-manager.license-lifecycle.<new-status>
+        event_name (str): Name of the event in the format of: edx.server.license-manager.license-lifecycle.<new-status>, see constants.SegmentEvents
         properties (dict): All the properties of an event. See docs/segment_events.rst
 
     Returns:

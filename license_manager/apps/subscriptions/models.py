@@ -33,6 +33,7 @@ from license_manager.apps.subscriptions.constants import (
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
     LicenseTypesToRenew,
+    SegmentEvents,
 )
 from license_manager.apps.subscriptions.event_utils import (
     get_license_tracking_properties,
@@ -908,7 +909,7 @@ class License(TimeStampedModel):
         self.save()
         event_properties = get_license_tracking_properties(self)
         track_event(self.lms_user_id,
-                    'edx.server.license-manager.license-lifecycle.revoked',
+                    SegmentEvents.LICENSE_REVOKED,
                     event_properties)
 
     def unrevoke(self):
@@ -930,7 +931,7 @@ class License(TimeStampedModel):
         self.save()
         event_properties = get_license_tracking_properties(self)
         track_event(revoked_lms_user_id,
-                    'edx.server.license-manager.license-lifecycle.assigned',
+                    SegmentEvents.LICENSE_ASSIGNED,
                     event_properties)
 
     @staticmethod
@@ -1114,7 +1115,7 @@ def dispatch_license_delete_event(sender, **kwargs):  # pylint: disable=unused-a
     license_obj = kwargs['instance']
     event_properties = get_license_tracking_properties(license_obj)
     track_event(license_obj.lms_user_id,
-                'edx.server.license-manager.license-lifecycle.deleted',
+                SegmentEvents.LICENSE_DELETED,
                 event_properties)
 
 
@@ -1133,18 +1134,18 @@ def dispatch_license_create_events(sender, **kwargs):  # pylint: disable=unused-
     event_properties = get_license_tracking_properties(license_obj)
     # We always send a creation event.
     track_event(license_obj.lms_user_id,
-                'edx.server.license-manager.license-lifecycle.created',
+                SegmentEvents.LICENSE_CREATED,
                 event_properties)
 
     # If the license has extra statuses on creation that would normally fire events,
     # then programmatically fire events for those also
     if license_obj.status == ASSIGNED:
         track_event(license_obj.lms_user_id,
-                    'edx.server.license-manager.license-lifecycle.assigned',
+                    SegmentEvents.LICENSE_ASSIGNED,
                     event_properties)
     if license_obj.status == ACTIVATED:
         track_event(license_obj.lms_user_id,
-                    'edx.server.license-manager.license-lifecycle.activated',
+                    SegmentEvents.LICENSE_ACTIVATED,
                     event_properties)
 
 
@@ -1164,5 +1165,5 @@ def dispatch_license_expiration_event(sender, **kwargs):  # pylint: disable=unus
             if not license_obj.renewed_to:
                 license_properties = get_license_tracking_properties(license_obj)
                 track_event(license_obj.lms_user_id,
-                            'edx.server.license-manager.license-lifecycle.expired',
+                            SegmentEvents.LICENSE_EXPIRED,
                             license_properties)
