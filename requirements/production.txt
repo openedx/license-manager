@@ -10,6 +10,10 @@ amqp==2.6.1
     #   kombu
 analytics-python==1.4.0
     # via -r requirements/base.txt
+asgiref==3.4.1
+    # via
+    #   -r requirements/base.txt
+    #   django
 backoff==1.10.0
     # via
     #   -r requirements/base.txt
@@ -18,11 +22,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.18.23
+boto3==1.18.38
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.21.23
+botocore==1.21.38
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -53,7 +57,7 @@ coreschema==0.0.4
     # via
     #   -r requirements/base.txt
     #   coreapi
-cryptography==3.4.7
+cryptography==3.4.8
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -63,9 +67,9 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-django==2.2.24
+django==3.2.7
     # via
-    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   django-cors-headers
     #   django-crum
@@ -126,24 +130,25 @@ djangorestframework-csv==2.1.1
     # via -r requirements/base.txt
 drf-jwt==1.19.0
     # via
-    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
+    #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
     #   edx-drf-extensions
 drf-nested-routers==0.93.3
     # via -r requirements/base.txt
 edx-auth-backends==3.4.0
     # via
-    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
+    #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
 edx-celeryutils==1.1.0
     # via -r requirements/base.txt
-edx-django-utils==4.2.0
+edx-django-utils==4.4.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
+    #   edx-rest-api-client
 edx-drf-extensions==6.6.0
     # via
-    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
+    #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
     #   edx-rbac
 edx-opaque-keys==2.2.2
@@ -152,10 +157,8 @@ edx-opaque-keys==2.2.2
     #   edx-drf-extensions
 edx-rbac==1.5.0
     # via -r requirements/base.txt
-edx-rest-api-client==1.9.2
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/base.txt
+edx-rest-api-client==5.4.0
+    # via -r requirements/base.txt
 future==0.18.2
     # via
     #   -r requirements/base.txt
@@ -205,7 +208,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.0.3
     # via -r requirements/base.txt
-newrelic==6.8.0.163
+newrelic==6.8.1.164
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -240,7 +243,7 @@ pyjwkest==1.4.2
     #   edx-drf-extensions
 pyjwt[crypto]==1.7.1
     # via
-    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
+    #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
     #   drf-jwt
     #   edx-auth-backends
@@ -303,7 +306,7 @@ semantic-version==2.8.5
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-simplejson==3.17.3
+simplejson==3.17.5
     # via
     #   -r requirements/base.txt
     #   django-rest-swagger
@@ -326,13 +329,12 @@ slumber==0.7.1
     #   edx-rest-api-client
 social-auth-app-django==4.0.0
     # via
-    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
+    #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
     #   edx-auth-backends
 social-auth-core==4.0.2
     # via
-    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
-    #   -c requirements/constraints.txt
+    #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
     #   edx-auth-backends
     #   social-auth-app-django
@@ -340,7 +342,7 @@ sqlparse==0.4.1
     # via
     #   -r requirements/base.txt
     #   django
-stevedore==3.3.0
+stevedore==3.4.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
