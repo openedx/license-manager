@@ -39,7 +39,7 @@ from license_manager.apps.subscriptions.event_utils import (
     track_event,
 )
 from license_manager.apps.subscriptions.exceptions import (
-    CustomerAgreementException,
+    CustomerAgreementError,
     LicenseUnrevokeError,
 )
 from license_manager.apps.subscriptions.utils import (
@@ -155,7 +155,7 @@ class CustomerAgreement(TimeStampedModel):
                     'CustomerAgreement was not saved - '
                     'could not fetch customer slug field from the enterprise API because {}'.format(exc)
                 )
-                raise CustomerAgreementException(error_message) from exc
+                raise CustomerAgreementError(error_message) from exc
 
         super().save(*args, **kwargs)
 

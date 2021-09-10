@@ -7,9 +7,7 @@ from django.test import TestCase
 from requests.exceptions import HTTPError
 
 from license_manager.apps.subscriptions.constants import REVOKED, UNASSIGNED
-from license_manager.apps.subscriptions.exceptions import (
-    CustomerAgreementException,
-)
+from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.models import License
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
@@ -320,7 +318,7 @@ class CustomerAgreementTests(TestCase):
         client = mock_client.return_value
         client.get_enterprise_customer_data.side_effect = HTTPError('some error')
 
-        with self.assertRaisesRegex(CustomerAgreementException, 'some error'):
+        with self.assertRaisesRegex(CustomerAgreementError, 'some error'):
             agreement.save()
 
         self.assertTrue(mock_client.called)

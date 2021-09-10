@@ -1,14 +1,13 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 from math import ceil
 from unittest import mock
 
 import ddt
 import freezegun
 from django.test import TestCase
-from pytz import UTC
+from requests.exceptions import HTTPError
 
-from license_manager.apps import subscriptions
 from license_manager.apps.subscriptions import api, constants, exceptions, utils
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
@@ -33,7 +32,7 @@ class PostRenewalExpirationTests(TestCase):
         )
 
         expected_message = "The plan's expiration is already marked as processed."
-        with self.assertRaisesRegex(api.UnprocessableSubscriptionPlanExpirationError, expected_message):
+        with self.assertRaisesRegex(exceptions.UnprocessableSubscriptionPlanExpirationError, expected_message):
             api.expire_plan_post_renewal(plan)
 
     def test_no_action_for_unexpired_subscription(self):
@@ -43,7 +42,7 @@ class PostRenewalExpirationTests(TestCase):
         )
 
         expected_message = "The plan's expiration date is in the future."
-        with self.assertRaisesRegex(api.UnprocessableSubscriptionPlanExpirationError, expected_message):
+        with self.assertRaisesRegex(exceptions.UnprocessableSubscriptionPlanExpirationError, expected_message):
             api.expire_plan_post_renewal(unexpired_plan)
 
     def test_no_action_when_no_associated_renewal(self):
@@ -58,7 +57,7 @@ class PostRenewalExpirationTests(TestCase):
         )
 
         expected_message = "The plan has no associated renewal record."
-        with self.assertRaisesRegex(api.UnprocessableSubscriptionPlanExpirationError, expected_message):
+        with self.assertRaisesRegex(exceptions.UnprocessableSubscriptionPlanExpirationError, expected_message):
             api.expire_plan_post_renewal(expired_plan)
 
     def test_no_action_when_renewal_is_not_processed(self):
@@ -78,7 +77,7 @@ class PostRenewalExpirationTests(TestCase):
         )
 
         expected_message = "The plan's renewal has not been processed."
-        with self.assertRaisesRegex(api.UnprocessableSubscriptionPlanExpirationError, expected_message):
+        with self.assertRaisesRegex(exceptions.UnprocessableSubscriptionPlanExpirationError, expected_message):
             api.expire_plan_post_renewal(expired_plan)
 
     def test_expiration_processed_and_licenses_transferred(self):
@@ -119,7 +118,7 @@ class RenewalProcessingTests(TestCase):
         )
 
         expected_message = 'Cannot renew for fewer than the number of original activated licenses.'
-        with self.assertRaisesRegex(api.RenewalProcessingError, expected_message):
+        with self.assertRaisesRegex(exceptions.RenewalProcessingError, expected_message):
             api.renew_subscription(renewal)
 
     def test_cannot_renew_with_existing_assigned_future_licenses(self):
@@ -135,7 +134,7 @@ class RenewalProcessingTests(TestCase):
         )
 
         expected_message = 'there are existing licenses in the renewed plan that are activated'
-        with self.assertRaisesRegex(api.RenewalProcessingError, expected_message):
+        with self.assertRaisesRegex(exceptions.RenewalProcessingError, expected_message):
             api.renew_subscription(renewal)
 
     def test_cannot_renew_too_many_existing_unassigned_licenses(self):
@@ -151,7 +150,7 @@ class RenewalProcessingTests(TestCase):
         )
 
         expected_message = 'More licenses exist than were requested to be renewed'
-        with self.assertRaisesRegex(api.RenewalProcessingError, expected_message):
+        with self.assertRaisesRegex(exceptions.RenewalProcessingError, expected_message):
             api.renew_subscription(renewal)
 
     def _assert_all_licenses_renewed(self, future_plan):
@@ -382,7 +381,7 @@ class SubscriptionFreezeTests(TestCase):
         subscription_plan = SubscriptionPlanFactory()
 
         expected_message = 'The plan does not support freezing unused licenses.'
-        with self.assertRaisesRegex(api.UnprocessableSubscriptionPlanFreezeError, expected_message):
+        with self.assertRaisesRegex(exceptions.UnprocessableSubscriptionPlanFreezeError, expected_message):
             api.delete_unused_licenses_post_freeze(subscription_plan)
 
     def test_delete_unassigned_licenses_post_freeze(self):
@@ -411,3 +410,44 @@ class SubscriptionFreezeTests(TestCase):
         assert subscription_plan.activated_licenses.count() == 1
 
         assert subscription_plan.last_freeze_timestamp == NOW
+
+
+class CustomerAgreementSyncTests(TestCase):
+    """
+    Tests for syncing data from the ``EnterpriseApiClient`` to the
+    CustomerAgreement record (e.g., the enterprise customer slug).
+    """
+    @mock.patch('license_manager.apps.subscriptions.api.EnterpriseApiClient', autospec=True)
+    def test_sync_slug(self, mock_client):
+        new_slug = 'new-slug'
+        agreement = CustomerAgreementFactory()
+        agreement.enterprise_customer_slug = 'original-slug'
+        client = mock_client.return_value
+        client.get_enterprise_customer_data.return_value = {
+            'slug': new_slug,
+        }
+
+        api.sync_agreement_with_enterprise_slug(customer_agreement=agreement)
+
+        self.assertTrue(mock_client.called)
+        client.get_enterprise_customer_data.assert_called_once_with(
+            agreement.enterprise_customer_uuid
+        )
+        self.assertEqual(new_slug, agreement.enterprise_customer_slug)
+
+    @mock.patch('license_manager.apps.subscriptions.api.EnterpriseApiClient', autospec=True)
+    def test_save_without_slug_http_error(self, mock_client):
+        original_slug = 'original-slug'
+        agreement = CustomerAgreementFactory()
+        agreement.enterprise_customer_slug = 'original-slug'
+        client = mock_client.return_value
+        client.get_enterprise_customer_data.side_effect = HTTPError('some error')
+
+        with self.assertRaisesRegex(exceptions.CustomerAgreementError, 'some error'):
+            api.sync_agreement_with_enterprise_slug(customer_agreement=agreement)
+
+        self.assertTrue(mock_client.called)
+        client.get_enterprise_customer_data.assert_called_once_with(
+            agreement.enterprise_customer_uuid
+        )
+        self.assertEqual(agreement.enterprise_customer_slug, original_slug)

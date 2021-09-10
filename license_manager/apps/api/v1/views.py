@@ -677,10 +677,12 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
     @action(detail=False, methods=['post'])
     def remind(self, request, subscription_uuid=None):
         """
-        Given a single email or a list of emails in the POST data, sends reminder email(s) that they have a license pending activation.
+        Given a single email or a list of emails in the POST data, sends
+        reminder email(s) that they have a license pending activation.
 
-        This endpoint reminds users by sending an email to the given email address(es), if there is a license which has not
-        yet been activated that is associated with the email address(es).
+        This endpoint reminds users by sending an email to the given email
+        address(es), if there is a license which has not yet been activated
+        that is associated with the email address(es).
         """
         # Validate the user_email and text sent in the data
         self._validate_data(request.data)

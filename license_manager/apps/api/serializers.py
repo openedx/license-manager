@@ -269,6 +269,10 @@ class MultipleOrSingleEmailSerializer(serializers.Serializer):  # pylint: disabl
         ]
 
 
-class CustomTextWithMultipleOrSingleEmailSerializer(MultipleOrSingleEmailSerializer, CustomTextSerializer):
+class CustomTextWithMultipleOrSingleEmailSerializer(MultipleOrSingleEmailSerializer, CustomTextSerializer):  # pylint: disable=abstract-method
+    """
+    Serializer for specifying custom text to use in a license management email for
+    either multiple user_emails or a single email.
+    """
     class Meta:
         fields = MultipleOrSingleEmailSerializer.Meta.fields + CustomTextSerializer.Meta.fields
