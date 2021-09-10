@@ -232,9 +232,9 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
 
     read_only_fields = (
         'enterprise_customer_uuid',
-        'enterprise_customer_slug',
     )
     writable_fields = (
+        'enterprise_customer_slug',
         'default_enterprise_catalog_uuid',
         'disable_expiration_notifications',
         'license_duration_before_purge',
