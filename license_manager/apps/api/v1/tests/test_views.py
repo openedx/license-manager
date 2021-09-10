@@ -3270,7 +3270,9 @@ class StaffLicenseLookupViewTests(LicenseViewTestMixin, TestCase):
                 'last_remind_date': None,
                 'revoked_date': None,
                 'status': constants.ACTIVATED,
-                'subscription_plan_expiration_date': _iso_8601_format(self.active_subscription_for_customer.expiration_date),  # pylint: disable=line-too-long
+                'subscription_plan_expiration_date': _iso_8601_format(
+                    self.active_subscription_for_customer.expiration_date
+                ),
                 'subscription_plan_title': self.active_subscription_for_customer.title,
             },
         ], response.json())

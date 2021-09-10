@@ -92,7 +92,9 @@ def track_event(lms_user_id, event_name, properties):
                                 event=event_name,
                                 properties=properties)
                 # We dont have an LMS user id for this event, so we can't track it in segment the same way.
-                logger.warning("Event {} for License Manager tracked without LMS User Id: {}". format(event_name, properties))
+                logger.warning(
+                    "Event {} for License Manager tracked without LMS User Id: {}".format(event_name, properties)
+                )
                 if properties['assigned_email']:
                     _track_event_via_braze_alias(properties['assigned_email'], event_name, properties)
 
@@ -102,7 +104,9 @@ def track_event(lms_user_id, event_name, properties):
         except Exception as exc:  # pylint: disable=broad-except
             logger.exception(exc)
     else:
-        logger.warning("Event {} for user_id {} not tracked because SEGMENT_KEY not set". format(event_name, lms_user_id))
+        logger.warning(
+            "Event {} for user_id {} not tracked because SEGMENT_KEY not set".format(event_name, lms_user_id)
+        )
 
 
 def get_license_tracking_properties(license_obj):

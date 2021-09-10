@@ -3,7 +3,7 @@ Exceptions raised by functions exposed by the Subscriptions app.
 """
 
 
-class CustomerAgreementException(Exception):
+class CustomerAgreementError(Exception):
     """
     A general exception dealing with CustomerAgreements.
     """
@@ -64,3 +64,24 @@ class LicenseNotFoundError(Exception):
             self.subscription_plan.uuid,
             self.license_statuses,
         )
+
+
+class RenewalProcessingError(Exception):
+    """
+    An Exception indicating that a SubscriptionPlanRenewal
+    cannot be processed.
+    """
+
+
+class UnprocessableSubscriptionPlanExpirationError(Exception):
+    """
+    An exception indicating that a subscription plan's
+    expiration cannot be processed.
+    """
+
+
+class UnprocessableSubscriptionPlanFreezeError(Exception):
+    """
+    An exception indicating that a subscription plan cannot be
+    frozen to delete unused licenses.
+    """

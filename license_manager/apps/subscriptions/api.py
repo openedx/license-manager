@@ -4,7 +4,9 @@ Python APIs exposed by the Subscriptions app to other in-process apps.
 import logging
 
 from django.db import transaction
+from requests.exceptions import HTTPError
 
+from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import event_utils
 
 from ..api.tasks import (
@@ -12,7 +14,13 @@ from ..api.tasks import (
     send_revocation_cap_notification_email_task,
 )
 from .constants import ACTIVATED, ASSIGNED, UNASSIGNED, LicenseTypesToRenew
-from .exceptions import LicenseRevocationError
+from .exceptions import (
+    CustomerAgreementError,
+    LicenseRevocationError,
+    RenewalProcessingError,
+    UnprocessableSubscriptionPlanExpirationError,
+    UnprocessableSubscriptionPlanFreezeError,
+)
 from .models import License, SubscriptionPlan
 from .utils import localized_utcnow
 
@@ -68,13 +76,6 @@ def revoke_license(user_license):
     logger.info('License {} has been revoked'.format(user_license.uuid))
     # Create new license to add to the unassigned license pool
     user_license.subscription_plan.increase_num_licenses(1)
-
-
-class RenewalProcessingError(Exception):
-    """
-    An Exception indicating that a SubscriptionPlanRenewal
-    cannot be processed.
-    """
 
 
 def renew_subscription(subscription_plan_renewal):
@@ -194,20 +195,6 @@ def _original_licenses_to_copy(original_plan, license_types_to_copy):
     return list(original_plan.licenses.filter(**license_status_kwargs))
 
 
-class UnprocessableSubscriptionPlanExpirationError(Exception):
-    """
-    An exception indicating that a subscription plan's
-    expiration cannot be processed.
-    """
-
-
-class UnprocessableSubscriptionPlanFreezeError(Exception):
-    """
-    An exception indicating that a subscription plan cannot be
-    frozen to delete unused licenses.
-    """
-
-
 def expire_plan_post_renewal(subscription_plan):
     """
     Expires an old plan and marks its associated licenses
@@ -257,3 +244,21 @@ def delete_unused_licenses_post_freeze(subscription_plan):
     subscription_plan.unassigned_licenses.delete()
     subscription_plan.last_freeze_timestamp = localized_utcnow()
     subscription_plan.save()
+
+
+def sync_agreement_with_enterprise_slug(customer_agreement):
+    """
+    Syncs any updates made to the enterprise customer slug as returned by the ``EnterpriseApiClient``
+    with the specified ``CustomerAgreement``.
+    """
+    try:
+        customer_data = EnterpriseApiClient().get_enterprise_customer_data(
+            customer_agreement.enterprise_customer_uuid,
+        )
+        customer_agreement.enterprise_customer_slug = customer_data.get('slug')
+        customer_agreement.save()
+    except HTTPError as exc:
+        error_message = (
+            'Could not fetch customer slug field from the enterprise API: {}'.format(exc)
+        )
+        raise CustomerAgreementError(error_message) from exc

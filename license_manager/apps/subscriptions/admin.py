@@ -10,10 +10,9 @@ from license_manager.apps.subscriptions.api import (
     delete_unused_licenses_post_freeze,
     expire_plan_post_renewal,
     renew_subscription,
+    sync_agreement_with_enterprise_slug,
 )
-from license_manager.apps.subscriptions.exceptions import (
-    CustomerAgreementException,
-)
+from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.forms import (
     CustomerAgreementAdminForm,
     SubscriptionPlanForm,
@@ -232,9 +231,9 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
 
     read_only_fields = (
         'enterprise_customer_uuid',
+        'enterprise_customer_slug',
     )
     writable_fields = (
-        'enterprise_customer_slug',
         'default_enterprise_catalog_uuid',
         'disable_expiration_notifications',
         'license_duration_before_purge',
@@ -257,18 +256,40 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'enterprise_customer_uuid__startswith',
         'enterprise_customer_slug__startswith',
     )
+    actions = ['sync_enterprise_customer_slug']
+
+    def sync_enterprise_customer_slug(self, request, queryset):
+        """
+        Django action handler to sync any updates made to the enterprise customer slug
+        with any selected CustomerAgreement records.
+
+        This provides a self-service way to address any mismatches between slug in the agreement
+        and the EnterpriseCustomer in the LMS.
+        """
+        try:
+            with transaction.atomic():
+                for customer_agreement in queryset:
+                    sync_agreement_with_enterprise_slug(customer_agreement)
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    'Successfully synced enterprise customer slugs with selected Customer Agreements'
+                )
+        except CustomerAgreementError as exc:
+            messages.add_message(request, messages.ERROR, exc)
+    sync_enterprise_customer_slug.short_description = 'Sync enterprise customer slug for selected records'
 
     def save_model(self, request, obj, form, change):
         """
         Saves the CustomerAgreement instance.
 
-        Adds a Django error message a ``CustomerAgreementException`` occurred.
+        Adds a Django error message a ``CustomerAgreementError`` occurred.
         Notably, this happens when the slug field was
         not present and could not be fetched from the enterprise API.
         """
         try:
             super().save_model(request, obj, form, change)
-        except CustomerAgreementException as exc:
+        except CustomerAgreementError as exc:
             messages.error(request, exc)
 
     def get_readonly_fields(self, request, obj=None):
