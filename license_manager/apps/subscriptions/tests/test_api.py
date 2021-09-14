@@ -295,12 +295,8 @@ class RevocationTests(TestCase):
         {'revoke_max_percentage': 0.74, 'number_licenses_to_create': 15},
     )
     @ddt.unpack
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
     def test_revocation_limit_reached_raises_error(
         self,
-        mock_cap_email_delay,
-        mock_revoke_enrollments_delay,
         revoke_max_percentage,
         number_licenses_to_create,
     ):
@@ -337,17 +333,13 @@ class RevocationTests(TestCase):
 
             original_license.refresh_from_db()
             self.assertEqual(original_license.status, constants.ACTIVATED)
-            self.assertFalse(mock_cap_email_delay.called)
-            self.assertFalse(mock_revoke_enrollments_delay.called)
 
     @ddt.data(
         constants.REVOKED,
         constants.UNASSIGNED,
     )
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
     def test_cannot_revoke_license_if_not_assigned_or_activated(
-            self, license_status, mock_cap_email_delay, mock_revoke_enrollments_delay
+            self, license_status
     ):
         subscription_plan = SubscriptionPlanFactory.create(
             is_revocation_cap_enabled=False,
@@ -363,21 +355,17 @@ class RevocationTests(TestCase):
 
         original_license.refresh_from_db()
         self.assertEqual(original_license.status, license_status)
-        self.assertFalse(mock_cap_email_delay.called)
-        self.assertFalse(mock_revoke_enrollments_delay.called)
 
     @ddt.data(True, False)
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
     def test_activated_license_is_revoked(
-        self, should_send_revocation_cap_email, mock_cap_email_delay, mock_revoke_enrollments_delay
+        self, is_revocation_cap_enabled,
     ):
         agreement = CustomerAgreementFactory.create(
             enterprise_customer_uuid=uuid.UUID('00000000-1111-2222-3333-444444444444'),
         )
         subscription_plan = SubscriptionPlanFactory.create(
             customer_agreement=agreement,
-            is_revocation_cap_enabled=should_send_revocation_cap_email,
+            is_revocation_cap_enabled=is_revocation_cap_enabled,
             num_revocations_applied=0,
             revoke_max_percentage=100,
         )
@@ -394,19 +382,50 @@ class RevocationTests(TestCase):
         self.assertEqual(original_license.status, constants.REVOKED)
         self.assertEqual(original_license.revoked_date, NOW)
 
-        if not should_send_revocation_cap_email:
-            self.assertFalse(mock_cap_email_delay.called)
-        else:
-            mock_cap_email_delay.assert_called_once_with(
-                subscription_uuid=subscription_plan.uuid,
-            )
-
-        mock_revoke_enrollments_delay.assert_called_once_with(
-            user_id=original_license.lms_user_id,
-            enterprise_id=str(subscription_plan.enterprise_customer_uuid),
-        )
         # There should now be 1 unassigned license
         self.assertEqual(subscription_plan.unassigned_licenses.count(), 1)
+
+    @ddt.data(
+        {'original_status': constants.ACTIVATED, 'revoke_max_percentage': 200},
+        {'original_status': constants.ACTIVATED, 'revoke_max_percentage': 100},
+        {'original_status': constants.ASSIGNED, 'revoke_max_percentage': 100}
+    )
+    @ddt.unpack
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
+    def test_execute_post_revocation_tasks(
+        self,
+        mock_cap_email_delay,
+        mock_revoke_enrollments_delay,
+        original_status,
+        revoke_max_percentage
+    ):
+        agreement = CustomerAgreementFactory.create(
+            enterprise_customer_uuid=uuid.UUID('00000000-1111-2222-3333-444444444444'),
+        )
+
+        subscription_plan = SubscriptionPlanFactory.create(
+            customer_agreement=agreement,
+            is_revocation_cap_enabled=True,
+            num_revocations_applied=0,
+            revoke_max_percentage=revoke_max_percentage,
+        )
+
+        original_license = LicenseFactory.create(
+            status=original_status,
+            subscription_plan=subscription_plan,
+            lms_user_id=123,
+        )
+
+        with freezegun.freeze_time(NOW):
+            revocation_result = api.revoke_license(original_license)
+            api.execute_post_revocation_tasks(**revocation_result)
+
+        is_license_revoked = original_status == constants.ACTIVATED
+        revoke_limit_reached = is_license_revoked and revoke_max_percentage <= 100
+
+        self.assertEqual(mock_revoke_enrollments_delay.called, is_license_revoked)
+        self.assertEqual(mock_cap_email_delay.called, revoke_limit_reached)
 
 
 class SubscriptionFreezeTests(TestCase):

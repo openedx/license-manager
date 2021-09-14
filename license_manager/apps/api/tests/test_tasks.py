@@ -197,17 +197,20 @@ class RevokeAllLicensesTaskTests(TestCase):
         License.objects.all().delete()
         SubscriptionPlan.objects.all().delete()
 
+    @mock.patch('license_manager.apps.subscriptions.api.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.subscriptions.api.revoke_license')
-    def test_revoke_all_licenses_task(self, mock_revoke_license):
+    def test_revoke_all_licenses_task(self, mock_revoke_license, mock_execute_post_revocation_tasks):
         """
-        Verify that revoke_license is called for each revocable license
+        Verify that revoke_license and execute_post_revocation_tasks is called for each revocable license
         """
         tasks.revoke_all_licenses_task(self.subscription_plan.uuid)
         assert mock_revoke_license.call_args_list == [
             mock.call(self.assigned_license), mock.call(self.activated_license)]
+        assert mock_execute_post_revocation_tasks.call_count == 2
 
+    @mock.patch('license_manager.apps.subscriptions.api.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.subscriptions.api.revoke_license')
-    def test_revoke_all_licenses_task_error(self, mock_revoke_license):
+    def test_revoke_all_licenses_task_error(self, mock_revoke_license, mock_execute_post_revocation_tasks):
         """
         Verify that revoke_license handles any errors
         """
@@ -221,3 +224,5 @@ class RevokeAllLicensesTaskTests(TestCase):
 
         assert 'Could not revoke license with uuid {} during revoke_all_licenses_task'.format(
             self.assigned_license.uuid) in log.output[0]
+
+        assert mock_execute_post_revocation_tasks.call_count == 0

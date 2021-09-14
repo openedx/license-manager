@@ -38,7 +38,10 @@ from license_manager.apps.api.tasks import (
 )
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import constants, event_utils
-from license_manager.apps.subscriptions.api import revoke_license
+from license_manager.apps.subscriptions.api import (
+    execute_post_revocation_tasks,
+    revoke_license,
+)
 from license_manager.apps.subscriptions.exceptions import (
     LicenseNotFoundError,
     LicenseRevocationError,
@@ -766,7 +769,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             raise LicenseNotFoundError(user_email, subscription_plan, constants.REVOCABLE_LICENSE_STATUSES) from exc
 
         try:
-            revoke_license(user_license)
+            return revoke_license(user_license)
         except LicenseRevocationError as exc:
             logger.error(exc)
             raise
@@ -804,7 +807,8 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             return Response(msg, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            self._revoke_by_email_and_plan(user_email, subscription_plan)
+            revocation_result = self._revoke_by_email_and_plan(user_email, subscription_plan)
+            execute_post_revocation_tasks(**revocation_result)
         except (LicenseNotFoundError, LicenseRevocationError) as exc:
             return Response(
                 str(exc),
@@ -864,10 +868,13 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             error_message = 'Plan does not have enough revocations remaining.'
             return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
 
+        revocation_results = []
+
         with transaction.atomic():
             for user_email in user_emails:
                 try:
-                    self._revoke_by_email_and_plan(user_email, subscription_plan)
+                    revocation_result = self._revoke_by_email_and_plan(user_email, subscription_plan)
+                    revocation_results.append(revocation_result)
                 except (LicenseNotFoundError, LicenseRevocationError) as exc:
                     error_message = str(exc)
                     error_response_status = get_http_status_for_exception(exc)
@@ -875,6 +882,9 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         if error_response_status:
             return Response(error_message, status=error_response_status)
+
+        for revocation_result in revocation_results:
+            execute_post_revocation_tasks(**revocation_result)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
