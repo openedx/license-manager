@@ -1534,19 +1534,23 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
 
+    @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_revoke_happy_path(self, mock_revoke_license):
+    def test_revoke_happy_path(self, mock_revoke_license, mock_execute_post_revocation_tasks):
         """
         Test that we can revoke a license from the revoke action.
         """
         self._setup_request_jwt(user=self.user)
         original_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
         self.subscription_plan.licenses.set([original_license])
+        mock_revolk_license_result = {'revoked_license': original_license, 'original_status': original_license.status}
+        mock_revoke_license.return_value = mock_revolk_license_result
 
         response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
         mock_revoke_license.assert_called_once_with(original_license)
+        mock_execute_post_revocation_tasks.assert_called_once_with(**mock_revolk_license_result)
 
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
     def test_revoke_revocation_error(self, mock_revoke_license):
@@ -1602,8 +1606,9 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         assert response.status_code == status.HTTP_403_FORBIDDEN
         self.assertFalse(mock_revoke_license.called)
 
+    @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_bulk_revoke_happy_path(self, mock_revoke_license):
+    def test_bulk_revoke_happy_path(self, mock_revoke_license, mock_execute_post_revocation_tasks):
         """
         Test that we can revoke multiple licenses from the bulk_revoke action.
         """
@@ -1618,12 +1623,22 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
                 'bob@example.com',
             ],
         }
+
+        revoke_alice_license_result = {'revoked_license': alice_license, 'original_status': alice_license.status}
+        revoke_bob_license_result = {'revoked_license': bob_license, 'original_status': bob_license.status}
+        mock_revoke_license.side_effect = [revoke_alice_license_result, revoke_bob_license_result]
+
         response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
         mock_revoke_license.assert_has_calls([
             mock.call(alice_license),
             mock.call(bob_license),
+        ])
+
+        mock_execute_post_revocation_tasks.assert_has_calls([
+            mock.call(**revoke_alice_license_result),
+            mock.call(**revoke_bob_license_result),
         ])
 
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')

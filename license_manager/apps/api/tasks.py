@@ -224,9 +224,15 @@ def revoke_all_licenses_task(subscription_uuid):
             status__in=REVOCABLE_LICENSE_STATUSES,
         )
 
+        revocation_results = []
+
         for sl in subscription_licenses:
             try:
-                subscriptions_api.revoke_license(sl)
-            except Exception:  # pylint: disable=broad-except
-                logger.error('Could not revoke license with uuid {} during revoke_all_licenses_task'.format(sl.uuid), exc_info=True)
+                revocation_results.append(subscriptions_api.revoke_license(sl))
+            except Exception:
+                logger.error('Could not revoke license with uuid {} during revoke_all_licenses_task'.format(sl.uuid),
+                             exc_info=True)
                 raise
+
+    for result in revocation_results:
+        subscriptions_api.execute_post_revocation_tasks(**result)

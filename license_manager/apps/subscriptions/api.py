@@ -48,7 +48,7 @@ def revoke_license(user_license):
             user_license.uuid,
             "License revocation limit has been reached."
         )
-    # Only allow revocation for ASSIGNED and ACTIVATED licenses
+
     if user_license.status not in REVOCABLE_LICENSE_STATUSES:
         raise LicenseRevocationError(
             user_license.uuid,
@@ -57,29 +57,46 @@ def revoke_license(user_license):
             )
         )
 
-    if user_license.status == ACTIVATED:
-        # We should only need to revoke enrollments if the License has an original
-        # status of ACTIVATED, pending users shouldn't have any enrollments.
-        tasks.revoke_course_enrollments_for_user_task.delay(
-            user_id=user_license.lms_user_id,
-            enterprise_id=str(user_license.subscription_plan.enterprise_customer_uuid),
-        )
-        if is_revocation_cap_enabled:
-            # Revocation only counts against the limit for ACTIVATED licenses
-            user_license.subscription_plan.num_revocations_applied += 1
-            user_license.subscription_plan.save()
+    if user_license.status == ACTIVATED and is_revocation_cap_enabled:
+        # Revocation only counts against the limit for ACTIVATED licenses
+        user_license.subscription_plan.num_revocations_applied += 1
+        user_license.subscription_plan.save()
 
-    if not user_license.subscription_plan.has_revocations_remaining:
-        # Send email notification to ECS that the Subscription Plan has reached its revocation cap
-        tasks.send_revocation_cap_notification_email_task.delay(
-            subscription_uuid=user_license.subscription_plan.uuid,
-        )
-
-    # Revoke the license
+    original_status = user_license.status
     user_license.revoke()
-    logger.info('License {} has been revoked'.format(user_license.uuid))
     # Create new license to add to the unassigned license pool
     user_license.subscription_plan.increase_num_licenses(1)
+
+    return {
+        'revoked_license': user_license,
+        'original_status': original_status
+    }
+
+
+def execute_post_revocation_tasks(revoked_license, original_status):
+    """
+    Executes a set of tasks after a license has been revoked.
+
+    Tasks:
+        - Revoke enrollments if the License has an original status of ACTIVATED.
+        - Send email notification to ECS if the Subscription Plan has reached its revocation cap.
+    """
+
+    # We should only need to revoke enrollments if the License has an original
+    # status of ACTIVATED, pending users shouldn't have any enrollments.
+    if original_status == ACTIVATED:
+        tasks.revoke_course_enrollments_for_user_task.delay(
+            user_id=revoked_license.lms_user_id,
+            enterprise_id=str(revoked_license.subscription_plan.enterprise_customer_uuid),
+        )
+
+    if not revoked_license.subscription_plan.has_revocations_remaining:
+        # Send email notification to ECS that the Subscription Plan has reached its revocation cap
+        tasks.send_revocation_cap_notification_email_task.delay(
+            subscription_uuid=revoked_license.subscription_plan.uuid,
+        )
+
+    logger.info('License {} has been revoked'.format(revoked_license.uuid))
 
 
 def renew_subscription(subscription_plan_renewal, is_auto_renewed=False):
