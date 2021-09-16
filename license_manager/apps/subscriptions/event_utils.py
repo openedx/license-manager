@@ -138,13 +138,6 @@ def get_license_tracking_properties(license_obj):
         "expiration_processed": license_obj.subscription_plan.expiration_processed
     }
 
-    user_who_made_change = ''
-    if license_obj.history.latest().history_user:
-        user_who_made_change = license_obj.history.latest().history_user.id
-    license_data.update({
-        'user_id': (user_who_made_change or '')
-    })
-
     if license_obj and license_obj.subscription_plan and license_obj.subscription_plan.customer_agreement:
         license_data.update(get_enterprise_tracking_properties(
             license_obj.subscription_plan.customer_agreement))

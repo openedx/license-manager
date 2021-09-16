@@ -959,6 +959,10 @@ class License(TimeStampedModel):
         https://django-simple-history.readthedocs.io/en/2.12.0/common_issues.html#bulk-creating-and-queryset-updating
         """
         bulk_create_with_history(license_objects, cls, batch_size=batch_size)
+
+        # prefetch related objects used in get_license_tracking_properties
+        models.prefetch_related_objects(license_objects, '_renewed_from', 'subscription_plan', 'subscription_plan__customer_agreement')
+
         # Since bulk_create does not call post_save, handle tracking events manually:
         for license_obj in license_objects:
             dispatch_license_create_events(License, instance=license_obj, created=True)
