@@ -654,11 +654,8 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             unassigned_licenses,
             ['user_email', 'status', 'activation_key', 'assigned_date', 'last_remind_date'],
         )
-        for newly_assigned in unassigned_licenses:
-            event_properties = event_utils.get_license_tracking_properties(newly_assigned)
-            event_utils.track_event(None,  # track_event will handle users with unregistered emails
-                                    constants.SegmentEvents.LICENSE_ASSIGNED,
-                                    event_properties)
+
+        event_utils.track_license_changes(list(unassigned_licenses), constants.SegmentEvents.LICENSE_ASSIGNED)
 
     def _link_and_notify_assigned_emails(self, request_data, subscription_plan, user_emails):
         """

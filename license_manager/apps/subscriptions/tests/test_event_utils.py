@@ -1,12 +1,15 @@
 """
 Tests for the event_utils.py module.
 """
+from unittest import mock
+
 from pytest import mark
 
-from license_manager.apps.subscriptions.constants import ASSIGNED
+from license_manager.apps.subscriptions.constants import ASSIGNED, SegmentEvents
 from license_manager.apps.subscriptions.event_utils import (
     _iso_8601_format_string,
     get_license_tracking_properties,
+    track_license_changes,
 )
 from license_manager.apps.subscriptions.tests.factories import (
     LicenseFactory,
@@ -42,3 +45,23 @@ def test_get_license_tracking_properties():
     for k, v in flat_data.items():
         assert isinstance(k, str)
         assert (isinstance(v, str) or isinstance(v, int) or isinstance(v, bool))
+
+
+@mark.django_db
+@mock.patch('license_manager.apps.subscriptions.event_utils.get_license_tracking_properties', return_value={})
+@mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
+def test_track_license_changes(mock_track_event, _):
+    licenses = LicenseFactory.create_batch(5)
+    track_license_changes(licenses, SegmentEvents.LICENSE_CREATED)
+    assert mock_track_event.call_count == 5
+    mock_track_event.assert_called_with(None, SegmentEvents.LICENSE_CREATED, {})
+
+
+@mark.django_db
+@mock.patch('license_manager.apps.subscriptions.event_utils.get_license_tracking_properties', return_value={'counter': 1})
+@mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
+def test_track_license_changes_with_properties(mock_track_event, _):
+    licenses = LicenseFactory.create_batch(5)
+    track_license_changes(licenses, SegmentEvents.LICENSE_CREATED, {'counter': 2})
+    assert mock_track_event.call_count == 5
+    mock_track_event.assert_called_with(None, SegmentEvents.LICENSE_CREATED, {'counter': 2})

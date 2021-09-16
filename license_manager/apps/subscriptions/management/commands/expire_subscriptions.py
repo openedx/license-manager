@@ -6,13 +6,16 @@ from django.core.management.base import BaseCommand
 from rest_framework import status
 
 from license_manager.apps.api.tasks import license_expiration_task
-from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
     LICENSE_EXPIRATION_BATCH_SIZE,
 )
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.models import (
+    License,
+    SubscriptionPlan,
+    dispatch_license_expiration_event,
+)
 from license_manager.apps.subscriptions.utils import (
     chunks,
     localized_datetime_from_datetime,
@@ -77,6 +80,7 @@ class Command(BaseCommand):
 
         expired_licenses = License.objects.filter(
             subscription_plan__expiration_date__range=(expired_after_date, expired_before_date),
+            subscription_plan__expiration_processed=False,
             status__in=[ASSIGNED, ACTIVATED],
         )
 
@@ -101,6 +105,11 @@ class Command(BaseCommand):
                 uuid__in=expired_subscription_uuids
             )
             expired_subscriptions.update(expiration_processed=True)
+
+            # since update does not call post_save, handle tracking events manually:
+            for subscription in expired_subscriptions:
+                dispatch_license_expiration_event(
+                    SubscriptionPlan, instance=subscription, update_fields=['expiration_processed'])
 
             message = 'Terminated course enrollments for learners in subscriptions: {} '.format(expired_subscription_uuids)
             logger.info(message)

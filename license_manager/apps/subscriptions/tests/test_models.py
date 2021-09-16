@@ -6,7 +6,11 @@ import freezegun
 from django.test import TestCase
 from requests.exceptions import HTTPError
 
-from license_manager.apps.subscriptions.constants import REVOKED, UNASSIGNED
+from license_manager.apps.subscriptions.constants import (
+    REVOKED,
+    UNASSIGNED,
+    SegmentEvents,
+)
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.models import License
 from license_manager.apps.subscriptions.tests.factories import (
@@ -159,8 +163,8 @@ class LicenseModelTests(TestCase):
         self.assertIsNone(another_one.renewed_to)
         self.assertIsNone(another_one.renewed_from)
 
-    @mock.patch('license_manager.apps.subscriptions.models.dispatch_license_create_events')
-    def test_bulk_create(self, mock_post_save_event):
+    @mock.patch('license_manager.apps.subscriptions.models.track_license_changes')
+    def test_bulk_create(self, mock_track_license_changes):
         """
         Test that bulk_create creates and saves objects, and creates an associated
         historical record for the creation, and calls the create track_event.
@@ -176,11 +180,12 @@ class LicenseModelTests(TestCase):
             assert 1 == len(license_history)
             assert self.CREATE_HISTORY_TYPE == user_license.history.earliest().history_type
 
-        # Assert we made the right # of tracking calls total.
-        assert len(licenses) == mock_post_save_event.call_count
+        mock_track_license_changes.assert_called_with(
+            licenses,
+            SegmentEvents.LICENSE_CREATED
+        )
 
-    @mock.patch('license_manager.apps.subscriptions.models.dispatch_license_create_events')
-    def test_bulk_update(self, mock_post_save_event):
+    def test_bulk_update(self):
         """
         Test that bulk_update saves objects, and creates an associated
         historical record for the update action
@@ -193,9 +198,6 @@ class LicenseModelTests(TestCase):
             user_license.status = REVOKED
 
         License.bulk_update(licenses, ['status'])
-
-        # Assert we made the right # of tracking calls total.
-        assert 2 * len(licenses) == mock_post_save_event.call_count
 
         for user_license in licenses:
             user_license.refresh_from_db()
