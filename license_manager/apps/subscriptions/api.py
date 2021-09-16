@@ -195,12 +195,9 @@ def _renew_all_licenses(original_licenses, future_plan, is_auto_renewed):
         ['renewed_to'],
     )
 
-    for future_license in future_licenses:
-        event_properties = event_utils.get_license_tracking_properties(future_license)
-        event_properties['is_auto_renewed'] = is_auto_renewed
-        event_utils.track_event(future_license.lms_user_id,
-                                SegmentEvents.LICENSE_RENEWED,
-                                event_properties)
+    event_utils.track_license_changes(future_licenses, SegmentEvents.LICENSE_RENEWED, {
+        'is_auto_renewed': is_auto_renewed
+    })
 
 
 def _original_licenses_to_copy(original_plan, license_types_to_copy):

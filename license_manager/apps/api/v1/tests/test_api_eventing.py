@@ -167,25 +167,30 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
             ],
         }
 
-        with mock.patch('license_manager.apps.subscriptions.models.track_event') as mock_revoke_track_event:
+        # Patch differently because the modules import track_event differently:
+        with mock.patch('license_manager.apps.subscriptions.models.track_event') as mock_revoke_track_event, \
+                mock.patch('license_manager.apps.subscriptions.event_utils.track_event') as mock_create_track_event:
             response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
             assert response.status_code == status.HTTP_204_NO_CONTENT
-            assert mock_revoke_track_event.call_count == 4
+
+            assert mock_revoke_track_event.call_count == 2
+            assert mock_create_track_event.call_count == 2
+
             assert (mock_revoke_track_event.call_args_list[0][0][1]
                     == constants.SegmentEvents.LICENSE_REVOKED)
             assert (mock_revoke_track_event.call_args_list[0][0][2]['assigned_email']
                     == 'alice@example.com')
-            assert (mock_revoke_track_event.call_args_list[1][0][1]
+            assert (mock_create_track_event.call_args_list[0][0][1]
                     == constants.SegmentEvents.LICENSE_CREATED)
-            assert mock_revoke_track_event.call_args_list[1][0][2]['assigned_email'] == ''
+            assert mock_create_track_event.call_args_list[0][0][2]['assigned_email'] == ''
 
-            assert (mock_revoke_track_event.call_args_list[2][0][1]
+            assert (mock_revoke_track_event.call_args_list[1][0][1]
                     == constants.SegmentEvents.LICENSE_REVOKED)
-            assert (mock_revoke_track_event.call_args_list[2][0][2]['assigned_email']
+            assert (mock_revoke_track_event.call_args_list[1][0][2]['assigned_email']
                     == 'bob@example.com')
-            assert (mock_revoke_track_event.call_args_list[3][0][1]
+            assert (mock_create_track_event.call_args_list[1][0][1]
                     == constants.SegmentEvents.LICENSE_CREATED)
-            assert mock_revoke_track_event.call_args_list[3][0][2]['assigned_email'] == ''
+            assert mock_create_track_event.call_args_list[1][0][2]['assigned_email'] == ''
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
@@ -200,18 +205,21 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
         original_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
         self.subscription_plan.licenses.set([original_license])
 
-        with mock.patch('license_manager.apps.subscriptions.models.track_event') as mock_revoke_track_event:
+        # Patch differently because the modules import track_event differently:
+        with mock.patch('license_manager.apps.subscriptions.models.track_event') as mock_revoke_track_event, \
+                mock.patch('license_manager.apps.subscriptions.event_utils.track_event') as mock_create_track_event:
             response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
 
             assert response.status_code == status.HTTP_204_NO_CONTENT
 
-            assert mock_revoke_track_event.call_count == 2
+            assert mock_revoke_track_event.call_count == 1
+            assert mock_create_track_event.call_count == 1
             assert (mock_revoke_track_event.call_args_list[0][0][1]
                     == constants.SegmentEvents.LICENSE_REVOKED)
             assert mock_revoke_track_event.call_args_list[0][0][2]['assigned_email'] == 'test@example.com'
-            assert (mock_revoke_track_event.call_args_list[1][0][1]
+            assert (mock_create_track_event.call_args_list[0][0][1]
                     == constants.SegmentEvents.LICENSE_CREATED)
-            assert mock_revoke_track_event.call_args_list[1][0][2]['assigned_email'] == ''
+            assert mock_create_track_event.call_args_list[0][0][2]['assigned_email'] == ''
 
     def test_license_renewed_events(self):
         """ Test that our standard renewal routine triggers the right set of events
@@ -243,20 +251,17 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
             license_types_to_copy=constants.LicenseTypesToRenew.ASSIGNED_AND_ACTIVATED
         )
 
-        # Patch differently because the modules import track_event differently:
-        with mock.patch('license_manager.apps.subscriptions.models.track_event') as mock_created_track_event:
-            with mock.patch('license_manager.apps.subscriptions.event_utils.track_event') as mock_renewed_track_event:
-                with freeze_time(NOW):
-                    api.renew_subscription(renewal)
-                renewal.refresh_from_db()
+        with mock.patch('license_manager.apps.subscriptions.event_utils.track_event') as mock_track_event:
+            with freeze_time(NOW):
+                api.renew_subscription(renewal)
+            renewal.refresh_from_db()
 
-                for call in mock_created_track_event.call_args_list[0:4]:
-                    assert call[0][1] == constants.SegmentEvents.LICENSE_CREATED
-                assert mock_created_track_event.call_count == 4
+            for call in mock_track_event.call_args_list[0:4]:
+                assert call[0][1] == constants.SegmentEvents.LICENSE_CREATED
 
-                for call in mock_renewed_track_event.call_args_list[0:4]:
-                    assert call[0][1] == constants.SegmentEvents.LICENSE_RENEWED
-                assert mock_renewed_track_event.call_count == 4
+            for call in mock_track_event.call_args_list[4:]:
+                assert call[0][1] == constants.SegmentEvents.LICENSE_RENEWED
+            assert mock_track_event.call_count == 8
 
     def test_activate_event(self):
         pass

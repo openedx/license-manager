@@ -38,6 +38,7 @@ from license_manager.apps.subscriptions.constants import (
 from license_manager.apps.subscriptions.event_utils import (
     get_license_tracking_properties,
     track_event,
+    track_license_changes,
 )
 from license_manager.apps.subscriptions.exceptions import (
     CustomerAgreementError,
@@ -960,12 +961,8 @@ class License(TimeStampedModel):
         """
         bulk_create_with_history(license_objects, cls, batch_size=batch_size)
 
-        # prefetch related objects used in get_license_tracking_properties
-        models.prefetch_related_objects(license_objects, '_renewed_from', 'subscription_plan', 'subscription_plan__customer_agreement')
-
         # Since bulk_create does not call post_save, handle tracking events manually:
-        for license_obj in license_objects:
-            dispatch_license_create_events(License, instance=license_obj, created=True)
+        track_license_changes(license_objects, SegmentEvents.LICENSE_CREATED)
 
     @classmethod
     def bulk_update(cls, license_objects, field_names, batch_size=LICENSE_BULK_OPERATION_BATCH_SIZE):
@@ -978,9 +975,6 @@ class License(TimeStampedModel):
         https://django-simple-history.readthedocs.io/en/2.12.0/common_issues.html#bulk-creating-and-queryset-updating
         """
         bulk_update_with_history(license_objects, cls, field_names, batch_size=batch_size)
-        # Since bulk_update does not call post_save, handle tracking events manually:
-        for license_obj in license_objects:
-            dispatch_license_create_events(License, instance=license_obj, created=False)
 
     @classmethod
     def by_user_email(cls, user_email):
@@ -1165,9 +1159,5 @@ def dispatch_license_expiration_event(sender, **kwargs):  # pylint: disable=unus
     update_fields = kwargs.get('update_fields', None)
 
     if subscription_plan_obj and update_fields and 'expiration_processed' in update_fields:
-        for license_obj in subscription_plan_obj.licenses.all():
-            if not license_obj.renewed_to:
-                license_properties = get_license_tracking_properties(license_obj)
-                track_event(license_obj.lms_user_id,
-                            SegmentEvents.LICENSE_EXPIRED,
-                            license_properties)
+        expired_licenses = [lsc for lsc in subscription_plan_obj.licenses.all() if not lsc.renewed_to]
+        track_license_changes(expired_licenses, SegmentEvents.LICENSE_EXPIRED)

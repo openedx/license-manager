@@ -4,6 +4,7 @@ import logging
 import analytics
 import requests
 from django.conf import settings
+from django.db.models import prefetch_related_objects
 
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
@@ -147,6 +148,29 @@ def get_license_tracking_properties(license_obj):
                        .format(license_obj.uuid))
 
     return license_data
+
+
+def track_license_changes(licenses, event_name, properties={}):
+    """
+    Send tracking events for changes to a list of licenses, useful when bulk changes are made.
+    Prefetches related objects for licenses to prevent additional queries
+
+    Args:
+        licenses (list): List of licenses
+        event_name (str): Name of the event in the format of: edx.server.license-manager.license-lifecycle.<new-status>, see constants.SegmentEvents
+        properties: (dict): Additional properties to track for each event, overrides fields from get_license_tracking_properties
+    Returns:
+        None
+    """
+
+    # prefetch related objects used in get_license_tracking_properties
+    prefetch_related_objects(licenses, '_renewed_from', 'subscription_plan', 'subscription_plan__customer_agreement')
+
+    for lcs in licenses:
+        event_properties = {**get_license_tracking_properties(lcs), **properties}
+        track_event(lcs.lms_user_id,  # None for unassigned licenses, track_event will handle users with unregistered emails
+                    event_name,
+                    event_properties)
 
 
 def get_enterprise_tracking_properties(customer_agreement):

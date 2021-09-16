@@ -148,3 +148,23 @@ class ExpireSubscriptionsCommandTests(TestCase):
         call_command(self.command_name)
         expected_call_count = math.ceil(1000 / LICENSE_EXPIRATION_BATCH_SIZE)
         assert expected_call_count == mock_license_expiration_task.call_count
+
+    @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
+    @mock.patch(
+        'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
+    )
+    def test_license_expiration_tracked(self, _, mock_track_event):
+        """
+        Verifies that license expiration events are tracked
+        """
+        expired_subscription = SubscriptionPlanFactory.create(
+            start_date=self.today - timedelta(days=7),
+            expiration_date=self.today,
+        )
+
+        LicenseFactory.create_batch(5, status=ASSIGNED, subscription_plan=expired_subscription)
+        LicenseFactory.create_batch(5, status=ACTIVATED, subscription_plan=expired_subscription)
+        LicenseFactory.create_batch(5, status=REVOKED, subscription_plan=expired_subscription)
+
+        call_command(self.command_name)
+        assert mock_track_event.call_count == 15

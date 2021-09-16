@@ -248,7 +248,7 @@ class RenewalProcessingTests(TestCase):
     @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
     def test_renewal_processed_segment_events(self, mock_track_event):
         prior_plan = SubscriptionPlanFactory()
-        original_activated_licenses = [LicenseFactory.create(
+        [LicenseFactory.create(
             subscription_plan=prior_plan,
             status=constants.ACTIVATED,
             user_email='activated_user_{}@example.com'
@@ -260,13 +260,15 @@ class RenewalProcessingTests(TestCase):
             license_types_to_copy=constants.LicenseTypesToRenew.ASSIGNED_AND_ACTIVATED
         )
         api.renew_subscription(renewal)
-        assert mock_track_event.call_count == len(original_activated_licenses)
-        self.assertFalse(mock_track_event.call_args_list[0].args[2]['is_auto_renewed'])
+        assert mock_track_event.call_count == 2
+        assert (mock_track_event.call_args_list[0].args[1] == constants.SegmentEvents.LICENSE_CREATED)
+        assert (mock_track_event.call_args_list[1].args[1] == constants.SegmentEvents.LICENSE_RENEWED)
+        self.assertFalse(mock_track_event.call_args_list[1].args[2]['is_auto_renewed'])
 
     @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
     def test_renewal_processed_segment_events_is_auto_renewed(self, mock_track_event):
         prior_plan = SubscriptionPlanFactory()
-        original_activated_licenses = [LicenseFactory.create(
+        [LicenseFactory.create(
             subscription_plan=prior_plan,
             status=constants.ACTIVATED,
             user_email='activated_user_{}@example.com'
@@ -278,8 +280,10 @@ class RenewalProcessingTests(TestCase):
             license_types_to_copy=constants.LicenseTypesToRenew.ASSIGNED_AND_ACTIVATED
         )
         api.renew_subscription(renewal, is_auto_renewed=True)
-        assert mock_track_event.call_count == len(original_activated_licenses)
-        self.assertTrue(mock_track_event.call_args_list[0].args[2]['is_auto_renewed'])
+        assert mock_track_event.call_count == 2
+        assert (mock_track_event.call_args_list[0].args[1] == constants.SegmentEvents.LICENSE_CREATED)
+        assert (mock_track_event.call_args_list[1].args[1] == constants.SegmentEvents.LICENSE_RENEWED)
+        self.assertTrue(mock_track_event.call_args_list[1].args[2]['is_auto_renewed'])
 
 
 @ddt.ddt
