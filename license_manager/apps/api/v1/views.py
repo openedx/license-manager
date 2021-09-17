@@ -771,49 +771,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             logger.error(exc)
             raise
 
-    @action(detail=False, methods=['post'])
-    def revoke(self, request, subscription_uuid=None):
-        """
-        Revokes one license in a subscription plan,
-        given an email address with which the license is associated.
-        This will result in any existing enrollments for the revoked user
-        being moved to the audit enrollment mode.
-
-        POST /api/v1/subscriptions/{subscription_uuid}/licenses/revoke/
-
-        Request payload:
-          {
-            "user_email": "alice@example.com"
-          }
-
-        Response:
-          204 No Content - The revocation was successful.
-          400 Bad Request - Some error occurred when processing the revocation. An error
-            message is included in the response.
-          404 Not Found - No license exists in the plan for the given email address,
-            or the license is not in an assigned or activated state.  An error message
-            is included in the response.
-        """
-        self._validate_data(request.data)
-
-        user_email = request.data.get('user_email')
-        subscription_plan = self._get_subscription_plan()
-
-        if not subscription_plan:
-            msg = 'No SubscriptionPlan identified by {} exists'.format(subscription_uuid)
-            return Response(msg, status=status.HTTP_404_NOT_FOUND)
-
-        try:
-            revocation_result = self._revoke_by_email_and_plan(user_email, subscription_plan)
-            execute_post_revocation_tasks(**revocation_result)
-        except (LicenseNotFoundError, LicenseRevocationError) as exc:
-            return Response(
-                str(exc),
-                status=get_http_status_for_exception(exc),
-            )
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
     @action(detail=False, methods=['post'], url_path='bulk-revoke')
     def bulk_revoke(self, request, subscription_uuid=None):
         """

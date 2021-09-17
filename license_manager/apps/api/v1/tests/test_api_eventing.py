@@ -39,10 +39,6 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
         # Routes setup
         cls.assign_url = reverse('api:v1:licenses-assign', kwargs={'subscription_uuid': cls.subscription_plan.uuid})
 
-        cls.revoke_license_url = reverse(
-            'api:v1:licenses-revoke',
-            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
-        )
         cls.bulk_revoke_license_url = reverse(
             'api:v1:licenses-bulk-revoke',
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
@@ -191,35 +187,6 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
             assert (mock_create_track_event.call_args_list[1][0][1]
                     == constants.SegmentEvents.LICENSE_CREATED)
             assert mock_create_track_event.call_args_list[1][0][2]['assigned_email'] == ''
-
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
-    def test_license_revoked_event(self, *_):
-        """ Test that revoking a license from a user triggers the right set of events:
-         1 revoke event and 1 creation of a fresh license
-        the customer can now use as a replacement.
-        """
-        self._setup_request_jwt(user=self.user)
-        original_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
-        self.subscription_plan.licenses.set([original_license])
-
-        # Patch differently because the modules import track_event differently:
-        with mock.patch('license_manager.apps.subscriptions.models.track_event') as mock_revoke_track_event, \
-                mock.patch('license_manager.apps.subscriptions.event_utils.track_event') as mock_create_track_event:
-            response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
-
-            assert response.status_code == status.HTTP_204_NO_CONTENT
-
-            assert mock_revoke_track_event.call_count == 1
-            assert mock_create_track_event.call_count == 1
-            assert (mock_revoke_track_event.call_args_list[0][0][1]
-                    == constants.SegmentEvents.LICENSE_REVOKED)
-            assert mock_revoke_track_event.call_args_list[0][0][2]['assigned_email'] == 'test@example.com'
-            assert (mock_create_track_event.call_args_list[0][0][1]
-                    == constants.SegmentEvents.LICENSE_CREATED)
-            assert mock_create_track_event.call_args_list[0][0][2]['assigned_email'] == ''
 
     def test_license_renewed_events(self):
         """ Test that our standard renewal routine triggers the right set of events
