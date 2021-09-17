@@ -453,7 +453,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
     POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/remind/
     POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/remind-all/
     POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/revoke/
-    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/bulk_revoke/ #TODO: This should probably be renamed to bulk-revolk
+    POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/bulk-revoke/
     POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/revoke-all/
     """
     lookup_field = 'uuid'
@@ -817,7 +817,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], url_path='bulk-revoke')
     def bulk_revoke(self, request, subscription_uuid=None):
         """
         Revokes one or more licenses in a subscription plan,
@@ -825,7 +825,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         This will result in any existing enrollments for the revoked users
         being moved to the audit enrollment mode.
 
-        POST /api/v1/subscriptions/{subscription_uuid}/licenses/bulk_revoke/
+        POST /api/v1/subscriptions/{subscription_uuid}/licenses/bulk-revoke/
 
         Request payload:
           {
