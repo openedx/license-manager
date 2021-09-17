@@ -1528,10 +1528,6 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
-        cls.revoke_license_url = reverse(
-            'api:v1:licenses-revoke',
-            kwargs={'subscription_uuid': cls.subscription_plan.uuid},
-        )
         cls.bulk_revoke_license_url = reverse(
             'api:v1:licenses-bulk-revoke',
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
@@ -1544,78 +1540,6 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             'api:v1:licenses-assign',
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
-
-    @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
-    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_revoke_happy_path(self, mock_revoke_license, mock_execute_post_revocation_tasks):
-        """
-        Test that we can revoke a license from the revoke action.
-        """
-        self._setup_request_jwt(user=self.user)
-        original_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
-        self.subscription_plan.licenses.set([original_license])
-        mock_revolk_license_result = {'revoked_license': original_license, 'original_status': original_license.status}
-        mock_revoke_license.return_value = mock_revolk_license_result
-
-        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
-
-        assert response.status_code == status.HTTP_204_NO_CONTENT
-        mock_revoke_license.assert_called_once_with(original_license)
-        mock_execute_post_revocation_tasks.assert_called_once_with(**mock_revolk_license_result)
-
-    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_revoke_revocation_error(self, mock_revoke_license):
-        """
-        Test that we can revoke a license from the revoke action.
-        """
-        self._setup_request_jwt(user=self.user)
-        original_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
-        self.subscription_plan.licenses.set([original_license])
-        mock_revoke_license.side_effect = LicenseRevocationError(
-            original_license.uuid,
-            failure_reason='Revocation fail',
-        )
-
-        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        mock_revoke_license.assert_called_once_with(original_license)
-        expected_msg = 'Action: license revocation failed for license: {} because: Revocation fail'.format(
-            original_license.uuid,
-        )
-        self.assertEqual(response.json(), expected_msg)
-
-    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_revoke_no_license(self, mock_revoke_license):
-        """
-        Tests revoking a license when the user doesn't have a license
-        """
-        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
-
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-        expected_msg = 'No license for email {} exists in plan {} with a status in {}'.format(
-            self.test_email,
-            self.subscription_plan.uuid,
-            [constants.ACTIVATED, constants.ASSIGNED],
-        )
-        self.assertEqual(response.json(), expected_msg)
-        self.assertFalse(mock_revoke_license.called)
-
-    @ddt.data(True, False)
-    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_revoke_non_admin_user(self, user_is_staff, mock_revoke_license):
-        """
-        Verify the revoke endpoint returns a 403 if a non-superuser with no
-        admin roles makes the request, even if they're staff (for good measure).
-        """
-        self.user.is_staff = user_is_staff
-        completely_different_customer_uuid = uuid4()
-        self._setup_request_jwt(enterprise_customer_uuid=completely_different_customer_uuid)
-
-        response = self.api_client.post(self.revoke_license_url, {'user_email': 'foo@bar.com'})
-
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        self.assertFalse(mock_revoke_license.called)
 
     @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
@@ -1866,7 +1790,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         self.subscription_plan.is_revocation_cap_enabled = is_revocation_cap_enabled
         self.subscription_plan.save()
 
-        response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
+        response = self.api_client.post(self.bulk_revoke_license_url, {'user_emails': [self.test_email]})
         assert response.status_code == status.HTTP_204_NO_CONTENT
         mock_revoke_course_enrollments_for_user_task.assert_called()
         if is_revocation_cap_enabled:
@@ -1927,7 +1851,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         }
 
         # Revoke the activated license and verify the counts change appropriately
-        revoke_response = self.api_client.post(self.revoke_license_url, {'user_email': self.test_email})
+        revoke_response = self.api_client.post(self.bulk_revoke_license_url, {'user_emails': [self.test_email]})
         assert revoke_response.status_code == status.HTTP_204_NO_CONTENT
         mock_revoke_course_enrollments_for_user_task.assert_called()
 
