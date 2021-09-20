@@ -771,8 +771,6 @@ class License(TimeStampedModel):
             "\nUnassigned: A license which has been created but does not have a learner assigned to it."
             "\nRevoked: A license which has been created but is no longer active (intentionally revoked or"
             " has expired). A license in this state may or may not have a learner assigned."
-            "\nTransferred for renewal: The license's subscription plan was renewed into a new plan,"
-            " and the license transferred to a new, active license in the renewed plan."
         )
     )
 
