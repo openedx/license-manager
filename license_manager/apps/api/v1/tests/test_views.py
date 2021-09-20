@@ -307,6 +307,17 @@ def _assert_license_response_correct(response, subscription_license):
     """
     Helper for asserting that the response for a subscription_license matches the object's values.
     """
+    expected_fields = {
+        'uuid',
+        'status',
+        'user_email',
+        'activation_date',
+        'last_remind_date',
+        'subscription_plan',
+        'activation_date',
+        'revoked_date'
+    }
+    assert set(response.keys()) == expected_fields
     assert response['uuid'] == str(subscription_license.uuid)
     assert response['status'] == subscription_license.status
     assert response['user_email'] == subscription_license.user_email

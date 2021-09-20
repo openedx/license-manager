@@ -132,6 +132,8 @@ class LicenseSerializer(serializers.ModelSerializer):
             'activation_date',
             'last_remind_date',
             'subscription_plan',
+            'activation_date',
+            'revoked_date',
         ]
         if settings.FEATURES[EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API]:
             fields.append('activation_key')
