@@ -216,41 +216,6 @@ def _original_licenses_to_copy(original_plan, license_types_to_copy):
     return list(original_plan.licenses.filter(**license_status_kwargs))
 
 
-def expire_plan_post_renewal(subscription_plan):
-    """
-    Expires an old plan and marks its associated licenses
-    as transferred.
-
-    The original license can't be marked as transferred until after the original
-    plan expires.  So we'll need a management command to periodically look
-    through expired plans, see if they were renewed, and update the
-    status of the expired plan's (previously) active licenses.
-    """
-    if subscription_plan.expiration_processed:
-        raise UnprocessableSubscriptionPlanExpirationError(
-            "Cannot expire {}. The plan's expiration is already marked as processed.".format(subscription_plan)
-        )
-
-    if subscription_plan.expiration_date > localized_utcnow():
-        raise UnprocessableSubscriptionPlanExpirationError(
-            "Cannot expire {}. The plan's expiration date is in the future.".format(subscription_plan)
-        )
-
-    renewal = subscription_plan.get_renewal()
-    if not renewal:
-        raise UnprocessableSubscriptionPlanExpirationError(
-            "Cannot expire {}. The plan has no associated renewal record.".format(subscription_plan)
-        )
-
-    if not renewal.processed:
-        raise UnprocessableSubscriptionPlanExpirationError(
-            "Cannot expire {}. The plan's renewal has not been processed.".format(subscription_plan)
-        )
-
-    subscription_plan.expiration_processed = True
-    subscription_plan.save(update_fields=['expiration_processed'])
-
-
 def delete_unused_licenses_post_freeze(subscription_plan):
     """
     Processes a "freeze" request on a SubscriptionPlan. Any unassigned licenses will be deleted, but
