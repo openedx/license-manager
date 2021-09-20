@@ -116,6 +116,16 @@ This modification also has the benefit of preventing the inclusion of certain li
 whose subscription plan is still marked as active but has an expiration date is in the past,
 in the response payload this endpoint.
 
+* We originally intended to introduce a new license status ``transferred-renewal`` to mark licenses as transferred 
+  after a renewal was processed and the original plan was expired. We decided to reject this approach to 
+  retain the original license statuses.
+
+Expire subscription plans and licensed enrollments 
+--------------------------------------------------
+A cron job runs daily to execute the ``expire_subscriptions`` command which calls the Enterprise API Client to terminate course enrollments associated
+with an expired license. Licensed enterprise course enrollments are changed to the "audit" course mode, or the user is unerolled from the 
+course if no audit mode exists. The ``expiration_processed`` field on the subscription plan is set to True after the expiration has been processed.
+
 No backfilling of data
 ----------------------
 
@@ -144,6 +154,3 @@ of license identifier.  As long as this remains true, which it should, this stra
 remains valid.  It should remain true because the existence of licenses is
 hidden from the learner; licenses are only a background means of access control - there
 are not UX elements that allow the user to read or update data about them.
-
-Consequences
-============

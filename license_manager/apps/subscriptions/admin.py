@@ -8,7 +8,6 @@ from license_manager.apps.subscriptions.api import (
     UnprocessableSubscriptionPlanExpirationError,
     UnprocessableSubscriptionPlanFreezeError,
     delete_unused_licenses_post_freeze,
-    expire_plan_post_renewal,
     renew_subscription,
     sync_agreement_with_enterprise_slug,
 )
@@ -160,7 +159,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'start_date',
         'expiration_date',
     )
-    actions = ['process_expiration_post_renewal', 'process_unused_licenses_post_freeze']
+    actions = ['process_unused_licenses_post_freeze']
 
     def save_model(self, request, obj, form, change):
         # Record change reason for simple history
@@ -197,20 +196,6 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         if db_field.name == 'customer_agreement':
             kwargs['queryset'] = CustomerAgreement.objects.filter().order_by('enterprise_customer_slug')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-    def process_expiration_post_renewal(self, request, queryset):
-        try:
-            with transaction.atomic():
-                for subscription_plan in queryset:
-                    expire_plan_post_renewal(subscription_plan)
-                messages.add_message(
-                    request,
-                    messages.SUCCESS,
-                    'Successfully processed expiration of selected Subscription Plans'
-                )
-        except UnprocessableSubscriptionPlanExpirationError as exc:
-            messages.add_message(request, messages.ERROR, exc)
-    process_expiration_post_renewal.short_description = 'Process post-renewal expiration of selected records'
 
     def process_unused_licenses_post_freeze(self, request, queryset):
         try:
