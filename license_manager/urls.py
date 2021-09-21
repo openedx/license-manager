@@ -19,7 +19,9 @@ from auth_backends.urls import oauth2_urlpatterns
 from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
-from rest_framework_swagger.views import get_swagger_view
+from drf_yasg.views import get_schema_view
+from edx_api_doc_tools import make_api_info
+from rest_framework import permissions
 
 from license_manager.apps.api import urls as api_urls
 from license_manager.apps.core import views as core_views
@@ -27,15 +29,24 @@ from license_manager.apps.core import views as core_views
 
 admin.autodiscover()
 
+
+api_info = make_api_info(title="License Manager API", version="v1")
+schema_view = get_schema_view(
+    api_info,
+    public=False,
+    permission_classes=(permissions.AllowAny,),
+)
+
 urlpatterns = [
     url(r'', include(oauth2_urlpatterns)),
     url(r'', include('csrf.urls')),  # Include csrf urls from edx-drf-extensions
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include(api_urls)),
-    url(r'^api-docs/', get_swagger_view(title='License Manager API')),
+    url(r'^api-docs/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     url(r'^auto_auth/$', core_views.AutoAuth.as_view(), name='auto_auth'),
     url(r'^health/$', core_views.health, name='health'),
 ]
+
 
 if settings.DEBUG and os.environ.get('ENABLE_DJANGO_TOOLBAR', False):  # pragma: no cover
     # Disable pylint import error because we don't install django-debug-toolbar

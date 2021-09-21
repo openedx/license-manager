@@ -44,9 +44,11 @@ THIRD_PARTY_APPS = (
     'django_filters',
     'durationwidget',
     'rest_framework',
-    'rest_framework_swagger',
+    'drf_yasg',
+    'edx_api_doc_tools',
     'rules.apps.AutodiscoverRulesConfig',
     'simple_history',
+    'simplejson',
     'social_django',
     'waffle',
 )
