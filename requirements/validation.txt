@@ -38,12 +38,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.18.38
+boto3==1.18.45
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.21.38
+botocore==1.21.45
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -65,7 +65,7 @@ cffi==1.14.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   cryptography
-charset-normalizer==2.0.4
+charset-normalizer==2.0.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -92,13 +92,13 @@ coreapi==2.3.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-    #   django-rest-swagger
-    #   openapi-codec
+    #   drf-yasg
 coreschema==0.0.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   coreapi
+    #   drf-yasg
 coverage==5.5
     # via
     #   -r requirements/test.txt
@@ -132,6 +132,8 @@ django==3.2.7
     #   djangorestframework
     #   drf-jwt
     #   drf-nested-routers
+    #   drf-yasg
+    #   edx-api-doc-tools
     #   edx-auth-backends
     #   edx-celeryutils
     #   edx-django-utils
@@ -170,10 +172,6 @@ django-model-utils==4.1.1
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-rest-swagger==2.2.0
-    # via
-    #   -r requirements/quality.txt
-    #   -r requirements/test.txt
 django-ses==2.2.1
     # via
     #   -r requirements/quality.txt
@@ -192,10 +190,11 @@ djangorestframework==3.12.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-    #   django-rest-swagger
     #   djangorestframework-csv
     #   drf-jwt
     #   drf-nested-routers
+    #   drf-yasg
+    #   edx-api-doc-tools
     #   edx-drf-extensions
     #   rest-condition
 djangorestframework-csv==2.1.1
@@ -209,6 +208,15 @@ drf-jwt==1.19.0
     #   -r requirements/test.txt
     #   edx-drf-extensions
 drf-nested-routers==0.93.3
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+drf-yasg==1.20.0
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   edx-api-doc-tools
+edx-api-doc-tools==1.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -273,6 +281,11 @@ idna==3.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
+inflection==0.5.1
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   drf-yasg
 iniconfig==1.1.1
     # via
     #   -r requirements/test.txt
@@ -335,7 +348,7 @@ mysqlclient==2.0.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==6.8.1.164
+newrelic==6.10.0.165
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -346,14 +359,11 @@ oauthlib==3.1.1
     #   -r requirements/test.txt
     #   requests-oauthlib
     #   social-auth-core
-openapi-codec==1.3.2
+packaging==21.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-    #   django-rest-swagger
-packaging==21.0
-    # via
-    #   -r requirements/test.txt
+    #   drf-yasg
     #   pytest
 path==16.2.0
     # via edx-i18n-tools
@@ -439,6 +449,7 @@ pymongo==3.12.0
     #   edx-opaque-keys
 pyparsing==2.4.7
     # via
+    #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   packaging
 pytest==6.2.5
@@ -509,6 +520,16 @@ rest-condition==1.0.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
+ruamel.yaml==0.17.16
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   drf-yasg
+ruamel.yaml.clib==0.2.6
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   ruamel.yaml
 rules==3.0
     # via
     #   -r requirements/quality.txt
@@ -527,7 +548,6 @@ simplejson==3.17.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-    #   django-rest-swagger
 six==1.16.0
     # via
     #   -r requirements/quality.txt
@@ -567,7 +587,7 @@ social-auth-core==4.0.2
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.4.1
+sqlparse==0.4.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -602,6 +622,7 @@ uritemplate==3.0.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   coreapi
+    #   drf-yasg
 urllib3==1.26.6
     # via
     #   -r requirements/quality.txt

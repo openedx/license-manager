@@ -16,9 +16,9 @@ backoff==1.10.0
     #   analytics-python
 billiard==3.6.4.0
     # via celery
-boto3==1.18.38
+boto3==1.18.45
     # via django-ses
-botocore==1.21.38
+botocore==1.21.45
     # via
     #   boto3
     #   s3transfer
@@ -31,14 +31,14 @@ certifi==2021.5.30
     # via requests
 cffi==1.14.6
     # via cryptography
-charset-normalizer==2.0.4
+charset-normalizer==2.0.6
     # via requests
 coreapi==2.3.3
-    # via
-    #   django-rest-swagger
-    #   openapi-codec
+    # via drf-yasg
 coreschema==0.0.4
-    # via coreapi
+    # via
+    #   coreapi
+    #   drf-yasg
 cryptography==3.4.8
     # via
     #   pyjwt
@@ -61,6 +61,8 @@ django==3.2.7
     #   djangorestframework
     #   drf-jwt
     #   drf-nested-routers
+    #   drf-yasg
+    #   edx-api-doc-tools
     #   edx-auth-backends
     #   edx-celeryutils
     #   edx-django-utils
@@ -85,8 +87,6 @@ django-model-utils==4.1.1
     #   -r requirements/base.in
     #   edx-celeryutils
     #   edx-rbac
-django-rest-swagger==2.2.0
-    # via -r requirements/base.in
 django-ses==2.2.1
     # via -r requirements/base.in
 django-simple-history==3.0.0
@@ -99,10 +99,11 @@ django-waffle==2.2.1
 djangorestframework==3.12.4
     # via
     #   -r requirements/base.in
-    #   django-rest-swagger
     #   djangorestframework-csv
     #   drf-jwt
     #   drf-nested-routers
+    #   drf-yasg
+    #   edx-api-doc-tools
     #   edx-drf-extensions
     #   rest-condition
 djangorestframework-csv==2.1.1
@@ -112,6 +113,10 @@ drf-jwt==1.19.0
     #   -c requirements/common_constraints.txt
     #   edx-drf-extensions
 drf-nested-routers==0.93.3
+    # via -r requirements/base.in
+drf-yasg==1.20.0
+    # via edx-api-doc-tools
+edx-api-doc-tools==1.5.0
     # via -r requirements/base.in
 edx-auth-backends==3.4.0
     # via
@@ -142,6 +147,8 @@ future==0.18.2
     #   pyjwkest
 idna==3.2
     # via requests
+inflection==0.5.1
+    # via drf-yasg
 itypes==1.2.0
     # via coreapi
 jinja2==2.11.3
@@ -164,14 +171,14 @@ monotonic==1.6
     # via analytics-python
 mysqlclient==2.0.3
     # via -r requirements/base.in
-newrelic==6.8.1.164
+newrelic==6.10.0.165
     # via edx-django-utils
 oauthlib==3.1.1
     # via
     #   requests-oauthlib
     #   social-auth-core
-openapi-codec==1.3.2
-    # via django-rest-swagger
+packaging==21.0
+    # via drf-yasg
 pbr==5.6.0
     # via stevedore
 psutil==5.8.0
@@ -191,6 +198,8 @@ pyjwt[crypto]==1.7.1
     #   social-auth-core
 pymongo==3.12.0
     # via edx-opaque-keys
+pyparsing==2.4.7
+    # via packaging
 python-dateutil==2.8.2
     # via
     #   analytics-python
@@ -220,6 +229,10 @@ requests-oauthlib==1.3.0
     # via social-auth-core
 rest-condition==1.0.3
     # via edx-drf-extensions
+ruamel.yaml==0.17.16
+    # via drf-yasg
+ruamel.yaml.clib==0.2.6
+    # via ruamel.yaml
 rules==3.0
     # via -r requirements/base.in
 s3transfer==0.5.0
@@ -227,7 +240,7 @@ s3transfer==0.5.0
 semantic-version==2.8.5
     # via edx-drf-extensions
 simplejson==3.17.5
-    # via django-rest-swagger
+    # via -r requirements/base.in
 six==1.16.0
     # via
     #   analytics-python
@@ -250,7 +263,7 @@ social-auth-core==4.0.2
     #   -c requirements/common_constraints.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.4.1
+sqlparse==0.4.2
     # via django
 stevedore==3.4.0
     # via
@@ -259,7 +272,9 @@ stevedore==3.4.0
 unicodecsv==0.14.1
     # via djangorestframework-csv
 uritemplate==3.0.1
-    # via coreapi
+    # via
+    #   coreapi
+    #   drf-yasg
 urllib3==1.26.6
     # via
     #   botocore
