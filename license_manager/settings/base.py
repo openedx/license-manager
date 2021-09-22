@@ -48,7 +48,6 @@ THIRD_PARTY_APPS = (
     'edx_api_doc_tools',
     'rules.apps.AutodiscoverRulesConfig',
     'simple_history',
-    'simplejson',
     'social_django',
     'waffle',
 )
@@ -388,3 +387,7 @@ ENTERPRISE_SUBSIDY_CHECKSUM_SECRET_KEY = 'please-set-me'
 ENTERPRISE_SUBSIDY_CHECKSUM_MESSAGE_FORMAT = '{lms_user_id}:{course_key}:{license_uuid}'
 
 SUBSCRIPTION_PLAN_RENEWAL_LOCK_PERIOD_HOURS = 12
+
+SWAGGER_SETTINGS = {
+    'LOGOUT_URL': LOGOUT_URL
+}

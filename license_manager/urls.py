@@ -19,6 +19,7 @@ from auth_backends.urls import oauth2_urlpatterns
 from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
+from drf_yasg.generators import OpenAPISchemaGenerator, openapi
 from drf_yasg.views import get_schema_view
 from edx_api_doc_tools import make_api_info
 from rest_framework import permissions
@@ -30,11 +31,30 @@ from license_manager.apps.core import views as core_views
 admin.autodiscover()
 
 
+class CustomerGeneratorSchema(OpenAPISchemaGenerator):
+    """
+    Adds USE-JWT-COOKIE header so that requests through swagger can be authorized
+    """
+    def get_operation(self, *args, **kwargs):
+        operation = super().get_operation(*args, **kwargs)
+        your_header = openapi.Parameter(
+            name='USE-JWT-Cookie',
+            in_=openapi.IN_HEADER,
+            type=openapi.TYPE_BOOLEAN,
+            required=True,
+            default=True,
+            enum=[True],
+        )
+        operation.parameters.append(your_header)
+        return operation
+
+
 api_info = make_api_info(title="License Manager API", version="v1")
 schema_view = get_schema_view(
     api_info,
-    public=False,
+    public=True,
     permission_classes=(permissions.AllowAny,),
+    generator_class=CustomerGeneratorSchema
 )
 
 urlpatterns = [

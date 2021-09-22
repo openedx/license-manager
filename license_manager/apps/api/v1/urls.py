@@ -62,7 +62,7 @@ router.register(
     basename='learner-subscriptions',
 )
 router.register(
-    prefix=r'(?<!learner-)subscriptions',
+    prefix=r'subscriptions',
     viewset=views.SubscriptionViewSet,
     basename='subscriptions',
 )
@@ -74,7 +74,7 @@ router.register(
 
 subscription_router = NestedSimpleRouter(
     parent_router=router,
-    parent_prefix=r'(?<!learner-)subscriptions',
+    parent_prefix=r'subscriptions',
 )
 subscription_router.register(
     r'licenses',
@@ -83,7 +83,7 @@ subscription_router.register(
 )
 
 subscription_router.register(
-    r'license(?![^\/])',
+    r'license',
     views.BaseLicenseViewSet,
     basename='license',
 )
