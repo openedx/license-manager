@@ -39,3 +39,12 @@ pylint==2.8.3
 # but diff-cover latest has a pin (pluggy<1.0.0a1)
 # Using the same version of diff-cover which is being used currently in edx-platform to avoid this conflict.
 diff-cover==4.0.0
+
+
+# PyJWT[crypto] 2.0.0 has a number of breaking changes
+# This https://github.com/edx/license-manager/pull/264 will remove these constraints
+
+pyjwt[crypto]<2.0.0
+social-auth-core<4.0.3
+edx-drf-extensions<7.0.0
+edx-auth-backends<4.0.0

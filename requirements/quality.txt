@@ -158,7 +158,7 @@ edx-api-doc-tools==1.5.0
     # via -r requirements/base.txt
 edx-auth-backends==3.4.0
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/base.txt
 edx-celeryutils==1.1.0
     # via -r requirements/base.txt
@@ -169,7 +169,7 @@ edx-django-utils==4.4.0
     #   edx-rest-api-client
 edx-drf-extensions==6.6.0
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   edx-rbac
 edx-lint==5.1.0
@@ -277,7 +277,7 @@ pyjwkest==1.4.2
     #   edx-drf-extensions
 pyjwt[crypto]==1.7.1
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   drf-jwt
     #   edx-auth-backends
@@ -390,12 +390,11 @@ snowballstemmer==2.1.0
     # via pydocstyle
 social-auth-app-django==4.0.0
     # via
-    #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
     #   edx-auth-backends
 social-auth-core==4.0.2
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   edx-auth-backends
     #   social-auth-app-django
