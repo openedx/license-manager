@@ -1,4 +1,4 @@
-9. Automatically activate subscription licenses upon login via SSO
+10. Automatically activate subscription licenses upon login via SSO
 ======================
 
 Status
