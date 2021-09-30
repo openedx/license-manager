@@ -53,15 +53,15 @@ def _track_event_via_braze_alias(email, event_name, properties):
 
     track_url = "{}/users/track".format(settings.BRAZE_URL)
     track_payload = {
-        "attributes" : [
+        "attributes": [
             {
-                "user_alias" : {
-                    "alias_name" : email,
-                    "alias_label" : "Enterprise"
+                "user_alias": {
+                    "alias_name": email,
+                    "alias_label": "Enterprise"
                 },
-                "email" : email,
+                "email": email,
                 "is_enterprise_learner": true,
-                "_update_existing_only" : false
+                "_update_existing_only": false
             }],
         "events": [
             {
@@ -72,7 +72,7 @@ def _track_event_via_braze_alias(email, event_name, properties):
                 "name": event_name,
                 "time": _iso_8601_format_string(localized_utcnow()),
                 "properties": properties,
-                "_update_existing_only" : false
+                "_update_existing_only": false
             }]
     }
     track_response = requests.request("POST", track_url, headers=headers, data=json.dumps(track_payload))
