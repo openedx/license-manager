@@ -84,6 +84,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     start_date = localized_utcnow()
     # Make the subscription expire in roughly a year and a day
     expiration_date = localized_utcnow() + timedelta(days=366)
+    expiration_processed = False
     customer_agreement = factory.SubFactory(CustomerAgreementFactory)
     enterprise_catalog_uuid = factory.LazyFunction(uuid4)
     netsuite_product_id = factory.Faker('random_int')

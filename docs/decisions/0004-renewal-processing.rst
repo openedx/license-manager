@@ -123,7 +123,7 @@ in the response payload this endpoint.
 Expire subscription plans and licensed enrollments 
 --------------------------------------------------
 A cron job runs daily to execute the ``expire_subscriptions`` command which calls the Enterprise API Client to terminate course enrollments associated
-with an expired license. Licensed enterprise course enrollments are changed to the "audit" course mode, or the user is unerolled from the 
+with an expired license. Licensed enterprise course enrollments are changed to the "audit" course mode, or the user is unenrolled from the 
 course if no audit mode exists. The ``expiration_processed`` field on the subscription plan is set to True after the expiration has been processed.
 
 No backfilling of data

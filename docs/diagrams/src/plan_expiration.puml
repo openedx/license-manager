@@ -1,0 +1,23 @@
+@startuml
+title License Expiration
+
+
+(*) --> "Commands.expire_subscriptions()"
+--> "bulk_licensed_enrollments_expiration()[edx-enterprise]"
+--> "get_course_overviews()[edx-platform]"
+
+if "has user earned a certificate?" then
+  ->[true] "LicensedEnterpriseCourseEnrollment.revoke()[edx-enterprise]"
+else
+  if "has course run ended?" then
+    ->[true] "LicensedEnterpriseCourseEnrollment.revoke()[edx-enterprise]"
+  else
+    -> [false] if "does course have audit mode?" then
+      ---> [true] "update_course_enrollment_mode_for_user()[edx-platform]"
+      ---> "LicensedEnterpriseCourseEnrollment.revoke()[edx-enterprise]"
+      else
+      ---> [false] "unenroll_user_from_course()[edx-platform]"
+      ---> "LicensedEnterpriseCourseEnrollment.revoke()[edx-enterprise]"
+endif
+
+@enduml

@@ -1,9 +1,7 @@
-import json
 import logging
 from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand
-from rest_framework import status
 
 from license_manager.apps.api.tasks import license_expiration_task
 from license_manager.apps.subscriptions.constants import (
@@ -11,11 +9,7 @@ from license_manager.apps.subscriptions.constants import (
     ASSIGNED,
     LICENSE_EXPIRATION_BATCH_SIZE,
 )
-from license_manager.apps.subscriptions.models import (
-    License,
-    SubscriptionPlan,
-    dispatch_license_expiration_event,
-)
+from license_manager.apps.subscriptions.models import SubscriptionPlan
 from license_manager.apps.subscriptions.utils import (
     chunks,
     localized_datetime_from_datetime,
@@ -64,13 +58,22 @@ class Command(BaseCommand):
             default=False
         )
 
+        parser.add_argument(
+            '--force',
+            action='store_true',
+            dest='force',
+            default=False,
+        )
+
     def handle(self, *args, **options):
-        expired_after_date = localized_datetime_from_datetime(datetime.strptime(options['expiration_date_from'], DATE_FORMAT))
-        expired_before_date = localized_datetime_from_datetime(datetime.strptime(options['expiration_date_to'], DATE_FORMAT))
+        expired_after_date = localized_datetime_from_datetime(
+            datetime.strptime(options['expiration_date_from'], DATE_FORMAT))
+        expired_before_date = localized_datetime_from_datetime(
+            datetime.strptime(options['expiration_date_to'], DATE_FORMAT))
 
-        today = localized_utcnow()
+        now = localized_utcnow()
 
-        if expired_after_date > today or expired_before_date > today:
+        if expired_after_date > now or expired_before_date > now:
             message = 'Subscriptions with expiration dates between {} and {} have not expired yet.'.format(
                 expired_after_date,
                 expired_before_date
@@ -78,42 +81,49 @@ class Command(BaseCommand):
             logger.error(message)
             return
 
-        expired_licenses = License.objects.filter(
-            subscription_plan__expiration_date__range=(expired_after_date, expired_before_date),
-            subscription_plan__expiration_processed=False,
-            status__in=[ASSIGNED, ACTIVATED],
-        )
+        filters = {'expiration_date__range': (expired_after_date, expired_before_date)}
+        # process plans again if force flag = True
+        if not options['force']:
+            filters['expiration_processed'] = False
 
-        if not expired_licenses:
-            message = 'No subscriptions have expired between {} and {}'.format(expired_after_date, expired_before_date)
+        expired_subscription_plans = SubscriptionPlan.objects.filter(
+            **filters
+        ).select_related('customer_agreement').prefetch_related('licenses')
+
+        if not expired_subscription_plans:
+            message = 'No subscriptions have expired between {} and {}'.format(
+                expired_after_date, expired_before_date)
             logger.info(message)
             return
 
-        expired_license_uuids = []
-        expired_subscription_uuids = set({})
-        for license in expired_licenses:
-            expired_license_uuids.append(str(license.uuid))
-            expired_subscription_uuids.add(str(license.subscription_plan.uuid))
-
         if not options['dry_run']:
-            # Terminate the licensed course enrollments
-            for license_uuids_chunk in chunks(expired_license_uuids, LICENSE_EXPIRATION_BATCH_SIZE):
-                license_expiration_task(license_uuids_chunk)
+            for expired_subscription_plan in expired_subscription_plans:
+                expired_licenses = [lcs for lcs in expired_subscription_plan.licenses.all() if lcs.status in [ASSIGNED, ACTIVATED]]
+                any_failures = False
 
-            # Mark the expired subscriptions as having been processed
-            expired_subscriptions = SubscriptionPlan.objects.filter(
-                uuid__in=expired_subscription_uuids
-            )
-            expired_subscriptions.update(expiration_processed=True)
+                # Terminate the licensed course enrollments for the given licenses,
+                # an alert will be triggered if any failures occur
+                for license_chunk in chunks(expired_licenses, LICENSE_EXPIRATION_BATCH_SIZE):
+                    try:
+                        license_chunk_uuids = [str(lcs.uuid) for lcs in license_chunk]
+                        license_expiration_task(license_chunk_uuids)
+                    except Exception:  # pylint: disable=broad-except
+                        any_failures = True
 
-            # since update does not call post_save, handle tracking events manually:
-            for subscription in expired_subscriptions:
-                dispatch_license_expiration_event(
-                    SubscriptionPlan, instance=subscription, update_fields=['expiration_processed'])
+                if not any_failures:
+                    expired_subscription_plan.expiration_processed = True
+                    expired_subscription_plan.save()
 
-            message = 'Terminated course enrollments for learners in subscriptions: {} '.format(expired_subscription_uuids)
-            logger.info(message)
+                    message = 'Terminated course enrollments for learners in subscription: {}'.format(
+                        expired_subscription_plan.uuid)
+                    logger.info(message)
+
+                    expired_subscription_plan.expiration_processed = True
+                    expired_subscription_plan.save(update_fields=['expiration_processed'])
+                else:
+                    message = 'Failed to process expiration for subscription: {}'.format(expired_subscription_plan.uuid)
+                    logger.error(message)
         else:
-            message = 'Dry-run result subscriptions that would be processed: {} '.format(
-                expired_subscription_uuids)
+            message = 'Dry-run result subscriptions that would be processed: {}'.format(
+                [str(sub.uuid) for sub in expired_subscription_plans])
             logger.info(message)

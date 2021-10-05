@@ -91,8 +91,9 @@ class EnterpriseApiClientTests(TestCase):
         # Mock out the response from the lms
         mock_oauth_client().post.return_value = MockResponse({'detail': 'Bad Request'}, 400, content='error response')
 
-        EnterpriseApiClient().revoke_course_enrollments_for_user(
-            user_id=self.user_id,
-            enterprise_id=self.uuid,
-        )
-        mock_logger.error.assert_called_once()
+        with self.assertRaises(requests.exceptions.HTTPError):
+            EnterpriseApiClient().revoke_course_enrollments_for_user(
+                user_id=self.user_id,
+                enterprise_id=self.uuid,
+            )
+            mock_logger.error.assert_called_once()

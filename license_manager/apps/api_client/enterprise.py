@@ -93,7 +93,10 @@ class EnterpriseApiClient(BaseOAuthClient):
             'enterprise_id': enterprise_id,
         }
         response = self.client.post(self.course_enrollments_revoke_endpoint, json=data)
-        if response.status_code >= 400:
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as exc:
             msg = (
                 'Failed to revoke course enrollments for user "{user_id}" and enterprise "{enterprise_id}". '
                 'Response: {response}'.format(
@@ -103,6 +106,7 @@ class EnterpriseApiClient(BaseOAuthClient):
                 )
             )
             logger.error(msg)
+            raise exc
 
     def bulk_licensed_enrollments_expiration(self, expired_license_uuids):
         """
@@ -115,7 +119,10 @@ class EnterpriseApiClient(BaseOAuthClient):
             'expired_license_uuids': expired_license_uuids,
         }
         response = self.client.post(self.bulk_licensed_enrollments_expiration_endpoint, json=data)
-        if response.status_code >= 400:
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as exc:
             msg = (
                 'Failed to terminate expired course enrollments for licenses [{expired_license_uuids}]. '
                 'Response: {response}'.format(
@@ -124,6 +131,7 @@ class EnterpriseApiClient(BaseOAuthClient):
                 )
             )
             logger.error(msg)
+            raise exc
 
     def bulk_enroll_enterprise_learners(self, enterprise_id, options):
         """
