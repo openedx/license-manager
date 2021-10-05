@@ -43,13 +43,13 @@ class CustomerAgreementFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CustomerAgreement
         # Perform a `get_or_create` when an agreement already exists with the same unique identifiers
-        django_get_or_create = ('enterprise_customer_uuid', 'enterprise_customer_slug',)
+        django_get_or_create = ('enterprise_customer_uuid', 'enterprise_customer_slug', 'enterprise_customer_name',)
 
     uuid = factory.LazyFunction(uuid4)
     enterprise_customer_uuid = factory.LazyFunction(uuid4)
     enterprise_customer_slug = factory.Faker('slug')
     default_enterprise_catalog_uuid = factory.LazyFunction(uuid4)
-    enterprise_cuistomer_name = factory.LazyAttribute(lambda x: FAKER.company())
+    enterprise_customer_name = factory.LazyAttribute(lambda x: FAKER.company())
 
 
 class PlanTypeFactory(factory.django.DjangoModelFactory):
