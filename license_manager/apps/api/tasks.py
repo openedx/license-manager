@@ -153,6 +153,12 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
     try:
         enterprise_api_client = EnterpriseApiClient()
         enterprise_api_client.revoke_course_enrollments_for_user(user_id=user_id, enterprise_id=enterprise_id)
+        logger.info(
+            'Revocation of course enrollments SUCCEEDED for user [{user_id}], enterprise [{enterprise_id}]'.format(
+                user_id=user_id,
+                enterprise_id=enterprise_id,
+            )
+        )
     except Exception:  # pylint: disable=broad-except
         logger.error(
             'Revocation of course enrollments FAILED for user [{user_id}], enterprise [{enterprise_id}]'.format(
@@ -174,13 +180,19 @@ def license_expiration_task(license_uuids):
     try:
         enterprise_api_client = EnterpriseApiClient()
         enterprise_api_client.bulk_licensed_enrollments_expiration(expired_license_uuids=license_uuids)
-    except Exception:  # pylint: disable=broad-except
+        logger.info(
+            "Expiration of course enrollments SUCCEEDED for licenses [{license_uuids}]".format(
+                license_uuids=license_uuids,
+            )
+        )
+    except Exception as exc:
         logger.error(
             "Expiration of course enrollments FAILED for licenses [{license_uuids}]".format(
                 license_uuids=license_uuids,
             ),
             exc_info=True,
         )
+        raise exc
 
 
 @shared_task(base=LoggedTask)

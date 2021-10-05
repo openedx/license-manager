@@ -68,6 +68,8 @@ class ExpireSubscriptionsCommandTests(TestCase):
             status__in=[ASSIGNED, ACTIVATED]
         )]
         mock_license_expiration_task.assert_called_with(expired_license_uuids)
+        expired_subscription.refresh_from_db()
+        assert expired_subscription.expiration_processed is True
 
     @mock.patch(
         'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
@@ -95,13 +97,15 @@ class ExpireSubscriptionsCommandTests(TestCase):
 
         call_command(self.command_name)
         mock_license_expiration_task.assert_called_with([str(license_to_expire_enrollments.uuid)])
+        expired_subscription.refresh_from_db()
+        assert expired_subscription.expiration_processed is True
 
     @mock.patch(
         'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
     )
-    def test_2_subscriptions_expiring_within_range(self, mock_license_expiration_task):
+    def test_subscriptions_expiring_within_range(self, mock_license_expiration_task):
         """
-        Verifies that all expired subscriptions within the expired range have their license uuids sent to edx-enterprise
+        Verifies that all expired and unprocessed subscriptions within the expired range have their license uuids sent to edx-enterprise.
         """
         expired_subscription_1 = SubscriptionPlanFactory.create(
             start_date=datetime.strptime('2013-1-01T00:00:00', DATE_FORMAT),
@@ -113,6 +117,57 @@ class ExpireSubscriptionsCommandTests(TestCase):
             expiration_date=datetime.strptime('2016-1-01T00:00:00', DATE_FORMAT),
         )
 
+        expired_subscription_3 = SubscriptionPlanFactory.create(
+            start_date=datetime.strptime('2015-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2016-1-01T00:00:00', DATE_FORMAT),
+            expiration_processed=True
+        )
+
+        # Create an activated license on each subscription
+        expired_license_1 = LicenseFactory.create(status=ACTIVATED, subscription_plan=expired_subscription_1)
+        expired_license_2 = LicenseFactory.create(status=ACTIVATED, subscription_plan=expired_subscription_2)
+
+        # These licenses should not be expired since the subscription plan has already been processed
+        LicenseFactory.create(status=ACTIVATED, subscription_plan=expired_subscription_3)
+
+        call_command(
+            self.command_name,
+            "--expired-after=2013-1-01T00:00:00",
+            "--expired-before=2016-1-01T00:00:00"
+        )
+
+        args_1 = mock_license_expiration_task.call_args_list[0][0][0]
+        args_2 = mock_license_expiration_task.call_args_list[1][0][0]
+        assert args_1 == [str(expired_license_1.uuid)]
+        assert args_2 == [str(expired_license_2.uuid)]
+        assert mock_license_expiration_task.call_count == 2
+
+        expired_subscription_1.refresh_from_db()
+        expired_subscription_2.refresh_from_db()
+        assert expired_subscription_1.expiration_processed is True
+        assert expired_subscription_2.expiration_processed is True
+
+    @mock.patch(
+        'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
+    )
+    def test_subscriptions_expiring_within_range_forced(self, mock_license_expiration_task):
+        """
+        Verifies that all expired subscriptions within the expired range, including previously processed ones,
+        have their license uuids sent to edx-enterprise if the force flag is passed
+        """
+
+        expired_subscription_1 = SubscriptionPlanFactory.create(
+            start_date=datetime.strptime('2013-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2014-1-01T00:00:00', DATE_FORMAT),
+            expiration_processed=True
+        )
+
+        expired_subscription_2 = SubscriptionPlanFactory.create(
+            start_date=datetime.strptime('2015-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2016-1-01T00:00:00', DATE_FORMAT),
+            expiration_processed=True
+        )
+
         # Create an activated license on each subscription
         expired_license_1 = LicenseFactory.create(status=ACTIVATED, subscription_plan=expired_subscription_1)
         expired_license_2 = LicenseFactory.create(status=ACTIVATED, subscription_plan=expired_subscription_2)
@@ -120,10 +175,20 @@ class ExpireSubscriptionsCommandTests(TestCase):
         call_command(
             self.command_name,
             "--expired-after=2013-1-01T00:00:00",
-            "--expired-before=2016-1-01T00:00:00"
+            "--expired-before=2016-1-01T00:00:00",
+            "--force"
         )
-        actual_args = mock_license_expiration_task.call_args_list[0][0][0]
-        assert sorted(actual_args) == sorted([str(expired_license_1.uuid), str(expired_license_2.uuid)])
+
+        args_1 = mock_license_expiration_task.call_args_list[0][0][0]
+        args_2 = mock_license_expiration_task.call_args_list[1][0][0]
+        assert args_1 == [str(expired_license_1.uuid)]
+        assert args_2 == [str(expired_license_2.uuid)]
+        assert mock_license_expiration_task.call_count == 2
+
+        expired_subscription_1.refresh_from_db()
+        expired_subscription_2.refresh_from_db()
+        assert expired_subscription_1.expiration_processed is True
+        assert expired_subscription_2.expiration_processed is True
 
     @mock.patch(
         'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
@@ -146,8 +211,32 @@ class ExpireSubscriptionsCommandTests(TestCase):
         LicenseFactory.create_batch(500, status=ACTIVATED, subscription_plan=expired_subscription_2)
 
         call_command(self.command_name)
-        expected_call_count = math.ceil(1000 / LICENSE_EXPIRATION_BATCH_SIZE)
+        expected_call_count = math.ceil(500 / LICENSE_EXPIRATION_BATCH_SIZE) * 2
         assert expected_call_count == mock_license_expiration_task.call_count
+
+    @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
+    @mock.patch(
+        'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
+    )
+    def test_license_expiration_error(self, mock_license_expiration_task, mock_track_event):
+        """
+        Verifies that expiration_processed is not set to True and license expiration events are not tracked
+        if an error occured during license_expiration_task
+        """
+        mock_license_expiration_task.side_effect = Exception('something terrible went wrong')
+
+        expired_subscription = SubscriptionPlanFactory.create(
+            start_date=self.today - timedelta(days=7),
+            expiration_date=self.today,
+        )
+
+        LicenseFactory.create_batch(5, status=ACTIVATED, subscription_plan=expired_subscription)
+
+        call_command(self.command_name)
+        assert mock_track_event.call_count == 0
+
+        expired_subscription.refresh_from_db()
+        assert expired_subscription.expiration_processed is False
 
     @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
     @mock.patch(

@@ -1164,5 +1164,5 @@ def dispatch_license_expiration_event(sender, **kwargs):  # pylint: disable=unus
     update_fields = kwargs.get('update_fields', None)
 
     if subscription_plan_obj and update_fields and 'expiration_processed' in update_fields:
-        expired_licenses = [lsc for lsc in subscription_plan_obj.licenses.all() if not lsc.renewed_to]
+        expired_licenses = [lcs for lcs in subscription_plan_obj.licenses.all() if not lcs.renewed_to]
         track_license_changes(expired_licenses, SegmentEvents.LICENSE_EXPIRED)
