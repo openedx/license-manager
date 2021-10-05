@@ -242,6 +242,7 @@ def sync_agreement_with_enterprise_slug(customer_agreement):
             customer_agreement.enterprise_customer_uuid,
         )
         customer_agreement.enterprise_customer_slug = customer_data.get('slug')
+        customer_agreement.enterprise_customer_name = customer_data.get('name')
         customer_agreement.save()
     except HTTPError as exc:
         error_message = (
