@@ -49,6 +49,7 @@ class CustomerAgreementFactory(factory.django.DjangoModelFactory):
     enterprise_customer_uuid = factory.LazyFunction(uuid4)
     enterprise_customer_slug = factory.Faker('slug')
     default_enterprise_catalog_uuid = factory.LazyFunction(uuid4)
+    enterprise_cuistomer_name = factory.LazyAttribute(lambda x: FAKER.company())
 
 
 class PlanTypeFactory(factory.django.DjangoModelFactory):

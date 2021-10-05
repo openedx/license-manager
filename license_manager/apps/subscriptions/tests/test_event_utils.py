@@ -40,6 +40,8 @@ def test_get_license_tracking_properties():
         == assigned_license.subscription_plan.expiration_processed
     assert flat_data['customer_agreement_uuid'] \
         == str(assigned_license.subscription_plan.customer_agreement.uuid)
+    assert flat_data['enterprise_customer_name'] \
+        == assigned_license.subscription_plan.customer_agreement.enterprise_customer_name
 
     # Check that all the data is a basic type that can be serialized so it will be clean in segment:
     for k, v in flat_data.items():
