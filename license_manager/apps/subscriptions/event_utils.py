@@ -81,9 +81,9 @@ def _track_event_via_braze_alias(email, event_name, properties):
                                            'enterprise_customer_slug',
                                            'enterprise_customer_name',
                                            'license_uuid']
-    for property in event_properites_to_copy_to_profile:
-        if properties.get(property) is not None:
-            track_payload['attributes'][0][property] = properties.get(property)
+    for event_property in event_properites_to_copy_to_profile:
+        if properties.get(event_property) is not None:
+            track_payload['attributes'][0][event_property] = properties.get(event_property)
 
     track_response = requests.request("POST", track_url, headers=headers, data=json.dumps(track_payload))
     logger.info('Sent "{}" event to Braze for license {}, enterprise {}.\nResponse:{} {}'

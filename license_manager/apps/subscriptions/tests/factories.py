@@ -23,7 +23,7 @@ from license_manager.apps.subscriptions.utils import localized_utcnow
 
 USER_PASSWORD = 'password'
 
-FAKE = Faker()
+FAKER = Faker()
 
 
 def get_random_salesforce_id():
@@ -78,7 +78,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
 
     # Make the title sufficiently random to avoid violating
     # the unique constraint on (customer_agreement, title)
-    title = factory.LazyAttribute(lambda p: '{} {}'.format(FAKE.word(), random.randint(0, 1000000)))
+    title = factory.LazyAttribute(lambda p: '{} {}'.format(FAKER.word(), random.randint(0, 1000000)))
     uuid = factory.LazyFunction(uuid4)
     is_active = True
     start_date = localized_utcnow()
