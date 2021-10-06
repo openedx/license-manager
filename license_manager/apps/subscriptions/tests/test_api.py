@@ -398,34 +398,41 @@ class CustomerAgreementSyncTests(TestCase):
     @mock.patch('license_manager.apps.subscriptions.api.EnterpriseApiClient', autospec=True)
     def test_sync_slug(self, mock_client):
         new_slug = 'new-slug'
+        new_name = 'New Name'
         agreement = CustomerAgreementFactory()
         agreement.enterprise_customer_slug = 'original-slug'
+        agreement.enterprise_customer_name = 'Original Name'
         client = mock_client.return_value
         client.get_enterprise_customer_data.return_value = {
             'slug': new_slug,
+            'name': new_name,
         }
 
-        api.sync_agreement_with_enterprise_slug(customer_agreement=agreement)
+        api.sync_agreement_with_enterprise_customer(customer_agreement=agreement)
 
         self.assertTrue(mock_client.called)
         client.get_enterprise_customer_data.assert_called_once_with(
             agreement.enterprise_customer_uuid
         )
         self.assertEqual(new_slug, agreement.enterprise_customer_slug)
+        self.assertEqual(new_name, agreement.enterprise_customer_name)
 
     @mock.patch('license_manager.apps.subscriptions.api.EnterpriseApiClient', autospec=True)
     def test_save_without_slug_http_error(self, mock_client):
         original_slug = 'original-slug'
+        original_name = 'Original Name'
         agreement = CustomerAgreementFactory()
-        agreement.enterprise_customer_slug = 'original-slug'
+        agreement.enterprise_customer_slug = original_slug
+        agreement.enterprise_customer_name = original_name
         client = mock_client.return_value
         client.get_enterprise_customer_data.side_effect = HTTPError('some error')
 
         with self.assertRaisesRegex(exceptions.CustomerAgreementError, 'some error'):
-            api.sync_agreement_with_enterprise_slug(customer_agreement=agreement)
+            api.sync_agreement_with_enterprise_customer(customer_agreement=agreement)
 
         self.assertTrue(mock_client.called)
         client.get_enterprise_customer_data.assert_called_once_with(
             agreement.enterprise_customer_uuid
         )
         self.assertEqual(agreement.enterprise_customer_slug, original_slug)
+        self.assertEqual(agreement.enterprise_customer_name, original_name)

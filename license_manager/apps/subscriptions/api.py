@@ -232,10 +232,10 @@ def delete_unused_licenses_post_freeze(subscription_plan):
     subscription_plan.save()
 
 
-def sync_agreement_with_enterprise_slug(customer_agreement):
+def sync_agreement_with_enterprise_customer(customer_agreement):
     """
-    Syncs any updates made to the enterprise customer slug as returned by the ``EnterpriseApiClient``
-    with the specified ``CustomerAgreement``.
+    Syncs any updates made to the enterprise customer slug or name as returned by the
+    ``EnterpriseApiClient`` with the specified ``CustomerAgreement``.
     """
     try:
         customer_data = EnterpriseApiClient().get_enterprise_customer_data(

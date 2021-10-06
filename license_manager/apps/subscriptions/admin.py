@@ -9,7 +9,7 @@ from license_manager.apps.subscriptions.api import (
     UnprocessableSubscriptionPlanFreezeError,
     delete_unused_licenses_post_freeze,
     renew_subscription,
-    sync_agreement_with_enterprise_slug,
+    sync_agreement_with_enterprise_customer,
 )
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.forms import (
@@ -254,7 +254,7 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         try:
             with transaction.atomic():
                 for customer_agreement in queryset:
-                    sync_agreement_with_enterprise_slug(customer_agreement)
+                    sync_agreement_with_enterprise_customer(customer_agreement)
                 messages.add_message(
                     request,
                     messages.SUCCESS,
