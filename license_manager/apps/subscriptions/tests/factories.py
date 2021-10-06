@@ -23,7 +23,7 @@ from license_manager.apps.subscriptions.utils import localized_utcnow
 
 USER_PASSWORD = 'password'
 
-FAKE = Faker()
+FAKER = Faker()
 
 
 def get_random_salesforce_id():
@@ -43,12 +43,13 @@ class CustomerAgreementFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CustomerAgreement
         # Perform a `get_or_create` when an agreement already exists with the same unique identifiers
-        django_get_or_create = ('enterprise_customer_uuid', 'enterprise_customer_slug',)
+        django_get_or_create = ('enterprise_customer_uuid', 'enterprise_customer_slug', 'enterprise_customer_name',)
 
     uuid = factory.LazyFunction(uuid4)
     enterprise_customer_uuid = factory.LazyFunction(uuid4)
     enterprise_customer_slug = factory.Faker('slug')
     default_enterprise_catalog_uuid = factory.LazyFunction(uuid4)
+    enterprise_customer_name = factory.LazyAttribute(lambda x: FAKER.company())
 
 
 class PlanTypeFactory(factory.django.DjangoModelFactory):
@@ -77,7 +78,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
 
     # Make the title sufficiently random to avoid violating
     # the unique constraint on (customer_agreement, title)
-    title = factory.LazyAttribute(lambda p: '{} {}'.format(FAKE.word(), random.randint(0, 1000000)))
+    title = factory.LazyAttribute(lambda p: '{} {}'.format(FAKER.word(), random.randint(0, 1000000)))
     uuid = factory.LazyFunction(uuid4)
     is_active = True
     start_date = localized_utcnow()

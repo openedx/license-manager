@@ -75,6 +75,16 @@ def _track_event_via_braze_alias(email, event_name, properties):
                 "_update_existing_only": False
             }]
     }
+
+    # event-level properties are not always available for personalization in braze
+    event_properites_to_copy_to_profile = ['enterprise_customer_uuid',
+                                           'enterprise_customer_slug',
+                                           'enterprise_customer_name',
+                                           'license_uuid']
+    for event_property in event_properites_to_copy_to_profile:
+        if properties.get(event_property) is not None:
+            track_payload['attributes'][0][event_property] = properties.get(event_property)
+
     track_response = requests.request("POST", track_url, headers=headers, data=json.dumps(track_payload))
     logger.info('Sent "{}" event to Braze for license {}, enterprise {}.\nResponse:{} {}'
                 .format(event_name,
@@ -195,4 +205,5 @@ def get_enterprise_tracking_properties(customer_agreement):
         'enterprise_customer_uuid': str(customer_agreement.enterprise_customer_uuid),
         'customer_agreement_uuid': str(customer_agreement.uuid),
         'enterprise_customer_slug': customer_agreement.enterprise_customer_slug,
+        'enterprise_customer_name': customer_agreement.enterprise_customer_name,
     }

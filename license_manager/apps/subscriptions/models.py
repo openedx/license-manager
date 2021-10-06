@@ -80,6 +80,13 @@ class CustomerAgreement(TimeStampedModel):
         unique=True,
     )
 
+    enterprise_customer_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        unique=False,
+    )
+
     default_enterprise_catalog_uuid = models.UUIDField(
         blank=True,
         null=True,
