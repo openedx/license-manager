@@ -96,7 +96,6 @@ PENDING_ACCOUNT_CREATION_BATCH_SIZE = 100
 VALIDATE_NUM_CATALOG_QUERIES_BATCH_SIZE = 100
 
 # Feature Toggles
-EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API = 'expose_license_activation_key_over_api'
 
 # Default sender alias for emails
 DEFAULT_EMAIL_SENDER_ALIAS = 'edX Support Team'
