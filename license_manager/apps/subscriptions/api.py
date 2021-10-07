@@ -246,6 +246,6 @@ def sync_agreement_with_enterprise_customer(customer_agreement):
         customer_agreement.save()
     except HTTPError as exc:
         error_message = (
-            'Could not fetch customer slug field from the enterprise API: {}'.format(exc)
+            'Could not fetch customer fields from the enterprise API: {}'.format(exc)
         )
         raise CustomerAgreementError(error_message) from exc

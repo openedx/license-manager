@@ -217,6 +217,7 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
     read_only_fields = (
         'enterprise_customer_uuid',
         'enterprise_customer_slug',
+        'enterprise_customer_name',
     )
     writable_fields = (
         'default_enterprise_catalog_uuid',
@@ -228,6 +229,7 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'uuid',
         'enterprise_customer_uuid',
         'enterprise_customer_slug',
+        'enterprise_customer_name',
         'get_subscription_plan_links',
         'disable_expiration_notifications',
     )
@@ -235,21 +237,23 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'uuid',
         'enterprise_customer_uuid',
         'enterprise_customer_slug',
+        'enterprise_customer_name',
     )
     search_fields = (
         'uuid__startswith',
         'enterprise_customer_uuid__startswith',
         'enterprise_customer_slug__startswith',
+        'enterprise_customer_name__startswith',
     )
-    actions = ['sync_enterprise_customer_slug']
+    actions = ['sync_agreement_with_enterprise_customer']
 
-    def sync_enterprise_customer_slug(self, request, queryset):
+    def sync_agreement_with_enterprise_customer(self, request, queryset):
         """
-        Django action handler to sync any updates made to the enterprise customer slug
-        with any selected CustomerAgreement records.
+        Django action handler to sync any updates made to the enterprise customer
+        name and slug with any selected CustomerAgreement records.
 
-        This provides a self-service way to address any mismatches between slug in the agreement
-        and the EnterpriseCustomer in the LMS.
+        This provides a self-service way to address any mismatches between slug or name
+        in the agreement and the EnterpriseCustomer in the LMS.
         """
         try:
             with transaction.atomic():
@@ -258,11 +262,11 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
                 messages.add_message(
                     request,
                     messages.SUCCESS,
-                    'Successfully synced enterprise customer slugs with selected Customer Agreements'
+                    'Successfully synced enterprise customer fields with selected Customer Agreements'
                 )
         except CustomerAgreementError as exc:
             messages.add_message(request, messages.ERROR, exc)
-    sync_enterprise_customer_slug.short_description = 'Sync enterprise customer slug for selected records'
+    sync_agreement_with_enterprise_customer.short_description = 'Sync enterprise customer fields for selected records'
 
     def save_model(self, request, obj, form, change):
         """
