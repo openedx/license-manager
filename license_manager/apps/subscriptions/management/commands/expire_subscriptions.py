@@ -106,7 +106,17 @@ class Command(BaseCommand):
                 for license_chunk in chunks(expired_licenses, LICENSE_EXPIRATION_BATCH_SIZE):
                     try:
                         license_chunk_uuids = [str(lcs.uuid) for lcs in license_chunk]
-                        license_expiration_task(license_chunk_uuids)
+                        ignore_enrollments_modified_after = expired_subscription_plan.expiration_date.isoformat() \
+                            if options['force'] else None
+
+                        license_expiration_task(
+                            license_chunk_uuids,
+                            # we might be running this command on a plan that expired further in the past to fix bad data, and we don't
+                            # want to modify a course enrollment if it's been modified after the plan expiration because a user might have upgraded
+                            # a course.
+                            ignore_enrollments_modified_after=ignore_enrollments_modified_after
+                        )
+
                     except Exception:  # pylint: disable=broad-except
                         any_failures = True
 

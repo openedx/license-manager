@@ -86,7 +86,7 @@ MIN_NUM_LICENSES = 0
 MAX_NUM_LICENSES = 5000
 
 # Number of license uuids enrollments are expired for in each batch
-LICENSE_EXPIRATION_BATCH_SIZE = 200
+LICENSE_EXPIRATION_BATCH_SIZE = 100
 
 # Bulk operation constants
 LICENSE_BULK_OPERATION_BATCH_SIZE = 100
