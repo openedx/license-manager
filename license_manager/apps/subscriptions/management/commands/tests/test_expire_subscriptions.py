@@ -67,7 +67,10 @@ class ExpireSubscriptionsCommandTests(TestCase):
         expired_license_uuids = [str(license.uuid) for license in expired_subscription.licenses.filter(
             status__in=[ASSIGNED, ACTIVATED]
         )]
-        mock_license_expiration_task.assert_called_with(expired_license_uuids)
+        mock_license_expiration_task.assert_called_with(
+            expired_license_uuids,
+            ignore_enrollments_modified_after=None
+        )
         expired_subscription.refresh_from_db()
         assert expired_subscription.expiration_processed is True
 
@@ -96,7 +99,10 @@ class ExpireSubscriptionsCommandTests(TestCase):
         LicenseFactory.create(status=ACTIVATED, subscription_plan=older_expired_subscription)
 
         call_command(self.command_name)
-        mock_license_expiration_task.assert_called_with([str(license_to_expire_enrollments.uuid)])
+        mock_license_expiration_task.assert_called_with(
+            [str(license_to_expire_enrollments.uuid)],
+            ignore_enrollments_modified_after=None
+        )
         expired_subscription.refresh_from_db()
         assert expired_subscription.expiration_processed is True
 
@@ -153,7 +159,7 @@ class ExpireSubscriptionsCommandTests(TestCase):
     def test_subscriptions_expiring_within_range_forced(self, mock_license_expiration_task):
         """
         Verifies that all expired subscriptions within the expired range, including previously processed ones,
-        have their license uuids sent to edx-enterprise if the force flag is passed
+        have their license uuids sent to edx-enterprise if the force flag is passed.
         """
 
         expired_subscription_1 = SubscriptionPlanFactory.create(
@@ -183,6 +189,12 @@ class ExpireSubscriptionsCommandTests(TestCase):
         args_2 = mock_license_expiration_task.call_args_list[1][0][0]
         assert args_1 == [str(expired_license_1.uuid)]
         assert args_2 == [str(expired_license_2.uuid)]
+        assert mock_license_expiration_task.call_args_list[0][1][
+            'ignore_enrollments_modified_after'
+        ] == '2014-01-01T00:00:00+00:00'
+        assert mock_license_expiration_task.call_args_list[1][1][
+            'ignore_enrollments_modified_after'
+        ] == '2016-01-01T00:00:00+00:00'
         assert mock_license_expiration_task.call_count == 2
 
         expired_subscription_1.refresh_from_db()

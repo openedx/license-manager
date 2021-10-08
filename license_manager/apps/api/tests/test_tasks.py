@@ -214,7 +214,10 @@ class RevokeAllLicensesTaskTests(TestCase):
         """
         Verify that revoke_license handles any errors
         """
-        mock_revoke_license.side_effect = [LicenseRevocationError(self.assigned_license.uuid, 'something terrible went wrong'), None]
+        mock_revoke_license.side_effect = [
+            LicenseRevocationError(self.assigned_license.uuid, 'something terrible went wrong'),
+            None
+        ]
 
         with self.assertLogs(level='INFO') as log, pytest.raises(LicenseRevocationError):
             tasks.revoke_all_licenses_task(self.subscription_plan.uuid)

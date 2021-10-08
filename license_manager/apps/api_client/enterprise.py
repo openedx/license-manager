@@ -108,7 +108,7 @@ class EnterpriseApiClient(BaseOAuthClient):
             logger.error(msg)
             raise exc
 
-    def bulk_licensed_enrollments_expiration(self, expired_license_uuids):
+    def bulk_licensed_enrollments_expiration(self, expired_license_uuids, ignore_enrollments_modified_after=None):
         """
         Calls the Enterprise API Client to terminate expired course enrollments for the provided license uuids
 
@@ -117,6 +117,7 @@ class EnterpriseApiClient(BaseOAuthClient):
         """
         data = {
             'expired_license_uuids': expired_license_uuids,
+            'ignore_enrollments_modified_after': ignore_enrollments_modified_after
         }
         response = self.client.post(self.bulk_licensed_enrollments_expiration_endpoint, json=data)
 

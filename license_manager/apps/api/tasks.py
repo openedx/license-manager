@@ -16,7 +16,6 @@ from license_manager.apps.subscriptions.emails import (
     send_onboarding_email,
     send_revocation_cap_notification_email,
 )
-from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 from license_manager.apps.subscriptions.utils import (
     chunks,
@@ -170,7 +169,7 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
-def license_expiration_task(license_uuids):
+def license_expiration_task(license_uuids, ignore_enrollments_modified_after=None):
     """
     Sends terminating the licensed course enrollments for the submitted license_uuids asynchronously
 
@@ -179,7 +178,10 @@ def license_expiration_task(license_uuids):
     """
     try:
         enterprise_api_client = EnterpriseApiClient()
-        enterprise_api_client.bulk_licensed_enrollments_expiration(expired_license_uuids=license_uuids)
+        enterprise_api_client.bulk_licensed_enrollments_expiration(
+            expired_license_uuids=license_uuids,
+            ignore_enrollments_modified_after=ignore_enrollments_modified_after
+        )
         logger.info(
             "Expiration of course enrollments SUCCEEDED for licenses [{license_uuids}]".format(
                 license_uuids=license_uuids,
