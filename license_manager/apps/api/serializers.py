@@ -1,10 +1,7 @@
 from django.conf import settings
 from rest_framework import serializers
 
-from license_manager.apps.subscriptions.constants import (
-    ACTIVATED,
-    ASSIGNED,
-)
+from license_manager.apps.subscriptions.constants import ACTIVATED, ASSIGNED
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
