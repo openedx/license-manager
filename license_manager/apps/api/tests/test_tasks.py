@@ -204,8 +204,8 @@ class RevokeAllLicensesTaskTests(TestCase):
         Verify that revoke_license and execute_post_revocation_tasks is called for each revocable license
         """
         tasks.revoke_all_licenses_task(self.subscription_plan.uuid)
-        assert mock_revoke_license.call_args_list == [
-            mock.call(self.assigned_license), mock.call(self.activated_license)]
+        expected_calls = [mock.call(self.activated_license), mock.call(self.assigned_license)]
+        mock_revoke_license.assert_has_calls(expected_calls, any_order=True)
         assert mock_execute_post_revocation_tasks.call_count == 2
 
     @mock.patch('license_manager.apps.subscriptions.api.execute_post_revocation_tasks')
@@ -219,8 +219,7 @@ class RevokeAllLicensesTaskTests(TestCase):
         with self.assertLogs(level='INFO') as log, pytest.raises(LicenseRevocationError):
             tasks.revoke_all_licenses_task(self.subscription_plan.uuid)
 
-        assert mock_revoke_license.call_args_list == [
-            mock.call(self.assigned_license)]
+        assert mock_revoke_license.call_args_list == [mock.call(self.assigned_license)]
 
         assert 'Could not revoke license with uuid {} during revoke_all_licenses_task'.format(
             self.assigned_license.uuid) in log.output[0]
