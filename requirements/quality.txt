@@ -26,11 +26,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.18.55
+boto3==1.18.60
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.21.55
+botocore==1.21.60
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -40,7 +40,7 @@ celery==4.4.7
     #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   edx-celeryutils
-certifi==2021.5.30
+certifi==2021.10.8
     # via
     #   -r requirements/base.txt
     #   requests
@@ -48,7 +48,7 @@ cffi==1.14.6
     # via
     #   -r requirements/base.txt
     #   cryptography
-charset-normalizer==2.0.6
+charset-normalizer==2.0.7
     # via
     #   -r requirements/base.txt
     #   requests
@@ -71,7 +71,7 @@ coreschema==0.0.4
     #   -r requirements/base.txt
     #   coreapi
     #   drf-yasg
-cryptography==3.4.8
+cryptography==35.0.0
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -182,7 +182,7 @@ future==0.18.2
     #   django-ses
     #   edx-celeryutils
     #   pyjwkest
-idna==3.2
+idna==3.3
     # via
     #   -r requirements/base.txt
     #   requests
@@ -232,7 +232,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.0.3
     # via -r requirements/base.txt
-newrelic==7.0.0.166
+newrelic==7.2.1.168
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -253,13 +253,13 @@ psutil==5.8.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-pycodestyle==2.7.0
+pycodestyle==2.8.0
     # via -r requirements/quality.in
 pycparser==2.20
     # via
     #   -r requirements/base.txt
     #   cffi
-pycryptodomex==3.10.4
+pycryptodomex==3.11.0
     # via
     #   -r requirements/base.txt
     #   pyjwkest
@@ -269,7 +269,7 @@ pyjwkest==1.4.2
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-pyjwt[crypto]==2.1.0
+pyjwt[crypto]==2.2.0
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -403,7 +403,7 @@ unicodecsv==0.14.1
     # via
     #   -r requirements/base.txt
     #   djangorestframework-csv
-uritemplate==3.0.1
+uritemplate==4.1.1
     # via
     #   -r requirements/base.txt
     #   coreapi

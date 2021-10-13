@@ -1,11 +1,7 @@
 from django.conf import settings
 from rest_framework import serializers
 
-from license_manager.apps.subscriptions.constants import (
-    ACTIVATED,
-    ASSIGNED,
-    EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API,
-)
+from license_manager.apps.subscriptions.constants import ACTIVATED, ASSIGNED
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
@@ -133,9 +129,8 @@ class LicenseSerializer(serializers.ModelSerializer):
             'last_remind_date',
             'subscription_plan',
             'revoked_date',
+            'activation_key',
         ]
-        if settings.FEATURES[EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API]:
-            fields.append('activation_key')
 
 
 class StaffLicenseSerializer(serializers.ModelSerializer):

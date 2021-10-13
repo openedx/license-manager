@@ -31,11 +31,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.18.55
+boto3==1.18.60
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.21.55
+botocore==1.21.60
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -45,7 +45,7 @@ celery==4.4.7
     #   -c requirements/constraints.txt
     #   -r requirements/validation.txt
     #   edx-celeryutils
-certifi==2021.5.30
+certifi==2021.10.8
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -53,7 +53,7 @@ cffi==1.14.6
     # via
     #   -r requirements/validation.txt
     #   cryptography
-charset-normalizer==2.0.6
+charset-normalizer==2.0.7
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -83,11 +83,11 @@ coreschema==0.0.4
     #   -r requirements/validation.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==6.0
+coverage[toml]==6.0.2
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==3.4.8
+cryptography==35.0.0
     # via
     #   -r requirements/validation.txt
     #   pyjwt
@@ -227,7 +227,7 @@ future==0.18.2
     #   pyjwkest
 gunicorn==20.1.0
     # via -r requirements/dev.in
-idna==3.2
+idna==3.3
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -293,7 +293,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.0.3
     # via -r requirements/validation.txt
-newrelic==7.0.0.166
+newrelic==7.2.1.168
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -321,7 +321,7 @@ pep517==0.11.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-pip-tools==6.3.0
+pip-tools==6.4.0
     # via -r requirements/pip-tools.txt
 pluggy==1.0.0
     # via
@@ -340,13 +340,13 @@ py==1.10.0
     # via
     #   -r requirements/validation.txt
     #   pytest
-pycodestyle==2.7.0
+pycodestyle==2.8.0
     # via -r requirements/validation.txt
 pycparser==2.20
     # via
     #   -r requirements/validation.txt
     #   cffi
-pycryptodomex==3.10.4
+pycryptodomex==3.11.0
     # via
     #   -r requirements/validation.txt
     #   pyjwkest
@@ -358,7 +358,7 @@ pyjwkest==1.4.2
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-pyjwt[crypto]==2.1.0
+pyjwt[crypto]==2.2.0
     # via
     #   -r requirements/validation.txt
     #   drf-jwt
@@ -532,7 +532,7 @@ unicodecsv==0.14.1
     # via
     #   -r requirements/validation.txt
     #   djangorestframework-csv
-uritemplate==3.0.1
+uritemplate==4.1.1
     # via
     #   -r requirements/validation.txt
     #   coreapi

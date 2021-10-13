@@ -84,7 +84,6 @@ SOCIAL_MEDIA_FOOTER_URLS = {
 }
 
 # Feature Toggles
-FEATURES[EXPOSE_LICENSE_ACTIVATION_KEY_OVER_API] = True
 
 # Install django-extensions for improved dev experiences
 # https://github.com/django-extensions/django-extensions#using-it

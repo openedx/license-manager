@@ -38,12 +38,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.18.55
+boto3==1.18.60
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.21.55
+botocore==1.21.60
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -55,7 +55,7 @@ celery==4.4.7
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-celeryutils
-certifi==2021.5.30
+certifi==2021.10.8
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -65,7 +65,7 @@ cffi==1.14.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   cryptography
-charset-normalizer==2.0.6
+charset-normalizer==2.0.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -99,11 +99,11 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==6.0
+coverage[toml]==6.0.2
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==3.4.8
+cryptography==35.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -271,7 +271,7 @@ future==0.18.2
     #   django-ses
     #   edx-celeryutils
     #   pyjwkest
-idna==3.2
+idna==3.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -343,7 +343,7 @@ mysqlclient==2.0.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==7.0.0.166
+newrelic==7.2.1.168
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -384,14 +384,14 @@ py==1.10.0
     # via
     #   -r requirements/test.txt
     #   pytest
-pycodestyle==2.7.0
+pycodestyle==2.8.0
     # via -r requirements/quality.txt
 pycparser==2.20
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   cffi
-pycryptodomex==3.10.4
+pycryptodomex==3.11.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -403,7 +403,7 @@ pyjwkest==1.4.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-pyjwt[crypto]==2.1.0
+pyjwt[crypto]==2.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -605,7 +605,7 @@ unicodecsv==0.14.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   djangorestframework-csv
-uritemplate==3.0.1
+uritemplate==4.1.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

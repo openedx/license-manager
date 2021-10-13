@@ -315,12 +315,14 @@ def _assert_license_response_correct(response, subscription_license):
         'last_remind_date',
         'subscription_plan',
         'activation_date',
-        'revoked_date'
+        'revoked_date',
+        'activation_key',
     }
     assert set(response.keys()) == expected_fields
     assert response['uuid'] == str(subscription_license.uuid)
     assert response['status'] == subscription_license.status
     assert response['user_email'] == subscription_license.user_email
+    assert response['activation_key'] == str(subscription_license.activation_key)
     assert response['activation_date'] == _iso_8601_format(subscription_license.activation_date)
     assert response['last_remind_date'] == _iso_8601_format(subscription_license.last_remind_date)
 
