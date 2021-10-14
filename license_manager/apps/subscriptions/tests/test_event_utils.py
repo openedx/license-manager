@@ -27,6 +27,7 @@ def test_get_license_tracking_properties():
         status=ASSIGNED)
     flat_data = get_license_tracking_properties(assigned_license)
     assert flat_data['license_uuid'] == str(assigned_license.uuid)
+    assert flat_data['license_activation_key'] == str(assigned_license.activation_key)
     assert flat_data['previous_license_uuid'] == ''
     assert flat_data['assigned_date'] == _iso_8601_format_string(assigned_license.assigned_date)
     assert flat_data['activation_date'] == _iso_8601_format_string(assigned_license.activation_date)
