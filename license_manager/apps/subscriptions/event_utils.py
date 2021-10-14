@@ -80,7 +80,8 @@ def _track_event_via_braze_alias(email, event_name, properties):
     event_properites_to_copy_to_profile = ['enterprise_customer_uuid',
                                            'enterprise_customer_slug',
                                            'enterprise_customer_name',
-                                           'license_uuid']
+                                           'license_uuid',
+                                           'license_activation_key']
     for event_property in event_properites_to_copy_to_profile:
         if properties.get(event_property) is not None:
             track_payload['attributes'][0][event_property] = properties.get(event_property)
@@ -149,6 +150,7 @@ def get_license_tracking_properties(license_obj):
         renewed_from_formatted = str(license_obj.renewed_from.uuid)
     license_data = {
         "license_uuid": str(license_obj.uuid),
+        "license_activation_key": str(license_obj.activation_key),
         "previous_license_uuid": renewed_from_formatted,
         "assigned_date": assigned_date_formatted,
         "activation_date": activation_date_formatted,
