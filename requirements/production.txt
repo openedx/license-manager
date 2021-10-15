@@ -22,11 +22,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.18.60
+boto3==1.18.62
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.21.60
+botocore==1.21.62
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -40,7 +40,7 @@ certifi==2021.10.8
     # via
     #   -r requirements/base.txt
     #   requests
-cffi==1.14.6
+cffi==1.15.0
     # via
     #   -r requirements/base.txt
     #   cryptography
@@ -102,7 +102,7 @@ django-extensions==3.1.3
     # via -r requirements/base.txt
 django-filter==21.1
     # via -r requirements/base.txt
-django-model-utils==4.1.1
+django-model-utils==4.2.0
     # via
     #   -r requirements/base.txt
     #   edx-celeryutils
@@ -280,7 +280,7 @@ pytz==2021.3
     #   celery
     #   django
     #   django-ses
-pyyaml==5.4.1
+pyyaml==6.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/production.in

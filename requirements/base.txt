@@ -16,9 +16,9 @@ backoff==1.10.0
     #   analytics-python
 billiard==3.6.4.0
     # via celery
-boto3==1.18.60
+boto3==1.18.62
     # via django-ses
-botocore==1.21.60
+botocore==1.21.62
     # via
     #   boto3
     #   s3transfer
@@ -29,7 +29,7 @@ celery==4.4.7
     #   edx-celeryutils
 certifi==2021.10.8
     # via requests
-cffi==1.14.6
+cffi==1.15.0
     # via cryptography
 charset-normalizer==2.0.7
     # via requests
@@ -81,7 +81,7 @@ django-extensions==3.1.3
     # via -r requirements/base.in
 django-filter==21.1
     # via -r requirements/base.in
-django-model-utils==4.1.1
+django-model-utils==4.2.0
     # via
     #   -r requirements/base.in
     #   edx-celeryutils
