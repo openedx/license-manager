@@ -51,6 +51,14 @@ class Command(BaseCommand):
         )
 
         parser.add_argument(
+            '--subscription-uuids',
+            action='store',
+            dest='subscription_uuids',
+            help='Delimited subscription uuids used to specify which subscription plans should be expired.',
+            type=lambda s: [str(uuid) for uuid in s.split(',')]
+        )
+
+        parser.add_argument(
             '--dry-run',
             action='store',
             dest='dry_run',
@@ -81,20 +89,30 @@ class Command(BaseCommand):
             logger.error(message)
             return
 
-        filters = {'expiration_date__range': (expired_after_date, expired_before_date)}
-        # process plans again if force flag = True
-        if not options['force']:
-            filters['expiration_processed'] = False
+        if options['subscription_uuids']:
+            filters = {'uuid__in': options['subscription_uuids'], 'expiration_date__lte': now}
+        else:
+            filters = {'expiration_date__range': (expired_after_date, expired_before_date)}
+
+            # process expired plans again if force flag = True
+            if not options['force']:
+                filters['expiration_processed'] = False
 
         expired_subscription_plans = SubscriptionPlan.objects.filter(
             **filters
         ).select_related('customer_agreement').prefetch_related('licenses')
 
         if not expired_subscription_plans:
-            message = 'No subscriptions have expired between {} and {}'.format(
-                expired_after_date, expired_before_date)
-            logger.info(message)
-            return
+            if options['subscription_uuids']:
+                message = 'No subscriptions with uuids {} have expired'.format(
+                    options['subscription_uuids'])
+                logger.error(message)
+                raise Exception(message)
+            else:
+                message = 'No subscriptions have expired between {} and {}'.format(
+                    expired_after_date, expired_before_date)
+                logger.info(message)
+                return
 
         if not options['dry_run']:
             for expired_subscription_plan in expired_subscription_plans:
@@ -107,7 +125,7 @@ class Command(BaseCommand):
                     try:
                         license_chunk_uuids = [str(lcs.uuid) for lcs in license_chunk]
                         ignore_enrollments_modified_after = expired_subscription_plan.expiration_date.isoformat() \
-                            if options['force'] else None
+                            if expired_subscription_plan.expiration_date < localized_utcnow() - timedelta(days=1) else None
 
                         license_expiration_task(
                             license_chunk_uuids,
@@ -121,9 +139,6 @@ class Command(BaseCommand):
                         any_failures = True
 
                 if not any_failures:
-                    expired_subscription_plan.expiration_processed = True
-                    expired_subscription_plan.save()
-
                     message = 'Terminated course enrollments for learners in subscription: {}'.format(
                         expired_subscription_plan.uuid)
                     logger.info(message)

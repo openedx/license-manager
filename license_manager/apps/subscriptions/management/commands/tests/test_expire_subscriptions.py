@@ -72,7 +72,7 @@ class ExpireSubscriptionsCommandTests(TestCase):
             ignore_enrollments_modified_after=None
         )
         expired_subscription.refresh_from_db()
-        assert expired_subscription.expiration_processed is True
+        self.assertTrue(expired_subscription.expiration_processed)
 
     @mock.patch(
         'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
@@ -104,7 +104,7 @@ class ExpireSubscriptionsCommandTests(TestCase):
             ignore_enrollments_modified_after=None
         )
         expired_subscription.refresh_from_db()
-        assert expired_subscription.expiration_processed is True
+        self.assertTrue(expired_subscription.expiration_processed)
 
     @mock.patch(
         'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
@@ -150,8 +150,8 @@ class ExpireSubscriptionsCommandTests(TestCase):
 
         expired_subscription_1.refresh_from_db()
         expired_subscription_2.refresh_from_db()
-        assert expired_subscription_1.expiration_processed is True
-        assert expired_subscription_2.expiration_processed is True
+        self.assertTrue(expired_subscription_1.expiration_processed)
+        self.assertTrue(expired_subscription_2.expiration_processed)
 
     @mock.patch(
         'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
@@ -199,8 +199,53 @@ class ExpireSubscriptionsCommandTests(TestCase):
 
         expired_subscription_1.refresh_from_db()
         expired_subscription_2.refresh_from_db()
-        assert expired_subscription_1.expiration_processed is True
-        assert expired_subscription_2.expiration_processed is True
+        self.assertTrue(expired_subscription_1.expiration_processed)
+        self.assertTrue(expired_subscription_2.expiration_processed)
+
+    @mock.patch(
+        'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
+    )
+    def test_subscriptions_expiring_with_uuids(self, mock_license_expiration_task):
+        """
+        Verifies that expired subscriptions with the given uuids, including previously processed ones,
+        have their license uuids sent to edx-enterprise.
+        """
+
+        expired_subscription_1 = SubscriptionPlanFactory.create(
+            start_date=datetime.strptime('2013-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2014-1-01T00:00:00', DATE_FORMAT),
+            expiration_processed=True
+        )
+
+        expired_subscription_2 = SubscriptionPlanFactory.create(
+            start_date=datetime.strptime('2015-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2016-1-01T00:00:00', DATE_FORMAT),
+            expiration_processed=False
+        )
+
+        # Create an activated license on each subscription
+        expired_license_1 = LicenseFactory.create(status=ACTIVATED, subscription_plan=expired_subscription_1)
+        LicenseFactory.create(status=ACTIVATED, subscription_plan=expired_subscription_2)
+
+        call_command(
+            self.command_name,
+            "--subscription-uuids={}".format(
+                ','.join([str(expired_subscription_1.uuid)])
+            ),
+        )
+
+        args_1 = mock_license_expiration_task.call_args_list[0][0][0]
+        assert args_1 == [str(expired_license_1.uuid)]
+        assert mock_license_expiration_task.call_args_list[0][1][
+            'ignore_enrollments_modified_after'
+        ] == '2014-01-01T00:00:00+00:00'
+        assert mock_license_expiration_task.call_count == 1
+
+        expired_subscription_1.refresh_from_db()
+        expired_subscription_2.refresh_from_db()
+
+        self.assertTrue(expired_subscription_1.expiration_processed)
+        self.assertFalse(expired_subscription_2.expiration_processed)
 
     @mock.patch(
         'license_manager.apps.subscriptions.management.commands.expire_subscriptions.license_expiration_task'
