@@ -2414,6 +2414,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
             'course_run_keys': [self.course_key],
             'notify': True,
         }
+        # pass an active subscription_uuid
         url = self._get_url_with_params(subscription_uuid=self.active_subscription_for_customer.uuid)
         response = self.api_client.post(url, data)
 
@@ -2463,6 +2464,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
             'course_run_keys': [self.course_key],
             'notify': True,
         }
+        # pass a random, invalid subscription_uuid
         url = self._get_url_with_params(subscription_uuid=SubscriptionPlanFactory().uuid)
         response = self.api_client.post(url, data)
 
