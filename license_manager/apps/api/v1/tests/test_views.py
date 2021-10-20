@@ -2259,6 +2259,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
     def _get_url_with_params(
         self,
         use_enterprise_customer=True,
+        subscription_uuid=None,
     ):
         """
         Helper to add the appropriate query parameters to the base url if specified.
@@ -2268,6 +2269,8 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         if use_enterprise_customer:
             # Use the override uuid if it's given
             query_params['enterprise_customer_uuid'] = self.enterprise_customer_uuid
+        if subscription_uuid:
+            query_params['subscription_uuid'] = subscription_uuid
         return url + '/?' + query_params.urlencode()
 
     def test_bulk_enroll_with_missing_role(self):
@@ -2384,6 +2387,98 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         )
         mock_contains_content.assert_called_with([self.course_key])
         assert mock_contains_content.call_count == 1
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_enroll_with_subscription(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+        """
+        Verify the view returns the correct response for a course in the user's subscription's catalog.
+        """
+        self._assign_learner_roles()
+
+        # Mock that the content was found in the subscription's catalog
+        mock_contains_content.return_value = True
+
+        # Mock the bulk enterprise enrollment endpoint's results
+        mock_enrollment_response = mock.Mock(spec=models.Response)
+        mock_enrollment_response.json.return_value = {
+            'successes': [{'email': self.user.email, 'course_run_key': self.course_key}],
+            'pending': [],
+            'failures': []
+        }
+        mock_enrollment_response.status_code = 201
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+
+        data = {
+            'emails': [self.user.email],
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params(subscription_uuid=self.active_subscription_for_customer.uuid)
+        response = self.api_client.post(url, data)
+
+        expected_enterprise_enrollment_request_options = {
+            'licenses_info': [
+                {
+                    'email': self.user.email,
+                    'course_run_key': self.course_key,
+                    'license_uuid': str(self.activated_license.uuid)
+                }
+            ],
+            'notify': True
+        }
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json() == {}
+        mock_bulk_enroll_enterprise_learners.assert_called_with(
+            str(self.enterprise_customer_uuid),
+            expected_enterprise_enrollment_request_options
+        )
+        mock_contains_content.assert_called_with([self.course_key])
+        assert mock_contains_content.call_count == 1
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_enroll_inactive_subscription(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+        """
+        Verify the view returns the correct response for a course in the user's subscription's catalog.
+        """
+        self._assign_learner_roles()
+
+        # Mock that the content was found in the subscription's catalog
+        mock_contains_content.return_value = True
+
+        # Mock the bulk enterprise enrollment endpoint's results
+        mock_enrollment_response = mock.Mock(spec=models.Response)
+        mock_enrollment_response.json.return_value = {
+            'successes': [{'email': self.user.email, 'course_run_key': self.course_key}],
+            'pending': [],
+            'failures': []
+        }
+        mock_enrollment_response.status_code = 201
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+
+        data = {
+            'emails': [self.user.email],
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params(subscription_uuid=SubscriptionPlanFactory().uuid)
+        response = self.api_client.post(url, data)
+
+        expected_enterprise_enrollment_request_options = {
+            'licenses_info': [
+                {
+                    'email': self.user.email,
+                    'course_run_key': self.course_key,
+                    'license_uuid': str(self.activated_license.uuid)
+                }
+            ],
+            'notify': True
+        }
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json() == {'failed_license_checks': {self.user.email: [self.course_key]}}
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')

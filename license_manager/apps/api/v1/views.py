@@ -964,6 +964,10 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
     def requested_enterprise_id(self):
         return self.request.query_params.get('enterprise_customer_uuid')
 
+    @property
+    def requested_subscription_id(self):
+        return self.request.query_params.get('subscription_uuid')
+
     def _validate_request_params(self):
         """
         Helper function to validate both the existence of required params and their typing.
@@ -991,7 +995,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
 
         return ''
 
-    def _check_missing_licenses(self, customer_agreement):
+    def _check_missing_licenses(self, customer_agreement, subscription_uuid=None):
         """
         Helper function to check that each of the provided learners has a valid subscriptions license for the provided
         courses.
@@ -1007,9 +1011,10 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
 
         subscription_plan_course_map = {}
 
+        subscription_plan_filter = [subscription_uuid] if subscription_uuid else customer_agreement.subscriptions.all()
         for email in set(self.requested_user_emails):
             filtered_licenses = License.objects.filter(
-                subscription_plan__in=customer_agreement.subscriptions.all(),
+                subscription_plan__in=subscription_plan_filter,
                 user_email=email,
             )
 
@@ -1092,7 +1097,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
 
         results = {}
         customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
-        missing_subscriptions, licensed_enrollment_info = self._check_missing_licenses(customer_agreement)
+        missing_subscriptions, licensed_enrollment_info = self._check_missing_licenses(customer_agreement, self.requested_subscription_id)
 
         if missing_subscriptions:
             msg = 'One or more of the learners entered do not have a valid subscription for your requested courses. ' \
