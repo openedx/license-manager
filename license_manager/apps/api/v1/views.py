@@ -1292,6 +1292,7 @@ class LicenseActivationView(LicenseBaseView):
             event_utils.track_event(self.lms_user_id,
                                     constants.SegmentEvents.LICENSE_ACTIVATED,
                                     event_properties)
+            event_utils.identify_braze_alias(self.lms_user_id, self.user_email)
 
             # Following successful license activation, send learner an email
             # to help them get started using the Enterprise Learner Portal.
