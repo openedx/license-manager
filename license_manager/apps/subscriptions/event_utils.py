@@ -94,6 +94,52 @@ def _track_event_via_braze_alias(email, event_name, properties):
                         track_response.status_code,
                         track_response.json()))
 
+def identify_braze_alias(lms_user_id, email_address):
+    """
+    Send `identify` event to Braze to link aliased Braze profiles.
+
+    Args:
+        lms_user_id (str): LMS User ID of the user we want to identify.
+        email_address (str): LMS User Email of the user we want to identify.
+    """
+    if not (hasattr(settings, "BRAZE_API_KEY") and hasattr(settings, "BRAZE_URL")
+            and settings.BRAZE_API_KEY and settings.BRAZE_URL):
+        logger.warning("Alias {} not identified because BRAZE_API_KEY and BRAZE_URL not set".format(email_address))
+        return
+
+    try: # We should never raise an exception when not able to send a tracking data
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(settings.BRAZE_API_KEY),
+            'Accept-Encoding': 'identity'
+        }
+        response = requests.post(
+            url=f'{settings.BRAZE_URL}/users/identify',
+            headers=headers,
+            json={
+                'aliases_to_identify': [
+                    # This hubspot alias is defined in 'hubspot_leads.py' in the edx-prefectutils repo
+                    {
+                        'external_id': str(lms_user_id),
+                        'user_alias': {
+                            'alias_label': 'hubspot',
+                            'alias_name': email_address,
+                        },
+                    },
+                    # This enterprise alias is used for Pending Learners before they activate their accounts,
+                    # see the license-manager repo event_utils.py file and the ecommerce Braze client files
+                    {
+                        'external_id': str(lms_user_id),
+                        'user_alias': {
+                            'alias_label': 'Enterprise',
+                            'alias_name': email_address,
+                        },
+                    },
+                ],
+            },
+        )
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception(exc)
 
 def track_event(lms_user_id, event_name, properties):
     """
