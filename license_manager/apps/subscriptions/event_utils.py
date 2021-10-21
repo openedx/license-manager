@@ -94,6 +94,7 @@ def _track_event_via_braze_alias(email, event_name, properties):
                         track_response.status_code,
                         track_response.json()))
 
+
 def identify_braze_alias(lms_user_id, email_address):
     """
     Send `identify` event to Braze to link aliased Braze profiles.
@@ -107,7 +108,7 @@ def identify_braze_alias(lms_user_id, email_address):
         logger.warning("Alias {} not identified because BRAZE_API_KEY and BRAZE_URL not set".format(email_address))
         return
 
-    try: # We should never raise an exception when not able to send a tracking data
+    try:  # We should never raise an exception when not able to send a tracking data
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(settings.BRAZE_API_KEY),
@@ -140,6 +141,7 @@ def identify_braze_alias(lms_user_id, email_address):
         )
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception(exc)
+
 
 def track_event(lms_user_id, event_name, properties):
     """
