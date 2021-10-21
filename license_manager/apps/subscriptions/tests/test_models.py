@@ -12,7 +12,7 @@ from license_manager.apps.subscriptions.constants import (
     SegmentEvents,
 )
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
-from license_manager.apps.subscriptions.models import License
+from license_manager.apps.subscriptions.models import License, Notification
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
@@ -72,6 +72,38 @@ class SubscriptionsModelTests(TestCase):
                 renewal_kwargs.update({'effective_date': renewed_subscription_plan.expiration_date})
             SubscriptionPlanRenewalFactory.create(**renewal_kwargs)
             self.assertEqual(renewed_subscription_plan.is_locked_for_renewal_processing, is_locked_for_renewal_processing)
+
+
+class NotificationTests(TestCase):
+    """
+    Test for the Notification Model.
+    """
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.NOW = localized_datetime(2021, 7, 1)
+
+        cls.enterprise_customer_uuid = uuid.uuid4()
+        cls.enterprise_customer_user_uuid = uuid.uuid4()
+
+    def test_notification_choices(self):
+        """
+        Verify we can create a Notification object with a valid notification type.
+        """
+        choices = [
+            "Limited Allocations Remaining",
+            "No Allocations Remaining",
+            "Periodic Informational",
+        ]
+        for choice in choices:
+            Notification.objects.create(
+                enterprise_customer_uuid=self.enterprise_customer_uuid,
+                enterprise_customer_user_uuid=self.enterprise_customer_user_uuid,
+                last_sent=self.NOW,
+                notification_type=choice
+            )
+        assert Notification.objects.count() == 3
 
 
 class LicenseModelTests(TestCase):

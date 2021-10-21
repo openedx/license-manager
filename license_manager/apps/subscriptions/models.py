@@ -33,6 +33,7 @@ from license_manager.apps.subscriptions.constants import (
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
     LicenseTypesToRenew,
+    NotificationChoices,
     SegmentEvents,
 )
 from license_manager.apps.subscriptions.event_utils import (
@@ -255,6 +256,36 @@ class PlanEmailTemplates(models.Model):
         blank=False,
         null=False,
     )
+
+
+class Notification(TimeStampedModel):
+    """
+    Stores information regarding when notifications were sent out to users.
+
+    .. no_pii: This model has no PII
+    """
+
+    enterprise_customer_uuid = models.UUIDField(
+        blank=False,
+        null=False,
+        verbose_name='Enterprise Customer UUID'
+    )
+    enterprise_customer_user_uuid = models.UUIDField(
+        blank=False,
+        null=False,
+        verbose_name='Enterprise Customer User UUID'
+    )
+    notification_type = models.CharField(
+        max_length=32,
+        blank=False,
+        null=False,
+        choices=NotificationChoices.CHOICES,
+        help_text=("Which type of notification was sent to the user."),
+    )
+    last_sent = models.DateTimeField(
+        help_text="Date of the last time a notifcation was sent."
+    )
+    history = HistoricalRecords()
 
 
 class SubscriptionPlan(TimeStampedModel):

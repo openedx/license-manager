@@ -43,6 +43,18 @@ class SubscriptionPlanChangeReasonChoices:
     )
 
 
+class NotificationChoices:
+    LIMITED_ALLOCATIONS_REMAINING = "limited_allocations_remaining"
+    NO_ALLOCATIONS_REMAINING = "no_allocations_remaining"
+    PERIODIC_INFORMATIONAL = "periodic_informational"
+
+    CHOICES = (
+        (LIMITED_ALLOCATIONS_REMAINING, "Limited Allocations Remaining"),
+        (NO_ALLOCATIONS_REMAINING, "No Allocations Remaining"),
+        (PERIODIC_INFORMATIONAL, "Periodic Informational"),
+    )
+
+
 # Segment events
 class SegmentEvents:
     LICENSE_ACTIVATED = 'edx.server.license-manager.license-lifecycle.activated'
