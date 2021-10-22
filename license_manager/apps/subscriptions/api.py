@@ -22,7 +22,6 @@ from .exceptions import (
     CustomerAgreementError,
     LicenseRevocationError,
     RenewalProcessingError,
-    UnprocessableSubscriptionPlanExpirationError,
     UnprocessableSubscriptionPlanFreezeError,
 )
 from .models import License, SubscriptionPlan
@@ -249,3 +248,26 @@ def sync_agreement_with_enterprise_customer(customer_agreement):
             'Could not fetch customer fields from the enterprise API: {}'.format(exc)
         )
         raise CustomerAgreementError(error_message) from exc
+
+
+def toggle_auto_apply_licenses(customer_agreement_uuid, subscription_uuid):
+    """
+    Turn auto apply licenses on for the subscription with the given uuid and off for the current
+    plan used for auto applied licenses. If subscription_uuid is empty or None, turn auto apply licenses
+    off for the current plan.
+
+    """
+    # there should only be one plan for auto-applied licenses
+    current_subs_for_auto_appled_licenses = SubscriptionPlan.objects.filter(
+        customer_agreement_id=customer_agreement_uuid,
+        should_auto_apply_licenses=True
+    )
+
+    current_subs_for_auto_appled_licenses.update(should_auto_apply_licenses=False)
+
+    if not subscription_uuid:
+        return
+
+    subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
+    subscription_plan.should_auto_apply_licenses = True
+    subscription_plan.save()

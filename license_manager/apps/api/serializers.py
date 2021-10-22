@@ -58,6 +58,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'days_until_expiration_including_renewals',
             'prior_renewals',
             'is_locked_for_renewal_processing',
+            'should_auto_apply_licenses'
         ]
 
     def get_licenses(self, obj):
@@ -98,6 +99,7 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
     Serializer for the `CustomerAgreement` model.
     """
     subscriptions = SubscriptionPlanSerializer(many=True)
+    subscription_for_auto_applied_licenses = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomerAgreement
@@ -110,7 +112,12 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
             'subscriptions',
             'disable_expiration_notifications',
             'net_days_until_expiration',
+            'subscription_for_auto_applied_licenses'
         ]
+
+    def get_subscription_for_auto_applied_licenses(self, obj):
+        subscription_plan = obj.subscriptions.filter(should_auto_apply_licenses=True).first()
+        return subscription_plan.uuid if subscription_plan else None
 
 
 class LicenseSerializer(serializers.ModelSerializer):
