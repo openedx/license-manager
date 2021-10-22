@@ -863,6 +863,14 @@ class License(TimeStampedModel):
         on_delete=models.SET_NULL,
     )
 
+    # None and False are functionally equivalent. Not adding False as default
+    # value simplified deploying, as the License table is quite large.
+    auto_applied = models.BooleanField(
+        blank=True,
+        null=True,
+        help_text="Whether or not License was auto-applied.",
+    )
+
     history = HistoricalRecords()
 
     class Meta:
