@@ -1,5 +1,4 @@
 import uuid
-from datetime import timedelta
 from math import ceil
 from unittest import mock
 
@@ -9,6 +8,10 @@ from django.test import TestCase
 from requests.exceptions import HTTPError
 
 from license_manager.apps.subscriptions import api, constants, exceptions, utils
+from license_manager.apps.subscriptions.models import (
+    CustomerAgreement,
+    SubscriptionPlan,
+)
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
@@ -436,3 +439,62 @@ class CustomerAgreementSyncTests(TestCase):
         )
         self.assertEqual(agreement.enterprise_customer_slug, original_slug)
         self.assertEqual(agreement.enterprise_customer_name, original_name)
+
+
+@ddt.ddt
+class ToggleAutoApplyLicensesTests(TestCase):
+    """
+    Tests for toggling auto apply licenses on a subscription plan.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        customer_agreement = CustomerAgreementFactory()
+        subscription_plan_1 = SubscriptionPlanFactory(customer_agreement=customer_agreement)
+        subscription_plan_2 = SubscriptionPlanFactory(customer_agreement=customer_agreement)
+
+        cls.customer_agreement = customer_agreement
+        cls.subscription_plan_1 = subscription_plan_1
+        cls.subscription_plan_2 = subscription_plan_2
+
+    def tearDown(self):
+        super().tearDown()
+        CustomerAgreement.objects.all().delete()
+        SubscriptionPlan.objects.all().delete()
+
+    def test_toggle_auto_apply_licenses_zero_state(self):
+        api.toggle_auto_apply_licenses(
+            customer_agreement_uuid=self.customer_agreement.uuid,
+            subscription_uuid=self.subscription_plan_1.uuid
+        )
+        self.subscription_plan_1.refresh_from_db()
+        self.assertTrue(self.subscription_plan_1.should_auto_apply_licenses)
+
+    @ddt.data(None, '')
+    def test_toggle_auto_apply_licenses_no_subscription_uuid(self, subscription_uuid):
+        SubscriptionPlan.objects.all().update(should_auto_apply_licenses=True)
+        self.assertEqual(len(SubscriptionPlan.objects.filter(should_auto_apply_licenses=True)), 2)
+        api.toggle_auto_apply_licenses(
+            customer_agreement_uuid=self.customer_agreement.uuid,
+            subscription_uuid=subscription_uuid
+        )
+        self.assertEqual(len(SubscriptionPlan.objects.filter(should_auto_apply_licenses=True)), 0)
+
+    def test_toggle_auto_apply_licenses_current_plan_exists(self):
+        self.subscription_plan_1.should_auto_apply_licenses = True
+        self.subscription_plan_1.save()
+
+        self.assertTrue(self.subscription_plan_1.should_auto_apply_licenses)
+        self.assertFalse(self.subscription_plan_2.should_auto_apply_licenses)
+        api.toggle_auto_apply_licenses(
+            customer_agreement_uuid=self.customer_agreement.uuid,
+            subscription_uuid=self.subscription_plan_2.uuid
+        )
+
+        self.subscription_plan_1.refresh_from_db()
+        self.subscription_plan_2.refresh_from_db()
+
+        self.assertFalse(self.subscription_plan_1.should_auto_apply_licenses)
+        self.assertTrue(self.subscription_plan_2.should_auto_apply_licenses)
