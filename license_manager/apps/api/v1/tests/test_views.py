@@ -210,17 +210,25 @@ def _subscriptions_detail_request(api_client, user, subscription_uuid):
     return api_client.get(url)
 
 
-def _licenses_list_request(api_client, subscription_uuid, page_size=None, active_only=None, search=None):
+def _licenses_list_request(api_client, subscription_uuid, page_size=None, active_only=None, search=None, ignore_null_emails=None, status=None):
     """
     Helper method that requests a list of licenses for a given subscription_uuid.
     """
     url = reverse('api:v1:licenses-list', kwargs={'subscription_uuid': subscription_uuid})
+
+    query_params = QueryDict(mutable=True)
     if page_size:
-        url += f'?page_size={page_size}'
+        query_params['page_size'] = page_size
     if active_only:
-        url += f'?active_only={active_only}'
+        query_params['active_only'] = active_only
     if search:
-        url += f'?search={search}'
+        query_params['search'] = search
+    if ignore_null_emails:
+        query_params['ignore_null_emails'] = ignore_null_emails
+    if status:
+        query_params['status'] = status
+
+    url = f'{url}?{query_params.urlencode()}'
     return api_client.get(url)
 
 
@@ -770,6 +778,27 @@ def test_license_list_staff_user_200_custom_page_size(api_client, staff_user):
     assert len(results_by_uuid) == 1
     assert response.data['count'] == 4
     assert response.data['next'] is not None
+
+
+@pytest.mark.django_db
+def test_license_list_ignore_null_emails_query_param(api_client, staff_user, boolean_toggle):
+    """
+    Assert the endpoint respects the ``ignore_null_emails`` query parameter.
+    """
+    subscription, _, _, _, revoked_license = _subscription_and_licenses()
+    _assign_role_via_jwt_or_db(
+        api_client,
+        staff_user,
+        subscription.enterprise_customer_uuid,
+        assign_via_jwt=True,
+    )
+    revoked_license.user_email = None
+    revoked_license.save()
+
+    response = _licenses_list_request(api_client, subscription.uuid, ignore_null_emails=boolean_toggle, status='revoked')
+    expected_license_uuids = [] if boolean_toggle else [str(revoked_license.uuid)]
+    actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
+    assert actual_license_uuids == expected_license_uuids
 
 
 @pytest.mark.django_db
@@ -1431,26 +1460,34 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         # Verify emails sent to only the pending licenses
         mock_send_reminder_emails_task.assert_called_with(
             {'greeting': self.greeting, 'closing': self.closing},
-            [license.user_email for license in pending_licenses],
+            sorted([license.user_email for license in pending_licenses]),
             str(self.subscription_plan.uuid),
         )
 
-    def test_license_overview(self):
+    @ddt.data(True, False)
+    def test_license_overview(self, ignore_null_emails):
         """
         Verify that the overview endpoint for the state of all licenses in the subscription returns correctly
         """
         unassigned_licenses = LicenseFactory.create_batch(5, status=constants.UNASSIGNED)
         pending_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
-        revoked_licenses = LicenseFactory.create_batch(1, status=constants.REVOKED)
+        revoked_licenses = LicenseFactory.create_batch(2, status=constants.REVOKED)
         self.subscription_plan.licenses.set(unassigned_licenses + pending_licenses + revoked_licenses)
 
-        response = self.api_client.get(self.license_overview_url)
+        revoked_licenses[0].user_email = None
+        revoked_licenses[0].save()
+
+        api_url = self.license_overview_url
+        if ignore_null_emails:
+            api_url += '?ignore_null_emails=1'
+
+        response = self.api_client.get(api_url)
         assert response.status_code == status.HTTP_200_OK
 
         expected_response = [
             {'status': constants.UNASSIGNED, 'count': len(unassigned_licenses)},
             {'status': constants.ASSIGNED, 'count': len(pending_licenses)},
-            {'status': constants.REVOKED, 'count': len(revoked_licenses)},
+            {'status': constants.REVOKED, 'count': len(revoked_licenses) - 1 if ignore_null_emails else len(revoked_licenses)},
         ]
         actual_response = response.data
         assert expected_response == actual_response
