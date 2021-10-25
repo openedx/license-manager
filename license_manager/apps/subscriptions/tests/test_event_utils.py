@@ -24,7 +24,8 @@ def test_get_license_tracking_properties():
         subscription_plan=SubscriptionPlanFactory.create(),
         lms_user_id=5,
         user_email=test_email,
-        status=ASSIGNED)
+        status=ASSIGNED,
+        auto_applied=True)
     flat_data = get_license_tracking_properties(assigned_license)
     assert flat_data['license_uuid'] == str(assigned_license.uuid)
     assert flat_data['license_activation_key'] == str(assigned_license.activation_key)
@@ -33,6 +34,7 @@ def test_get_license_tracking_properties():
     assert flat_data['activation_date'] == _iso_8601_format_string(assigned_license.activation_date)
     assert flat_data['assigned_lms_user_id'] == assigned_license.lms_user_id
     assert flat_data['assigned_email'] == test_email
+    assert flat_data['auto_applied'] is True
     assert flat_data['enterprise_customer_uuid'] \
         == str(assigned_license.subscription_plan.customer_agreement.enterprise_customer_uuid)
     assert flat_data['enterprise_customer_slug'] \

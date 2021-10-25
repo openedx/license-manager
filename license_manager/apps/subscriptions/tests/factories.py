@@ -93,6 +93,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     # though this can be overridden to test others
     plan_type_id = 4
     can_freeze_unused_licenses = False
+    should_auto_apply_licenses = False
 
 
 class SubscriptionPlanRenewalFactory(factory.django.DjangoModelFactory):
@@ -127,6 +128,7 @@ class LicenseFactory(factory.django.DjangoModelFactory):
     status = UNASSIGNED
     subscription_plan = factory.SubFactory(SubscriptionPlanFactory)
     revoked_date = None
+    auto_applied = False
 
 
 class UserFactory(factory.django.DjangoModelFactory):

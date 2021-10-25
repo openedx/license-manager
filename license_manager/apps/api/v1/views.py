@@ -76,6 +76,61 @@ def get_http_status_for_exception(exc):
     )
 
 
+def assign_new_licenses(subscription_plan, user_emails, auto_applied=False):
+    """
+    Assign licenses for the given user_emails (that have not already been revoked).
+
+    Returns a QuerySet of licenses that are assigned.
+    """
+    licenses = subscription_plan.unassigned_licenses[:len(user_emails)]
+    for unassigned_license, email in zip(licenses, user_emails):
+        # Assign each email to a license and mark the license as assigned
+        unassigned_license.user_email = email
+        unassigned_license.status = constants.ASSIGNED
+        unassigned_license.activation_key = str(uuid4())
+        unassigned_license.assigned_date = localized_utcnow()
+        unassigned_license.last_remind_date = localized_utcnow()
+        unassigned_license.auto_applied = auto_applied
+
+    License.bulk_update(
+        licenses,
+        ['user_email', 'status', 'activation_key', 'assigned_date', 'last_remind_date', 'auto_applied'],
+    )
+
+    event_utils.track_license_changes(list(licenses), constants.SegmentEvents.LICENSE_ASSIGNED)
+    return licenses
+
+
+def get_custom_text(data):
+    """
+    Returns a dictionary with the custom text given in the POST data.
+    """
+    return {
+        'greeting': data.get('greeting', ''),
+        'closing': data.get('closing', ''),
+    }
+
+
+def link_and_notify_assigned_emails(request_data, subscription_plan, user_emails):
+    """
+    Helper to create async chains of the pending learners and activation emails tasks with each batch of users
+    The task signatures are immutable, hence the `si()` - we don't want the result of the
+    link_learners_to_enterprise_task passed to the "child" activation_email_task.
+    """
+    for pending_learner_batch in chunks(user_emails, constants.PENDING_ACCOUNT_CREATION_BATCH_SIZE):
+        chain(
+            link_learners_to_enterprise_task.si(
+                pending_learner_batch,
+                subscription_plan.enterprise_customer_uuid,
+            ),
+            activation_email_task.si(
+                get_custom_text(request_data),
+                pending_learner_batch,
+                str(subscription_plan.uuid),
+            )
+        ).apply_async()
+
+
 class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
     """ Viewset for read operations on CustomerAgreements. """
 
@@ -134,6 +189,97 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
             kwargs.update({'uuid': self.requested_customer_agreement_uuid})
 
         return CustomerAgreement.objects.filter(**kwargs).order_by('uuid')
+
+    @action(detail=True, methods=['post'])
+    def auto_apply(self, request, customer_agreement_uuid=None):
+        """
+        Endpoint to auto-apply a license to a subscription plan.
+        """
+        customer_agreement = CustomerAgreement.objects.get(
+            uuid=customer_agreement_uuid
+        )
+
+        # Check if there are auto-appliable SubscriptionPlans
+        plan = customer_agreement.auto_applicable_subscription
+        if not plan:
+            error_message = (
+                'License was unable to be automatically applied. '
+                'Please contact your administrator for further assistance.'
+            )
+            logger.exception(error_message)
+            return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+        # Check if any licenses associated with user
+        user_email = request.data.get('user_email', '')
+        check_results = self._check_subscription_licenses(plan, user_email)
+        # If the results of check is a Response object, simply return that, as
+        # proceding to assignment logic is not necessary.
+        if isinstance(check_results, Response):
+            return check_results
+
+        # Assign a License
+        try:
+            # Note [0] gets the only license from the queryset of 1
+            license_obj = assign_new_licenses(plan, [user_email], auto_applied=True)[0]
+        except DatabaseError:
+            error_message = 'Database error occurred while assigning licenses, no assignments were completed'
+            logger.exception(error_message)
+            return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        else:
+            link_and_notify_assigned_emails(
+                request.data,
+                plan,
+                [user_email],
+            )
+
+        # Serialize the License we created to be returned in response
+        serializer = serializers.LicenseSerializer(license_obj)
+        response_data = {
+            'num_successful_assignments': 1,
+            'license': serializer.data,
+        }
+        return Response(data=response_data, status=status.HTTP_200_OK)
+
+    def _check_subscription_licenses(self, plan, user_email):
+        """
+        Check subscription to see if it can be used to assign licenses.
+        """
+        user_licenses = plan.licenses.filter(user_email=user_email)
+
+        # If revoked license exists for user
+        if user_licenses.filter(status=constants.REVOKED).exists():
+            error_message = (
+                'You are not eligible for an auto-applied license. '
+                'Please contact your administrator for further assistance.'
+            )
+            logger.exception(error_message)
+            return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+        # If license already assigned or activated for user
+        active_or_assigned_licenses = user_licenses.filter(status__in=[constants.ASSIGNED, constants.ACTIVATED])
+        if active_or_assigned_licenses:
+            info_message = (
+                'License already assigned or activated. '
+                'No auto-application of license necessary.'
+            )
+            logger.info(info_message)
+
+            license_obj = active_or_assigned_licenses[0]
+            serializer = serializers.LicenseSerializer(license_obj)
+            response_data = {
+                'num_successful_assignments': 0,
+                'license': serializer.data,
+            }
+            return Response(data=response_data, status=status.HTTP_200_OK)
+
+        # Check if the plan has licenses available at all
+        if plan.unassigned_licenses.count() == 0:
+            error_message = (
+                'There are no licenses remaining in your organization. '
+                'Please contact your administrator for further assistance.'
+            )
+            logger.exception(error_message)
+            return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
 class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
@@ -485,15 +631,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         return queryset
 
-    def _get_custom_text(self, data):
-        """
-        Returns a dictionary with the custom text given in the POST data.
-        """
-        return {
-            'greeting': data.get('greeting', ''),
-            'closing': data.get('closing', ''),
-        }
-
     def _validate_data(self, data):
         """
         Helper that validates the data sent in from a POST request.
@@ -562,7 +699,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                 user_emails_ex_revoked = self._reassign_revoked_licenses(
                     user_emails, revoked_licenses_for_assignment,
                 )
-                self._assign_new_licenses(
+                assign_new_licenses(
                     subscription_plan, user_emails_ex_revoked,
                 )
                 self._delete_unentitled_unassigned_licenses(
@@ -573,7 +710,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             logger.exception(error_message)
             return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         else:
-            self._link_and_notify_assigned_emails(
+            link_and_notify_assigned_emails(
                 request.data,
                 subscription_plan,
                 user_emails,
@@ -637,45 +774,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         return user_emails_ex_revoked
 
-    def _assign_new_licenses(self, subscription_plan, user_emails):
-        """
-        Assign licenses for the given user_emails (that have not already been revoked).
-        """
-        unassigned_licenses = subscription_plan.unassigned_licenses[:len(user_emails)]
-        for unassigned_license, email in zip(unassigned_licenses, user_emails):
-            # Assign each email to a license and mark the license as assigned
-            unassigned_license.user_email = email
-            unassigned_license.status = constants.ASSIGNED
-            unassigned_license.activation_key = str(uuid4())
-            unassigned_license.assigned_date = localized_utcnow()
-            unassigned_license.last_remind_date = localized_utcnow()
-
-        License.bulk_update(
-            unassigned_licenses,
-            ['user_email', 'status', 'activation_key', 'assigned_date', 'last_remind_date'],
-        )
-
-        event_utils.track_license_changes(list(unassigned_licenses), constants.SegmentEvents.LICENSE_ASSIGNED)
-
-    def _link_and_notify_assigned_emails(self, request_data, subscription_plan, user_emails):
-        """
-        Helper to create async chains of the pending learners and activation emails tasks with each batch of users
-        The task signatures are immutable, hence the `si()` - we don't want the result of the
-        link_learners_to_enterprise_task passed to the "child" activation_email_task.
-        """
-        for pending_learner_batch in chunks(user_emails, constants.PENDING_ACCOUNT_CREATION_BATCH_SIZE):
-            chain(
-                link_learners_to_enterprise_task.si(
-                    pending_learner_batch,
-                    subscription_plan.enterprise_customer_uuid,
-                ),
-                activation_email_task.si(
-                    self._get_custom_text(request_data),
-                    pending_learner_batch,
-                    str(subscription_plan.uuid),
-                )
-            ).apply_async()
-
     @action(detail=False, methods=['post'])
     def remind(self, request, subscription_uuid=None):
         """
@@ -720,7 +818,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         # Send activation reminder email
         send_reminder_email_task.delay(
-            self._get_custom_text(request.data),
+            get_custom_text(request.data),
             emails_to_remind,
             subscription_uuid,
         )
@@ -745,7 +843,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         pending_user_emails = [license.user_email for license in pending_licenses]
         # Send activation reminder email to all pending users
         send_reminder_email_task.delay(
-            self._get_custom_text(request.data),
+            get_custom_text(request.data),
             sorted(pending_user_emails),
             subscription_uuid,
         )
