@@ -259,7 +259,7 @@ def revoke_all_licenses_task(subscription_uuid):
 @shared_task(base=LoggedTask)
 def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid=None):
     """
-    Doooooooo it.
+    Enroll a list of enterprise learners into a list of course runs with or without notifying them. Optionally, filter license check by a specific subscription.
     """
     results = {}
     results['bulk_enrollment_errors'] = list()
@@ -290,7 +290,7 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
                     'notify': notify_learners
                 }
                 enrollment_response = EnterpriseApiClient().bulk_enroll_enterprise_learners(
-                    enterprise_id, options
+                    str(enterprise_customer_uuid), options
                 )
 
                 # Check for bulk enrollment errors
