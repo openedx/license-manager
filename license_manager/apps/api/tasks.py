@@ -275,8 +275,11 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
         for learner_enrollment_batch in chunks(user_emails, 25):
             logger.debug("learner_enrollment_batch size: {}".format(len(learner_enrollment_batch)))
 
-            missing_subscriptions, licensed_enrollment_info = utils.check_missing_licenses(customer_agreement, 
-                learner_enrollment_batch, course_run_key_batch, subscription_uuid)
+            missing_subscriptions, licensed_enrollment_info = utils.check_missing_licenses(customer_agreement,
+                                                                                           learner_enrollment_batch,
+                                                                                           course_run_key_batch,
+                                                                                           subscription_uuid
+                                                                                           )
 
             if missing_subscriptions:
                 msg = 'One or more of the learners entered do not have a valid subscription for your requested courses. ' \

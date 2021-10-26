@@ -996,7 +996,6 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
 
         return ''
 
-
     @permission_required(
         constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
         fn=lambda request: utils.get_context_for_customer_agreement_from_request(request),  # pylint: disable=unnecessary-lambda
@@ -1051,7 +1050,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                                                          self.requested_course_run_keys,
                                                          self.requested_notify_learners,
                                                          self.requested_subscription_id
-        )
+                                                        )
 
         return Response(results, status=status.HTTP_201_CREATED)
 

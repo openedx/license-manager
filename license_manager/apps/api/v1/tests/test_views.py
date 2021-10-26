@@ -2335,7 +2335,6 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         assert response.status_code == 400
         assert response.json() == "Missing the following required request data: ['emails']"
 
-
     def test_bulk_enroll_too_many_enrollments(self):
         # Unnecessary math time!
         enrollment_split = ceil(sqrt(settings.BULK_ENROLL_REQUEST_LIMIT)) + 1

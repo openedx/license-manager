@@ -291,7 +291,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         }
 
         tasks.enterprise_enrollment_license_subsidy_task(self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
-        
+
         mock_bulk_enroll_enterprise_learners.assert_called_with(
             str(self.enterprise_customer_uuid),
             expected_enterprise_enrollment_request_options

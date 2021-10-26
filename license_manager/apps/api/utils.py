@@ -88,6 +88,7 @@ def get_context_from_subscription_plan_by_activation_key(request):
     )
     return user_license.subscription_plan.customer_agreement.enterprise_customer_uuid
 
+
 def check_missing_licenses(customer_agreement, user_emails, course_run_keys, subscription_uuid=None):
     """
     Helper function to check that each of the provided learners has a valid subscriptions license for the provided
