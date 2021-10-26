@@ -27,10 +27,18 @@ class SubscriptionPlanForm(forms.ModelForm):
         min_value=MIN_NUM_LICENSES,
     )
 
-    # Using a HidenInput widget here allows us to hide the property
+    # Using a HiddenInput widget here allows us to hide the property
     # on the creation form while still displaying the property
     # as read-only on the SubscriptionPlan update form.
     num_revocations_remaining = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+
+    # Using a HiddenInput widget here allows us to hide the property
+    # on the creation form while still displaying the property
+    # as read-only on the SubscriptionPlan update form.
+    should_auto_apply_licenses = forms.ChoiceField(
         required=False,
         widget=forms.HiddenInput()
     )
@@ -96,7 +104,7 @@ class SubscriptionPlanForm(forms.ModelForm):
 
 
 class SubscriptionPlanRenewalForm(forms.ModelForm):
-    # Using a HidenInput widget here allows us to hide the property
+    # Using a HiddenInput widget here allows us to hide the property
     # on the creation form while still displaying the property
     # as read-only on the SubscriptionPlanRenewalForm update form.
     renewed_subscription_plan = forms.IntegerField(
