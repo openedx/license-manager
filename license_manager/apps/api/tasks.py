@@ -5,8 +5,8 @@ from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 from django.db import transaction
 
-from license_manager.apps.api import utils
 import license_manager.apps.subscriptions.api as subscriptions_api
+from license_manager.apps.api import utils
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
     PENDING_ACCOUNT_CREATION_BATCH_SIZE,
@@ -27,6 +27,7 @@ from license_manager.apps.subscriptions.utils import (
     get_enterprise_reply_to_email,
     get_enterprise_sender_alias,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -262,6 +263,8 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
     Enroll a list of enterprise learners into a list of course runs with or without notifying them. Optionally, filter license check by a specific subscription.
     """
     results = {}
+    results['successes'] = dict()
+    results['failures'] = dict()
     results['bulk_enrollment_errors'] = list()
     results['failed_license_checks'] = list()
     results['failed_enrollments'] = list()
@@ -273,9 +276,9 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
     # this is to avoid hitting timeouts on the enterprise enroll api
     # take course keys 25 at a time, for each course key chunk, take learners 25 at a time
     for course_run_key_batch in chunks(course_run_keys, 25):
-        logger.debug("course_run_key_batch size: {}".format(len(course_run_key_batch)))
+        logger.debug("enterprise_customer_uuid={} course_run_key_batch size: {}".format(enterprise_customer_uuid, len(course_run_key_batch)))
         for learner_enrollment_batch in chunks(user_emails, 25):
-            logger.debug("learner_enrollment_batch size: {}".format(len(learner_enrollment_batch)))
+            logger.debug("enterprise_customer_uuid={} learner_enrollment_batch size: {}".format(enterprise_customer_uuid, len(learner_enrollment_batch)))
 
             missing_subscriptions, licensed_enrollment_info = utils.check_missing_licenses(customer_agreement,
                                                                                            learner_enrollment_batch,
@@ -284,6 +287,8 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
                                                                                            )
 
             if missing_subscriptions:
+                for failed_email in missing_subscriptions.keys():
+                    results['failures'][failed_email] = missing_subscriptions.get(failed_email)
                 msg = 'One or more of the learners entered do not have a valid subscription for your requested courses. ' \
                       'Learners: {}'.format(missing_subscriptions)
                 results['failed_license_checks'].append(missing_subscriptions)
@@ -297,6 +302,16 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
                 enrollment_response = EnterpriseApiClient().bulk_enroll_enterprise_learners(
                     str(enterprise_customer_uuid), options
                 )
+
+                for result_key in ['successes', 'failures']:
+                    enrollment_result = enrollment_response.json()
+                    for result_dict in enrollment_result.get(result_key):
+                        result_email = result_dict.get('email')
+                        result_course_key = result_dict.get('course_run_key')
+                        if results[result_key].get(result_email):
+                            results[result_key][result_email].append(result_course_key)
+                        else:
+                            results[result_key][result_email] = [result_course_key]
 
                 # Check for bulk enrollment errors
                 if enrollment_response.status_code >= 400 and enrollment_response.status_code != 409:

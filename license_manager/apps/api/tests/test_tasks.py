@@ -290,7 +290,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
             'notify': True
         }
 
-        tasks.enterprise_enrollment_license_subsidy_task(self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
 
         mock_bulk_enroll_enterprise_learners.assert_called_with(
             str(self.enterprise_customer_uuid),
@@ -298,6 +298,8 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         )
         mock_contains_content.assert_called_with([self.course_key])
         assert mock_contains_content.call_count == 1
+        assert len(results['successes']) == 1
+        assert len(results['failures']) == 0
 
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
     def test_bulk_enroll_revoked_license(self, mock_bulk_enroll_enterprise_learners):
@@ -305,3 +307,5 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         results = tasks.enterprise_enrollment_license_subsidy_task(self.enterprise_customer_uuid, [self.user2.email], [self.course_key], True, uuid4())
         mock_bulk_enroll_enterprise_learners.assert_not_called()
         assert len(results['failed_license_checks']) == 1
+        assert len(results['successes']) == 0
+        assert len(results['failures']) == 1

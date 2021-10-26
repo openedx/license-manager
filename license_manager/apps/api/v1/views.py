@@ -31,11 +31,11 @@ from license_manager.apps.api.filters import LicenseStatusFilter
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_email_task,
+    enterprise_enrollment_license_subsidy_task,
     link_learners_to_enterprise_task,
     revoke_all_licenses_task,
     send_onboarding_email_task,
     send_reminder_email_task,
-    enterprise_enrollment_license_subsidy_task,
 )
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import constants, event_utils
