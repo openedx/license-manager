@@ -2299,7 +2299,6 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         response = self.api_client.post(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-
     @mock.patch('license_manager.apps.api.v1.views.enterprise_enrollment_license_subsidy_task.delay')
     def test_bulk_enroll(self, mock_enterprise_enrollment_license_subsidy_task):
         """
