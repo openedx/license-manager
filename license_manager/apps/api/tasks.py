@@ -5,6 +5,7 @@ from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 from django.db import transaction
 
+from license_manager.apps.api import utils
 import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
@@ -16,13 +17,16 @@ from license_manager.apps.subscriptions.emails import (
     send_onboarding_email,
     send_revocation_cap_notification_email,
 )
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.models import (
+    CustomerAgreement,
+    License,
+    SubscriptionPlan,
+)
 from license_manager.apps.subscriptions.utils import (
     chunks,
     get_enterprise_reply_to_email,
     get_enterprise_sender_alias,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -250,3 +254,69 @@ def revoke_all_licenses_task(subscription_uuid):
 
     for result in revocation_results:
         subscriptions_api.execute_post_revocation_tasks(**result)
+
+
+@shared_task(base=LoggedTask)
+def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid=None):
+    """
+    Doooooooo it.
+    """
+    results = {}
+    results['bulk_enrollment_errors'] = list()
+    results['failed_license_checks'] = list()
+    results['failed_enrollments'] = list()
+
+    logger.info("starting enterprise_enrollment_license_subsidy_task")
+
+    customer_agreement = CustomerAgreement.objects.get(enterprise_customer_uuid=enterprise_customer_uuid)
+
+    for course_run_key_batch in chunks(course_run_keys, 25):
+        logger.debug("course_run_key_batch size: {}".format(len(course_run_key_batch)))
+        for learner_enrollment_batch in chunks(user_emails, 25):
+            logger.debug("learner_enrollment_batch size: {}".format(len(learner_enrollment_batch)))
+
+            missing_subscriptions, licensed_enrollment_info = utils.check_missing_licenses(customer_agreement, 
+                learner_enrollment_batch, course_run_key_batch, subscription_uuid)
+
+            if missing_subscriptions:
+                msg = 'One or more of the learners entered do not have a valid subscription for your requested courses. ' \
+                      'Learners: {}'.format(missing_subscriptions)
+                results['failed_license_checks'].append(missing_subscriptions)
+                logger.error(msg)
+
+            if licensed_enrollment_info:
+                options = {
+                    'licenses_info': licensed_enrollment_info,
+                    'notify': notify_learners
+                }
+                enrollment_response = EnterpriseApiClient().bulk_enroll_enterprise_learners(
+                    enterprise_id, options
+                )
+
+                # Check for bulk enrollment errors
+                if enrollment_response.status_code >= 400 and enrollment_response.status_code != 409:
+                    try:
+                        response_json = enrollment_response.json()
+                    except JSONDecodeError:
+                        # Catch uncaught exceptions from enterprise
+                        results['bulk_enrollment_errors'].append(enrollment_response.reason)
+                    else:
+                        msg = 'Encountered a validation error when requesting bulk enrollment. Endpoint returned with ' \
+                              'error: {}'.format(response_json)
+                        logger.error(msg)
+
+                        # check for non field specific errors
+                        if response_json.get('non_field_errors'):
+                            results['bulk_enrollment_errors'].append(response_json['non_field_errors'])
+
+                        # check for param field specific validation errors
+                        for param in options:
+                            if response_json.get(param):
+                                results['bulk_enrollment_errors'].append(response_json.get(param))
+
+                else:
+                    enrollment_result = enrollment_response.json()
+                    if enrollment_result.get('failures'):
+                        results['failed_enrollments'].append(enrollment_result['failures'])
+
+    return results
