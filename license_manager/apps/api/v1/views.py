@@ -1041,7 +1041,6 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        results = {}
         # check to be sure we have a customer agreement
         customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
 
@@ -1052,7 +1051,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                                                          self.requested_subscription_id
                                                          )
 
-        return Response(results, status=status.HTTP_201_CREATED)
+        return Response({}, status=status.HTTP_201_CREATED)
 
 
 class LicenseSubsidyView(LicenseBaseView):

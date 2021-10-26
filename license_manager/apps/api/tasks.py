@@ -266,10 +266,12 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
     results['failed_license_checks'] = list()
     results['failed_enrollments'] = list()
 
-    logger.info("starting enterprise_enrollment_license_subsidy_task")
+    logger.info("starting enterprise_enrollment_license_subsidy_task for enterprise_customer_uuid={}".format(enterprise_customer_uuid))
 
     customer_agreement = CustomerAgreement.objects.get(enterprise_customer_uuid=enterprise_customer_uuid)
 
+    # this is to avoid hitting timeouts on the enterprise enroll api
+    # take course keys 25 at a time, for each course key chunk, take learners 25 at a time
     for course_run_key_batch in chunks(course_run_keys, 25):
         logger.debug("course_run_key_batch size: {}".format(len(course_run_key_batch)))
         for learner_enrollment_batch in chunks(user_emails, 25):
