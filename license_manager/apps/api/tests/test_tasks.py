@@ -309,8 +309,9 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         assert len(results['pending']) == 0
         assert len(results['failures']) == 0
 
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll_revoked_license(self, mock_bulk_enroll_enterprise_learners):
+    def test_bulk_enroll_revoked_license(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
         # random, non-existant subscription uuid
         results = tasks.enterprise_enrollment_license_subsidy_task(self.enterprise_customer_uuid, [self.user2.email], [self.course_key], True, uuid4())
         mock_bulk_enroll_enterprise_learners.assert_not_called()
@@ -319,8 +320,9 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         assert len(results['pending']) == 0
         assert len(results['failures']) == 1
 
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll_invalid_email_addresses(self, mock_bulk_enroll_enterprise_learners):
+    def test_bulk_enroll_invalid_email_addresses(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
         mock_enrollment_response = mock.Mock(spec=models.Response)
         mock_enrollment_response.json.return_value = {
             'successes': [],
@@ -355,8 +357,9 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         assert len(results['failures']) == 0
         assert len(results['pending']) == 1
 
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll_failures(self, mock_bulk_enroll_enterprise_learners):
+    def test_bulk_enroll_failures(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
         mock_enrollment_response = mock.Mock(spec=models.Response)
         mock_enrollment_response.json.return_value = {
             'successes': [],
