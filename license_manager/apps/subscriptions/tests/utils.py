@@ -10,6 +10,7 @@ from license_manager.apps.subscriptions.constants import (
     LicenseTypesToRenew,
 )
 from license_manager.apps.subscriptions.forms import (
+    CustomerAgreementAdminForm,
     SubscriptionPlanForm,
     SubscriptionPlanRenewalForm,
 )
@@ -86,6 +87,28 @@ def make_bound_subscription_plan_renewal_form(
         'license_types_to_copy': license_types_to_copy,
     }
     return SubscriptionPlanRenewalForm(form_data)
+
+
+def make_bound_customer_agreement_form(
+    customer_agreement,
+    default_enterprise_catalog_uuid=None,
+    disable_expiration_notifications=False,
+    license_duration_before_purge=90,
+    subscription_for_auto_applied_licenses=''
+):
+    """
+    Builds a bound CustomerAgreementAdminForm
+    """
+    form_data = {
+        'customer_agreement_uuid': str(customer_agreement.uuid),
+        'enterprise_customer_uuid': customer_agreement.enterprise_customer_uuid,
+        'default_enterprise_catalog_uuid': default_enterprise_catalog_uuid,
+        'disable_expiration_notifications': disable_expiration_notifications,
+        'license_duration_before_purge_0': license_duration_before_purge,
+        'subscription_for_auto_applied_licenses': subscription_for_auto_applied_licenses,
+        'enterprise_customer_slug': 'test-slug'
+    }
+    return CustomerAgreementAdminForm(form_data, instance=customer_agreement)
 
 
 def make_test_email_data():

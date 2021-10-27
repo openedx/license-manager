@@ -5,11 +5,11 @@ from django.utils.safestring import mark_safe
 from simple_history.admin import SimpleHistoryAdmin
 
 from license_manager.apps.subscriptions.api import (
-    UnprocessableSubscriptionPlanExpirationError,
     UnprocessableSubscriptionPlanFreezeError,
     delete_unused_licenses_post_freeze,
     renew_subscription,
     sync_agreement_with_enterprise_customer,
+    toggle_auto_apply_licenses,
 )
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.forms import (
@@ -24,6 +24,7 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 def _related_object_link(admin_viewname, object_pk, object_str):
@@ -110,6 +111,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'expiration_processed',
         'customer_agreement',
         'last_freeze_timestamp',
+        'should_auto_apply_licenses'
     )
     writable_fields = (
         'title',
@@ -224,14 +226,16 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'disable_expiration_notifications',
         'license_duration_before_purge',
     )
-    fields = read_only_fields + writable_fields
+    custom_fields = ('subscription_for_auto_applied_licenses',)
+
+    fields = read_only_fields + writable_fields + custom_fields
     list_display = (
         'uuid',
         'enterprise_customer_uuid',
         'enterprise_customer_slug',
         'enterprise_customer_name',
         'get_subscription_plan_links',
-        'disable_expiration_notifications',
+        'disable_expiration_notifications'
     )
     sortable_by = (
         'uuid',
@@ -277,6 +281,11 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         not present and could not be fetched from the enterprise API.
         """
         try:
+            if 'subscription_for_auto_applied_licenses' in form.changed_data:
+                customer_agreement_uuid = request.resolver_match.kwargs.get('object_id')
+                subscription_for_auto_applied_licenses = form.cleaned_data['subscription_for_auto_applied_licenses']
+                toggle_auto_apply_licenses(customer_agreement_uuid, subscription_for_auto_applied_licenses)
+
             super().save_model(request, obj, form, change)
         except CustomerAgreementError as exc:
             messages.error(request, exc)

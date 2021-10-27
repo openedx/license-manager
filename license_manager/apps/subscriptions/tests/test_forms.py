@@ -13,10 +13,12 @@ from license_manager.apps.subscriptions.constants import (
 from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.models import SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (
+    CustomerAgreementFactory,
     PlanTypeFactory,
     SubscriptionPlanFactory,
 )
 from license_manager.apps.subscriptions.tests.utils import (
+    make_bound_customer_agreement_form,
     make_bound_subscription_form,
     make_bound_subscription_plan_renewal_form,
 )
@@ -183,3 +185,44 @@ class TestSubscriptionPlanRenewalForm(TestCase):
             renewed_expiration_date=prior_subscription_plan.expiration_date + timedelta(366),
         )
         assert not form.is_valid()
+
+
+@mark.django_db
+class TestCustomerAgreementAdminForm(TestCase):
+
+    def test_populate_subscription_for_auto_applied_licenses_choices(self):
+        customer_agreement = CustomerAgreementFactory()
+        active_subscription_plan = SubscriptionPlanFactory(customer_agreement=customer_agreement)
+        SubscriptionPlanFactory(customer_agreement=customer_agreement, is_active=False)
+
+        form = make_bound_customer_agreement_form(
+            customer_agreement=customer_agreement,
+            subscription_for_auto_applied_licenses=None
+        )
+
+        field = form.fields['subscription_for_auto_applied_licenses']
+        choices = field.choices
+        self.assertEqual(len(choices), 2)
+        self.assertEqual(choices[0], ('', '------'))
+        self.assertEqual(choices[1], (active_subscription_plan.uuid, active_subscription_plan.title))
+        self.assertEqual(field.initial, ('', '------'))
+
+    def test_populate_subscription_for_auto_applied_licenses_choices_initial_choice(self):
+        customer_agreement = CustomerAgreementFactory()
+        current_sub_for_auto_applied_licenses = SubscriptionPlanFactory(
+            customer_agreement=customer_agreement,
+            should_auto_apply_licenses=True
+        )
+        SubscriptionPlanFactory(customer_agreement=customer_agreement, is_active=False)
+
+        form = make_bound_customer_agreement_form(
+            customer_agreement=customer_agreement,
+            subscription_for_auto_applied_licenses=None
+        )
+
+        field = form.fields['subscription_for_auto_applied_licenses']
+        choices = field.choices
+        self.assertEqual(len(choices), 2)
+        self.assertEqual(choices[0], ('', '------'))
+        self.assertEqual(choices[1], (current_sub_for_auto_applied_licenses.uuid, current_sub_for_auto_applied_licenses.title))
+        self.assertEqual(field.initial, (current_sub_for_auto_applied_licenses.uuid, current_sub_for_auto_applied_licenses.title))

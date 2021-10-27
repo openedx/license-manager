@@ -404,6 +404,14 @@ class SubscriptionPlan(TimeStampedModel):
         help_text=_("The time at which the Subscription Plan was last frozen."),
     )
 
+    should_auto_apply_licenses = models.BooleanField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "Whether licenses from this Subscription Plan should be auto applied."
+        )
+    )
+
     @property
     def days_until_expiration(self):
         """
@@ -1054,9 +1062,9 @@ class License(TimeStampedModel):
         if active_plans_only:
             kwargs['subscription_plan__is_active'] = True
         if current_plans_only:
-            today = localized_utcnow()
-            kwargs['subscription_plan__start_date__lte'] = today
-            kwargs['subscription_plan__expiration_date__gte'] = today
+            now = localized_utcnow()
+            kwargs['subscription_plan__start_date__lte'] = now
+            kwargs['subscription_plan__expiration_date__gte'] = now
 
         return queryset.filter(**kwargs)
 

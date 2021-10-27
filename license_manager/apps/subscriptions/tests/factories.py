@@ -123,6 +123,7 @@ class LicenseFactory(factory.django.DjangoModelFactory):
 
     uuid = factory.LazyFunction(uuid4)
     activation_key = factory.LazyFunction(uuid4)
+    user_email = factory.LazyAttribute(lambda a: f'{a.uuid}@example.com')
     status = UNASSIGNED
     subscription_plan = factory.SubFactory(SubscriptionPlanFactory)
     revoked_date = None

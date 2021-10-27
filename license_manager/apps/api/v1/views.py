@@ -27,7 +27,7 @@ from rest_framework_csv.renderers import CSVRenderer
 from simplejson.errors import JSONDecodeError
 
 from license_manager.apps.api import serializers, utils
-from license_manager.apps.api.filters import LicenseStatusFilter
+from license_manager.apps.api.filters import LicenseFilter
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_email_task,
@@ -275,7 +275,7 @@ class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, 
     """
     authentication_classes = [JwtAuthentication]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    filterset_class = LicenseStatusFilter
+    filterset_class = LicenseFilter
     ordering_fields = [
         'user_email',
         'status',
@@ -382,7 +382,7 @@ class BaseLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMod
         'last_remind_date',
     ]
     search_fields = ['user_email']
-    filterset_class = LicenseStatusFilter
+    filterset_class = LicenseFilter
     permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
 
     # The fields that control permissions for 'list' actions.
@@ -747,7 +747,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         # Send activation reminder email to all pending users
         send_reminder_email_task.delay(
             self._get_custom_text(request.data),
-            pending_user_emails,
+            sorted(pending_user_emails),
             subscription_uuid,
         )
 

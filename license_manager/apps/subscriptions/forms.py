@@ -149,6 +149,36 @@ class CustomerAgreementAdminForm(forms.ModelForm):
     Helps convert the unuseful database value, stored in microseconds,
     of ``license_duration_before_purge`` to a useful value, and vica versa.
     """
+    subscription_for_auto_applied_licenses = forms.ChoiceField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        instance = kwargs['instance']
+        self.populate_subscription_for_auto_applied_licenses_choices(instance)
+
+    def populate_subscription_for_auto_applied_licenses_choices(self, instance):
+        now = localized_utcnow()
+        active_plans = SubscriptionPlan.objects.filter(
+            customer_agreement=instance,
+            is_active=True,
+            start_date__lte=now,
+            expiration_date__gte=now
+        )
+
+        current_plan = SubscriptionPlan.objects.filter(
+            should_auto_apply_licenses=True
+        ).first()
+
+        empty_choice = ('', '------')
+        choices = [empty_choice] + [(plan.uuid, plan.title) for plan in active_plans]
+        choice_field = forms.ChoiceField(
+            choices=choices,
+            required=False,
+            initial=empty_choice if not current_plan else (current_plan.uuid, current_plan.title)
+        )
+        self.fields['subscription_for_auto_applied_licenses'] = choice_field
+
     class Meta:
         model = CustomerAgreement
         fields = '__all__'
