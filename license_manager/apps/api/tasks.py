@@ -265,6 +265,8 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
     results = {}
     results['successes'] = dict()
     results['failures'] = dict()
+    results['pending'] = dict()
+    # these keys are from the orginal endpoint, retaining them for now
     results['bulk_enrollment_errors'] = list()
     results['failed_license_checks'] = list()
     results['failed_enrollments'] = list()
@@ -303,8 +305,8 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
                     str(enterprise_customer_uuid), options
                 )
 
-                for result_key in ['successes', 'failures']:
-                    enrollment_result = enrollment_response.json()
+                enrollment_result = enrollment_response.json()
+                for result_key in ['successes', 'pending', 'failures']:
                     for result_dict in enrollment_result.get(result_key):
                         result_email = result_dict.get('email')
                         result_course_key = result_dict.get('course_run_key')
@@ -312,6 +314,13 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
                             results[result_key][result_email].append(result_course_key)
                         else:
                             results[result_key][result_email] = [result_course_key]
+
+                if enrollment_result.get('invalid_email_addresses'):
+                    for result_email in enrollment_result['invalid_email_addresses']:
+                        if results['failures'].get(result_email):
+                            results['failures'][result_email] = results['failures'][result_email] + course_run_key_batch
+                        else:
+                            results['failures'][result_email] = course_run_key_batch
 
                 # Check for bulk enrollment errors
                 if enrollment_response.status_code >= 400 and enrollment_response.status_code != 409:
