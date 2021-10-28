@@ -1,6 +1,7 @@
 """
 Tests for the license-manager API celery tasks
 """
+import datetime
 from smtplib import SMTPException
 from unittest import mock
 from uuid import uuid4
@@ -8,14 +9,21 @@ from uuid import uuid4
 import pytest
 from django.test import TestCase
 from freezegun import freeze_time
+from requests import Response, models
 
 from license_manager.apps.api import tasks
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
+from license_manager.apps.subscriptions.models import (
+    CustomerAgreement,
+    License,
+    SubscriptionPlan,
+)
 from license_manager.apps.subscriptions.tests.factories import (
+    CustomerAgreementFactory,
     LicenseFactory,
     SubscriptionPlanFactory,
+    UserFactory,
 )
 from license_manager.apps.subscriptions.tests.utils import (
     assert_date_fields_correct,
@@ -228,3 +236,141 @@ class RevokeAllLicensesTaskTests(TestCase):
             self.assigned_license.uuid) in log.output[0]
 
         assert mock_execute_post_revocation_tasks.call_count == 0
+
+
+class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.user = UserFactory()
+        cls.user2 = UserFactory()
+        cls.users = [cls.user, cls.user2]
+        cls.enterprise_customer_uuid = uuid4()
+        cls.enterprise_catalog_uuid = uuid4()
+        cls.course_key = 'testX'
+        cls.lms_user_id = 1
+        cls.now = localized_utcnow()
+        cls.activation_key = uuid4()
+
+        cls.customer_agreement = CustomerAgreementFactory(
+            enterprise_customer_uuid=cls.enterprise_customer_uuid,
+        )
+        cls.active_subscription_for_customer = SubscriptionPlanFactory.create(
+            customer_agreement=cls.customer_agreement,
+            enterprise_catalog_uuid=cls.enterprise_catalog_uuid,
+            is_active=True,
+        )
+        cls.activated_license = LicenseFactory.create(
+            status=constants.ACTIVATED,
+            user_email=cls.user.email,
+            subscription_plan=cls.active_subscription_for_customer,
+        )
+
+    def tearDown(self):
+        super().tearDown()
+        License.objects.all().delete()
+        SubscriptionPlan.objects.all().delete()
+        CustomerAgreement.objects.all().delete()
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_enroll(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+
+        mock_enrollment_response = mock.Mock(spec=models.Response)
+        mock_enrollment_response.json.return_value = {
+            'successes': [{'email': self.user.email, 'course_run_key': self.course_key}],
+            'pending': [],
+            'failures': []
+        }
+        mock_enrollment_response.status_code = 201
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+
+        expected_enterprise_enrollment_request_options = {
+            'licenses_info': [
+                {
+                    'email': self.user.email,
+                    'course_run_key': self.course_key,
+                    'license_uuid': str(self.activated_license.uuid)
+                }
+            ],
+            'notify': True
+        }
+
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+
+        mock_bulk_enroll_enterprise_learners.assert_called_with(
+            str(self.enterprise_customer_uuid),
+            expected_enterprise_enrollment_request_options
+        )
+        mock_contains_content.assert_called_with([self.course_key])
+        assert mock_contains_content.call_count == 1
+        assert len(results['successes']) == 1
+        assert len(results['pending']) == 0
+        assert len(results['failures']) == 0
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_enroll_revoked_license(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+        # random, non-existant subscription uuid
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user2.email], [self.course_key], True, uuid4())
+        mock_bulk_enroll_enterprise_learners.assert_not_called()
+        assert len(results['failed_license_checks']) == 1
+        assert len(results['successes']) == 0
+        assert len(results['pending']) == 0
+        assert len(results['failures']) == 1
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_enroll_invalid_email_addresses(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+        mock_enrollment_response = mock.Mock(spec=models.Response)
+        mock_enrollment_response.json.return_value = {
+            'successes': [],
+            'pending': [],
+            'failures': [],
+            'invalid_email_addresses': [self.user.email],
+        }
+        mock_enrollment_response.status_code = 201
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+
+        assert len(results['successes']) == 0
+        assert len(results['pending']) == 0
+        assert len(results['failures']) == 1
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_enroll_pending(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+        mock_enrollment_response = mock.Mock(spec=models.Response)
+        mock_enrollment_response.json.return_value = {
+            'successes': [],
+            'pending': [{'email': self.user.email, 'course_run_key': self.course_key}],
+            'failures': [],
+        }
+        mock_enrollment_response.status_code = 202
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+
+        assert len(results['successes']) == 0
+        assert len(results['failures']) == 0
+        assert len(results['pending']) == 1
+
+    @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
+    @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
+    def test_bulk_enroll_failures(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+        mock_enrollment_response = mock.Mock(spec=models.Response)
+        mock_enrollment_response.json.return_value = {
+            'successes': [],
+            'pending': [],
+            'failures': [{'email': self.user.email, 'course_run_key': self.course_key}],
+        }
+        mock_enrollment_response.status_code = 201
+        mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
+
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+
+        assert len(results['successes']) == 0
+        assert len(results['pending']) == 0
+        assert len(results['failures']) == 1

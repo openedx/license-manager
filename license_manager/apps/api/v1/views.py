@@ -31,6 +31,7 @@ from license_manager.apps.api.filters import LicenseFilter
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_email_task,
+    enterprise_enrollment_license_subsidy_task,
     link_learners_to_enterprise_task,
     revoke_all_licenses_task,
     send_onboarding_email_task,
@@ -995,61 +996,6 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
 
         return ''
 
-    def _check_missing_licenses(self, customer_agreement, subscription_uuid=None):
-        """
-        Helper function to check that each of the provided learners has a valid subscriptions license for the provided
-        courses.
-
-        Uses a map to track:
-            <plan_key>: <plan_contains_course>
-        where, plan_key = {subscription_plan.uuid}_{course_key}
-        This will help us memoize the value of the subscription_plan.contains_content([course_key])
-        to avoid repeated requests to the enterprise catalog endpoint for the same information
-        """
-        missing_subscriptions = {}
-        licensed_enrollment_info = []
-
-        subscription_plan_course_map = {}
-
-        subscription_plan_filter = [subscription_uuid] if subscription_uuid else customer_agreement.subscriptions.all()
-        for email in set(self.requested_user_emails):
-            filtered_licenses = License.objects.filter(
-                subscription_plan__in=subscription_plan_filter,
-                user_email=email,
-            )
-
-            # order licenses by their associated subscription plan expiration date
-            ordered_licenses_by_expiration = sorted(
-                filtered_licenses,
-                key=lambda user_license: user_license.subscription_plan.expiration_date,
-                reverse=True,
-            )
-            for course_key in set(self.requested_course_run_keys):
-                plan_found = False
-                for user_license in ordered_licenses_by_expiration:
-                    subscription_plan = user_license.subscription_plan
-                    plan_key = f'{subscription_plan.uuid}_{course_key}'
-                    if plan_key in subscription_plan_course_map:
-                        plan_contains_content = subscription_plan_course_map.get(plan_key)
-                    else:
-                        plan_contains_content = subscription_plan.contains_content([course_key])
-                        subscription_plan_course_map[plan_key] = plan_contains_content
-
-                    if plan_contains_content:
-                        licensed_enrollment_info.append({
-                            'email': email,
-                            'course_run_key': course_key,
-                            'license_uuid': str(user_license.uuid)
-                        })
-                        plan_found = True
-                if not plan_found:
-                    if missing_subscriptions.get(email):
-                        missing_subscriptions[email].append(course_key)
-                    else:
-                        missing_subscriptions[email] = [course_key]
-
-        return missing_subscriptions, licensed_enrollment_info
-
     @permission_required(
         constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
         fn=lambda request: utils.get_context_for_customer_agreement_from_request(request),  # pylint: disable=unnecessary-lambda
@@ -1068,21 +1014,13 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
             Example:
                 emails: ['testuser@abc.com','learner@example.com','newuser@wow.com']
             - enterprise_customer_uuid (string): the uuid of the associated enterprise customer provided as a query
-            params.
+            params. This enterprise must have a valid CustomerAgreement object.
         Expected Return Values:
             Success cases:
-                - All learners have licenses and are enrolled - {}, 201
+                - All validation has passed and learners are queued for enrollment - {'job_id': '<UUID4>' }, 201
             Partial failure cases:
-                License verification and bulk enterprise enrollment happen non-transactionally, meaning that a subset of
-                learners failing one step will not stop others from continuing the enrollment flow. As such, partial
-                failures will be reported in the following ways:
-                Fails license verification:
-                    response includes: {'failed_license_checks': [<users who do not have valid licenses>]}
-                Fails Enrollment:
-                    response includes {'failed_enrollments': [<users who were not able to be enrolled>]}
-                Fails Validation (something goes wrong with requesting enrollments):
-                    response includes:
-                     {'bulk_enrollment_errors': [<errors returned by the bulk enrollment endpoint>]}
+                - Exceeding BULK_ENROLL_REQUEST_LIMIT by passing too many learners + course keys, 400
+                - Enterprise UUID without a valid CustomerAgreement, 404
         """
         param_validation = self._validate_request_params()
         if param_validation:
@@ -1095,61 +1033,21 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        results = {}
+        # check to be sure we have a customer agreement
         customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
-        missing_subscriptions, licensed_enrollment_info = self._check_missing_licenses(customer_agreement, self.requested_subscription_id)
 
-        if missing_subscriptions:
-            msg = 'One or more of the learners entered do not have a valid subscription for your requested courses. ' \
-                  'Learners: {}'.format(missing_subscriptions)
-            results['failed_license_checks'] = missing_subscriptions
-            logger.error(msg)
+        # this job_id will be used in the future enable the frontend to track the status/progress of work
+        enrollment_job_id = str(uuid4())
 
-        if licensed_enrollment_info:
-            options = {
-                'licenses_info': licensed_enrollment_info,
-                'notify': self.requested_notify_learners
-            }
-            enrollment_response = EnterpriseApiClient().bulk_enroll_enterprise_learners(
-                self.requested_enterprise_id, options
-            )
+        enterprise_enrollment_license_subsidy_task.delay(enrollment_job_id,
+                                                         self.requested_enterprise_id,
+                                                         self.requested_user_emails,
+                                                         self.requested_course_run_keys,
+                                                         self.requested_notify_learners,
+                                                         self.requested_subscription_id
+                                                         )
 
-            # Check for bulk enrollment errors
-            if enrollment_response.status_code >= 400 and enrollment_response.status_code != 409:
-                status_code = status.HTTP_400_BAD_REQUEST
-                results['bulk_enrollment_errors'] = []
-                try:
-                    response_json = enrollment_response.json()
-                except JSONDecodeError:
-                    # Catch uncaught exceptions from enterprise
-                    results['bulk_enrollment_errors'].append(enrollment_response.reason)
-                else:
-                    msg = 'Encountered a validation error when requesting bulk enrollment. Endpoint returned with ' \
-                          'error: {}'.format(response_json)
-                    logger.error(msg)
-
-                    # check for non field specific errors
-                    if response_json.get('non_field_errors'):
-                        results['bulk_enrollment_errors'].append(response_json['non_field_errors'])
-
-                    # check for param field specific validation errors
-                    for param in options:
-                        if response_json.get(param):
-                            results['bulk_enrollment_errors'].append(response_json.get(param))
-
-            else:
-                enrollment_result = enrollment_response.json()
-                if enrollment_result.get('failures'):
-                    results['failed_enrollments'] = enrollment_result['failures']
-
-                if enrollment_result.get('failures') or missing_subscriptions:
-                    status_code = status.HTTP_409_CONFLICT
-                else:
-                    status_code = status.HTTP_201_CREATED
-        else:
-            status_code = status.HTTP_404_NOT_FOUND
-
-        return Response(results, status=status_code)
+        return Response({'job_id': enrollment_job_id}, status=status.HTTP_201_CREATED)
 
 
 class LicenseSubsidyView(LicenseBaseView):
