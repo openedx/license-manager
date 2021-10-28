@@ -352,7 +352,6 @@ def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid,
                                 results['bulk_enrollment_errors'].append(response_json.get(param))
 
                 else:
-                    enrollment_result = enrollment_response.json()
                     if enrollment_result.get('failures'):
                         results['failed_enrollments'].append(enrollment_result['failures'])
 
