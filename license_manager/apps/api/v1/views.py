@@ -1014,21 +1014,13 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
             Example:
                 emails: ['testuser@abc.com','learner@example.com','newuser@wow.com']
             - enterprise_customer_uuid (string): the uuid of the associated enterprise customer provided as a query
-            params.
+            params. This enterprise must have a valid CustomerAgreement object.
         Expected Return Values:
             Success cases:
-                - All learners have licenses and are enrolled - {}, 201
+                - All validation has passed and learners are queued for enrollment - {'job_id': '<UUID4>' }, 201
             Partial failure cases:
-                License verification and bulk enterprise enrollment happen non-transactionally, meaning that a subset of
-                learners failing one step will not stop others from continuing the enrollment flow. As such, partial
-                failures will be reported in the following ways:
-                Fails license verification:
-                    response includes: {'failed_license_checks': [<users who do not have valid licenses>]}
-                Fails Enrollment:
-                    response includes {'failed_enrollments': [<users who were not able to be enrolled>]}
-                Fails Validation (something goes wrong with requesting enrollments):
-                    response includes:
-                     {'bulk_enrollment_errors': [<errors returned by the bulk enrollment endpoint>]}
+                - Exceeding BULK_ENROLL_REQUEST_LIMIT by passing too many learners + course keys, 400
+                - Enterprise UUID without a valid CustomerAgreement, 404
         """
         param_validation = self._validate_request_params()
         if param_validation:
@@ -1044,14 +1036,18 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         # check to be sure we have a customer agreement
         customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
 
-        enterprise_enrollment_license_subsidy_task.delay(self.requested_enterprise_id,
+        # this job_id will be used in the future enable the frontend to track the status/progress of work
+        enrollment_job_id = str(uuid4())
+
+        enterprise_enrollment_license_subsidy_task.delay(enrollment_job_id,
+                                                         self.requested_enterprise_id,
                                                          self.requested_user_emails,
                                                          self.requested_course_run_keys,
                                                          self.requested_notify_learners,
                                                          self.requested_subscription_id
                                                          )
 
-        return Response({}, status=status.HTTP_201_CREATED)
+        return Response({'job_id': enrollment_job_id}, status=status.HTTP_201_CREATED)
 
 
 class LicenseSubsidyView(LicenseBaseView):

@@ -258,9 +258,17 @@ def revoke_all_licenses_task(subscription_uuid):
 
 
 @shared_task(base=LoggedTask)
-def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid=None):
+def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid, learner_emails, course_run_keys, notify_learners, subscription_uuid=None):
     """
     Enroll a list of enterprise learners into a list of course runs with or without notifying them. Optionally, filter license check by a specific subscription.
+
+    Arguments:
+        job_id (str): UUID (string representation) created by the enqueuing process for logging and (future) progress tracking table updates.
+        enterprise_customer_uuid (str): UUID (string representation) the enterprise customer id
+        learner_emails (list(str)): email addresses of the learners to enroll
+        course_run_keys (list(str)): course keys of the courses to enroll the learners into
+        notify_learners (bool): whether or not to send notifications of their enrollment to the learners
+        subscription_uuid (str): UUID (string representation) of the specific enterprise subscription to use when validating learner licenses
     """
     results = {}
     results['successes'] = dict()
@@ -271,7 +279,7 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
     results['failed_license_checks'] = list()
     results['failed_enrollments'] = list()
 
-    logger.info("starting enterprise_enrollment_license_subsidy_task for enterprise_customer_uuid={}".format(enterprise_customer_uuid))
+    logger.info("starting job_id={} enterprise_enrollment_license_subsidy_task for enterprise_customer_uuid={}".format(job_id, enterprise_customer_uuid))
 
     customer_agreement = CustomerAgreement.objects.get(enterprise_customer_uuid=enterprise_customer_uuid)
 
@@ -279,7 +287,7 @@ def enterprise_enrollment_license_subsidy_task(enterprise_customer_uuid, user_em
     # take course keys 25 at a time, for each course key chunk, take learners 25 at a time
     for course_run_key_batch in chunks(course_run_keys, 25):
         logger.debug("enterprise_customer_uuid={} course_run_key_batch size: {}".format(enterprise_customer_uuid, len(course_run_key_batch)))
-        for learner_enrollment_batch in chunks(user_emails, 25):
+        for learner_enrollment_batch in chunks(learner_emails, 25):
             logger.debug("enterprise_customer_uuid={} learner_enrollment_batch size: {}".format(enterprise_customer_uuid, len(learner_enrollment_batch)))
 
             missing_subscriptions, licensed_enrollment_info = utils.check_missing_licenses(customer_agreement,
