@@ -226,3 +226,25 @@ class TestCustomerAgreementAdminForm(TestCase):
         self.assertEqual(choices[0], ('', '------'))
         self.assertEqual(choices[1], (current_sub_for_auto_applied_licenses.uuid, current_sub_for_auto_applied_licenses.title))
         self.assertEqual(field.initial, (current_sub_for_auto_applied_licenses.uuid, current_sub_for_auto_applied_licenses.title))
+
+    def test_populate_subscription_for_auto_applied_licenses_plans_outside_agreement_not_included(self):
+        customer_agreement_1 = CustomerAgreementFactory()
+        customer_agreement_2 = CustomerAgreementFactory()
+
+        sub_for_customer_agreement_1 = SubscriptionPlanFactory(
+            customer_agreement=customer_agreement_1,
+            should_auto_apply_licenses=False
+        )
+        SubscriptionPlanFactory(customer_agreement=customer_agreement_2, should_auto_apply_licenses=True)
+
+        form = make_bound_customer_agreement_form(
+            customer_agreement=customer_agreement_1,
+            subscription_for_auto_applied_licenses=None
+        )
+
+        field = form.fields['subscription_for_auto_applied_licenses']
+        choices = field.choices
+        self.assertEqual(len(choices), 2)
+        self.assertEqual(choices[0], ('', '------'))
+        self.assertEqual(choices[1], (sub_for_customer_agreement_1.uuid, sub_for_customer_agreement_1.title))
+        self.assertEqual(field.initial, choices[0], ('', '------'))
