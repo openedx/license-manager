@@ -2352,7 +2352,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         response = self.api_client.post(url, data)
 
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.json() == {}
+        assert response.json().get('job_id')
         mock_enterprise_enrollment_license_subsidy_task.assert_called()
 
     def test_bulk_licensed_enrollment_with_missing_emails(self):
