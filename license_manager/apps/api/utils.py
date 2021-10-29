@@ -5,9 +5,12 @@ from django.shortcuts import get_object_or_404
 from edx_rbac.utils import get_decoded_jwt
 from rest_framework.exceptions import ParseError
 
+from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import CustomerAgreement, License
 from license_manager.apps.subscriptions.utils import localized_utcnow
-
+from license_manager.apps.subscriptions.utils import (
+    get_license_activation_link,
+)
 
 def get_customer_agreement_from_request_enterprise_uuid(request):
     """
@@ -105,6 +108,8 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
 
     subscription_plan_course_map = {}
 
+    enterprise_slug = customer_agreement.enterprise_customer_slug
+
     subscription_plan_filter = [subscription_uuid] if subscription_uuid else customer_agreement.subscriptions.all()
     for email in set(user_emails):
         filtered_licenses = License.objects.filter(
@@ -130,11 +135,15 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
                     subscription_plan_course_map[plan_key] = plan_contains_content
 
                 if plan_contains_content:
-                    licensed_enrollment_info.append({
+                    this_enrollment = {
                         'email': email,
                         'course_run_key': course_key,
                         'license_uuid': str(user_license.uuid)
-                    })
+                    }
+                    # assigned, not yet activated, incliude activation URL
+                    if user_license.status == constants.ASSIGNED:
+                        this_enrollment['activation_link'] = get_license_activation_link(enterprise_slug, user_license.activation_key)
+                    licensed_enrollment_info.append(this_enrollment)
                     plan_found = True
             if not plan_found:
                 if missing_subscriptions.get(email):
