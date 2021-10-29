@@ -9,7 +9,7 @@ from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import CustomerAgreement, License
 from license_manager.apps.subscriptions.utils import (
     get_license_activation_link,
-    localized_utcnow
+    localized_utcnow,
 )
 
 
