@@ -291,7 +291,7 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
             try:
                 event_properties = event_utils.get_enterprise_tracking_properties(customer_agreement)
                 event_utils.track_event(self.lms_user_id,
-                                        constants.SegmentEvents.LICENSE_NOT_CREATED,
+                                        constants.SegmentEvents.LICENSE_NOT_ASSIGNED,
                                         event_properties)
             except Exception:
                 logger.warning(f"Emitting segment event for 'no licenses for auto-apply' failed for plan: {plan}")
