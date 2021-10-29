@@ -147,6 +147,14 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
 
+    @cached_property
+    def decoded_jwt(self):
+        return utils.get_decoded_jwt(self.request)
+
+    @property
+    def lms_user_id(self):
+        return utils.get_key_from_jwt(self.decoded_jwt, 'user_id')
+
     @property
     def requested_enterprise_uuid(self):
         enterprise_customer_uuid = self.request.query_params.get('enterprise_customer_uuid')
@@ -211,7 +219,7 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
 
         # Check if any licenses associated with user
         user_email = request.data.get('user_email', '')
-        check_results = self._check_subscription_licenses(plan, user_email)
+        check_results = self._check_subscription_licenses(customer_agreement, plan, user_email)
         # If the results of check is a Response object, simply return that, as
         # proceding to assignment logic is not necessary.
         if isinstance(check_results, Response):
@@ -240,7 +248,7 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
         }
         return Response(data=response_data, status=status.HTTP_200_OK)
 
-    def _check_subscription_licenses(self, plan, user_email):
+    def _check_subscription_licenses(self, customer_agreement, plan, user_email):
         """
         Check subscription to see if it can be used to assign licenses.
         """
@@ -279,6 +287,15 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
                 'Please contact your administrator for further assistance.'
             )
             logger.exception(error_message)
+
+            try:
+                event_properties = event_utils.get_enterprise_tracking_properties(customer_agreement)
+                event_utils.track_event(self.lms_user_id,
+                                        constants.SegmentEvents.LICENSE_NOT_ASSIGNED,
+                                        event_properties)
+            except Exception:
+                logger.warning(f"Emitting segment event for 'no licenses for auto-apply' failed for plan: {plan}")
+
             return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
