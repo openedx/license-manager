@@ -23,6 +23,7 @@ from license_manager.apps.subscriptions.tests.factories import (
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
+
 logger = logging.getLogger(__name__)
 
 
