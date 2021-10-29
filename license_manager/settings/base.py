@@ -62,6 +62,7 @@ INSTALLED_APPS += THIRD_PARTY_APPS
 INSTALLED_APPS += PROJECT_APPS
 
 MIDDLEWARE = (
+    'edx_django_utils.monitoring.DeploymentMonitoringMiddleware',
     # Resets RequestCache utility for added safety.
     'edx_django_utils.cache.middleware.RequestCacheMiddleware',
 
