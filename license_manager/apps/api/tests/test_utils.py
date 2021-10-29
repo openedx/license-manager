@@ -25,6 +25,7 @@ from license_manager.apps.subscriptions.utils import localized_utcnow
 
 logger = logging.getLogger(__name__)
 
+
 class CheckMissingLicenseTests(TestCase):
     """
     Tests for check_missing_licenses
@@ -86,7 +87,7 @@ class CheckMissingLicenseTests(TestCase):
         )
         assert licensed_enrollment_info[0]['license_uuid'] == str(self.activated_license.uuid)
         assert licensed_enrollment_info[0]['email'] == self.activated_license.user_email
-        assert licensed_enrollment_info[0].get('activation_link') == None
+        assert licensed_enrollment_info[0].get('activation_link') is None
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     def test_missing(self, mock_contains_content):
@@ -97,4 +98,4 @@ class CheckMissingLicenseTests(TestCase):
             self.active_subscription_for_customer.uuid
         )
         assert len(licensed_enrollment_info) == 0
-        assert missing_subscriptions.get(self.unlicensed_user.email) != None
+        assert missing_subscriptions.get(self.unlicensed_user.email) is not None

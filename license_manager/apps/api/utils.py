@@ -12,6 +12,7 @@ from license_manager.apps.subscriptions.utils import (
     get_license_activation_link,
 )
 
+
 def get_customer_agreement_from_request_enterprise_uuid(request):
     """
     Helper function to return the CustomerAgreement, if any, associated with the specified ``enterprise_customer_uuid``.
