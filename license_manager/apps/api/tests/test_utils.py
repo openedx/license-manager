@@ -37,9 +37,6 @@ class CheckMissingLicenseTests(TestCase):
         self.enterprise_customer_uuid = uuid4()
         self.enterprise_catalog_uuid = uuid4()
         self.course_key = 'testX'
-        self.lms_user_id = 1
-        self.now = localized_utcnow()
-        self.activation_key = uuid4()
 
         self.customer_agreement = CustomerAgreementFactory(
             enterprise_customer_uuid=self.enterprise_customer_uuid,
