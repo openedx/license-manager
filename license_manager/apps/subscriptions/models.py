@@ -146,6 +146,21 @@ class CustomerAgreement(TimeStampedModel):
             net_days = max(net_days, plan.days_until_expiration_including_renewals)
         return net_days
 
+    @property
+    def auto_applicable_subscription(self):
+        """
+        Get which subscription on CustomerAgreement is auto_appliable.
+        """
+        now = localized_utcnow()
+        plan = self.subscriptions.filter(
+            should_auto_apply_licenses=True,
+            is_active=True,
+            start_date__lte=now,
+            expiration_date__gte=now
+        ).first()
+
+        return plan
+
     def save(self, *args, **kwargs):
         """
         Before saving this CustomerAgreement instance, if the enterprise_customer_slug

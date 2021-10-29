@@ -204,7 +204,8 @@ def get_license_tracking_properties(license_obj):
         "activation_date": activation_date_formatted,
         "assigned_lms_user_id": (license_obj.lms_user_id or ''),
         "assigned_email": (license_obj.user_email or ''),
-        "expiration_processed": license_obj.subscription_plan.expiration_processed
+        "expiration_processed": license_obj.subscription_plan.expiration_processed,
+        "auto_applied": (license_obj.auto_applied or False),
     }
 
     if license_obj and license_obj.subscription_plan and license_obj.subscription_plan.customer_agreement:

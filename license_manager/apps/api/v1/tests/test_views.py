@@ -1057,6 +1057,266 @@ class LicenseViewSetActionMixin:
 
 
 @ddt.ddt
+class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
+    """
+    Tests for special actions on the CustomerAgreementViewSet.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        # API client setup
+        self.api_client = APIClient()
+        self._setup_request_jwt()
+
+        # Try to start every test with the regular user not being staff
+        self.user.is_staff = False
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        # Set up a couple of users
+        cls.user = UserFactory()
+        cls.super_user = UserFactory(is_staff=True, is_superuser=True)
+        cls.subscription_plan = SubscriptionPlanFactory()
+
+        cls.enterprise_catalog_uuid = uuid4()
+
+        cls.customer_agreement = CustomerAgreementFactory(
+            enterprise_customer_uuid=uuid4(),
+        )
+        cls.active_subscription_for_customer = SubscriptionPlanFactory.create(
+            customer_agreement=cls.customer_agreement,
+            enterprise_catalog_uuid=cls.enterprise_catalog_uuid,
+            is_active=True,
+            should_auto_apply_licenses=False,
+        )
+
+        # Routes setup
+        cls.auto_assign_url = reverse(
+            'api:v1:customer-agreement-auto-apply',
+            kwargs={'customer_agreement_uuid': cls.customer_agreement.uuid}
+        )
+
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
+    def test_auto_apply_422_if_no_applicable_subscriptions(self, mock_activation_task, mock_link_learners_task):
+        """
+        Endpoint should return 422 if no auto-applicable subscriptions are found.
+        """
+        SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            is_active=True,
+            should_auto_apply_licenses=False,
+        )
+
+        self._setup_request_jwt(user=self.super_user)
+        response = self.api_client.post(self.auto_assign_url)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+        # Check whether tasks were run
+        mock_activation_task.assert_not_called()
+        mock_link_learners_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
+    def test_auto_apply_422_if_no_licenses_on_applicable_plan(self, mock_activation_task, mock_link_learners_task):
+        """
+        Endpoint should return 422 if applicable subscriptions found, but not
+        enough licenses.
+        """
+        SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            is_active=True,
+            should_auto_apply_licenses=True,
+        )
+
+        self._setup_request_jwt(user=self.super_user)
+        response = self.api_client.post(self.auto_assign_url)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+        # Check whether tasks were run
+        mock_activation_task.assert_not_called()
+        mock_link_learners_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
+    def test_auto_apply_422_if_revoked_license_on_plan(self, mock_activation_task, mock_link_learners_task):
+        """
+        Endpoint should return 422 if applicable subscriptions found, license
+        with revoked status for user found.
+        """
+        user_email = 'test@example.com'
+
+        plan = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            is_active=True,
+            should_auto_apply_licenses=True,
+        )
+        LicenseFactory.create(subscription_plan=plan)
+        LicenseFactory.create(
+            subscription_plan=plan,
+            user_email=user_email,
+            status=constants.REVOKED
+        )
+
+        assert License.objects.filter(user_email=user_email).count() == 1
+
+        self._setup_request_jwt(user=self.super_user)
+        response = self.api_client.post(
+            self.auto_assign_url,
+            data={'user_email': user_email},
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert License.objects.filter(user_email=user_email).count() == 1
+
+        # Check whether tasks were run
+        mock_activation_task.assert_not_called()
+        mock_link_learners_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
+    def test_auto_apply_200_if_active_or_assigned_license_on_plan(self, mock_activation_task, mock_link_learners_task):
+        """
+        Endpoint should return 200 if the plan in question already has an
+        activated or assigned license associated with the user.
+        """
+        user_email = 'test@example.com'
+
+        plan = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            is_active=True,
+            should_auto_apply_licenses=True,
+        )
+        LicenseFactory.create(subscription_plan=plan)
+        LicenseFactory.create(
+            subscription_plan=plan,
+            user_email=user_email,
+            status=constants.ACTIVATED
+        )
+
+        assert License.objects.filter(user_email=user_email).count() == 1
+
+        self._setup_request_jwt(user=self.super_user)
+        response = self.api_client.post(
+            self.auto_assign_url,
+            data={'user_email': user_email},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()['license']['user_email'] == 'test@example.com'
+        assert response.json()['license']['status'] == 'activated'
+        assert License.objects.filter(user_email=user_email).count() == 1
+
+        # Check whether tasks were run
+        mock_activation_task.assert_not_called()
+        mock_link_learners_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
+    def test_auto_apply_endpoint_idempotent(self, mock_activation_task, mock_link_learners_task):
+        """
+        Endpoint should only associate user with license on auto-applicable
+        subscription once, even if you hit the end point a bunch of times.
+        """
+        user_email = 'test@example.com'
+
+        plan = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            is_active=True,
+            should_auto_apply_licenses=True,
+        )
+        # Unassigned License
+        for _ in range(10):
+            LicenseFactory.create(subscription_plan=plan)
+
+        assert License.objects.filter(user_email=user_email).count() == 0
+        self._setup_request_jwt(user=self.super_user)
+        for _ in range(7):
+            response = self.api_client.post(
+                self.auto_assign_url,
+                data={'user_email': user_email},
+            )
+        assert License.objects.filter(user_email=user_email).count() == 1
+
+        # Check whether tasks were run
+        mock_activation_task.assert_called_once()
+        mock_link_learners_task.assert_called_once()
+
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.assign_new_licenses')
+    def test_auto_apply_422_if_DB_error(self, mock_assign_new_licenses, mock_activation_task, mock_link_learners_task):
+        """
+        Endpoint should return 422 if database error occurs.
+        """
+        plan = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            is_active=True,
+            should_auto_apply_licenses=True,
+        )
+        for _ in range(3):
+            LicenseFactory.create(subscription_plan=plan)
+
+        # Make sure no licenses have auto_applied True
+        assert License.objects.filter(auto_applied=True).count() == 0
+
+        self._setup_request_jwt(user=self.super_user)
+
+        mock_assign_new_licenses.side_effect = DatabaseError('fail')
+        response = self.api_client.post(self.auto_assign_url)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+        # Make sure no licenses still don't have auto_applied True
+        assert License.objects.filter(auto_applied=True).count() == 0
+
+        # Check whether tasks were run
+        mock_activation_task.assert_not_called()
+        mock_link_learners_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
+    def test_auto_apply_200_if_successful(self, mock_activation_task, mock_link_learners_task):
+        """
+        Endpoint should return 200 if applicable subscriptions found, and
+        License successfully auto applied.
+        """
+        plan = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            is_active=True,
+            should_auto_apply_licenses=True,
+        )
+        for _ in range(3):
+            LicenseFactory.create(subscription_plan=plan)
+
+        # Make sure no licenses have auto_applied True
+        assert License.objects.filter(auto_applied=True).count() == 0
+
+        self._setup_request_jwt(user=self.super_user)
+        response = self.api_client.post(
+            self.auto_assign_url,
+            data={'user_email': 'test@example.com'}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()['license']['user_email'] == 'test@example.com'
+        assert response.json()['license']['status'] == 'assigned'
+
+        # Check if 1 License has become auto_applied
+        assert plan.licenses.filter(auto_applied=True).count() == 1
+
+        # Check whether tasks were run
+        mock_activation_task.assert_called_once()
+        mock_link_learners_task.assert_called_once()
+
+
+@ddt.ddt
 class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
     """
     Tests for special actions on the LicenseViewSet.
