@@ -14,6 +14,7 @@ from license_manager.apps.subscriptions.api import (
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.forms import (
     CustomerAgreementAdminForm,
+    ProductForm,
     SubscriptionPlanForm,
     SubscriptionPlanRenewalForm,
 )
@@ -21,6 +22,7 @@ from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
     PlanType,
+    Product,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
@@ -121,6 +123,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'salesforce_opportunity_id',
         'netsuite_product_id',
         'plan_type',
+        'product',
         'revoke_max_percentage',
         'is_revocation_cap_enabled',
         'is_active',
@@ -477,4 +480,35 @@ class PlanTypeAdmin(admin.ModelAdmin):
         'ns_id_required',
         'sf_id_required',
         'internal_use_only',
+    )
+
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    form = ProductForm
+
+    exclude = ['history']
+    fields = (
+        'name',
+        'description',
+        'netsuite_id',
+        'plan_type',
+    )
+    list_display = fields
+    ordering = (
+        'plan_type',
+        'name',
+        'netsuite_id',
+    )
+    sortable_by = (
+        'name',
+        'netsuite_id',
+        'plan_type',
+    )
+    list_filter = (
+        'plan_type',
+    )
+    search_fields = (
+        'name',
+        'netsuite_id',
     )

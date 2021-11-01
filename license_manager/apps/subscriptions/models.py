@@ -246,6 +246,46 @@ class PlanType(models.Model):
         return self.label
 
 
+class Product(models.Model):
+    """
+    Defines the specific Product that was sold to the customer to allow
+    them access to a SubscriptionPlan.
+
+    .. no_pii: This model has no PII
+    """
+    name = models.CharField(
+        max_length=128,
+        blank=False,
+        null=False,
+    )
+    description = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+    )
+    netsuite_id = models.IntegerField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "The Product ID field (numeric) of what was sold to the customer."
+        ),
+    )
+    plan_type = models.ForeignKey(
+        PlanType,
+        related_name='netsuite_products',
+        on_delete=models.DO_NOTHING,
+        null=False,
+        blank=False,
+    )
+    history = HistoricalRecords()
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=("netsuite_id",), name="unique_netsuite_id")]
+
+    def __str__(self):
+        return self.name
+
+
 class PlanEmailTemplates(models.Model):
     """
     Stores email templates associated with each enterprise Subscription plan type.
@@ -398,8 +438,16 @@ class SubscriptionPlan(TimeStampedModel):
         blank=True,
         null=True,
         help_text=_(
+            "DEPRECATED in favor product.netsuite_id. "
             "Locate the Sales Order record in NetSuite and copy the Product ID field (numeric)."
-        )
+        ),
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
     )
 
     for_internal_use_only = models.BooleanField(
@@ -413,7 +461,11 @@ class SubscriptionPlan(TimeStampedModel):
         PlanType,
         on_delete=models.DO_NOTHING,
         null=False,
-        blank=False
+        blank=False,
+        help_text=_(
+            "DEPRECATED in favor product.plan_type. "
+            "Locate the Sales Order record in NetSuite and copy the Product ID field (numeric)."
+        )
     )
 
     can_freeze_unused_licenses = models.BooleanField(

@@ -10,7 +10,10 @@ from license_manager.apps.subscriptions.constants import (
     MIN_NUM_LICENSES,
     SubscriptionPlanChangeReasonChoices,
 )
-from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
+from license_manager.apps.subscriptions.forms import (
+    ProductForm,
+    SubscriptionPlanForm,
+)
 from license_manager.apps.subscriptions.models import SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
@@ -248,3 +251,26 @@ class TestCustomerAgreementAdminForm(TestCase):
         self.assertEqual(choices[0], ('', '------'))
         self.assertEqual(choices[1], (sub_for_customer_agreement_1.uuid, sub_for_customer_agreement_1.title))
         self.assertEqual(field.initial, choices[0], ('', '------'))
+
+
+@mark.django_db
+@ddt.ddt
+class TestProductAdminForm(TestCase):
+
+    @ddt.data(
+        {'ns_id_required': True, 'ns_id': '', 'is_valid': False},
+        {'ns_id_required': True, 'ns_id': '1', 'is_valid': True},
+        {'ns_id_required': False, 'ns_id': '', 'is_valid': True},
+        {'ns_id_required': False, 'ns_id': '1', 'is_valid': True},
+    )
+    @ddt.unpack
+    def test_ns_id_validation(self, ns_id_required, ns_id, is_valid):
+        plan_type = PlanTypeFactory.create(ns_id_required=ns_id_required)
+        form_data = {
+            'name': 'Product A',
+            'description': 'Product A description',
+            'netsuite_id': ns_id,
+            'plan_type': plan_type.id,
+        }
+        product_form = ProductForm(form_data)
+        assert product_form.is_valid() is is_valid

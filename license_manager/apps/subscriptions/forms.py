@@ -13,6 +13,7 @@ from license_manager.apps.subscriptions.constants import (
 )
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
+    Product,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
@@ -209,3 +210,23 @@ class CustomerAgreementAdminForm(forms.ModelForm):
             "and the license status reset to UNASSIGNED."
         ),
     )
+
+
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+    def is_valid(self):
+        # Perform original validation and return if false
+        if not super().is_valid():
+            return False
+
+        if self.instance.plan_type.ns_id_required and not self.instance.netsuite_id:
+            self.add_error(
+                'netsuite_id',
+                'You must specify Netsuite ID for selected plan type.',
+            )
+            return False
+
+        return True
