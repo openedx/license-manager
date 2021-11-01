@@ -37,11 +37,11 @@ billiard==3.6.4.0
     #   celery
 bleach==4.1.0
     # via readme-renderer
-boto3==1.19.9
+boto3==1.20.2
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.22.9
+botocore==1.23.2
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -136,7 +136,7 @@ django-durationwidget==1.0.5
     # via -r requirements/test.txt
 django-dynamic-fixture==3.1.2
     # via -r requirements/test.txt
-django-extensions==3.1.3
+django-extensions==3.1.5
     # via -r requirements/test.txt
 django-filter==21.1
     # via -r requirements/test.txt
@@ -165,7 +165,7 @@ djangorestframework==3.12.4
     #   edx-drf-extensions
 djangorestframework-csv==2.1.1
     # via -r requirements/test.txt
-doc8==0.9.1
+doc8==0.10.1
     # via -r requirements/doc.in
 docutils==0.16
     # via
@@ -231,7 +231,7 @@ idna==3.3
     # via
     #   -r requirements/test.txt
     #   requests
-imagesize==1.2.0
+imagesize==1.3.0
     # via sphinx
 inflection==0.5.1
     # via
@@ -241,7 +241,7 @@ iniconfig==1.1.1
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==5.10.0
+isort==5.10.1
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -288,7 +288,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.0.3
     # via -r requirements/test.txt
-newrelic==7.2.2.169
+newrelic==7.2.3.170
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -304,7 +304,7 @@ packaging==21.2
     #   drf-yasg
     #   pytest
     #   sphinx
-pbr==5.6.0
+pbr==5.7.0
     # via
     #   -r requirements/test.txt
     #   stevedore
@@ -316,11 +316,11 @@ psutil==5.8.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-py==1.10.0
+py==1.11.0
     # via
     #   -r requirements/test.txt
     #   pytest
-pycparser==2.20
+pycparser==2.21
     # via
     #   -r requirements/test.txt
     #   cffi

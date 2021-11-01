@@ -1,6 +1,7 @@
 import logging
 from smtplib import SMTPException
 
+from braze.client import BrazeClient
 from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 from django.conf import settings
@@ -151,6 +152,58 @@ def send_onboarding_email_task(enterprise_customer_uuid, user_email, subscriptio
         send_onboarding_email(enterprise_customer_uuid, user_email, subscription_plan_type)
     except SMTPException:
         logger.error('Onboarding email to {} failed'.format(user_email), exc_info=True)
+
+
+@shared_task(base=LoggedTask)
+def send_auto_applied_license_email_task(enterprise_customer_uuid, user_email):
+    """
+    Asynchronously sends onboarding email to learner. Intended for use following automatic license activation.
+
+    Uses Braze client to send email via Braze campaign.
+    """
+    try:
+        # Get some info about the enterprise customer
+        enterprise_api_client = EnterpriseApiClient()
+        enterprise_customer = enterprise_api_client.get_enterprise_customer_data(enterprise_customer_uuid)
+        enterprise_slug = enterprise_customer.get('slug')
+        enterprise_name = enterprise_customer.get('name')
+        learner_portal_search_enabled = enterprise_customer.get('enable_integrated_customer_learner_portal_search')
+        identity_provider = enterprise_customer.get('identity_provider')
+    except Exception:
+        message = (
+            f'Error getting data about the enterprise_customer {enterprise_customer_uuid}. '
+            f'Onboarding email to {user_email} for auto applied license failed.'
+        )
+        logger.error(message, exc_info=True)
+        return
+
+    # Determine which email campaign to use
+    if identity_provider and learner_portal_search_enabled is False:
+        braze_campaign_id = settings.AUTOAPPLY_NO_LEARNER_PORTAL_CAMPAIGN
+    else:
+        braze_campaign_id = settings.AUTOAPPLY_WITH_LEARNER_PORTAL_CAMPAIGN
+
+    # Form data we want to hand to the campaign's email template
+    braze_trigger_properties = {
+        'enterprise_customer_slug': enterprise_slug,
+        'enterprise_customer_name': enterprise_name,
+    }
+
+    try:
+        # Hit the Braze api to send the email
+        braze_client_instance = BrazeApiClient()
+        braze_client_instance.send_campaign_message(
+            braze_campaign_id,
+            emails=[user_email],
+            trigger_properties=braze_trigger_properties,
+        )
+
+    except Exception:
+        message = (
+            'Error hitting Braze API. '
+            f'Onboarding email to {user_email} for auto applied license failed.'
+        )
+        logger.error(message, exc_info=True)
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)

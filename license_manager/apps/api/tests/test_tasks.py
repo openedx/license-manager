@@ -11,6 +11,7 @@ import freezegun
 import pytest
 from django.conf import settings
 from django.test import TestCase
+from django.test.utils import override_settings
 from freezegun import freeze_time
 from requests import models
 
@@ -41,6 +42,7 @@ from license_manager.apps.subscriptions.tests.utils import (
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
+@ddt.ddt
 class EmailTaskTests(TestCase):
     """
     Tests for activation_email_task and send_onboarding_email_task
@@ -189,6 +191,89 @@ class EmailTaskTests(TestCase):
             self.user_email,
             self.subscription_plan_type,
         )
+
+    @override_settings(AUTOAPPLY_WITH_LEARNER_PORTAL_CAMPAIGN='LP-campaign-id')
+    @ddt.data(
+        {
+            'lp_search': True,
+            'identity_provider': uuid4(),
+        },
+        {
+            'lp_search': False,
+            'identity_provider': uuid4(),
+        },
+        {
+            'lp_search': True,
+            'identity_provider': None,
+        },
+        {
+            'lp_search': False,
+            'identity_provider': None,
+        },
+    )
+    @ddt.unpack
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    def test_auto_applied_license_onboard_email(self, mock_enterprise_client, mock_braze_client, lp_search, identity_provider):
+        """
+        Tests braze API is called when everything works as expected.
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'enable_integrated_customer_learner_portal_search': lp_search,
+            'identity_provider': identity_provider,
+        }
+
+        tasks.send_auto_applied_license_email_task(self.enterprise_uuid, self.user_email)
+
+        expected_trigger_properties = {
+            'enterprise_customer_slug': self.enterprise_slug,
+            'enterprise_customer_name': self.enterprise_name,
+        }
+
+        if identity_provider and lp_search is False:
+            expected_campaign_id = ''  # Empty because setting isn't set in tests
+        else:
+            expected_campaign_id = 'LP-campaign-id'
+
+        mock_braze_client().send_campaign_message.assert_called_with(
+            expected_campaign_id,
+            emails=[self.user_email],
+            trigger_properties=expected_trigger_properties,
+        )
+
+    @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', side_effect=Exception)
+    def test_auto_applied_license_onboard_email_ent_client_error(self, mock_enterprise_client, mock_braze_client, mock_logger):
+        """
+        Tests braze API is not called if enterprise client errors.
+        """
+        tasks.send_auto_applied_license_email_task(self.enterprise_uuid, self.user_email)
+
+        mock_braze_client().send_campaign_message.assert_not_called()
+        mock_logger.error.assert_called_once()
+
+    @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=Exception)
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    def test_auto_applied_license_onboard_email_braze_client_error(self, mock_enterprise_client, mock_braze_client, mock_logger):
+        """
+        Tests error logged if brazy client errors.
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'enable_integrated_customer_learner_portal_search': True,
+            'identity-provider': uuid4(),
+        }
+
+        tasks.send_auto_applied_license_email_task(self.enterprise_uuid, self.user_email)
+
+        mock_logger.error.assert_called_once()
 
 
 class RevokeAllLicensesTaskTests(TestCase):
