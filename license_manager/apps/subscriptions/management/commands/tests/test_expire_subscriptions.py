@@ -12,15 +12,15 @@ from license_manager.apps.subscriptions.constants import (
     LICENSE_EXPIRATION_BATCH_SIZE,
     REVOKED,
 )
+from license_manager.apps.subscriptions.management.commands.expire_subscriptions import (
+    DATE_FORMAT,
+)
 from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (
     LicenseFactory,
     SubscriptionPlanFactory,
 )
-from license_manager.apps.subscriptions.utils import (
-    localized_datetime,
-    localized_utcnow,
-)
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 @pytest.mark.django_db
@@ -114,18 +114,18 @@ class ExpireSubscriptionsCommandTests(TestCase):
         Verifies that all expired and unprocessed subscriptions within the expired range have their license uuids sent to edx-enterprise.
         """
         expired_subscription_1 = SubscriptionPlanFactory.create(
-            start_date=localized_datetime(2013, 1, 1),
-            expiration_date=localized_datetime(2014, 1, 1),
+            start_date=datetime.strptime('2013-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2014-1-01T00:00:00', DATE_FORMAT),
         )
 
         expired_subscription_2 = SubscriptionPlanFactory.create(
-            start_date=localized_datetime(2015, 1, 1),
-            expiration_date=localized_datetime(2016, 1, 1),
+            start_date=datetime.strptime('2015-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2016-1-01T00:00:00', DATE_FORMAT),
         )
 
         expired_subscription_3 = SubscriptionPlanFactory.create(
-            start_date=localized_datetime(2015, 1, 1),
-            expiration_date=localized_datetime(2016, 1, 1),
+            start_date=datetime.strptime('2015-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2016-1-01T00:00:00', DATE_FORMAT),
             expiration_processed=True
         )
 
@@ -163,14 +163,14 @@ class ExpireSubscriptionsCommandTests(TestCase):
         """
 
         expired_subscription_1 = SubscriptionPlanFactory.create(
-            start_date=localized_datetime(2013, 1, 1),
-            expiration_date=localized_datetime(2014, 1, 1),
+            start_date=datetime.strptime('2013-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2014-1-01T00:00:00', DATE_FORMAT),
             expiration_processed=True
         )
 
         expired_subscription_2 = SubscriptionPlanFactory.create(
-            start_date=localized_datetime(2015, 1, 1),
-            expiration_date=localized_datetime(2016, 1, 1),
+            start_date=datetime.strptime('2015-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2016-1-01T00:00:00', DATE_FORMAT),
             expiration_processed=True
         )
 
@@ -212,14 +212,14 @@ class ExpireSubscriptionsCommandTests(TestCase):
         """
 
         expired_subscription_1 = SubscriptionPlanFactory.create(
-            start_date=localized_datetime(2013, 1, 1),
-            expiration_date=localized_datetime(2014, 1, 1),
+            start_date=datetime.strptime('2013-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2014-1-01T00:00:00', DATE_FORMAT),
             expiration_processed=True
         )
 
         expired_subscription_2 = SubscriptionPlanFactory.create(
-            start_date=localized_datetime(2015, 1, 1),
-            expiration_date=localized_datetime(2016, 1, 1),
+            start_date=datetime.strptime('2015-1-01T00:00:00', DATE_FORMAT),
+            expiration_date=datetime.strptime('2016-1-01T00:00:00', DATE_FORMAT),
             expiration_processed=False
         )
 

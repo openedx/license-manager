@@ -7,7 +7,7 @@ nested routes backed by the `SubscriptionViewSet`.  That is:
 /api/v1/subscriptions/{subscription_uuid}/licenses/
 /api/v1/subscriptions/{subscription_uuid}/licenses/{license_uuid}/
 """
-from django.urls import re_path
+from django.conf.urls import url
 from rest_framework_nested import routers
 
 from license_manager.apps.api.v1 import views
@@ -89,27 +89,27 @@ subscription_router.register(
 )
 
 urlpatterns = [
-    re_path(
+    url(
         r'bulk-license-enrollment',
         views.EnterpriseEnrollmentWithLicenseSubsidyView.as_view(),
         name='bulk-license-enrollment',
     ),
-    re_path(
+    url(
         r'license-subsidy',
         views.LicenseSubsidyView.as_view(),
         name='license-subsidy',
     ),
-    re_path(
+    url(
         r'license-activation',
         views.LicenseActivationView.as_view(),
         name='license-activation',
     ),
-    re_path(
+    url(
         r'retire_user',
         views.UserRetirementView.as_view(),
         name='user-retirement',
     ),
-    re_path(
+    url(
         r'staff_lookup_licenses',
         views.StaffLicenseLookupView.as_view(),
         name='staff-lookup-licenses',

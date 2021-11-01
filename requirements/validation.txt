@@ -38,12 +38,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.19.7
+boto3==1.18.60
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.22.7
+botocore==1.21.60
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -60,7 +60,7 @@ certifi==2021.10.8
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
-cffi==1.15.0
+cffi==1.14.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -99,7 +99,7 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==6.1.1
+coverage[toml]==6.0.2
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -117,7 +117,7 @@ defusedxml==0.7.1
     #   -r requirements/test.txt
     #   python3-openid
     #   social-auth-core
-django==3.2.9
+django==3.2.8
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
@@ -165,7 +165,7 @@ django-filter==21.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-model-utils==4.2.0
+django-model-utils==4.1.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -204,7 +204,7 @@ drf-jwt==1.19.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-drf-nested-routers==0.93.4
+drf-nested-routers==0.93.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -217,7 +217,7 @@ edx-api-doc-tools==1.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-auth-backends==4.0.1
+edx-auth-backends==4.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -231,14 +231,14 @@ edx-django-utils==4.4.0
     #   -r requirements/test.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==8.0.1
+edx-drf-extensions==8.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-rbac
 edx-i18n-tools==0.8.1
     # via -r requirements/validation.in
-edx-lint==5.2.1
+edx-lint==5.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -255,7 +255,7 @@ edx-rest-api-client==5.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-factory-boy==3.2.1
+factory-boy==3.2.0
     # via -r requirements/test.txt
 faker==8.1.3
     # via
@@ -343,7 +343,7 @@ mysqlclient==2.0.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==7.2.2.169
+newrelic==7.2.1.168
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -354,7 +354,7 @@ oauthlib==3.1.1
     #   -r requirements/test.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==21.2
+packaging==21.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -403,7 +403,7 @@ pyjwkest==1.4.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-pyjwt[crypto]==2.3.0
+pyjwt[crypto]==2.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -437,7 +437,7 @@ pylint-plugin-utils==0.6
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==3.12.1
+pymongo==3.12.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -482,7 +482,7 @@ pytz==2021.3
     #   celery
     #   django
     #   django-ses
-pyyaml==6.0
+pyyaml==5.4.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
@@ -510,7 +510,7 @@ requests-oauthlib==1.3.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-ruamel.yaml==0.17.17
+ruamel.yaml==0.17.16
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -577,7 +577,7 @@ sqlparse==0.4.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django
-stevedore==3.5.0
+stevedore==3.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -596,7 +596,7 @@ toml==0.10.2
     #   -r requirements/test.txt
     #   pylint
     #   pytest
-tomli==1.2.2
+tomli==1.2.1
     # via
     #   -r requirements/test.txt
     #   coverage
