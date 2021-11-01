@@ -39,6 +39,8 @@ subscriptions.HistoricalSubscriptionPlan:
   ".. no_pii:": "This model has no PII"
 subscriptions.HistoricalSubscriptionPlanRenewal:
   ".. no_pii:": "This model has no PII"
+subscriptions.HistoricalProduct:
+  ".. no_pii:": "This model has no PII"
 waffle.Flag:
   ".. no_pii:": "This model has no PII"
 waffle.Sample:
