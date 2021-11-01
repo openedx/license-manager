@@ -105,15 +105,15 @@ class LicenseAdmin(admin.ModelAdmin):
 class SubscriptionPlanAdmin(SimpleHistoryAdmin):
     form = SubscriptionPlanForm
     # This is not to be confused with readonly_fields of the BaseModelAdmin class
-    read_only_fields = (
+    read_only_fields = [
         'num_revocations_remaining',
         'num_licenses',
         'expiration_processed',
         'customer_agreement',
         'last_freeze_timestamp',
         'should_auto_apply_licenses'
-    )
-    writable_fields = (
+    ]
+    writable_fields = [
         'title',
         'start_date',
         'expiration_date',
@@ -127,8 +127,44 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'for_internal_use_only',
         'change_reason',
         'can_freeze_unused_licenses',
-    )
-    fields = writable_fields + read_only_fields
+    ]
+
+    # There are some fields we want to come first/last in the form for cognitive ease.
+    fields_displayed_first = [
+        'title',
+        'is_active',
+        'num_licenses',
+        'for_internal_use_only',
+    ]
+    fields_displayed_last = [
+        'is_revocation_cap_enabled',
+        'revoke_max_percentage',
+        'can_freeze_unused_licenses',
+        'change_reason',
+    ]
+
+    def get_remaining_fields(
+        writable_fields=writable_fields,
+        read_only_fields=read_only_fields,
+        fields_displayed_first=fields_displayed_first,
+        fields_displayed_last=fields_displayed_last,
+    ):
+        """
+        Scoping is weird for class-scoped variables -
+        hence this function to determine the "remaining_fields".
+        See https://stackoverflow.com/questions/13905741/accessing-class-variables-from-a-list-comprehension-in-the-class-definition
+        Note that dict is guaranteed to preserve insertion order as of Python 3.7
+        https://docs.python.org/3.6/whatsnew/3.6.html#new-dict-implementation
+        """
+        return [
+            field for field in
+            dict.fromkeys(writable_fields + read_only_fields)
+            if field not in
+            fields_displayed_first + fields_displayed_last
+        ]
+
+    fields = fields_displayed_first + get_remaining_fields() + fields_displayed_last
+
     list_display = (
         'title',
         'uuid',
@@ -220,6 +256,7 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'enterprise_customer_uuid',
         'enterprise_customer_slug',
         'enterprise_customer_name',
+        'get_subscription_plan_links',
     )
     writable_fields = (
         'default_enterprise_catalog_uuid',
