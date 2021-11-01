@@ -28,3 +28,5 @@ import logging
 
 for logger_to_silence in ['faker', 'jwkest', 'edx_rest_framework_extensions']:
     logging.getLogger(logger_to_silence).setLevel(logging.WARNING)
+# Specifically silence license manager event_utils warnings
+logging.getLogger('event_utils').setLevel(logging.ERROR)
