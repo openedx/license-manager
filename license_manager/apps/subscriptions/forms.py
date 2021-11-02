@@ -180,10 +180,7 @@ class CustomerAgreementAdminForm(forms.ModelForm):
             expiration_date__gte=now
         )
 
-        current_plan = SubscriptionPlan.objects.filter(
-            customer_agreement=instance,
-            should_auto_apply_licenses=True
-        ).first()
+        current_plan = instance.auto_applicable_subscription
 
         empty_choice = ('', '------')
         choices = [empty_choice] + [(plan.uuid, plan.title) for plan in active_plans]

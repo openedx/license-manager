@@ -769,6 +769,14 @@ class SubscriptionPlanRenewal(TimeStampedModel):
         ),
     )
 
+    disable_auto_apply_licenses = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Whether auto-applied licenses should be disabled for the future plan. "
+            "If the original plan was not auto applying licenses, modifying this field will have no effect."
+        )
+    )
+
     history = HistoricalRecords()
 
     class Meta:

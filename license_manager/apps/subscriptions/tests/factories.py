@@ -111,6 +111,7 @@ class SubscriptionPlanRenewalFactory(factory.django.DjangoModelFactory):
     effective_date = localized_utcnow() + timedelta(days=366)
     renewed_expiration_date = effective_date + timedelta(days=366)
     processed = False
+    disable_auto_apply_licenses = False
 
 
 class LicenseFactory(factory.django.DjangoModelFactory):
