@@ -159,6 +159,14 @@ def renew_subscription(subscription_plan_renewal, is_auto_renewed=False):
             is_auto_renewed
         )
 
+        if original_plan.should_auto_apply_licenses:
+            customer_agreement_id = original_plan.customer_agreement_id
+
+            if subscription_plan_renewal.disable_auto_apply_licenses:
+                toggle_auto_apply_licenses(customer_agreement_id, None)
+            else:
+                toggle_auto_apply_licenses(customer_agreement_id, future_plan.uuid)
+
         subscription_plan_renewal.renewed_subscription_plan = future_plan
         subscription_plan_renewal.processed = True
         subscription_plan_renewal.processed_datetime = localized_utcnow()

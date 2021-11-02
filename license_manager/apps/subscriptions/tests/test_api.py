@@ -23,6 +23,7 @@ from license_manager.apps.subscriptions.tests.factories import (
 NOW = utils.localized_utcnow()
 
 
+@ddt.ddt
 class RenewalProcessingTests(TestCase):
     """
     Tests for the processing of a SubscriptionPlanRenewal.
@@ -166,6 +167,57 @@ class RenewalProcessingTests(TestCase):
         self.assertEqual(renewal.processed_datetime, NOW)
         self.assertEqual(future_plan.num_licenses, renewal.number_of_licenses)
         self._assert_all_licenses_renewed(future_plan)
+
+    @ddt.data(
+        True,
+        False,
+        None
+    )
+    def test_renewal_future_plan_auto_applies_licenses(self, should_auto_apply_licenses):
+        customer_agreement = CustomerAgreementFactory.create()
+        prior_plan = SubscriptionPlanFactory(
+            customer_agreement=customer_agreement,
+            should_auto_apply_licenses=should_auto_apply_licenses
+        )
+        renewal = SubscriptionPlanRenewalFactory(
+            prior_subscription_plan=prior_plan,
+            number_of_licenses=1,
+            license_types_to_copy=constants.LicenseTypesToRenew.ASSIGNED_AND_ACTIVATED,
+            effective_date=NOW
+        )
+
+        with freezegun.freeze_time(NOW):
+            api.renew_subscription(renewal)
+
+        renewal.refresh_from_db()
+        future_plan = renewal.renewed_subscription_plan
+
+        if should_auto_apply_licenses:
+            self.assertTrue(future_plan.should_auto_apply_licenses)
+            self.assertEqual(customer_agreement.auto_applicable_subscription, future_plan)
+        else:
+            assert future_plan.should_auto_apply_licenses is None
+            assert customer_agreement.auto_applicable_subscription is None
+
+    def test_renewal_disable_auto_apply_licenses(self):
+        customer_agreement = CustomerAgreementFactory.create()
+        prior_plan = SubscriptionPlanFactory(
+            customer_agreement=customer_agreement,
+            should_auto_apply_licenses=True
+        )
+        renewal = SubscriptionPlanRenewalFactory(
+            prior_subscription_plan=prior_plan,
+            number_of_licenses=1,
+            license_types_to_copy=constants.LicenseTypesToRenew.ASSIGNED_AND_ACTIVATED,
+            disable_auto_apply_licenses=True
+        )
+
+        with freezegun.freeze_time(NOW):
+            api.renew_subscription(renewal)
+
+        future_plan = renewal.renewed_subscription_plan
+        self.assertFalse(future_plan.should_auto_apply_licenses)
+        assert customer_agreement.auto_applicable_subscription is None
 
     @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
     def test_renewal_processed_segment_events(self, mock_track_event):
