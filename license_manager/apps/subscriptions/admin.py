@@ -336,7 +336,11 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         """
         if obj:
             return self.read_only_fields
-        return ('enterprise_customer_slug', 'license_duration_before_purge')
+        return (
+            'enterprise_customer_slug',
+            'license_duration_before_purge',
+            'get_subscription_plan_links',
+        )
 
     def get_subscription_plan_links(self, obj):
         links = []
