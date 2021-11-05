@@ -169,7 +169,8 @@ class CustomerAgreementAdminForm(forms.ModelForm):
 
         if 'instance' in kwargs:
             instance = kwargs['instance']
-            self.populate_subscription_for_auto_applied_licenses_choices(instance)
+            if instance:
+                self.populate_subscription_for_auto_applied_licenses_choices(instance)
 
     def populate_subscription_for_auto_applied_licenses_choices(self, instance):
         now = localized_utcnow()
