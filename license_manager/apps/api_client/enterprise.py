@@ -15,6 +15,7 @@ class EnterpriseApiClient(BaseOAuthClient):
     """
     api_base_url = settings.LMS_URL + '/enterprise/api/v1/'
     enterprise_customer_endpoint = api_base_url + 'enterprise-customer/'
+    enterprise_learner_endpoint = api_base_url + 'enterprise-learner/'
     pending_enterprise_learner_endpoint = api_base_url + 'pending-enterprise-learner/'
     course_enrollments_revoke_endpoint = api_base_url + 'licensed-enterprise-course-enrollment/license_revoke/'
     bulk_licensed_enrollments_expiration_endpoint = api_base_url \
@@ -37,6 +38,54 @@ class EnterpriseApiClient(BaseOAuthClient):
         except requests.exceptions.HTTPError as exc:
             logger.error(
                 'Failed to fetch enterprise customer data for %r because %r',
+                enterprise_customer_uuid,
+                response.text,
+            )
+            raise exc
+
+    def get_enterprise_admin_users(self, enterprise_customer_uuid):
+        """
+        Gets a list of admin users for a given enterprise customer.
+
+        Arguments:
+            enterprise_customer_uuid (UUID): UUID of the enterprise customer associated with an enterprise
+        Returns:
+            A list of dicts in the form of
+                {
+                    'id': str,
+                    'username': str,
+                    'first_name': str,
+                    'last_name': str,
+                    'email': str,
+                    'is_staff': bool,
+                    'is_active': bool,
+                    'date_joined': str,
+                    'ecu_id': str,
+                    'created': str
+                }
+        """
+
+        query_params = f'?enterprise_customer_uuid={str(enterprise_customer_uuid)}&role=enterprise_admin'
+
+        try:
+            url = self.enterprise_learner_endpoint + query_params
+            results = []
+
+            while url:
+                response = self.client.get(url)
+                response.raise_for_status()
+                resp_json = response.json()
+                url = resp_json['next']
+
+                for result in resp_json['results']:
+                    user_data = result['user']
+                    user_data.update(ecu_id=result['id'], created=result['created'])
+                    results.append(user_data)
+
+            return results
+        except requests.exceptions.HTTPError as exc:
+            logger.error(
+                'Failed to fetch enterprise admin users for %r because %r',
                 enterprise_customer_uuid,
                 response.text,
             )

@@ -20,6 +20,7 @@ djangorestframework-csv
 drf-nested-routers
 edx-api-doc-tools
 edx-auth-backends
+edx-braze-client
 edx-celeryutils
 edx-django-utils
 edx-drf-extensions

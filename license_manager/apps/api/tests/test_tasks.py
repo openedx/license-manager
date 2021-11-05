@@ -1,22 +1,31 @@
 """
 Tests for the license-manager API celery tasks
 """
-import datetime
+from datetime import timedelta
 from smtplib import SMTPException
 from unittest import mock
 from uuid import uuid4
 
+import ddt
+import freezegun
 import pytest
+from django.conf import settings
 from django.test import TestCase
 from freezegun import freeze_time
-from requests import Response, models
+from requests import models
 
 from license_manager.apps.api import tasks
 from license_manager.apps.subscriptions import constants
+from license_manager.apps.subscriptions.constants import (
+    ASSIGNED,
+    WEEKLY_UTILIZATION_EMAIL_INTERLUDE,
+    NotificationChoices,
+)
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
+    Notification,
     SubscriptionPlan,
 )
 from license_manager.apps.subscriptions.tests.factories import (
@@ -374,3 +383,382 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         assert len(results['successes']) == 0
         assert len(results['pending']) == 0
         assert len(results['failures']) == 1
+
+
+class SendWeeklyUtilizationEmailTaskTests(TestCase):
+    now = localized_utcnow()
+    test_ecu_id = uuid4()
+    test_email = 'test@email.com'
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        customer_agreement = CustomerAgreementFactory()
+        subscription_plan = SubscriptionPlanFactory(customer_agreement=customer_agreement)
+        subscription_plan_details = {
+            'uuid': subscription_plan.uuid,
+            'title': subscription_plan.title,
+            'enterprise_customer_uuid': subscription_plan.enterprise_customer_uuid,
+            'enterprise_customer_name': subscription_plan.customer_agreement.enterprise_customer_name,
+            'num_allocated_licenses': subscription_plan.num_allocated_licenses,
+            'num_licenses': subscription_plan.num_licenses,
+            'highest_utilization_threshold_reached': subscription_plan.highest_utilization_threshold_reached
+        }
+
+        cls.customer_agreement = customer_agreement
+        cls.subscription_plan = subscription_plan
+        cls.subscription_plan_details = subscription_plan_details
+
+    def tearDown(self):
+        """
+        Deletes all licenses, and subscription after each test method is run.
+        """
+        super().tearDown()
+        SubscriptionPlan.objects.all().delete()
+        CustomerAgreement.objects.all().delete()
+        Notification.objects.all().delete()
+
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    def test_user_activated_too_recently(self, mock_braze_api_client):
+        """
+        Tests that email is not sent to admins who have been active for less than a configured period of time.
+        """
+        tasks.send_weekly_utilization_email_task(
+            self.subscription_plan_details,
+            [{
+                'ecu_id': self.test_ecu_id,
+                'email': self.test_email,
+                'created': (self.now - timedelta(days=WEEKLY_UTILIZATION_EMAIL_INTERLUDE - 1)).isoformat()
+            }]
+        )
+
+        mock_braze_api_client.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    def test_user_already_received_email_for_week(self, mock_braze_api_client):
+        """
+        Tests that email is not sent to admins who have already recevied an email for the week.
+        """
+        notification = Notification(
+            enterprise_customer_uuid=self.subscription_plan.enterprise_customer_uuid,
+            enterprise_customer_user_uuid=self.test_ecu_id,
+            subscripton_plan_id=self.subscription_plan.uuid,
+            notification_type=NotificationChoices.PERIODIC_INFORMATIONAL
+        )
+        notification.save()
+
+        tasks.send_weekly_utilization_email_task(
+            self.subscription_plan_details,
+            [{
+                'ecu_id': self.test_ecu_id,
+                'email': self.test_email,
+                'created': (self.now - timedelta(days=8)).isoformat()
+            }]
+        )
+
+        mock_braze_api_client.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    def test_send_weekly_utilization_email_task_success(self, mock_braze_api_client):
+        """
+        Tests that the Braze client is called and the a Notification object is created.
+        """
+        with freezegun.freeze_time(self.now):
+            tasks.send_weekly_utilization_email_task(
+                self.subscription_plan_details,
+                [{
+                    'ecu_id': self.test_ecu_id,
+                    'email': self.test_email,
+                    'created': (self.now - timedelta(days=WEEKLY_UTILIZATION_EMAIL_INTERLUDE + 1)).isoformat()
+                }]
+            )
+
+            mock_send_campaign_message = mock_braze_api_client.return_value.send_campaign_message
+            mock_braze_api_client.assert_called()
+            mock_send_campaign_message.assert_called_with(
+                settings.WEEKLY_LICENSE_UTILIZATION_CAMPAIGN,
+                emails=[self.test_email],
+                trigger_properties={
+                    'subscription_plan_title': self.subscription_plan.title,
+                    'enterprise_customer_name': self.customer_agreement.enterprise_customer_name,
+                    'num_allocated_licenses': 0,
+                    'num_licenses': 0
+                }
+            )
+
+            notification = Notification.objects.get(
+                enterprise_customer_uuid=self.subscription_plan.enterprise_customer_uuid,
+                enterprise_customer_user_uuid=self.test_ecu_id,
+                subscripton_plan_id=self.subscription_plan.uuid,
+                notification_type=NotificationChoices.PERIODIC_INFORMATIONAL,
+            )
+
+            self.assertEqual(notification.last_sent, self.now)
+
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    def test_send_weekly_utilization_email_task_success_previously_sent(self, mock_braze_api_client):
+        """
+        Tests that the Braze client is called and the a Notification object is updated if one already exists.
+        """
+        notification = Notification.objects.create(
+            enterprise_customer_uuid=self.subscription_plan.enterprise_customer_uuid,
+            enterprise_customer_user_uuid=self.test_ecu_id,
+            subscripton_plan_id=self.subscription_plan.uuid,
+            notification_type=NotificationChoices.PERIODIC_INFORMATIONAL,
+        )
+        notification.last_sent = self.now - timedelta(days=WEEKLY_UTILIZATION_EMAIL_INTERLUDE + 1)
+        notification.save()
+
+        with freezegun.freeze_time(self.now):
+            tasks.send_weekly_utilization_email_task(
+                self.subscription_plan_details,
+                [{
+                    'ecu_id': self.test_ecu_id,
+                    'email': self.test_email,
+                    'created': (self.now - timedelta(days=8)).isoformat()
+                }]
+            )
+
+            notification.refresh_from_db()
+            mock_send_campaign_message = mock_braze_api_client.return_value.send_campaign_message
+            mock_braze_api_client.assert_called()
+            mock_send_campaign_message.assert_called_with(
+                settings.WEEKLY_LICENSE_UTILIZATION_CAMPAIGN,
+                emails=[self.test_email],
+                trigger_properties={
+                    'subscription_plan_title': self.subscription_plan.title,
+                    'enterprise_customer_name': self.customer_agreement.enterprise_customer_name,
+                    'num_allocated_licenses': 0,
+                    'num_licenses': 0
+                }
+            )
+
+            self.assertEqual(notification.last_sent, self.now)
+
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    def test_send_weekly_utilization_email_task_failure(self, mock_braze_api_client):
+        """
+        Tests that db commits are rolled back if an error occurs.
+        """
+        with freezegun.freeze_time(self.now), pytest.raises(Exception):
+            mock_send_campaign_message = mock_braze_api_client.return_value.send_campaign_message
+            mock_send_campaign_message.side_effect = Exception('Something went wrong')
+
+            tasks.send_weekly_utilization_email_task(
+                self.subscription_plan,
+                [{
+                    'ecu_id': self.test_ecu_id,
+                    'email': self.test_email,
+                    'created': (self.now - timedelta(days=WEEKLY_UTILIZATION_EMAIL_INTERLUDE + 1)).isoformat()
+                }]
+            )
+
+            mock_braze_api_client.assert_called()
+            mock_send_campaign_message.assert_called_with(
+                settings.WEEKLY_LICENSE_UTILIZATION_CAMPAIGN,
+                emails=[self.test_email],
+                trigger_properties={
+                    'subscription_plan_title': self.subscription_plan.title,
+                    'enterprise_customer_name': self.customer_agreement.enterprise_customer_name,
+                    'num_allocated_licenses': 0,
+                    'num_licenses': 0
+                }
+            )
+
+            notification = Notification.objects.filter(
+                enterprise_customer_uuid=self.subscription_plan.enterprise_customer_uuid,
+                enterprise_customer_user_uuid=self.test_ecu_id,
+                subscripton_plan_id=self.subscription_plan.uuid,
+                notification_type=NotificationChoices.PERIODIC_INFORMATIONAL,
+            ).first()
+
+            assert notification is None
+
+
+@ddt.ddt
+class SendUtilizationThresholdReachedEmailTaskTests(TestCase):
+    now = localized_utcnow()
+    test_ecu_id = uuid4()
+    test_email = 'test@email.com'
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        customer_agreement = CustomerAgreementFactory()
+        subscription_plan = SubscriptionPlanFactory(customer_agreement=customer_agreement)
+        subscription_plan_details = {
+            'uuid': subscription_plan.uuid,
+            'title': subscription_plan.title,
+            'enterprise_customer_uuid': subscription_plan.enterprise_customer_uuid,
+            'enterprise_customer_name': subscription_plan.customer_agreement.enterprise_customer_name,
+            'num_allocated_licenses': subscription_plan.num_allocated_licenses,
+            'num_licenses': subscription_plan.num_licenses,
+            'highest_utilization_threshold_reached': subscription_plan.highest_utilization_threshold_reached
+        }
+
+        cls.customer_agreement = customer_agreement
+        cls.subscription_plan = subscription_plan
+        cls.subscription_plan_details = subscription_plan_details
+
+    def tearDown(self):
+        """
+        Deletes all licenses, and subscription after each test method is run.
+        """
+        super().tearDown()
+        CustomerAgreement.objects.all().delete()
+        SubscriptionPlan.objects.all().delete()
+        Notification.objects.all().delete()
+        License.objects.all().delete()
+
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    def test_no_utilization_threshold_reached(self, mock_braze_api_client):
+        """
+        Tests that email is not sent if no utilization threshold has been reached.
+        """
+        tasks.send_utilization_threshold_reached_email_task(
+            self.subscription_plan_details,
+            [{
+                'ecu_id': self.test_ecu_id,
+                'email': self.test_email,
+                'created': (self.now - timedelta(days=8)).isoformat()
+            }]
+        )
+
+        mock_braze_api_client.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    def test_send_utilization_threshold_reached_email_task_previously_sent(self, mock_braze_api_client):
+        """
+        Tests that email is not sent if one has been sent before for the given threshold.
+        """
+        Notification.objects.create(
+            enterprise_customer_uuid=self.subscription_plan.enterprise_customer_uuid,
+            enterprise_customer_user_uuid=self.test_ecu_id,
+            subscripton_plan_id=self.subscription_plan.uuid,
+            notification_type=NotificationChoices.NO_ALLOCATIONS_REMAINING,
+        )
+        LicenseFactory.create(
+            subscription_plan=self.subscription_plan,
+            status=constants.ASSIGNED,
+        )
+
+        tasks.send_utilization_threshold_reached_email_task(
+            self.subscription_plan_details,
+            [{
+                'ecu_id': self.test_ecu_id,
+                'email': self.test_email,
+                'created': (self.now - timedelta(days=8)).isoformat()
+            }]
+        )
+
+        mock_braze_api_client.assert_not_called()
+
+    @ddt.data(
+        {
+            'num_allocated_licenses': 1,
+            'num_licenses': 1,
+            'highest_utilization_threshold_reached': 1,
+            'notification_type': NotificationChoices.NO_ALLOCATIONS_REMAINING,
+            'campaign': 'NO_ALLOCATIONS_REMAINING_CAMPAIGN'
+        },
+        {
+            'num_allocated_licenses': 3,
+            'num_licenses': 4,
+            'highest_utilization_threshold_reached': 0.75,
+            'notification_type': NotificationChoices.LIMITED_ALLOCATIONS_REMAINING,
+            'campaign': 'LIMITED_ALLOCATIONS_REMAINING_CAMPAIGN'
+        }
+    )
+    @ddt.unpack
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    def test_send_utilization_threshold_reached_email_task_success(
+        self,
+        mock_braze_api_client,
+        num_allocated_licenses,
+        num_licenses,
+        highest_utilization_threshold_reached,
+        notification_type,
+        campaign
+    ):
+        """
+        Tests that the Braze client is called and a Notification object is created.
+        """
+        tasks.send_utilization_threshold_reached_email_task(
+            {
+                **self.subscription_plan_details,
+                **{
+                    'num_allocated_licenses': num_allocated_licenses,
+                    'num_licenses': num_licenses,
+                    'highest_utilization_threshold_reached': highest_utilization_threshold_reached
+                }
+            },
+            [{
+                'ecu_id': self.test_ecu_id,
+                'email': self.test_email,
+                'created': (self.now - timedelta(days=8)).isoformat()
+            }]
+        )
+
+        mock_send_campaign_message = mock_braze_api_client.return_value.send_campaign_message
+
+        mock_braze_api_client.assert_called()
+        mock_send_campaign_message.assert_called_with(
+            getattr(settings, campaign),
+            emails=[self.test_email],
+            trigger_properties={
+                'subscription_plan_title': self.subscription_plan.title,
+                'enterprise_customer_name': self.customer_agreement.enterprise_customer_name,
+                'num_allocated_licenses': num_allocated_licenses,
+                'num_licenses': num_licenses
+            }
+        )
+
+        Notification.objects.get(
+            enterprise_customer_uuid=self.subscription_plan.enterprise_customer_uuid,
+            enterprise_customer_user_uuid=self.test_ecu_id,
+            subscripton_plan_id=self.subscription_plan.uuid,
+            notification_type=notification_type,
+        )
+
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    def test_send_utilization_threshold_reached_email_task_failure(self, mock_braze_api_client):
+        """
+        Tests that db commits are rolled back if an error occurs.
+        """
+        LicenseFactory.create(subscription_plan=self.subscription_plan, status=ASSIGNED)
+
+        with freezegun.freeze_time(self.now), pytest.raises(Exception):
+            mock_send_campaign_message = mock_braze_api_client.return_value.send_campaign_message
+            mock_send_campaign_message.side_effect = Exception('Something went wrong')
+
+            tasks.send_utilization_threshold_reached_email_task(
+                self.subscription_plan_details,
+                [{
+                    'ecu_id': self.test_ecu_id,
+                    'email': self.test_email,
+                    'created': (self.now - timedelta(days=8)).isoformat()
+                }]
+            )
+
+            mock_braze_api_client.assert_called()
+            mock_send_campaign_message.assert_called_with(
+                settings.NO_ALLOCATIONS_REMAINING_CAMPAIGN,
+                emails=[self.test_email],
+                trigger_properties={
+                    'subscription_plan_title': self.subscription_plan.title,
+                    'enterprise_customer_name': self.customer_agreement.enterprise_customer_name,
+                    'num_allocated_licenses': 1,
+                    'num_licenses': 1
+                }
+            )
+
+            notification = Notification.objects.filter(
+                enterprise_customer_uuid=self.subscription_plan.enterprise_customer_uuid,
+                enterprise_customer_user_uuid=self.test_ecu_id,
+                subscripton_plan_id=self.subscription_plan.uuid,
+                notification_type=NotificationChoices.NO_ALLOCATIONS_REMAINING,
+            ).first()
+
+            assert notification is None
