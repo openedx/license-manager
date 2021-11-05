@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils.functional import cached_property
+from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rbac.utils import ALL_ACCESS_CONTEXT
@@ -29,6 +30,7 @@ from license_manager.apps.subscriptions.constants import (
     ASSIGNED,
     LICENSE_BULK_OPERATION_BATCH_SIZE,
     LICENSE_STATUS_CHOICES,
+    LICENSE_UTILIZATION_THRESHOLDS,
     REVOKED,
     SALESFORCE_ID_LENGTH,
     UNASSIGNED,
@@ -290,6 +292,14 @@ class Notification(TimeStampedModel):
         null=False,
         verbose_name='Enterprise Customer User UUID'
     )
+
+    subscripton_plan = models.ForeignKey(
+        'SubscriptionPlan',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+
     notification_type = models.CharField(
         max_length=32,
         blank=False,
@@ -298,7 +308,8 @@ class Notification(TimeStampedModel):
         help_text=("Which type of notification was sent to the user."),
     )
     last_sent = models.DateTimeField(
-        help_text="Date of the last time a notifcation was sent."
+        help_text="Date of the last time a notifcation was sent.",
+        default=now
     )
     history = HistoricalRecords()
 
@@ -599,6 +610,26 @@ class SubscriptionPlan(TimeStampedModel):
 
         is_plan_locked_for_renewal = hours_until_effective_date < settings.SUBSCRIPTION_PLAN_RENEWAL_LOCK_PERIOD_HOURS
         return is_plan_locked_for_renewal
+
+    @property
+    def highest_utilization_threshold_reached(self):
+        """
+        Returns the highest license utilization threshold that has been reached.
+
+        If no thresholds have been reached, return None.
+        """
+
+        num_licenses = self.num_licenses
+
+        if num_licenses == 0:
+            return None
+
+        thresholds = LICENSE_UTILIZATION_THRESHOLDS
+        current_utilization = self.num_allocated_licenses / num_licenses
+
+        for threshold in thresholds:
+            if current_utilization >= threshold:
+                return threshold
 
     def license_count_by_status(self):
         """

@@ -37,11 +37,11 @@ billiard==3.6.4.0
     #   celery
 bleach==4.1.0
     # via readme-renderer
-boto3==1.19.8
+boto3==1.19.9
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.22.8
+botocore==1.22.9
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -187,6 +187,8 @@ edx-api-doc-tools==1.5.0
     # via -r requirements/test.txt
 edx-auth-backends==4.0.1
     # via -r requirements/test.txt
+edx-braze-client==0.1.0
+    # via -r requirements/test.txt
 edx-celeryutils==1.1.1
     # via -r requirements/test.txt
 edx-django-utils==4.4.0
@@ -239,7 +241,7 @@ iniconfig==1.1.1
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==5.9.3
+isort==5.10.0
     # via
     #   -r requirements/test.txt
     #   pylint
