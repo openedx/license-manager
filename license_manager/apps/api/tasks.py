@@ -275,6 +275,7 @@ def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid,
     """
     logger.info("starting job_id={} enterprise_enrollment_license_subsidy_task for enterprise_customer_uuid={}".format(job_id, enterprise_customer_uuid))
 
+    # collect/return results (rather than just write to the CSV) to help testability
     results = []
 
     customer_agreement = CustomerAgreement.objects.get(enterprise_customer_uuid=enterprise_customer_uuid)
@@ -327,6 +328,8 @@ def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid,
         result_writer.writerow(['email address', 'course key', 'enrollment status', 'notes'])
         for result in results:
             result_writer.writerow(result)
+        # TODO upload to s3
+        # TODO trigger email notification
     finally:
         result_file.close()
         os.unlink(result_file.name)
