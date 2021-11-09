@@ -6,7 +6,10 @@ from edx_rbac.utils import get_decoded_jwt
 from rest_framework.exceptions import ParseError
 
 from license_manager.apps.subscriptions import constants
-from license_manager.apps.subscriptions.models import CustomerAgreement, License
+from license_manager.apps.subscriptions.models import (
+    CustomerAgreement,
+    License,
+)
 from license_manager.apps.subscriptions.utils import (
     get_license_activation_link,
     localized_utcnow,

@@ -37,6 +37,7 @@ from license_manager.apps.api.tasks import (
     send_onboarding_email_task,
     send_reminder_email_task,
 )
+from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import constants, event_utils
 from license_manager.apps.subscriptions.api import (
@@ -1151,18 +1152,15 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         # check to be sure we have a customer agreement
         customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
 
-        # this job_id will be used in the future enable the frontend to track the status/progress of work
-        enrollment_job_id = str(uuid4())
+        bulk_enrollment_job = BulkEnrollmentJob.create_bulk_enrollment_job(self.lms_user_id,
+                                                               self.requested_enterprise_id,
+                                                               self.requested_user_emails,
+                                                               self.requested_course_run_keys,
+                                                               self.requested_notify_learners,
+                                                               self.requested_subscription_id
+                                                              )
 
-        enterprise_enrollment_license_subsidy_task.delay(enrollment_job_id,
-                                                         self.requested_enterprise_id,
-                                                         self.requested_user_emails,
-                                                         self.requested_course_run_keys,
-                                                         self.requested_notify_learners,
-                                                         self.requested_subscription_id
-                                                         )
-
-        return Response({'job_id': enrollment_job_id}, status=status.HTTP_201_CREATED)
+        return Response({'job_id': str(bulk_enrollment_job.uuid)}, status=status.HTTP_201_CREATED)
 
 
 class LicenseSubsidyView(LicenseBaseView):
