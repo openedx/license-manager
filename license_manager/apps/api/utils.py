@@ -1,9 +1,12 @@
 """ Utility functions. """
 import uuid
+import os
 
 from django.shortcuts import get_object_or_404
 from edx_rbac.utils import get_decoded_jwt
 from rest_framework.exceptions import ParseError
+
+import boto3
 
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import (
@@ -156,3 +159,47 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
                     missing_subscriptions[email] = [course_key]
 
     return missing_subscriptions, licensed_enrollment_info
+
+
+def upload_file_to_s3(file_name, bucket, object_name=None):
+    """Upload a file to an S3 bucket
+
+    :param file_name: File to upload
+    :param bucket: Bucket to upload to
+    :param object_name: S3 object name. If not specified then file_name is used
+    :return: URL of object uploaded or raises botocore.exceptions.ClientError
+    """
+
+    # If S3 object_name was not specified, use file_name
+    if object_name is None:
+        object_name = os.path.basename(file_name)
+
+    # Upload the file
+    s3_client = boto3.client('s3')
+    s3_client.upload_file(file_name, bucket, object_name)
+
+    # https://stackoverflow.com/a/56090535
+    # https://aws.amazon.com/fr/blogs/aws/amazon-s3-path-deprecation-plan-the-rest-of-the-story/
+    return f'''https://{bucket}.s3.amazonaws.com/{urllib.parse.quote(object_name, safe="~()*!.'")}'''
+
+
+def create_presigned_url(bucket_name, object_name, expiration=3600):
+    """Generate a presigned URL to share an S3 object
+
+    :param bucket_name: string
+    :param object_name: string
+    :param expiration: Time in seconds for the presigned URL to remain valid
+    :return: Presigned URL as string or raises botocore.exceptions.ClientError
+    """
+
+    # Generate a presigned URL for the S3 object
+    s3_client = boto3.client('s3')
+
+    response = s3_client.generate_presigned_url('get_object',
+                                                Params={'Bucket': bucket_name,
+                                                        'Key': object_name},
+                                                ExpiresIn=expiration)
+
+    # The response contains the presigned URL
+    return response
+

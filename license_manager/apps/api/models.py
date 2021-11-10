@@ -3,6 +3,7 @@
 # specific to a particular version of the API. In this case, the models
 # in question should be moved to versioned sub-package.
 
+import datetime
 from uuid import uuid4
 
 from django.db import models
@@ -10,6 +11,11 @@ from model_utils.models import TimeStampedModel
 
 from license_manager.apps.api.tasks import (
     enterprise_enrollment_license_subsidy_task,
+)
+
+from license_manager.apps.api.utils import (
+    upload_file_to_s3,
+    create_presigned_url,
 )
 
 class BulkEnrollmentJob(TimeStampedModel):
@@ -35,8 +41,25 @@ class BulkEnrollmentJob(TimeStampedModel):
         null=True,
     )
 
+    results_s3_object_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        unique=False,
+    )
+
     @classmethod
     def create_bulk_enrollment_job(enqueuing_user_id, enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid = None):
         bej = BulkEnrollmentJob(enterprise_customer_uuid=enterprise_customer_uuid,lms_user_id=enqueuing_user_id).save()
         enterprise_enrollment_license_subsidy_task.delay(str(bej.uuid), enterprise_uuid, user_emails, course_run_keys, notify_learners,subscription_uuid)
         return bje
+
+    def upload_results(file_name):
+        self.results_s3_object_name = f'{self.uuid}/{datetime.datetime.utcnow().isoformat()}.csv'
+        results_object_uri = upload_file_to_s3(file_name, bucket, object_name=self.results_s3_object_name)
+        self.save()
+        return results_object_uri
+
+    def generate_download_url():
+        return create_presigned_url(bucket_name, self.results_s3_object_name)
+
