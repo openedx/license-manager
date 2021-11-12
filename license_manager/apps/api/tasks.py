@@ -322,6 +322,39 @@ def revoke_all_licenses_task(subscription_uuid):
         subscriptions_api.execute_post_revocation_tasks(**result)
 
 
+def _send_bulk_enrollment_results_email(
+    bulk_enrollment_job,
+    campaign_id,
+):
+    """
+    Sends email with properties required to detail the results of a bulk enrollment job.
+
+    Arguments:
+        bulk_enrollment_job (BulkEnrollmentJob): the completed bulk enrollment job
+        campaign_id: (str): The Braze campaign identifier
+        emails: (list of str): List of recipients to send the email to
+
+    """
+
+    try:
+        braze_client = BrazeApiClient()
+        braze_client.send_campaign_message(
+            campaign_id,
+            emails=emails,
+            trigger_properties={
+                'subscription_plan_title': subscription_details['title'],
+                'enterprise_customer_name': subscription_details['enterprise_customer_name'],
+                'num_allocated_licenses': subscription_details['num_allocated_licenses'],
+                'num_licenses': subscription_details['num_licenses']
+            }
+        )
+        msg = f'Sent {campaign_id} email for BulkEnrollmentJob result {bulk_enrollment_job.uuid} to {len(emails)} admins.'
+        logger.info(msg)
+    except Exception as ex:
+        msg = f'Failed to send {campaign_id} email for BulkEnrollmentJob result {bulk_enrollment_job.uuid} to {len(emails)} admins.'
+        logger.error(msg, exc_info=True)
+        raise ex
+
 @shared_task(base=LoggedTask)
 def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid, learner_emails, course_run_keys, notify_learners, subscription_uuid=None):
     """
@@ -394,7 +427,10 @@ def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid,
 
         result_file.close()
         bulk_enrollment_job.upload_results(result_file.name)
-        # TODO trigger email notification
+        _send_bulk_enrollment_results_email(
+            bulk_enrollment_job=bulk_enrollment_job,
+            campaign_id=settings.BULK_ENROLLMENT_RESULT_CAMPAIGN, # TODO
+        )
     finally:
         result_file.close()
         os.unlink(result_file.name)
