@@ -163,10 +163,12 @@ class RenewalProcessingTests(TestCase):
         with freezegun.freeze_time(NOW):
             api.renew_subscription(renewal)
 
+        original_plan = renewal.prior_subscription_plan
         future_plan.refresh_from_db()
         self.assertTrue(renewal.processed)
         self.assertEqual(renewal.processed_datetime, NOW)
         self.assertEqual(future_plan.num_licenses, renewal.number_of_licenses)
+        self.assertEqual(original_plan.product_id, future_plan.product_id)
         self._assert_all_licenses_renewed(future_plan)
 
     @ddt.data(
