@@ -358,6 +358,7 @@ SUPPORT_SITE_URL = os.environ.get('SUPPORT_SITE_URL', '')
 # Bulk enroll specific
 BULK_ENROLL_REQUEST_TIMEOUT_SECONDS = os.environ.get('BULK_ENROLL_REQUEST_TIMEOUT_SECONDS', 180)
 BULK_ENROLL_REQUEST_LIMIT = os.environ.get('BULK_ENROLL_REQUEST_LIMIT', 500)
+BULK_ENROLL_JOB_AWS_BUCKET = os.environ.get('BULK_ENROLL_JOB_AWS_BUCKET', 'test-bucket')
 
 # Set up system-to-feature roles mapping for edx-rbac
 SYSTEM_TO_FEATURE_ROLE_MAPPING = {

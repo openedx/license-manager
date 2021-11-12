@@ -10,6 +10,7 @@ from django.db import transaction
 
 import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api import utils
+from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
     PENDING_ACCOUNT_CREATION_BATCH_SIZE,
@@ -278,6 +279,7 @@ def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid,
     # collect/return results (rather than just write to the CSV) to help testability
     results = []
 
+    bulk_enrollment_job = BulkEnrollmentJob.objects.get(uuid=job_id)
     customer_agreement = CustomerAgreement.objects.get(enterprise_customer_uuid=enterprise_customer_uuid)
 
     # this is to avoid hitting timeouts on the enterprise enroll api
@@ -328,7 +330,9 @@ def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid,
         result_writer.writerow(['email address', 'course key', 'enrollment status', 'notes'])
         for result in results:
             result_writer.writerow(result)
-        # TODO upload to s3
+
+        result_file.close()
+        bulk_enrollment_job.upload_results(result_file.name)
         # TODO trigger email notification
     finally:
         result_file.close()
