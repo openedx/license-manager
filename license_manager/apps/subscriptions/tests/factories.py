@@ -15,6 +15,7 @@ from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
     PlanType,
+    Product,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
@@ -67,6 +68,18 @@ class PlanTypeFactory(factory.django.DjangoModelFactory):
         model = PlanType
 
 
+class ProductFactory(factory.django.DjangoModelFactory):
+    """
+    Test factory for the `Product` model.
+    """
+    name = 'Test Product'
+    description = 'Test Product'
+    plan_type_id = 4
+
+    class Meta:
+        model = Product
+
+
 class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     """
     Test factory for the `SubscriptionPlan` model.
@@ -92,6 +105,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     # By default, all the subscription plans created are Test type,
     # though this can be overridden to test others
     plan_type_id = 4
+    product = factory.SubFactory(ProductFactory)
     can_freeze_unused_licenses = False
     should_auto_apply_licenses = False
 

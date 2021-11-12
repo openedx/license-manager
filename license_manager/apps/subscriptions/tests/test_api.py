@@ -97,21 +97,20 @@ class RenewalProcessingTests(TestCase):
 
     def test_renewal_processed_with_no_existing_future_plan(self):
         prior_plan = SubscriptionPlanFactory()
-        original_activated_licenses = [
+
+        for i in range(5):
             LicenseFactory.create(
                 subscription_plan=prior_plan,
                 status=constants.ACTIVATED,
                 user_email='activated_user_{}@example.com'.format(i)
-            ) for i in range(5)
-        ]
-        original_assigned_licenses = [
+            )
+
+        for i in range(5):
             LicenseFactory.create(
                 subscription_plan=prior_plan,
                 status=constants.ASSIGNED,
                 user_email='assigned_user_{}@example.com'.format(i)
-            ) for i in range(5)
-        ]
-        original_licenses = original_activated_licenses + original_assigned_licenses
+            )
 
         renewal = SubscriptionPlanRenewalFactory(
             prior_subscription_plan=prior_plan,
@@ -123,21 +122,23 @@ class RenewalProcessingTests(TestCase):
             api.renew_subscription(renewal)
 
         renewal.refresh_from_db()
+        original_plan = renewal.prior_subscription_plan
         future_plan = renewal.renewed_subscription_plan
         self.assertTrue(renewal.processed)
         self.assertEqual(renewal.processed_datetime, NOW)
+        self.assertEqual(original_plan.product_id, future_plan.product_id)
         self.assertEqual(future_plan.num_licenses, renewal.number_of_licenses)
         self._assert_all_licenses_renewed(future_plan)
 
     def test_renewal_processed_with_existing_future_plan(self):
         prior_plan = SubscriptionPlanFactory()
-        original_licenses = [
+
+        for i in range(5):
             LicenseFactory.create(
                 subscription_plan=prior_plan,
                 status=constants.ACTIVATED,
                 user_email='activated_user_{}@example.com'.format(i)
-            ) for i in range(5)
-        ]
+            )
 
         # create some revoked original licenses that should not be renewed
         LicenseFactory.create_batch(
@@ -222,11 +223,12 @@ class RenewalProcessingTests(TestCase):
     @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
     def test_renewal_processed_segment_events(self, mock_track_event):
         prior_plan = SubscriptionPlanFactory()
-        [LicenseFactory.create(
+
+        LicenseFactory.create(
             subscription_plan=prior_plan,
             status=constants.ACTIVATED,
             user_email='activated_user_{}@example.com'
-        )]
+        )
 
         renewal = SubscriptionPlanRenewalFactory(
             prior_subscription_plan=prior_plan,
@@ -242,11 +244,12 @@ class RenewalProcessingTests(TestCase):
     @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
     def test_renewal_processed_segment_events_is_auto_renewed(self, mock_track_event):
         prior_plan = SubscriptionPlanFactory()
-        [LicenseFactory.create(
+
+        LicenseFactory.create(
             subscription_plan=prior_plan,
             status=constants.ACTIVATED,
             user_email='activated_user_{}@example.com'
-        )]
+        )
 
         renewal = SubscriptionPlanRenewalFactory(
             prior_subscription_plan=prior_plan,

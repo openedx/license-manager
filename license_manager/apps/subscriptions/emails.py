@@ -35,7 +35,7 @@ def send_revocation_cap_notification_email(subscription_plan, enterprise_name, e
         'NUM_REVOCATIONS_APPLIED': subscription_plan.num_revocations_applied,
         'RECIPIENT_EMAIL': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
         'HIDE_EMAIL_FOOTER_MARKETING': True,
-        'SUBSCRIPTION_PLAN_TYPE': subscription_plan.plan_type.id,
+        'SUBSCRIPTION_PLAN_TYPE': subscription_plan.product.plan_type_id,
     }
     email = _message_from_context_and_template(context, enterprise_sender_alias, reply_to_email)
     email.send()
@@ -165,11 +165,7 @@ def _get_plan_email_template_row(context):
         ).get()
     else:
         plan_type_id = context.get('SUBSCRIPTION_PLAN_TYPE', None)
-        # TODO: this can go away once every subscription plan is guaranteed to have an associated plan type
-        if not plan_type_id:
-            plan_type = PlanType.objects.get(label='Standard Paid')
-        else:
-            plan_type = PlanType.objects.get(id=plan_type_id)
+        plan_type = PlanType.objects.get(id=plan_type_id)
 
         plan_email_template = PlanEmailTemplates.objects.get(
             template_type=template_type,

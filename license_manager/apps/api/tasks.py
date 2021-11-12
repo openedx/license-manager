@@ -60,7 +60,7 @@ def activation_email_task(custom_template_text, email_recipient_list, subscripti
     """
     subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
     pending_licenses = subscription_plan.licenses.filter(user_email__in=email_recipient_list).order_by('uuid')
-    subscription_plan_type = subscription_plan.plan_type.id if subscription_plan.plan_type else None
+    subscription_plan_type = subscription_plan.product.plan_type_id
     enterprise_api_client = EnterpriseApiClient()
     enterprise_customer = enterprise_api_client.get_enterprise_customer_data(subscription_plan.enterprise_customer_uuid)
     enterprise_slug = enterprise_customer.get('slug')
@@ -112,7 +112,7 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
             with or will be associated with.
     """
     subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
-    subscription_plan_type = subscription_plan.plan_type.id if subscription_plan.plan_type else None
+    subscription_plan_type = subscription_plan.product.plan_type_id
     pending_licenses = subscription_plan.licenses.filter(user_email__in=email_recipient_list).order_by('uuid')
     enterprise_api_client = EnterpriseApiClient()
     enterprise_customer = enterprise_api_client.get_enterprise_customer_data(subscription_plan.enterprise_customer_uuid)

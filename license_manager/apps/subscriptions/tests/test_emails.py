@@ -32,7 +32,7 @@ class EmailTests(TestCase):
         self.enterprise_name = 'Mock Enterprise'
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
         self.reply_to_email = 'edx@example.com'
-        self.subscription_plan_type = self.subscription.plan_type.id
+        self.subscription_plan_type = self.subscription.product.plan_type_id
 
     def test_send_activation_emails(self):
         """
