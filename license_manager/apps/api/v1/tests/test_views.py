@@ -1099,9 +1099,8 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
             kwargs={'customer_agreement_uuid': cls.customer_agreement.uuid}
         )
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
-    def test_auto_apply_422_if_no_applicable_subscriptions(self, mock_activation_task, mock_link_learners_task):
+    @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
+    def test_auto_apply_422_if_no_applicable_subscriptions(self, mock_activation_task):
         """
         Endpoint should return 422 if no auto-applicable subscriptions are found.
         """
@@ -1118,11 +1117,9 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
 
         # Check whether tasks were run
         mock_activation_task.assert_not_called()
-        mock_link_learners_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
-    def test_auto_apply_422_if_no_licenses_on_applicable_plan(self, mock_activation_task, mock_link_learners_task):
+    @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
+    def test_auto_apply_422_if_no_licenses_on_applicable_plan(self, mock_activation_task):
         """
         Endpoint should return 422 if applicable subscriptions found, but not
         enough licenses.
@@ -1140,11 +1137,9 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
 
         # Check whether tasks were run
         mock_activation_task.assert_not_called()
-        mock_link_learners_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
-    def test_auto_apply_422_if_revoked_license_on_plan(self, mock_activation_task, mock_link_learners_task):
+    @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
+    def test_auto_apply_422_if_revoked_license_on_plan(self, mock_activation_task):
         """
         Endpoint should return 422 if applicable subscriptions found, license
         with revoked status for user found.
@@ -1176,11 +1171,9 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
 
         # Check whether tasks were run
         mock_activation_task.assert_not_called()
-        mock_link_learners_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
-    def test_auto_apply_200_if_active_or_assigned_license_on_plan(self, mock_activation_task, mock_link_learners_task):
+    @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
+    def test_auto_apply_200_if_active_or_assigned_license_on_plan(self, mock_activation_task):
         """
         Endpoint should return 200 if the plan in question already has an
         activated or assigned license associated with the user.
@@ -1214,11 +1207,9 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
 
         # Check whether tasks were run
         mock_activation_task.assert_not_called()
-        mock_link_learners_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
-    def test_auto_apply_endpoint_idempotent(self, mock_activation_task, mock_link_learners_task):
+    @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
+    def test_auto_apply_endpoint_idempotent(self, mock_activation_task):
         """
         Endpoint should only associate user with license on auto-applicable
         subscription once, even if you hit the end point a bunch of times.
@@ -1245,13 +1236,14 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         assert License.objects.filter(user_email=user_email).count() == 1
 
         # Check whether tasks were run
-        mock_activation_task.assert_called_once()
-        mock_link_learners_task.assert_called_once()
+        mock_activation_task.assert_called_once_with(
+            (self.customer_agreement.enterprise_customer_uuid, 'test@example.com'),
+            {}
+        )
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
     @mock.patch('license_manager.apps.api.v1.views.assign_new_licenses')
-    def test_auto_apply_422_if_DB_error(self, mock_assign_new_licenses, mock_activation_task, mock_link_learners_task):
+    def test_auto_apply_422_if_DB_error(self, mock_assign_new_licenses, mock_activation_task):
         """
         Endpoint should return 422 if database error occurs.
         """
@@ -1278,11 +1270,9 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
 
         # Check whether tasks were run
         mock_activation_task.assert_not_called()
-        mock_link_learners_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
-    def test_auto_apply_200_if_successful(self, mock_activation_task, mock_link_learners_task):
+    @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
+    def test_auto_apply_200_if_successful(self, mock_activation_task):
         """
         Endpoint should return 200 if applicable subscriptions found, and
         License successfully auto applied.
@@ -1312,8 +1302,10 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         assert plan.licenses.filter(auto_applied=True).count() == 1
 
         # Check whether tasks were run
-        mock_activation_task.assert_called_once()
-        mock_link_learners_task.assert_called_once()
+        mock_activation_task.assert_called_once_with(
+            (self.customer_agreement.enterprise_customer_uuid, 'test@example.com'),
+            {}
+        )
 
 
 @ddt.ddt

@@ -34,6 +34,7 @@ from license_manager.apps.api.tasks import (
     enterprise_enrollment_license_subsidy_task,
     link_learners_to_enterprise_task,
     revoke_all_licenses_task,
+    send_auto_applied_license_email_task,
     send_onboarding_email_task,
     send_reminder_email_task,
 )
@@ -236,10 +237,9 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
             logger.exception(error_message)
             return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         else:
-            link_and_notify_assigned_emails(
-                request.data,
-                plan,
-                [user_email],
+            send_auto_applied_license_email_task.delay(
+                customer_agreement.enterprise_customer_uuid,
+                user_email
             )
 
         # Serialize the License we created to be returned in response

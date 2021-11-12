@@ -4,17 +4,24 @@ from tempfile import NamedTemporaryFile
 import csv
 import os
 
+from braze.client import BrazeClient
 from celery import shared_task
 from celery_utils.logged_task import LoggedTask
+from django.conf import settings
 from django.db import transaction
+from django.utils.dateparse import parse_datetime
 
 import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api import utils
 from license_manager.apps.api.models import BulkEnrollmentJob
+from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
+    NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD,
     PENDING_ACCOUNT_CREATION_BATCH_SIZE,
     REVOCABLE_LICENSE_STATUSES,
+    WEEKLY_UTILIZATION_EMAIL_INTERLUDE,
+    NotificationChoices,
 )
 from license_manager.apps.subscriptions.emails import (
     send_activation_emails,
@@ -24,12 +31,14 @@ from license_manager.apps.subscriptions.emails import (
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
+    Notification,
     SubscriptionPlan,
 )
 from license_manager.apps.subscriptions.utils import (
     chunks,
     get_enterprise_reply_to_email,
     get_enterprise_sender_alias,
+    localized_utcnow,
 )
 
 
@@ -147,6 +156,58 @@ def send_onboarding_email_task(enterprise_customer_uuid, user_email, subscriptio
         send_onboarding_email(enterprise_customer_uuid, user_email, subscription_plan_type)
     except SMTPException:
         logger.error('Onboarding email to {} failed'.format(user_email), exc_info=True)
+
+
+@shared_task(base=LoggedTask)
+def send_auto_applied_license_email_task(enterprise_customer_uuid, user_email):
+    """
+    Asynchronously sends onboarding email to learner. Intended for use following automatic license activation.
+
+    Uses Braze client to send email via Braze campaign.
+    """
+    try:
+        # Get some info about the enterprise customer
+        enterprise_api_client = EnterpriseApiClient()
+        enterprise_customer = enterprise_api_client.get_enterprise_customer_data(enterprise_customer_uuid)
+        enterprise_slug = enterprise_customer.get('slug')
+        enterprise_name = enterprise_customer.get('name')
+        learner_portal_search_enabled = enterprise_customer.get('enable_integrated_customer_learner_portal_search')
+        identity_provider = enterprise_customer.get('identity_provider')
+    except Exception:
+        message = (
+            f'Error getting data about the enterprise_customer {enterprise_customer_uuid}. '
+            f'Onboarding email to {user_email} for auto applied license failed.'
+        )
+        logger.error(message, exc_info=True)
+        return
+
+    # Determine which email campaign to use
+    if identity_provider and learner_portal_search_enabled is False:
+        braze_campaign_id = settings.AUTOAPPLY_NO_LEARNER_PORTAL_CAMPAIGN
+    else:
+        braze_campaign_id = settings.AUTOAPPLY_WITH_LEARNER_PORTAL_CAMPAIGN
+
+    # Form data we want to hand to the campaign's email template
+    braze_trigger_properties = {
+        'enterprise_customer_slug': enterprise_slug,
+        'enterprise_customer_name': enterprise_name,
+    }
+
+    try:
+        # Hit the Braze api to send the email
+        braze_client_instance = BrazeApiClient()
+        braze_client_instance.send_campaign_message(
+            braze_campaign_id,
+            emails=[user_email],
+            trigger_properties=braze_trigger_properties,
+        )
+
+    except Exception:
+        message = (
+            'Error hitting Braze API. '
+            f'Onboarding email to {user_email} for auto applied license failed.'
+        )
+        logger.error(message, exc_info=True)
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -339,3 +400,166 @@ def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid,
         os.unlink(result_file.name)
 
     return results
+
+
+def _send_license_utilization_email(
+    subscription_details,
+    campaign_id,
+    emails
+):
+    """
+    Sends email with properties required to detail license utilization.
+
+    Arguments:
+        subscription_details (dict): Dictionary containing subscription details in the format of
+            {
+                'uuid': uuid,
+                'title': str,
+                'enterprise_customer_uuid': str,
+                'enterprise_customer_name': str,
+                'num_allocated_licenses': str,
+                'num_licenses': num,
+                'highest_utilization_threshold_reached': num
+            }
+        campaign_id: (str): The Braze campaign identifier
+        emails: (list of str): List of recipients to send the email to
+
+    """
+
+    subscription_uuid = subscription_details['uuid']
+    try:
+        braze_client = BrazeApiClient()
+        braze_client.send_campaign_message(
+            campaign_id,
+            emails=emails,
+            trigger_properties={
+                'subscription_plan_title': subscription_details['title'],
+                'enterprise_customer_name': subscription_details['enterprise_customer_name'],
+                'num_allocated_licenses': subscription_details['num_allocated_licenses'],
+                'num_licenses': subscription_details['num_licenses']
+            }
+        )
+        msg = f'Sent {campaign_id} email for subscription {subscription_uuid} to {len(emails)} admins.'
+        logger.info(msg)
+    except Exception as ex:
+        msg = f'Failed to send {campaign_id} email for subscription {subscription_uuid} to {len(emails)} admins.'
+        logger.error(msg, exc_info=True)
+        raise ex
+
+
+@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+def send_weekly_utilization_email_task(subscription_details, recipients):
+    """
+    Sends email to admins detailing license utilization for a subscription plan.
+
+    Arguments:
+        subscription_details (dict): Dictionary containing subscription details in the format of
+            {
+                'uuid': uuid,
+                'title': str,
+                'enterprise_customer_uuid': str,
+                'enterprise_customer_name': str,
+                'num_allocated_licenses': str,
+                'num_licenses': num,
+                'highest_utilization_threshold_reached': num
+            }
+        recipients (list of dict): List of recipients to send the emails to in the format of
+            {
+                'ecu_id': str,
+                'email': str,
+                'created': str
+            }
+    """
+    if not recipients:
+        return
+
+    now = localized_utcnow()
+    emails = []
+
+    with transaction.atomic():
+
+        # determine eligibility for weekly email
+        for recipient in recipients:
+            activation_date = parse_datetime(recipient['created'])
+
+            user_is_eligible = (now - activation_date).days >= WEEKLY_UTILIZATION_EMAIL_INTERLUDE
+
+            if not user_is_eligible:
+                continue
+
+            notification, created = Notification.objects.get_or_create(
+                enterprise_customer_uuid=subscription_details['enterprise_customer_uuid'],
+                enterprise_customer_user_uuid=recipient['ecu_id'],
+                subscripton_plan_id=subscription_details['uuid'],
+                notification_type=NotificationChoices.PERIODIC_INFORMATIONAL
+            )
+
+            user_has_not_received_email_for_week = created or (now - notification.last_sent).days >= WEEKLY_UTILIZATION_EMAIL_INTERLUDE
+
+            if user_has_not_received_email_for_week:
+                emails.append(recipient['email'])
+                notification.last_sent = now
+                notification.save()
+
+        if emails:
+            # will raise exception and roll back changes if error occurs
+            _send_license_utilization_email(
+                subscription_details=subscription_details,
+                campaign_id=settings.WEEKLY_LICENSE_UTILIZATION_CAMPAIGN,
+                emails=emails
+            )
+
+
+@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+def send_utilization_threshold_reached_email_task(subscription_details, recipients):
+    """
+    Sends email to admins if a license utilization threshold for a subscription plan has been reached.
+
+    Arguments:
+        subscription_details (dict): Dictionary containing subscription details in the format of
+            {
+                'uuid': uuid,
+                'title': str,
+                'enterprise_customer_uuid': str,
+                'enterprise_customer_name': str,
+                'num_allocated_licenses': str,
+                'num_licenses': num,
+                'highest_utilization_threshold_reached': num
+            }
+        recipients (list of dict): List of recipients to send the emails to in the format of
+            {
+                'ecu_id': str,
+                'email': str,
+                'created': str
+            }
+    """
+
+    if not recipients:
+        return
+
+    # only send email for the highest threshold reached
+    highest_utilization_threshold_reached = subscription_details['highest_utilization_threshold_reached']
+    if highest_utilization_threshold_reached is not None:
+        emails = []
+
+        notification_type, campaign = NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD[highest_utilization_threshold_reached]
+
+        with transaction.atomic():
+            for recipient in recipients:
+                _, created = Notification.objects.get_or_create(
+                    enterprise_customer_uuid=subscription_details['enterprise_customer_uuid'],
+                    enterprise_customer_user_uuid=recipient['ecu_id'],
+                    subscripton_plan_id=subscription_details['uuid'],
+                    notification_type=notification_type
+                )
+
+                # created means the email for this threshold has not been sent yet
+                if created:
+                    emails.append(recipient['email'])
+            if emails:
+                # will raise exception and roll back changes if error occurs
+                _send_license_utilization_email(
+                    subscription_details=subscription_details,
+                    campaign_id=getattr(settings, campaign),
+                    emails=emails
+                )
