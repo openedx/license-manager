@@ -160,8 +160,6 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'expiration_date',
         'enterprise_catalog_uuid',
         'salesforce_opportunity_id',
-        'netsuite_product_id',
-        'plan_type',
         'product',
         'revoke_max_percentage',
         'is_revocation_cap_enabled',
@@ -248,6 +246,10 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         # If a uuid is not specified on the subscription itself, use the default one for the CustomerAgreement
         customer_agreement_catalog = obj.customer_agreement.default_enterprise_catalog_uuid
         obj.enterprise_catalog_uuid = (obj.enterprise_catalog_uuid or customer_agreement_catalog)
+
+        # assign netsuite_id using and plan_type using product until column is fully deprecated
+        obj.netsuite_product_id = obj.product.netsuite_id
+        obj.plan_type = obj.product.plan_type
 
         # Create licenses to be associated with the subscription plan after creating the subscription plan
         num_new_licenses = form.cleaned_data.get('num_licenses', 0) - obj.num_licenses

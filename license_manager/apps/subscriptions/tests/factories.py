@@ -15,6 +15,7 @@ from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
     PlanType,
+    Product,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
@@ -67,6 +68,18 @@ class PlanTypeFactory(factory.django.DjangoModelFactory):
         model = PlanType
 
 
+class ProductFactory(factory.django.DjangoModelFactory):
+    """
+    Test factory for the `Product` model.
+    """
+    name = 'Test Product'
+    description = 'Test Product'
+    plan_type = factory.SubFactory(PlanTypeFactory)
+
+    class Meta:
+        model = Product
+
+
 class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     """
     Test factory for the `SubscriptionPlan` model.
@@ -89,6 +102,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     enterprise_catalog_uuid = factory.LazyFunction(uuid4)
     netsuite_product_id = factory.Faker('random_int')
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
+    product = factory.SubFactory(ProductFactory)
     # By default, all the subscription plans created are Test type,
     # though this can be overridden to test others
     plan_type_id = 4

@@ -17,6 +17,8 @@ from license_manager.apps.subscriptions.forms import (
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
+    PlanTypeFactory,
+    ProductFactory,
     SubscriptionPlanFactory,
     get_random_salesforce_id,
 )
@@ -36,7 +38,8 @@ def make_bound_subscription_form(
     num_licenses=0,
     is_active=False,
     for_internal_use_only=False,
-    plan_type=None,
+    has_product=True,
+    is_sf_id_required=False,
     has_customer_agreement=True,
     customer_agreement_has_default_catalog=True,
     change_reason="new"
@@ -49,13 +52,16 @@ def make_bound_subscription_form(
     else:
         customer_agreement = CustomerAgreementFactory(default_enterprise_catalog_uuid=None)
 
+    product = ProductFactory(plan_type=PlanTypeFactory(sf_id_required=is_sf_id_required))
+
     form_data = {
         'title': title,
         'start_date': start_date,
         'expiration_date': expiration_date,
         'enterprise_catalog_uuid': enterprise_catalog_uuid,
+        'product': product.id if has_product else None,
         'netsuite_product_id': netsuite_product_id,
-        'plan_type': plan_type.id,
+        'plan_type': product.plan_type.id,
         'salesforce_opportunity_id': salesforce_opportunity_id,
         'num_licenses': num_licenses,
         'is_active': is_active,
