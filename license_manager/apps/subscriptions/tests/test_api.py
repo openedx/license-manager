@@ -91,6 +91,7 @@ class RenewalProcessingTests(TestCase):
             self.assertEqual(future_license.status, original_license.status)
             self.assertEqual(future_license.user_email, original_license.user_email)
             self.assertEqual(future_license.lms_user_id, original_license.lms_user_id)
+            self.assertEqual(future_license.product_id, original_license.produt_id)
             if original_license.status == constants.ACTIVATED:
                 self.assertEqual(future_license.activation_date, expected_activation_datetime)
             self.assertEqual(future_license.assigned_date, NOW)
