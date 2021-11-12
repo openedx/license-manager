@@ -7,7 +7,7 @@ from license_manager.apps.api_client.enterprise_catalog import (
     EnterpriseCatalogApiClient,
 )
 from license_manager.apps.subscriptions import constants
-from license_manager.apps.subscriptions.models import SubscriptionPlan
+from license_manager.apps.subscriptions.models import Product, SubscriptionPlan
 from license_manager.apps.subscriptions.utils import chunks
 
 
@@ -26,6 +26,7 @@ class Command(BaseCommand):
             expiration_processed=False,
             for_internal_use_only=False,
         )
+
         distinct_catalog_uuids = [
             str(uuid) for uuid in customer_subs.values_list('enterprise_catalog_uuid', flat=True).distinct()
         ]
@@ -42,7 +43,7 @@ class Command(BaseCommand):
         # Calculate the number of customer types using the distinct number of Netsuite
         # product IDs found among customer subscriptions. If the number of distinct catalog
         # query IDs doesn't match the number of customer types, log an error.
-        num_customer_types = customer_subs.values_list('netsuite_product_id', flat=True).distinct().count()
+        num_customer_types = Product.objects.all().values_list('netsuite_id', flat=True).distinct().count()
         summary = '{} distinct Subscription Catalog Queries found, {} expected.'.format(
             len(distinct_catalog_query_ids),
             num_customer_types,

@@ -11,11 +11,13 @@ from license_manager.apps.subscriptions.admin import (
 )
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
+    Product,
     SubscriptionPlan,
 )
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     PlanTypeFactory,
+    ProductFactory,
     SubscriptionPlanFactory,
     UserFactory,
 )
@@ -31,11 +33,11 @@ def test_licenses_subscription_creation():
     Verify that creating a SubscriptionPlan creates its associated Licenses after it is created.
     """
     subscription_admin = SubscriptionPlanAdmin(SubscriptionPlan, AdminSite())
+    product = ProductFactory()
     request = RequestFactory()
     request.user = UserFactory()
-    plan_type = PlanTypeFactory.create()
     num_licenses = 5
-    form = make_bound_subscription_form(num_licenses=num_licenses, plan_type=plan_type)
+    form = make_bound_subscription_form(num_licenses=num_licenses, product=product)
     obj = form.save()  # Get the object returned from saving the form to save to the database
     assert obj.licenses.count() == 0  # Verify no Licenses have been created yet
     change = False

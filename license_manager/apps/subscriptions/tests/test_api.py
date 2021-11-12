@@ -91,7 +91,6 @@ class RenewalProcessingTests(TestCase):
             self.assertEqual(future_license.status, original_license.status)
             self.assertEqual(future_license.user_email, original_license.user_email)
             self.assertEqual(future_license.lms_user_id, original_license.lms_user_id)
-            self.assertEqual(future_license.product_id, original_license.produt_id)
             if original_license.status == constants.ACTIVATED:
                 self.assertEqual(future_license.activation_date, expected_activation_datetime)
             self.assertEqual(future_license.assigned_date, NOW)
@@ -164,12 +163,10 @@ class RenewalProcessingTests(TestCase):
         with freezegun.freeze_time(NOW):
             api.renew_subscription(renewal)
 
-        original_plan = renewal.prior_subscription_plan
         future_plan.refresh_from_db()
         self.assertTrue(renewal.processed)
         self.assertEqual(renewal.processed_datetime, NOW)
         self.assertEqual(future_plan.num_licenses, renewal.number_of_licenses)
-        self.assertEqual(original_plan.product_id, future_plan.product_id)
         self._assert_all_licenses_renewed(future_plan)
 
     @ddt.data(

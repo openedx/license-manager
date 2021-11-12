@@ -8,7 +8,9 @@ from django.test import TestCase
 from license_manager.apps.subscriptions.management.commands.validate_num_catalog_queries import (
     InvalidCatalogQueryMappingError,
 )
+from license_manager.apps.subscriptions.models import Product
 from license_manager.apps.subscriptions.tests.factories import (
+    ProductFactory,
     SubscriptionPlanFactory,
 )
 
@@ -36,7 +38,8 @@ class ValidateQueryMappingTaskTests(TestCase):
         """
         # Arbitrary number of subscriptions ("correct" number)
         num_subs = 3
-        SubscriptionPlanFactory.create_batch(num_subs)
+        for i in range(num_subs):
+            SubscriptionPlanFactory.create(product=ProductFactory(netsuite_id=i))
         if is_valid:
             log_level = 'INFO'
             num_queries_found = num_subs

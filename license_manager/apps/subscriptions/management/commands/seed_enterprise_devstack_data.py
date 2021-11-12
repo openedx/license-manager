@@ -6,6 +6,7 @@ Management command for seeding devstack with licenses and subscriptions for deve
 import logging
 from datetime import timedelta
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -13,7 +14,7 @@ from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
-    PlanType,
+    Product,
     SubscriptionPlan,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
@@ -97,6 +98,9 @@ class Command(BaseCommand):
         """
         Creates a SubscriptionPlan for a customer.
         """
+
+        # populate products first
+        call_command('seed_development_data')
         timestamp = localized_utcnow()
         new_plan = SubscriptionPlan(
             title='Seed Generated Plan from {} {}'.format(customer_agreement, timestamp),
@@ -106,9 +110,7 @@ class Command(BaseCommand):
             expiration_date=timestamp + timedelta(days=365),
             is_active=True,
             for_internal_use_only=True,
-            netsuite_product_id=0,
-            salesforce_opportunity_id=123456789123456789,
-            plan_type=PlanType.objects.get(label="Standard Paid"),
+            product=Product.objects.get(name="B2B Paid")
         )
         with transaction.atomic():
             new_plan.save()
