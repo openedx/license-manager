@@ -40,7 +40,9 @@ from license_manager.apps.subscriptions.tests.utils import (
     make_test_email_data,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
-
+from license_manager.apps.api.tests.factories import (
+    BulkEnrollmentJobFactory,
+)
 
 @ddt.ddt
 class EmailTaskTests(TestCase):
@@ -361,6 +363,11 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
             subscription_plan=cls.active_subscription_for_customer,
         )
 
+        cls.bulk_enrollment_job = BulkEnrollmentJobFactory.create(
+            enterprise_customer_uuid=cls.enterprise_customer_uuid,
+            lms_user_id=cls.lms_user_id,
+        )
+
     def tearDown(self):
         super().tearDown()
         License.objects.all().delete()
@@ -391,7 +398,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
             'notify': True
         }
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
 
         mock_bulk_enroll_enterprise_learners.assert_called_with(
             str(self.enterprise_customer_uuid),
@@ -406,7 +413,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
     def test_bulk_enroll_revoked_license(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
         # random, non-existant subscription uuid
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user2.email], [self.course_key], True, uuid4())
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user2.email], [self.course_key], True, uuid4())
         mock_bulk_enroll_enterprise_learners.assert_not_called()
         assert len(results) == 1
         assert results[0][2] == 'failed'
@@ -424,7 +431,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_enrollment_response.status_code = 201
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
 
         assert len(results) == 1
         assert results[0][2] == 'failed'
@@ -442,7 +449,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_enrollment_response.status_code = 202
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
 
         assert len(results) == 1
         assert results[0][2] == 'pending'
@@ -459,7 +466,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_enrollment_response.status_code = 201
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
 
         assert len(results) == 1
         assert results[0][2] == 'failed'

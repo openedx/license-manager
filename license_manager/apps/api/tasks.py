@@ -366,24 +366,24 @@ def _send_bulk_enrollment_results_email(
         raise ex
 
 @shared_task(base=LoggedTask)
-def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid, learner_emails, course_run_keys, notify_learners, subscription_uuid=None):
+def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterprise_customer_uuid, learner_emails, course_run_keys, notify_learners, subscription_uuid=None):
     """
     Enroll a list of enterprise learners into a list of course runs with or without notifying them. Optionally, filter license check by a specific subscription.
 
     Arguments:
-        job_id (str): UUID (string representation) for a BulkEnrollmentJob created by the enqueuing process for logging and progress tracking table updates.
+        bulk_enrollment_job_uuid (str): UUID (string representation) for a BulkEnrollmentJob created by the enqueuing process for logging and progress tracking table updates.
         enterprise_customer_uuid (str): UUID (string representation) the enterprise customer id
         learner_emails (list(str)): email addresses of the learners to enroll
         course_run_keys (list(str)): course keys of the courses to enroll the learners into
         notify_learners (bool): whether or not to send notifications of their enrollment to the learners
         subscription_uuid (str): UUID (string representation) of the specific enterprise subscription to use when validating learner licenses
     """
-    logger.info("starting job_id={} enterprise_enrollment_license_subsidy_task for enterprise_customer_uuid={}".format(job_id, enterprise_customer_uuid))
+    logger.info("starting bulk_enrollment_job_uuid={} enterprise_enrollment_license_subsidy_task for enterprise_customer_uuid={}".format(bulk_enrollment_job_uuid, enterprise_customer_uuid))
 
     # collect/return results (rather than just write to the CSV) to help testability
     results = []
 
-    bulk_enrollment_job = BulkEnrollmentJob.objects.get(uuid=job_id)
+    bulk_enrollment_job = BulkEnrollmentJob.objects.get(pk=bulk_enrollment_job_uuid)
     customer_agreement = CustomerAgreement.objects.get(enterprise_customer_uuid=enterprise_customer_uuid)
 
     # this is to avoid hitting timeouts on the enterprise enroll api
@@ -436,7 +436,6 @@ def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid,
             result_writer.writerow(result)
 
         result_file.close()
-        bulk_enrollment_job.upload_results(result_file.name)
         _send_bulk_enrollment_results_email(
             bulk_enrollment_job=bulk_enrollment_job,
             campaign_id=settings.BULK_ENROLLMENT_RESULT_CAMPAIGN,
