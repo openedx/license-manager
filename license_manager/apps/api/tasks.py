@@ -332,10 +332,9 @@ def _send_bulk_enrollment_results_email(
     Arguments:
         bulk_enrollment_job (BulkEnrollmentJob): the completed bulk enrollment job
         campaign_id: (str): The Braze campaign identifier
-        emails: (list of str): List of recipients to send the email to
 
     """
-
+    emails = []
     try:
 
         enterprise_api_client = EnterpriseApiClient()
@@ -436,10 +435,11 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
             result_writer.writerow(result)
 
         result_file.close()
-        _send_bulk_enrollment_results_email(
-            bulk_enrollment_job=bulk_enrollment_job,
-            campaign_id=settings.BULK_ENROLLMENT_RESULT_CAMPAIGN,
-        )
+        # TODO would normally feature gate this
+        # _send_bulk_enrollment_results_email(
+        #     bulk_enrollment_job=bulk_enrollment_job,
+        #     campaign_id=settings.BULK_ENROLL_RESULT_CAMPAIGN,
+        # )
     finally:
         result_file.close()
         os.unlink(result_file.name)
