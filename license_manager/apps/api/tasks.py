@@ -337,15 +337,25 @@ def _send_bulk_enrollment_results_email(
     """
 
     try:
+
+        enterprise_api_client = EnterpriseApiClient()
+        enterprise_customer = enterprise_api_client.get_enterprise_customer_data(
+            bulk_enrollment_job.enterprise_customer_uuid,
+        )
+
+        User = get_user_model()
+        user = User.objects.get(id=bulk_enrollment_job.lms_user_id)
+
+        emails = [user.email]
+
         braze_client = BrazeApiClient()
         braze_client.send_campaign_message(
             campaign_id,
             emails=emails,
             trigger_properties={
-                'subscription_plan_title': subscription_details['title'],
-                'enterprise_customer_name': subscription_details['enterprise_customer_name'],
-                'num_allocated_licenses': subscription_details['num_allocated_licenses'],
-                'num_licenses': subscription_details['num_licenses']
+                'enterprise_customer_slug': enterprise_customer.get('slug'),
+                'enterprise_customer_name': enterprise_customer.get('name'),
+                'bulk_enrollment_job_uuid': bulk_enrollment_job.uuid,
             }
         )
         msg = f'Sent {campaign_id} email for BulkEnrollmentJob result {bulk_enrollment_job.uuid} to {len(emails)} admins.'
@@ -429,7 +439,7 @@ def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid,
         bulk_enrollment_job.upload_results(result_file.name)
         _send_bulk_enrollment_results_email(
             bulk_enrollment_job=bulk_enrollment_job,
-            campaign_id=settings.BULK_ENROLLMENT_RESULT_CAMPAIGN, # TODO
+            campaign_id=settings.BULK_ENROLLMENT_RESULT_CAMPAIGN,
         )
     finally:
         result_file.close()

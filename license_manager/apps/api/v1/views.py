@@ -1044,6 +1044,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
     provided learners in all courses.
 
     POST /api/v1/bulk-license-enrollment
+    GET /api/v1/bulk-license-enrollment/<UUID>
 
     Required query param:
         - enterprise_customer_uuid (str): enterprise customer's uuid
