@@ -49,6 +49,9 @@ from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanRenewalFactory,
     UserFactory,
 )
+from license_manager.apps.api.tests.factories import (
+    BulkEnrollmentJobFactory,
+)
 from license_manager.apps.subscriptions.tests.utils import (
     assert_historical_pii_cleared,
     assert_license_fields_cleared,
@@ -2544,11 +2547,16 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
             user_email=cls.user.email,
             subscription_plan=cls.active_subscription_for_customer,
         )
+        cls.bulk_enrollment_job = BulkEnrollmentJobFactory.create(
+            enterprise_customer_uuid=cls.enterprise_customer_uuid,
+        )
+
 
     def _get_url_with_params(
         self,
         use_enterprise_customer=True,
         subscription_uuid=None,
+        bulk_enrollment_job_uuid=None,
     ):
         """
         Helper to add the appropriate query parameters to the base url if specified.
@@ -2560,6 +2568,8 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
             query_params['enterprise_customer_uuid'] = self.enterprise_customer_uuid
         if subscription_uuid:
             query_params['subscription_uuid'] = subscription_uuid
+        if bulk_enrollment_job_uuid:
+            query_params['bulk_enrollment_job_uuid'] = bulk_enrollment_job_uuid
         return url + '/?' + query_params.urlencode()
 
     def test_bulk_enroll_with_missing_role(self):
@@ -2639,6 +2649,13 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         assert response.status_code == 400
         assert response.json() == constants.BULK_ENROLL_TOO_MANY_ENROLLMENTS
 
+    @mock.patch('license_manager.apps.api.utils.create_presigned_url', return_value="https://example.com/download")
+    def test_bulk_enroll_status(self, mock_create_presigned_url):
+        self._assign_learner_roles()
+        url = self._get_url_with_params(bulk_enrollment_job_uuid=self.bulk_enrollment_job.uuid)
+        response = self.api_client.get(url)
+        assert response.status_code == 200
+        mock_create_presigned_url.assert_called()
 
 @ddt.ddt
 class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):

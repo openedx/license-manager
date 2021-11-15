@@ -382,7 +382,7 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
     # collect/return results (rather than just write to the CSV) to help testability
     results = []
 
-    bulk_enrollment_job = BulkEnrollmentJob.objects.get(pk=bulk_enrollment_job_uuid)
+    bulk_enrollment_job = BulkEnrollmentJob.objects.get(uuid=bulk_enrollment_job_uuid)
     customer_agreement = CustomerAgreement.objects.get(enterprise_customer_uuid=enterprise_customer_uuid)
 
     # this is to avoid hitting timeouts on the enterprise enroll api

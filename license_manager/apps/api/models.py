@@ -59,12 +59,12 @@ class BulkEnrollmentJob(TimeStampedModel):
         current_app.send_task('api.tasks.enterprise_enrollment_license_subsidy_task', (str(bej.uuid), enterprise_uuid, user_emails, course_run_keys, notify_learners,subscription_uuid))
         return bje
 
-    def upload_results(file_name):
+    def upload_results(self, file_name):
         self.results_s3_object_name = f'{self.enterprise_customer_uuid}/{self.uuid}/Bulk-Enrollment-Results-{datetime.datetime.utcnow().isoformat()}.csv'
         results_object_uri = upload_file_to_s3(file_name, settings.BULK_ENROLL_JOB_AWS_BUCKET, object_name=self.results_s3_object_name)
         self.save()
         return results_object_uri
 
-    def generate_download_url():
+    def generate_download_url(self):
         return create_presigned_url(settings.BULK_ENROLL_JOB_AWS_BUCKET, self.results_s3_object_name)
 
