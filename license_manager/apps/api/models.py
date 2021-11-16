@@ -51,13 +51,13 @@ class BulkEnrollmentJob(TimeStampedModel):
     )
 
     @classmethod
-    def create_bulk_enrollment_job(enqueuing_user_id, enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid = None):
-        bej = BulkEnrollmentJob(enterprise_customer_uuid=enterprise_customer_uuid,lms_user_id=enqueuing_user_id).save()
+    def create_bulk_enrollment_job(cls, enqueuing_user_id, enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid = None):
+        bulk_enrollment_job = cls(enterprise_customer_uuid=enterprise_customer_uuid,lms_user_id=enqueuing_user_id)
+        bulk_enrollment_job.save()
         # avoid circular dependency
         # https://stackoverflow.com/a/26382812
-        # enterprise_enrollment_license_subsidy_task.delay(str(bej.uuid), enterprise_uuid, user_emails, course_run_keys, notify_learners,subscription_uuid)
-        current_app.send_task('api.tasks.enterprise_enrollment_license_subsidy_task', (str(bej.uuid), enterprise_uuid, user_emails, course_run_keys, notify_learners,subscription_uuid))
-        return bje
+        current_app.send_task('api.tasks.enterprise_enrollment_license_subsidy_task', (str(bulk_enrollment_job.uuid), enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid))
+        return bulk_enrollment_job
 
     def upload_results(self, file_name):
         self.results_s3_object_name = f'{self.enterprise_customer_uuid}/{self.uuid}/Bulk-Enrollment-Results-{datetime.datetime.utcnow().isoformat()}.csv'

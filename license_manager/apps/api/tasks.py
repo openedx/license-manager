@@ -365,7 +365,7 @@ def _send_bulk_enrollment_results_email(
         raise ex
 
 @shared_task(base=LoggedTask)
-def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterprise_customer_uuid, learner_emails, course_run_keys, notify_learners, subscription_uuid=None):
+def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterprise_customer_uuid, learner_emails, course_run_keys, notify_learners, subscription_uuid):
     """
     Enroll a list of enterprise learners into a list of course runs with or without notifying them. Optionally, filter license check by a specific subscription.
 
@@ -395,7 +395,7 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
             missing_subscriptions, licensed_enrollment_info = utils.check_missing_licenses(customer_agreement,
                                                                                            learner_enrollment_batch,
                                                                                            course_run_key_batch,
-                                                                                           subscription_uuid
+                                                                                           subscription_uuid=subscription_uuid,
                                                                                            )
 
             if missing_subscriptions:

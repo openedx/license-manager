@@ -1174,14 +1174,15 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
 
         # check to be sure we have a customer agreement
         customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
-
-        bulk_enrollment_job = BulkEnrollmentJob.create_bulk_enrollment_job(self.lms_user_id,
-                                                               self.requested_enterprise_id,
-                                                               self.requested_user_emails,
-                                                               self.requested_course_run_keys,
-                                                               self.requested_notify_learners,
-                                                               self.requested_subscription_id
-                                                              )
+        # enqueuing_user_id, enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid = None
+        bulk_enrollment_job = BulkEnrollmentJob.create_bulk_enrollment_job(
+            self.lms_user_id,
+            self.requested_enterprise_id,
+            self.requested_user_emails,
+            self.requested_course_run_keys,
+            self.requested_notify_learners,
+            subscription_uuid=self.requested_subscription_id
+        )
 
         return Response({'job_id': str(bulk_enrollment_job.uuid)}, status=status.HTTP_201_CREATED)
 
