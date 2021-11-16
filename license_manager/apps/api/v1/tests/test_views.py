@@ -2649,13 +2649,15 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         assert response.status_code == 400
         assert response.json() == constants.BULK_ENROLL_TOO_MANY_ENROLLMENTS
 
-    @mock.patch('license_manager.apps.api.utils.create_presigned_url', return_value="https://example.com/download")
-    def test_bulk_enroll_status(self, mock_create_presigned_url):
+    @mock.patch('license_manager.apps.api.v1.views.BulkEnrollmentJob.generate_download_url', return_value="https://example.com/download")
+    def test_bulk_enroll_status(self, mock_generate_download_url):
         self._assign_learner_roles()
         url = self._get_url_with_params(bulk_enrollment_job_uuid=self.bulk_enrollment_job.uuid)
         response = self.api_client.get(url)
         assert response.status_code == 200
-        mock_create_presigned_url.assert_called()
+        mock_generate_download_url.assert_called()
+        assert response.json().get('job_id') == str(self.bulk_enrollment_job.uuid)
+        assert response.json().get('download_url') == 'https://example.com/download'
 
 @ddt.ddt
 class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
