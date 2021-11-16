@@ -435,6 +435,7 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
             result_writer.writerow(result)
 
         result_file.close()
+        bulk_enrollment_job.upload_results(result_file.name)
         # TODO would normally feature gate this
         # _send_bulk_enrollment_results_email(
         #     bulk_enrollment_job=bulk_enrollment_job,
