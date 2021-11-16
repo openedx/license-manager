@@ -11,14 +11,17 @@ from django.conf import settings
 from django.db import models
 from model_utils.models import TimeStampedModel
 
+from license_manager.apps.api.utils import (
+    create_presigned_url,
+    upload_file_to_s3,
+)
+
+
 # from license_manager.apps.api.tasks import (
 #     enterprise_enrollment_license_subsidy_task,
 # )
 
-from license_manager.apps.api.utils import (
-    upload_file_to_s3,
-    create_presigned_url,
-)
+
 
 class BulkEnrollmentJob(TimeStampedModel):
     """
@@ -51,8 +54,8 @@ class BulkEnrollmentJob(TimeStampedModel):
     )
 
     @classmethod
-    def create_bulk_enrollment_job(cls, enqueuing_user_id, enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid = None):
-        bulk_enrollment_job = cls(enterprise_customer_uuid=enterprise_customer_uuid,lms_user_id=enqueuing_user_id)
+    def create_bulk_enrollment_job(cls, enqueuing_user_id, enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid=None):
+        bulk_enrollment_job = cls(enterprise_customer_uuid=enterprise_customer_uuid, lms_user_id=enqueuing_user_id)
         bulk_enrollment_job.save()
         # avoid circular dependency
         # https://stackoverflow.com/a/26382812
@@ -67,4 +70,3 @@ class BulkEnrollmentJob(TimeStampedModel):
 
     def generate_download_url(self):
         return create_presigned_url(settings.BULK_ENROLL_JOB_AWS_BUCKET, self.results_s3_object_name)
-

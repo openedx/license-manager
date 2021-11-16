@@ -28,6 +28,7 @@ from requests import Response, models
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from license_manager.apps.api.tests.factories import BulkEnrollmentJobFactory
 from license_manager.apps.api.v1.tests.constants import (
     ADMIN_ROLES,
     LEARNER_ROLES,
@@ -48,9 +49,6 @@ from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
     SubscriptionPlanRenewalFactory,
     UserFactory,
-)
-from license_manager.apps.api.tests.factories import (
-    BulkEnrollmentJobFactory,
 )
 from license_manager.apps.subscriptions.tests.utils import (
     assert_historical_pii_cleared,
@@ -2551,7 +2549,6 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
             enterprise_customer_uuid=cls.enterprise_customer_uuid,
         )
 
-
     def _get_url_with_params(
         self,
         use_enterprise_customer=True,
@@ -2659,6 +2656,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         mock_generate_download_url.assert_called()
         assert response.json().get('job_id') == str(self.bulk_enrollment_job.uuid)
         assert response.json().get('download_url') == 'https://example.com/download'
+
 
 @ddt.ddt
 class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):

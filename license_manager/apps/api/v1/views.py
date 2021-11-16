@@ -29,6 +29,7 @@ from simplejson.errors import JSONDecodeError
 
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
+from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_email_task,
@@ -39,7 +40,6 @@ from license_manager.apps.api.tasks import (
     send_onboarding_email_task,
     send_reminder_email_task,
 )
-from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import constants, event_utils
 from license_manager.apps.subscriptions.api import (
@@ -1095,7 +1095,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         """
         Helper function to validate both the existence of required params and their typing.
         """
-        self.missing_params = []    
+        self.missing_params = []
 
         if not self.requested_enterprise_id:
             self.missing_params.append('enterprise_customer_uuid')
@@ -1206,6 +1206,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         }
 
         return Response(response_object, status=status.HTTP_200_OK)
+
 
 class LicenseSubsidyView(LicenseBaseView):
     """

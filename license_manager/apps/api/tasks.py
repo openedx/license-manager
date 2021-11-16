@@ -1,8 +1,8 @@
+import csv
 import logging
+import os
 from smtplib import SMTPException
 from tempfile import NamedTemporaryFile
-import csv
-import os
 
 from braze.client import BrazeClient
 from celery import shared_task
@@ -364,6 +364,7 @@ def _send_bulk_enrollment_results_email(
         logger.error(msg, exc_info=True)
         raise ex
 
+
 @shared_task(base=LoggedTask)
 def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterprise_customer_uuid, learner_emails, course_run_keys, notify_learners, subscription_uuid):
     """
@@ -425,7 +426,6 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
                     for result_email in enrollment_result['invalid_email_addresses']:
                         for course_key in course_run_key_batch:
                             results.append([result_email, course_key, 'failed', 'invalid email address'])
-
 
     result_file = NamedTemporaryFile(mode='w', delete=False)
     try:

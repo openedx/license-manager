@@ -16,6 +16,7 @@ from freezegun import freeze_time
 from requests import models
 
 from license_manager.apps.api import tasks
+from license_manager.apps.api.tests.factories import BulkEnrollmentJobFactory
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.constants import (
     ASSIGNED,
@@ -40,9 +41,7 @@ from license_manager.apps.subscriptions.tests.utils import (
     make_test_email_data,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
-from license_manager.apps.api.tests.factories import (
-    BulkEnrollmentJobFactory,
-)
+
 
 @ddt.ddt
 class EmailTaskTests(TestCase):
@@ -442,7 +441,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         assert results[0][2] == 'failed'
         assert results[0][3] == 'invalid email address'
 
-    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")    
+    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
     def test_bulk_enroll_pending(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
@@ -461,7 +460,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         assert len(results) == 1
         assert results[0][2] == 'pending'
 
-    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download") 
+    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
     def test_bulk_enroll_failures(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
@@ -858,4 +857,3 @@ class SendUtilizationThresholdReachedEmailTaskTests(TestCase):
             ).first()
 
             assert notification is None
-

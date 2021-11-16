@@ -1,18 +1,14 @@
 """ Utility functions. """
-import uuid
 import os
+import uuid
 
+import boto3
 from django.shortcuts import get_object_or_404
 from edx_rbac.utils import get_decoded_jwt
 from rest_framework.exceptions import ParseError
 
-import boto3
-
 from license_manager.apps.subscriptions import constants
-from license_manager.apps.subscriptions.models import (
-    CustomerAgreement,
-    License,
-)
+from license_manager.apps.subscriptions.models import CustomerAgreement, License
 from license_manager.apps.subscriptions.utils import (
     get_license_activation_link,
     localized_utcnow,
@@ -202,4 +198,3 @@ def create_presigned_url(bucket_name, object_name, expiration=3600):
 
     # The response contains the presigned URL
     return response
-
