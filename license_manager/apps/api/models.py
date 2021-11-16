@@ -17,12 +17,6 @@ from license_manager.apps.api.utils import (
 )
 
 
-# from license_manager.apps.api.tasks import (
-#     enterprise_enrollment_license_subsidy_task,
-# )
-
-
-
 class BulkEnrollmentJob(TimeStampedModel):
     """
     An object to track async Bulk Enrollment tasks
