@@ -2598,8 +2598,9 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         response = self.api_client.post(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @mock.patch('license_manager.apps.api.models.current_app.send_task')
     @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
-    def test_bulk_enroll(self, mock_get_decoded_jwt):
+    def test_bulk_enroll(self, mock_get_decoded_jwt, mock_send_task):
         """
         Verify the view returns the correct response for a course in the user's subscription's catalog.
         """
@@ -2613,6 +2614,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         url = self._get_url_with_params()
         response = self.api_client.post(url, data)
 
+        mock_send_task.assert_called()
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json().get('job_id')
 
