@@ -1,5 +1,6 @@
 """ Utility functions. """
 import os
+import urllib
 import uuid
 
 import boto3
@@ -157,6 +158,10 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
     return missing_subscriptions, licensed_enrollment_info
 
 
+def _get_short_file_name(long_file_name):
+    return long_file_name.split("/")[-1]
+
+
 def upload_file_to_s3(file_name, bucket, object_name=None):
     """Upload a file to an S3 bucket
 
@@ -179,7 +184,7 @@ def upload_file_to_s3(file_name, bucket, object_name=None):
     return f'''https://{bucket}.s3.amazonaws.com/{urllib.parse.quote(object_name, safe="~()*!.'")}'''
 
 
-def create_presigned_url(bucket_name, object_name, expiration=3600):
+def create_presigned_url(bucket_name, object_name, expiration=300):
     """Generate a presigned URL to share an S3 object
 
     :param bucket_name: string
@@ -191,10 +196,15 @@ def create_presigned_url(bucket_name, object_name, expiration=3600):
     # Generate a presigned URL for the S3 object
     s3_client = boto3.client('s3')
 
-    response = s3_client.generate_presigned_url('get_object',
-                                                Params={'Bucket': bucket_name,
-                                                        'Key': object_name},
-                                                ExpiresIn=expiration)
+    response = s3_client.generate_presigned_url(
+        'get_object',
+        Params={
+            'Bucket': bucket_name,
+            'Key': object_name,
+            "ResponseContentDisposition": f'attachment; filename={_get_short_file_name(object_name)}',
+        },
+        ExpiresIn=expiration
+    )
 
     # The response contains the presigned URL
     return response

@@ -100,3 +100,14 @@ class CheckMissingLicenseTests(TestCase):
         )
         assert len(licensed_enrollment_info) == 0
         assert missing_subscriptions.get(self.unlicensed_user.email) is not None
+
+
+class FileUploadTests(TestCase):
+    def test_get_short_file_name(self):
+        file_name = "BulkEnroll-Results.csv"
+        object_name = "pathA/pathB/BulkEnroll-Results.csv"
+        full_path_file_name = "/pathA/pathB/BulkEnroll-Results.csv"
+
+        assert utils._get_short_file_name(file_name) == file_name
+        assert utils._get_short_file_name(object_name) == file_name
+        assert utils._get_short_file_name(full_path_file_name) == file_name
