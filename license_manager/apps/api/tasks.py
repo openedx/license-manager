@@ -435,12 +435,16 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
             result_writer.writerow(result)
 
         result_file.close()
-        bulk_enrollment_job.upload_results(result_file.name)
+
+        if hasattr(settings, "BULK_ENROLL_JOB_AWS_BUCKET") and settings.BULK_ENROLL_JOB_AWS_BUCKET:
+            bulk_enrollment_job.upload_results(result_file.name)
+
         if hasattr(settings, "BULK_ENROLL_RESULT_CAMPAIGN") and settings.BULK_ENROLL_RESULT_CAMPAIGN:
             _send_bulk_enrollment_results_email(
                 bulk_enrollment_job=bulk_enrollment_job,
                 campaign_id=settings.BULK_ENROLL_RESULT_CAMPAIGN,
             )
+
     finally:
         result_file.close()
         os.unlink(result_file.name)
