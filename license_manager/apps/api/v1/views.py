@@ -98,10 +98,11 @@ def auto_apply_new_license(subscription_plan, user_email, lms_user_id):
     auto_applied_license.assigned_date = now
     auto_applied_license.last_remind_date = now
     auto_applied_license.auto_applied = True
-    
+
     auto_applied_license.save()
     event_utils.track_license_changes([auto_applied_license], constants.SegmentEvents.LICENSE_ACTIVATED)
     return auto_applied_license
+
 
 def assign_new_licenses(subscription_plan, user_emails):
     """
