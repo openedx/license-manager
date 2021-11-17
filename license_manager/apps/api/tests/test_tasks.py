@@ -399,7 +399,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         }
 
         results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
-        mock_upload_results.assert_called()
+
         mock_bulk_enroll_enterprise_learners.assert_called_with(
             str(self.enterprise_customer_uuid),
             expected_enterprise_enrollment_request_options
@@ -415,7 +415,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
     def test_bulk_enroll_revoked_license(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
         # random, non-existant subscription uuid
         results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user2.email], [self.course_key], True, uuid4())
-        mock_upload_results.assert_called()
+
         mock_bulk_enroll_enterprise_learners.assert_not_called()
         assert len(results) == 1
         assert results[0][2] == 'failed'
@@ -435,7 +435,6 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
         results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
-        mock_upload_results.assert_called()
 
         assert len(results) == 1
         assert results[0][2] == 'failed'
@@ -455,7 +454,6 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
         results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
-        mock_upload_results.assert_called()
 
         assert len(results) == 1
         assert results[0][2] == 'pending'
@@ -474,7 +472,6 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
         results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
-        mock_upload_results.assert_called()
 
         assert len(results) == 1
         assert results[0][2] == 'failed'
