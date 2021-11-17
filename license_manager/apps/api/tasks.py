@@ -8,6 +8,7 @@ from braze.client import BrazeClient
 from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.dateparse import parse_datetime
 
@@ -334,7 +335,6 @@ def _send_bulk_enrollment_results_email(
         campaign_id: (str): The Braze campaign identifier
 
     """
-    emails = []
     try:
 
         enterprise_api_client = EnterpriseApiClient()
@@ -436,11 +436,11 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
 
         result_file.close()
         bulk_enrollment_job.upload_results(result_file.name)
-        # TODO would normally feature gate this
-        # _send_bulk_enrollment_results_email(
-        #     bulk_enrollment_job=bulk_enrollment_job,
-        #     campaign_id=settings.BULK_ENROLL_RESULT_CAMPAIGN,
-        # )
+        if hasattr(settings, "BULK_ENROLL_RESULT_CAMPAIGN") and settings.BULK_ENROLL_RESULT_CAMPAIGN:
+            _send_bulk_enrollment_results_email(
+                bulk_enrollment_job=bulk_enrollment_job,
+                campaign_id=settings.BULK_ENROLL_RESULT_CAMPAIGN,
+            )
     finally:
         result_file.close()
         os.unlink(result_file.name)
