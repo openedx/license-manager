@@ -69,7 +69,9 @@ def _jwt_payload_from_role_context_pairs(user, role_context_pairs):
         roles.append(role_data)
 
     payload = generate_unversioned_payload(user)
+    payload.update({'user_id': user.id})
     payload.update({'roles': roles})
+
     return payload
 
 
@@ -1094,7 +1096,7 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         )
 
         # Routes setup
-        cls.auto_assign_url = reverse(
+        cls.auto_apply_url = reverse(
             'api:v1:customer-agreement-auto-apply',
             kwargs={'customer_agreement_uuid': cls.customer_agreement.uuid}
         )
@@ -1112,7 +1114,7 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         )
 
         self._setup_request_jwt(user=self.super_user)
-        response = self.api_client.post(self.auto_assign_url)
+        response = self.api_client.post(self.auto_apply_url)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
         # Check whether tasks were run
@@ -1132,7 +1134,7 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         )
 
         self._setup_request_jwt(user=self.super_user)
-        response = self.api_client.post(self.auto_assign_url)
+        response = self.api_client.post(self.auto_apply_url)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
         # Check whether tasks were run
@@ -1144,7 +1146,7 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         Endpoint should return 422 if applicable subscriptions found, license
         with revoked status for user found.
         """
-        user_email = 'test@example.com'
+        user_email = self.super_user.email
 
         plan = SubscriptionPlanFactory.create(
             customer_agreement=self.customer_agreement,
@@ -1162,10 +1164,7 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         assert License.objects.filter(user_email=user_email).count() == 1
 
         self._setup_request_jwt(user=self.super_user)
-        response = self.api_client.post(
-            self.auto_assign_url,
-            data={'user_email': user_email},
-        )
+        response = self.api_client.post(self.auto_apply_url)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         assert License.objects.filter(user_email=user_email).count() == 1
 
@@ -1178,8 +1177,7 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         Endpoint should return 200 if the plan in question already has an
         activated or assigned license associated with the user.
         """
-        user_email = 'test@example.com'
-
+        user_email = self.super_user.email
         plan = SubscriptionPlanFactory.create(
             customer_agreement=self.customer_agreement,
             enterprise_catalog_uuid=self.enterprise_catalog_uuid,
@@ -1196,13 +1194,10 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         assert License.objects.filter(user_email=user_email).count() == 1
 
         self._setup_request_jwt(user=self.super_user)
-        response = self.api_client.post(
-            self.auto_assign_url,
-            data={'user_email': user_email},
-        )
+        response = self.api_client.post(self.auto_apply_url)
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()['license']['user_email'] == 'test@example.com'
-        assert response.json()['license']['status'] == 'activated'
+        assert response.json()['user_email'] == user_email
+        assert response.json()['status'] == 'activated'
         assert License.objects.filter(user_email=user_email).count() == 1
 
         # Check whether tasks were run
@@ -1214,7 +1209,7 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         Endpoint should only associate user with license on auto-applicable
         subscription once, even if you hit the end point a bunch of times.
         """
-        user_email = 'test@example.com'
+        user_email = self.super_user.email
 
         plan = SubscriptionPlanFactory.create(
             customer_agreement=self.customer_agreement,
@@ -1229,21 +1224,18 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         assert License.objects.filter(user_email=user_email).count() == 0
         self._setup_request_jwt(user=self.super_user)
         for _ in range(7):
-            response = self.api_client.post(
-                self.auto_assign_url,
-                data={'user_email': user_email},
-            )
+            response = self.api_client.post(self.auto_apply_url)
         assert License.objects.filter(user_email=user_email).count() == 1
 
         # Check whether tasks were run
         mock_activation_task.assert_called_once_with(
-            (self.customer_agreement.enterprise_customer_uuid, 'test@example.com'),
+            (self.customer_agreement.enterprise_customer_uuid, user_email),
             {}
         )
 
     @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
-    @mock.patch('license_manager.apps.api.v1.views.assign_new_licenses')
-    def test_auto_apply_422_if_DB_error(self, mock_assign_new_licenses, mock_activation_task):
+    @mock.patch('license_manager.apps.api.v1.views.auto_apply_new_license')
+    def test_auto_apply_422_if_DB_error(self, mock_auto_apply_new_licenses, mock_activation_task):
         """
         Endpoint should return 422 if database error occurs.
         """
@@ -1261,8 +1253,8 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
 
         self._setup_request_jwt(user=self.super_user)
 
-        mock_assign_new_licenses.side_effect = DatabaseError('fail')
-        response = self.api_client.post(self.auto_assign_url)
+        mock_auto_apply_new_licenses.side_effect = DatabaseError('fail')
+        response = self.api_client.post(self.auto_apply_url)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
         # Make sure no licenses still don't have auto_applied True
@@ -1290,20 +1282,17 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         assert License.objects.filter(auto_applied=True).count() == 0
 
         self._setup_request_jwt(user=self.super_user)
-        response = self.api_client.post(
-            self.auto_assign_url,
-            data={'user_email': 'test@example.com'}
-        )
+        response = self.api_client.post(self.auto_apply_url)
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()['license']['user_email'] == 'test@example.com'
-        assert response.json()['license']['status'] == 'assigned'
+        assert response.json()['user_email'] == self.super_user.email
+        assert response.json()['status'] == 'activated'
 
         # Check if 1 License has become auto_applied
         assert plan.licenses.filter(auto_applied=True).count() == 1
 
         # Check whether tasks were run
         mock_activation_task.assert_called_once_with(
-            (self.customer_agreement.enterprise_customer_uuid, 'test@example.com'),
+            (self.customer_agreement.enterprise_customer_uuid, self.super_user.email),
             {}
         )
 

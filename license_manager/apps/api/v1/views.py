@@ -78,25 +78,50 @@ def get_http_status_for_exception(exc):
     )
 
 
-def assign_new_licenses(subscription_plan, user_emails, auto_applied=False):
+def auto_apply_new_license(subscription_plan, user_email, lms_user_id):
+    """
+    Auto-apply licenses for the given user_email and lms_user_id.
+
+    Returns the auto-applied (activated) license.
+    """
+    now = localized_utcnow()
+
+    auto_applied_license = subscription_plan.unassigned_licenses.first()
+    if not auto_applied_license:
+        return None
+
+    auto_applied_license.user_email = user_email
+    auto_applied_license.lms_user_id = lms_user_id
+    auto_applied_license.status = constants.ACTIVATED
+    auto_applied_license.activation_key = str(uuid4())
+    auto_applied_license.activation_date = now
+    auto_applied_license.assigned_date = now
+    auto_applied_license.last_remind_date = now
+    auto_applied_license.auto_applied = True
+    
+    auto_applied_license.save()
+    event_utils.track_license_changes([auto_applied_license], constants.SegmentEvents.LICENSE_ACTIVATED)
+    return auto_applied_license
+
+def assign_new_licenses(subscription_plan, user_emails):
     """
     Assign licenses for the given user_emails (that have not already been revoked).
 
     Returns a QuerySet of licenses that are assigned.
     """
     licenses = subscription_plan.unassigned_licenses[:len(user_emails)]
+    now = localized_utcnow()
     for unassigned_license, email in zip(licenses, user_emails):
         # Assign each email to a license and mark the license as assigned
         unassigned_license.user_email = email
         unassigned_license.status = constants.ASSIGNED
         unassigned_license.activation_key = str(uuid4())
-        unassigned_license.assigned_date = localized_utcnow()
-        unassigned_license.last_remind_date = localized_utcnow()
-        unassigned_license.auto_applied = auto_applied
+        unassigned_license.assigned_date = now
+        unassigned_license.last_remind_date = now
 
     License.bulk_update(
         licenses,
-        ['user_email', 'status', 'activation_key', 'assigned_date', 'last_remind_date', 'auto_applied'],
+        ['user_email', 'status', 'activation_key', 'assigned_date', 'last_remind_date'],
     )
 
     event_utils.track_license_changes(list(licenses), constants.SegmentEvents.LICENSE_ASSIGNED)
@@ -158,6 +183,10 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
         return utils.get_key_from_jwt(self.decoded_jwt, 'user_id')
 
     @property
+    def user_email(self):
+        return utils.get_key_from_jwt(self.decoded_jwt, 'email')
+
+    @property
     def requested_enterprise_uuid(self):
         enterprise_customer_uuid = self.request.query_params.get('enterprise_customer_uuid')
         if not enterprise_customer_uuid:
@@ -200,7 +229,7 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
 
         return CustomerAgreement.objects.filter(**kwargs).order_by('uuid')
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, url_path='auto-apply', methods=['post'])
     def auto_apply(self, request, customer_agreement_uuid=None):
         """
         Endpoint to auto-apply a license to a subscription plan.
@@ -220,38 +249,33 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
             return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         # Check if any licenses associated with user
-        user_email = request.data.get('user_email', '')
-        check_results = self._check_subscription_licenses(customer_agreement, plan, user_email)
+        check_results = self._check_subscription_licenses(customer_agreement, plan, self.user_email)
         # If the results of check is a Response object, simply return that, as
-        # proceding to assignment logic is not necessary.
+        # proceeding to assignment logic is not necessary.
         if isinstance(check_results, Response):
             return check_results
-
-        # Assign a License
+        
+        # Auto-apply (activate) a license
         try:
-            # Note [0] gets the only license from the queryset of 1
-            license_obj = assign_new_licenses(plan, [user_email], auto_applied=True)[0]
+            license_obj = auto_apply_new_license(plan, self.user_email, self.lms_user_id)
         except DatabaseError:
-            error_message = 'Database error occurred while assigning licenses, no assignments were completed'
+            error_message = 'Database error occurred while auto-applying license, no auto-applied license was completed.'
             logger.exception(error_message)
             return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         else:
             send_auto_applied_license_email_task.delay(
                 customer_agreement.enterprise_customer_uuid,
-                user_email
+                self.user_email,
             )
 
         # Serialize the License we created to be returned in response
         serializer = serializers.LicenseSerializer(license_obj)
-        response_data = {
-            'num_successful_assignments': 1,
-            'license': serializer.data,
-        }
+        response_data = serializer.data
         return Response(data=response_data, status=status.HTTP_200_OK)
 
     def _check_subscription_licenses(self, customer_agreement, plan, user_email):
         """
-        Check subscription to see if it can be used to assign licenses.
+        Check subscription to see if it can be used to auto-apply a license.
         """
         user_licenses = plan.licenses.filter(user_email=user_email)
 
@@ -275,10 +299,7 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
 
             license_obj = active_or_assigned_licenses[0]
             serializer = serializers.LicenseSerializer(license_obj)
-            response_data = {
-                'num_successful_assignments': 0,
-                'license': serializer.data,
-            }
+            response_data = serializer.data
             return Response(data=response_data, status=status.HTTP_200_OK)
 
         # Check if the plan has licenses available at all
