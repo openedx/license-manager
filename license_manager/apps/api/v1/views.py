@@ -254,7 +254,7 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
         # proceeding to assignment logic is not necessary.
         if isinstance(check_results, Response):
             return check_results
-        
+
         # Auto-apply (activate) a license
         try:
             license_obj = auto_apply_new_license(plan, self.user_email, self.lms_user_id)
