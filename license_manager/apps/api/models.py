@@ -3,8 +3,8 @@
 # specific to a particular version of the API. In this case, the models
 # in question should be moved to versioned sub-package.
 
-import logging
 import datetime
+import logging
 from uuid import uuid4
 
 from celery import current_app
