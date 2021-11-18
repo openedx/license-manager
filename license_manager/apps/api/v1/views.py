@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, transaction
 from django.db.models import Count
+from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
@@ -28,6 +29,7 @@ from simplejson.errors import JSONDecodeError
 
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
+from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_email_task,
@@ -1043,6 +1045,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
     provided learners in all courses.
 
     POST /api/v1/bulk-license-enrollment
+    GET /api/v1/bulk-license-enrollment/<UUID>
 
     Required query param:
         - enterprise_customer_uuid (str): enterprise customer's uuid
@@ -1081,10 +1084,31 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         return self.request.query_params.get('enterprise_customer_uuid')
 
     @property
+    def requested_bulk_enrollment_job_id(self):
+        return self.request.query_params.get('bulk_enrollment_job_uuid')
+
+    @property
     def requested_subscription_id(self):
         return self.request.query_params.get('subscription_uuid')
 
-    def _validate_request_params(self):
+    def _validate_status_request_params(self):
+        """
+        Helper function to validate both the existence of required params and their typing.
+        """
+        self.missing_params = []
+
+        if not self.requested_enterprise_id:
+            self.missing_params.append('enterprise_customer_uuid')
+        if not self.requested_bulk_enrollment_job_id:
+            self.missing_params.append('bulk_enrollment_job_uuid')
+
+        # Report required params type errors
+        if self.missing_params:
+            return 'Missing the following required request data: {}'.format(self.missing_params)
+
+        return ''
+
+    def _validate_enrollment_request_params(self):
         """
         Helper function to validate both the existence of required params and their typing.
         """
@@ -1137,7 +1161,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                 - Exceeding BULK_ENROLL_REQUEST_LIMIT by passing too many learners + course keys, 400
                 - Enterprise UUID without a valid CustomerAgreement, 404
         """
-        param_validation = self._validate_request_params()
+        param_validation = self._validate_enrollment_request_params()
         if param_validation:
             return Response(param_validation, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1150,19 +1174,38 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
 
         # check to be sure we have a customer agreement
         customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
+        # enqueuing_user_id, enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid = None
+        bulk_enrollment_job = BulkEnrollmentJob.create_bulk_enrollment_job(
+            self.lms_user_id,
+            self.requested_enterprise_id,
+            self.requested_user_emails,
+            self.requested_course_run_keys,
+            self.requested_notify_learners,
+            subscription_uuid=self.requested_subscription_id
+        )
 
-        # this job_id will be used in the future enable the frontend to track the status/progress of work
-        enrollment_job_id = str(uuid4())
+        return Response({'job_id': str(bulk_enrollment_job.uuid)}, status=status.HTTP_201_CREATED)
 
-        enterprise_enrollment_license_subsidy_task.delay(enrollment_job_id,
-                                                         self.requested_enterprise_id,
-                                                         self.requested_user_emails,
-                                                         self.requested_course_run_keys,
-                                                         self.requested_notify_learners,
-                                                         self.requested_subscription_id
-                                                         )
+    @permission_required(
+        constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
+        fn=lambda request: utils.get_context_for_customer_agreement_from_request(request),  # pylint: disable=unnecessary-lambda
+    )
+    def get(self, request):
+        param_validation = self._validate_status_request_params()
+        if param_validation:
+            return Response(param_validation, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'job_id': enrollment_job_id}, status=status.HTTP_201_CREATED)
+        bulk_enrollment_job = get_object_or_404(
+            BulkEnrollmentJob,
+            uuid=self.requested_bulk_enrollment_job_id,
+        )
+
+        response_object = {
+            'job_id': str(bulk_enrollment_job.uuid),
+            'download_url': bulk_enrollment_job.generate_download_url(),
+        }
+
+        return Response(response_object, status=status.HTTP_200_OK)
 
 
 class LicenseSubsidyView(LicenseBaseView):

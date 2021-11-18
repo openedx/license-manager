@@ -16,6 +16,7 @@ from freezegun import freeze_time
 from requests import models
 
 from license_manager.apps.api import tasks
+from license_manager.apps.api.tests.factories import BulkEnrollmentJobFactory
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.constants import (
     ASSIGNED,
@@ -361,15 +362,21 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
             subscription_plan=cls.active_subscription_for_customer,
         )
 
+        cls.bulk_enrollment_job = BulkEnrollmentJobFactory.create(
+            enterprise_customer_uuid=cls.enterprise_customer_uuid,
+            lms_user_id=cls.lms_user_id,
+        )
+
     def tearDown(self):
         super().tearDown()
         License.objects.all().delete()
         SubscriptionPlan.objects.all().delete()
         CustomerAgreement.objects.all().delete()
 
+    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+    def test_bulk_enroll(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
 
         mock_enrollment_response = mock.Mock(spec=models.Response)
         mock_enrollment_response.json.return_value = {
@@ -391,7 +398,7 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
             'notify': True
         }
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
 
         mock_bulk_enroll_enterprise_learners.assert_called_with(
             str(self.enterprise_customer_uuid),
@@ -399,24 +406,24 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         )
         mock_contains_content.assert_called_with([self.course_key])
         assert mock_contains_content.call_count == 1
-        assert len(results['successes']) == 1
-        assert len(results['pending']) == 0
-        assert len(results['failures']) == 0
+        assert len(results) == 1
+        assert results[0][2] == 'success'
 
+    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll_revoked_license(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+    def test_bulk_enroll_revoked_license(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
         # random, non-existant subscription uuid
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user2.email], [self.course_key], True, uuid4())
-        mock_bulk_enroll_enterprise_learners.assert_not_called()
-        assert len(results['failed_license_checks']) == 1
-        assert len(results['successes']) == 0
-        assert len(results['pending']) == 0
-        assert len(results['failures']) == 1
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user2.email], [self.course_key], True, uuid4())
 
+        mock_bulk_enroll_enterprise_learners.assert_not_called()
+        assert len(results) == 1
+        assert results[0][2] == 'failed'
+
+    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll_invalid_email_addresses(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+    def test_bulk_enroll_invalid_email_addresses(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
         mock_enrollment_response = mock.Mock(spec=models.Response)
         mock_enrollment_response.json.return_value = {
             'successes': [],
@@ -427,15 +434,16 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_enrollment_response.status_code = 201
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
 
-        assert len(results['successes']) == 0
-        assert len(results['pending']) == 0
-        assert len(results['failures']) == 1
+        assert len(results) == 1
+        assert results[0][2] == 'failed'
+        assert results[0][3] == 'invalid email address'
 
+    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll_pending(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+    def test_bulk_enroll_pending(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
         mock_enrollment_response = mock.Mock(spec=models.Response)
         mock_enrollment_response.json.return_value = {
             'successes': [],
@@ -445,15 +453,15 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_enrollment_response.status_code = 202
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
 
-        assert len(results['successes']) == 0
-        assert len(results['failures']) == 0
-        assert len(results['pending']) == 1
+        assert len(results) == 1
+        assert results[0][2] == 'pending'
 
+    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll_failures(self, mock_bulk_enroll_enterprise_learners, mock_contains_content):
+    def test_bulk_enroll_failures(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
         mock_enrollment_response = mock.Mock(spec=models.Response)
         mock_enrollment_response.json.return_value = {
             'successes': [],
@@ -463,11 +471,10 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_enrollment_response.status_code = 201
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(uuid4()), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
 
-        assert len(results['successes']) == 0
-        assert len(results['pending']) == 0
-        assert len(results['failures']) == 1
+        assert len(results) == 1
+        assert results[0][2] == 'failed'
 
 
 class SendWeeklyUtilizationEmailTaskTests(TestCase):

@@ -1,15 +1,20 @@
+import csv
 import logging
+import os
 from smtplib import SMTPException
+from tempfile import NamedTemporaryFile
 
 from braze.client import BrazeClient
 from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.dateparse import parse_datetime
 
 import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api import utils
+from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
@@ -318,30 +323,67 @@ def revoke_all_licenses_task(subscription_uuid):
         subscriptions_api.execute_post_revocation_tasks(**result)
 
 
+def _send_bulk_enrollment_results_email(
+    bulk_enrollment_job,
+    campaign_id,
+):
+    """
+    Sends email with properties required to detail the results of a bulk enrollment job.
+
+    Arguments:
+        bulk_enrollment_job (BulkEnrollmentJob): the completed bulk enrollment job
+        campaign_id: (str): The Braze campaign identifier
+
+    """
+    try:
+
+        enterprise_api_client = EnterpriseApiClient()
+        enterprise_customer = enterprise_api_client.get_enterprise_customer_data(
+            bulk_enrollment_job.enterprise_customer_uuid,
+        )
+
+        User = get_user_model()
+        user = User.objects.get(id=bulk_enrollment_job.lms_user_id)
+
+        emails = [user.email]
+
+        braze_client = BrazeApiClient()
+        braze_client.send_campaign_message(
+            campaign_id,
+            emails=emails,
+            trigger_properties={
+                'enterprise_customer_slug': enterprise_customer.get('slug'),
+                'enterprise_customer_name': enterprise_customer.get('name'),
+                'bulk_enrollment_job_uuid': bulk_enrollment_job.uuid,
+            }
+        )
+        msg = f'Sent {campaign_id} email for BulkEnrollmentJob result {bulk_enrollment_job.uuid} to {len(emails)} admins.'
+        logger.info(msg)
+    except Exception as ex:
+        msg = f'Failed to send {campaign_id} email for BulkEnrollmentJob result {bulk_enrollment_job.uuid} to {len(emails)} admins.'
+        logger.error(msg, exc_info=True)
+        raise ex
+
+
 @shared_task(base=LoggedTask)
-def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid, learner_emails, course_run_keys, notify_learners, subscription_uuid=None):
+def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterprise_customer_uuid, learner_emails, course_run_keys, notify_learners, subscription_uuid):
     """
     Enroll a list of enterprise learners into a list of course runs with or without notifying them. Optionally, filter license check by a specific subscription.
 
     Arguments:
-        job_id (str): UUID (string representation) created by the enqueuing process for logging and (future) progress tracking table updates.
+        bulk_enrollment_job_uuid (str): UUID (string representation) for a BulkEnrollmentJob created by the enqueuing process for logging and progress tracking table updates.
         enterprise_customer_uuid (str): UUID (string representation) the enterprise customer id
         learner_emails (list(str)): email addresses of the learners to enroll
         course_run_keys (list(str)): course keys of the courses to enroll the learners into
         notify_learners (bool): whether or not to send notifications of their enrollment to the learners
         subscription_uuid (str): UUID (string representation) of the specific enterprise subscription to use when validating learner licenses
     """
-    results = {}
-    results['successes'] = dict()
-    results['failures'] = dict()
-    results['pending'] = dict()
-    # these keys are from the orginal endpoint, retaining them for now
-    results['bulk_enrollment_errors'] = list()
-    results['failed_license_checks'] = list()
-    results['failed_enrollments'] = list()
+    logger.info("starting bulk_enrollment_job_uuid={} enterprise_enrollment_license_subsidy_task for enterprise_customer_uuid={}".format(bulk_enrollment_job_uuid, enterprise_customer_uuid))
 
-    logger.info("starting job_id={} enterprise_enrollment_license_subsidy_task for enterprise_customer_uuid={}".format(job_id, enterprise_customer_uuid))
+    # collect/return results (rather than just write to the CSV) to help testability
+    results = []
 
+    bulk_enrollment_job = BulkEnrollmentJob.objects.get(uuid=bulk_enrollment_job_uuid)
     customer_agreement = CustomerAgreement.objects.get(enterprise_customer_uuid=enterprise_customer_uuid)
 
     # this is to avoid hitting timeouts on the enterprise enroll api
@@ -354,67 +396,58 @@ def enterprise_enrollment_license_subsidy_task(job_id, enterprise_customer_uuid,
             missing_subscriptions, licensed_enrollment_info = utils.check_missing_licenses(customer_agreement,
                                                                                            learner_enrollment_batch,
                                                                                            course_run_key_batch,
-                                                                                           subscription_uuid
+                                                                                           subscription_uuid=subscription_uuid,
                                                                                            )
 
             if missing_subscriptions:
                 for failed_email in missing_subscriptions.keys():
-                    results['failures'][failed_email] = missing_subscriptions.get(failed_email)
-                msg = 'One or more of the learners entered do not have a valid subscription for your requested courses. ' \
-                      'Learners: {}'.format(missing_subscriptions)
-                results['failed_license_checks'].append(missing_subscriptions)
-                logger.error(msg)
+                    for course_key in missing_subscriptions[failed_email]:
+                        results.append([failed_email, course_key, 'failed', 'missing subscription'])
 
             if licensed_enrollment_info:
                 options = {
                     'licenses_info': licensed_enrollment_info,
                     'notify': notify_learners
                 }
-                enrollment_response = EnterpriseApiClient().bulk_enroll_enterprise_learners(
+                enrollment_result = EnterpriseApiClient().bulk_enroll_enterprise_learners(
                     str(enterprise_customer_uuid), options
-                )
+                ).json()
 
-                enrollment_result = enrollment_response.json()
-                for result_key in ['successes', 'pending', 'failures']:
-                    for result_dict in enrollment_result.get(result_key):
-                        result_email = result_dict.get('email')
-                        result_course_key = result_dict.get('course_run_key')
-                        if results[result_key].get(result_email):
-                            results[result_key][result_email].append(result_course_key)
-                        else:
-                            results[result_key][result_email] = [result_course_key]
+                for success in enrollment_result['successes']:
+                    results.append([success.get('email'), success.get('course_run_key'), 'success', ''])
+
+                for pending in enrollment_result['pending']:
+                    results.append([pending.get('email'), pending.get('course_run_key'), 'pending', 'pending license activation'])
+
+                for failure in enrollment_result['failures']:
+                    results.append([failure.get('email'), failure.get('course_run_key'), 'failed', ''])
 
                 if enrollment_result.get('invalid_email_addresses'):
                     for result_email in enrollment_result['invalid_email_addresses']:
-                        if results['failures'].get(result_email):
-                            results['failures'][result_email] = results['failures'][result_email] + course_run_key_batch
-                        else:
-                            results['failures'][result_email] = course_run_key_batch
+                        for course_key in course_run_key_batch:
+                            results.append([result_email, course_key, 'failed', 'invalid email address'])
 
-                # Check for bulk enrollment errors
-                if enrollment_response.status_code >= 400 and enrollment_response.status_code != 409:
-                    try:
-                        response_json = enrollment_response.json()
-                    except JSONDecodeError:
-                        # Catch uncaught exceptions from enterprise
-                        results['bulk_enrollment_errors'].append(enrollment_response.reason)
-                    else:
-                        msg = 'Encountered a validation error when requesting bulk enrollment. Endpoint returned with ' \
-                              'error: {}'.format(response_json)
-                        logger.error(msg)
+    result_file = NamedTemporaryFile(mode='w', delete=False)
+    try:
+        result_writer = csv.writer(result_file)
+        result_writer.writerow(['email address', 'course key', 'enrollment status', 'notes'])
+        for result in results:
+            result_writer.writerow(result)
 
-                        # check for non field specific errors
-                        if response_json.get('non_field_errors'):
-                            results['bulk_enrollment_errors'].append(response_json['non_field_errors'])
+        result_file.close()
 
-                        # check for param field specific validation errors
-                        for param in options:
-                            if response_json.get(param):
-                                results['bulk_enrollment_errors'].append(response_json.get(param))
+        if hasattr(settings, "BULK_ENROLL_JOB_AWS_BUCKET") and settings.BULK_ENROLL_JOB_AWS_BUCKET:
+            bulk_enrollment_job.upload_results(result_file.name)
 
-                else:
-                    if enrollment_result.get('failures'):
-                        results['failed_enrollments'].append(enrollment_result['failures'])
+        if hasattr(settings, "BULK_ENROLL_RESULT_CAMPAIGN") and settings.BULK_ENROLL_RESULT_CAMPAIGN:
+            _send_bulk_enrollment_results_email(
+                bulk_enrollment_job=bulk_enrollment_job,
+                campaign_id=settings.BULK_ENROLL_RESULT_CAMPAIGN,
+            )
+
+    finally:
+        result_file.close()
+        os.unlink(result_file.name)
 
     return results
 
