@@ -1,7 +1,11 @@
+from datetime import datetime
+
+from django.conf import settings
 from django.contrib import admin, messages
 from django.db import transaction
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from pytz import UTC
 from simple_history.admin import SimpleHistoryAdmin
 
 from license_manager.apps.subscriptions.api import (
@@ -74,6 +78,8 @@ class LicenseAdmin(admin.ModelAdmin):
         'subscription_plan__enterprise_catalog_uuid__startswith',
     )
 
+    actions = ['revert_licenses_to_snapshot_time']
+
     def get_subscription_plan_title(self, obj):
         return _related_object_link(
             'admin:subscriptions_subscriptionplan_change',
@@ -101,6 +107,39 @@ class LicenseAdmin(admin.ModelAdmin):
             obj.renewed_from.uuid,
         )
     get_renewed_from.short_description = 'License renewed from'
+
+    def _parse_snapshot_timestamp(self):
+        """
+        Parses settings.LICENSE_REVERT_SNAPSHOT_TIMESTAMP into a UTC-localized datetime object.
+        """
+        return UTC.localize(
+            datetime.strptime(
+                settings.LICENSE_REVERT_SNAPSHOT_TIMESTAMP,
+                '%Y-%m-%d %H:%M:%S',
+            )
+        )
+
+    def revert_licenses_to_snapshot_time(self, request, queryset):
+        """
+        Sets a license back to whatever it was at some timestamp defined in config.
+        """
+        try:
+            with transaction.atomic():
+                snapshot_datetime = self._parse_snapshot_timestamp()
+                for _license in queryset:
+                    # https://github.com/jazzband/django-simple-history/issues/617
+                    snapshot_record = _license.history.as_of(snapshot_datetime)
+                    _license = snapshot_record
+                    _license._state.adding = False
+                    _license.save(force_update=True)
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    'Successfully reset licenses to snapshot time {}'.format(snapshot_datetime),
+                )
+        except Exception as exc:  # pylint: disable=broad-except
+            messages.add_message(request, messages.ERROR, exc)
+    revert_licenses_to_snapshot_time.short_description = 'Revert licenses to snapshot'
 
 
 @admin.register(SubscriptionPlan)
