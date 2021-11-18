@@ -341,10 +341,11 @@ def _send_bulk_enrollment_results_email(
             bulk_enrollment_job.enterprise_customer_uuid,
         )
 
-        User = get_user_model()
-        user = User.objects.get(id=bulk_enrollment_job.lms_user_id)
+        admin_users = enterprise_api_client.get_enterprise_admin_users(
+            bulk_enrollment_job.enterprise_customer_uuid,
+        )
 
-        emails = [user.email]
+        emails = [user['email'] for user in admin_users]
 
         braze_client = BrazeApiClient()
         braze_client.send_campaign_message(
