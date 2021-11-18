@@ -4,6 +4,7 @@
 # in question should be moved to versioned sub-package.
 
 import datetime
+import logging
 from uuid import uuid4
 
 from celery import current_app
@@ -15,6 +16,9 @@ from license_manager.apps.api.utils import (
     create_presigned_url,
     upload_file_to_s3,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class BulkEnrollmentJob(TimeStampedModel):
@@ -51,16 +55,23 @@ class BulkEnrollmentJob(TimeStampedModel):
     def create_bulk_enrollment_job(cls, enqueuing_user_id, enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid=None):
         bulk_enrollment_job = cls(enterprise_customer_uuid=enterprise_customer_uuid, lms_user_id=enqueuing_user_id)
         bulk_enrollment_job.save()
+        logger.info(f'enqueuing enterprise_enrollment_license_subsidy_task for bulk_enrollment_job_uuid={str(bulk_enrollment_job.uuid)}')
         # avoid circular dependency
         # https://stackoverflow.com/a/26382812
-        current_app.send_task('api.tasks.enterprise_enrollment_license_subsidy_task', (str(bulk_enrollment_job.uuid), enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid))
+        current_app.send_task('license_manager.apps.api.tasks.enterprise_enrollment_license_subsidy_task', (str(bulk_enrollment_job.uuid), enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid))
         return bulk_enrollment_job
 
     def upload_results(self, file_name):
-        self.results_s3_object_name = f'{self.enterprise_customer_uuid}/{self.uuid}/Bulk-Enrollment-Results-{datetime.datetime.utcnow().isoformat()}.csv'
-        results_object_uri = upload_file_to_s3(file_name, settings.BULK_ENROLL_JOB_AWS_BUCKET, object_name=self.results_s3_object_name)
-        self.save()
-        return results_object_uri
+        if hasattr(settings, "BULK_ENROLL_JOB_AWS_BUCKET") and settings.BULK_ENROLL_JOB_AWS_BUCKET:
+            self.results_s3_object_name = f'{self.enterprise_customer_uuid}/{self.uuid}/Bulk-Enrollment-Results-{datetime.datetime.utcnow().isoformat()}.csv'
+            results_object_uri = upload_file_to_s3(file_name, settings.BULK_ENROLL_JOB_AWS_BUCKET, object_name=self.results_s3_object_name)
+            self.save()
+            return results_object_uri
+        else:
+            return None
 
     def generate_download_url(self):
-        return create_presigned_url(settings.BULK_ENROLL_JOB_AWS_BUCKET, self.results_s3_object_name)
+        if self.results_s3_object_name:
+            return create_presigned_url(settings.BULK_ENROLL_JOB_AWS_BUCKET, self.results_s3_object_name)
+        else:
+            return None
