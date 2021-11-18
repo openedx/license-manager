@@ -456,6 +456,7 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
         logger.error(msg, exc_info=True)
         raise ex
 
+
 def _send_license_utilization_email(
     subscription_details,
     campaign_id,
