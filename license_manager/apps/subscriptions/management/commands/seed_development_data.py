@@ -33,6 +33,11 @@ class Command(BaseCommand):
             description='Test Catalog',
             plan_type=PlanType.objects.get(label="Test")
         )
+        Product.objects.get_or_create(
+            name='OCE',
+            description='OCE Catalog',
+            plan_type=PlanType.objects.get(label="OCE")
+        )
 
     def handle(self, *args, **options):
         self._create_products()

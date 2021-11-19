@@ -6,6 +6,7 @@ from django.test import TestCase
 
 from license_manager.apps.subscriptions import constants, emails
 from license_manager.apps.subscriptions.tests.factories import (
+    ProductFactory,
     SubscriptionPlanFactory,
 )
 from license_manager.apps.subscriptions.tests.utils import make_test_email_data
@@ -22,7 +23,8 @@ class EmailTests(TestCase):
         super().setUp()
         test_email_data = make_test_email_data()
         self.user_email = 'emailtest@example.com'
-        self.subscription = SubscriptionPlanFactory.create()
+        product = ProductFactory(plan_type_id=4)
+        self.subscription = SubscriptionPlanFactory(product=product)
         self.subscription_plan = test_email_data['subscription_plan']
         self.licenses = test_email_data['licenses']
         self.custom_template_text = test_email_data['custom_template_text']
@@ -32,7 +34,7 @@ class EmailTests(TestCase):
         self.enterprise_name = 'Mock Enterprise'
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
         self.reply_to_email = 'edx@example.com'
-        self.subscription_plan_type = self.subscription.plan_type.id
+        self.subscription_plan_type = self.subscription.product.plan_type_id
 
     def test_send_activation_emails(self):
         """

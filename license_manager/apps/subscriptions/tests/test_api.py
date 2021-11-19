@@ -123,9 +123,11 @@ class RenewalProcessingTests(TestCase):
             api.renew_subscription(renewal)
 
         renewal.refresh_from_db()
+        original_plan = renewal.prior_subscription_plan
         future_plan = renewal.renewed_subscription_plan
         self.assertTrue(renewal.processed)
         self.assertEqual(renewal.processed_datetime, NOW)
+        self.assertEqual(original_plan.product_id, future_plan.product_id)
         self.assertEqual(future_plan.num_licenses, renewal.number_of_licenses)
         self._assert_all_licenses_renewed(future_plan)
 
