@@ -6,6 +6,7 @@ Management command for seeding devstack with licenses and subscriptions for deve
 import logging
 from datetime import timedelta
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -14,6 +15,7 @@ from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
     PlanType,
+    Product,
     SubscriptionPlan,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
@@ -109,6 +111,7 @@ class Command(BaseCommand):
             netsuite_product_id=0,
             salesforce_opportunity_id=123456789123456789,
             plan_type=PlanType.objects.get(label="Standard Paid"),
+            product=Product.objects.get(name="B2B Paid")
         )
         with transaction.atomic():
             new_plan.save()
@@ -136,6 +139,9 @@ class Command(BaseCommand):
         logger.info('\nEnterpriseCustomer found to apply new licenses for: {} {}.'
                     .format(enterprise_customer['name'], enterprise_customer['uuid']))
         customer_agreement = self.get_or_create_customer_agreement(enterprise_customer)
+
+        # populate products first
+        call_command('seed_development_data')
         new_plan = self.create_subscription_plan(customer_agreement, num_licenses=options['num_licenses'])
         logger.info('\nCustomerAgreement created on {} used for this subscription plan: {}'.
                     format(customer_agreement.created, customer_agreement.uuid))

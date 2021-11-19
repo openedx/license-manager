@@ -22,6 +22,8 @@ docker exec -t license_manager.app bash -c "cd /edx/app/${name}/ && make migrate
 # Seed data for development
 echo -e "${GREEN}Seeding development data..."
 docker exec -t license_manager.app bash -c "python manage.py seed_development_data"
+# Some migrations require development data to be seeded, hence migrating again.
+docker exec -t license_manager.app bash -c "make migrate"
 
 # Create superuser
 echo -e "${GREEN}Creating super-user for ${name}...${NC}"
