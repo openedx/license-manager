@@ -150,6 +150,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     """
     Test factory for the `User` model.
     """
+    id = factory.Sequence(lambda n: n + 1)
     username = factory.Faker('user_name')
     password = factory.PostGenerationMethodCall('set_password', USER_PASSWORD)
     email = factory.Faker('email')
