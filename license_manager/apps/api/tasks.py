@@ -348,14 +348,18 @@ def _send_bulk_enrollment_results_email(
         # https://web.archive.org/web/20211122135949/https://www.braze.com/docs/api/objects_filters/recipient_object/
         recipients = []
         for user in admin_users:
-            # https://web.archive.org/web/20211122140312/https://www.braze.com/docs/api/objects_filters/user_alias_object/
+            if int(user['user_id']) != bulk_enrollment_job.lms_user_id:
+                continue
+            # must use a mix of send_to_existing_only: false + enternal_id w/ attributes to send to new braze profiles
             recipient = {
-                'user_alias': {
-                    'alias_name': user['email'],
-                    'alias_label': 'Enterprise',
+                'send_to_existing_only': False,
+                'external_user_id': str(user['user_id']),
+                'attributes': {
+                    'email': user['email'],
                 }
             }
             recipients.append(recipient)
+            break
 
         braze_client = BrazeApiClient()
         braze_client.send_campaign_message(
