@@ -58,7 +58,7 @@ class BulkEnrollmentJob(TimeStampedModel):
         logger.info(f'enqueuing enterprise_enrollment_license_subsidy_task for bulk_enrollment_job_uuid={str(bulk_enrollment_job.uuid)}')
         # avoid circular dependency
         # https://stackoverflow.com/a/26382812
-        current_app.send_task('license_manager.apps.api.tasks.enterprise_enrollment_license_subsidy_task', (str(bulk_enrollment_job.uuid), enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid))
+        current_app.send_task('license_manager.apps.api.tasks.enterprise_enrollment_license_subsidy_task', (str(bulk_enrollment_job.uuid), str(enterprise_customer_uuid), user_emails, course_run_keys, notify_learners, subscription_uuid))
         return bulk_enrollment_job
 
     def upload_results(self, file_name):

@@ -364,7 +364,7 @@ def _send_bulk_enrollment_results_email(
             trigger_properties={
                 'enterprise_customer_slug': enterprise_customer.get('slug'),
                 'enterprise_customer_name': enterprise_customer.get('name'),
-                'bulk_enrollment_job_uuid': bulk_enrollment_job.uuid,
+                'bulk_enrollment_job_uuid': str(bulk_enrollment_job.uuid),
             }
         )
         msg = f'success _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
