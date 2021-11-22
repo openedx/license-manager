@@ -345,12 +345,25 @@ def _send_bulk_enrollment_results_email(
             bulk_enrollment_job.enterprise_customer_uuid,
         )
 
-        emails = [user['email'] for user in admin_users]
+        # https://web.archive.org/web/20211122135949/https://www.braze.com/docs/api/objects_filters/recipient_object/
+        recipients = []
+        for user in admin_users:
+            if int(user['id']) != bulk_enrollment_job.lms_user_id:
+                continue
+            # https://web.archive.org/web/20211122140312/https://www.braze.com/docs/api/objects_filters/user_alias_object/
+            recipient = {
+                'user_alias': {
+                    'alias_name': user['email'],
+                    'alias_label': 'Enterprise',
+                }
+            }
+            recipients.append(recipient)
+            break
 
         braze_client = BrazeApiClient()
         braze_client.send_campaign_message(
             campaign_id,
-            emails=emails,
+            recipients=recipients,
             trigger_properties={
                 'enterprise_customer_slug': enterprise_customer.get('slug'),
                 'enterprise_customer_name': enterprise_customer.get('name'),
