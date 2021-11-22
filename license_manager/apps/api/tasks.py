@@ -349,7 +349,7 @@ def _send_bulk_enrollment_results_email(
         recipients = []
         for user in admin_users:
             if int(user['user_id']) != bulk_enrollment_job.lms_user_id:
-                continue;
+                continue
             # must use a mix of send_to_existing_only: false + enternal_id w/ attributes to send to new braze profiles
             recipient = {
                 'send_to_existing_only': False,
