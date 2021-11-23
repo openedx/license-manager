@@ -103,6 +103,7 @@ def auto_apply_new_license(subscription_plan, user_email, lms_user_id):
 
     auto_applied_license.save()
     event_utils.track_license_changes([auto_applied_license], constants.SegmentEvents.LICENSE_ACTIVATED)
+    event_utils.identify_braze_alias(lms_user_id, user_email)
     return auto_applied_license
 
 
