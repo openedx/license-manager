@@ -73,6 +73,14 @@ def get_learner_portal_url(enterprise_slug):
     return '{}/{}'.format(settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL, enterprise_slug)
 
 
+def get_admin_portal_url(enterprise_slug):
+    """
+    Returns the link to the admin portal, given an enterprise slug.
+    Does not contain a trailing slash.
+    """
+    return '{}/{}'.format(settings.ENTERPRISE_ADMIN_PORTAL_BASE_URL, enterprise_slug)
+
+
 def get_license_activation_link(enterprise_slug, activation_key):
     """
     Returns the activation link displayed in the activation email sent to a learner

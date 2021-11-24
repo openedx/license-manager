@@ -151,7 +151,7 @@ class CustomerAgreement(TimeStampedModel):
     @property
     def auto_applicable_subscription(self):
         """
-        Get which subscription on CustomerAgreement is auto_appliable.
+        Get which subscription on CustomerAgreement is auto-applicable.
         """
         now = localized_utcnow()
         plan = self.subscriptions.filter(
@@ -327,6 +327,7 @@ class Notification(TimeStampedModel):
         null=False,
         verbose_name='Enterprise Customer UUID'
     )
+
     enterprise_customer_user_uuid = models.UUIDField(
         blank=False,
         null=False,
@@ -682,6 +683,37 @@ class SubscriptionPlan(TimeStampedModel):
         for threshold in thresholds:
             if current_utilization >= threshold:
                 return threshold
+
+    @cached_property
+    def auto_apply_licenses_turned_on_at(self):
+        """
+        Returns the time of when auto-apply licenses was last turned on.
+        """
+
+        if not self.should_auto_apply_licenses:
+            return None
+
+        result = None
+
+        for history in self.history.iterator():
+            if history.should_auto_apply_licenses:
+                result = history.history_date
+            else:
+                break
+
+        return result
+
+    def auto_applied_licenses_count_since(self, since=None):
+        """
+        Returns the number of licenses auto applied since a given time.
+        """
+        if since is None:
+            since = self.auto_apply_licenses_turned_on_at
+
+        return self.licenses.filter(
+            auto_applied=True,
+            activation_date__gte=since
+        ).count()
 
     def license_count_by_status(self):
         """

@@ -1204,8 +1204,9 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         # Check whether tasks were run
         mock_activation_task.assert_not_called()
 
+    @mock.patch('license_manager.apps.api.tasks.send_utilization_threshold_reached_email_task.delay')
     @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
-    def test_auto_apply_endpoint_idempotent(self, mock_activation_task):
+    def test_auto_apply_endpoint_idempotent(self, mock_activation_task, mock_send_utilization_threshold_reached_email_task):
         """
         Endpoint should only associate user with license on auto-applicable
         subscription once, even if you hit the end point a bunch of times.
@@ -1232,6 +1233,10 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         mock_activation_task.assert_called_once_with(
             (self.customer_agreement.enterprise_customer_uuid, user_email),
             {}
+        )
+
+        mock_send_utilization_threshold_reached_email_task.assert_called_once_with(
+            plan.uuid
         )
 
     @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
@@ -1264,8 +1269,9 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         # Check whether tasks were run
         mock_activation_task.assert_not_called()
 
+    @mock.patch('license_manager.apps.api.tasks.send_utilization_threshold_reached_email_task.delay')
     @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
-    def test_auto_apply_200_if_successful(self, mock_activation_task):
+    def test_auto_apply_200_if_successful(self, mock_activation_task, mock_send_utilization_threshold_reached_email_task):
         """
         Endpoint should return 200 if applicable subscriptions found, and
         License successfully auto applied.
@@ -1295,6 +1301,10 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         mock_activation_task.assert_called_once_with(
             (self.customer_agreement.enterprise_customer_uuid, self.super_user.email),
             {}
+        )
+
+        mock_send_utilization_threshold_reached_email_task.assert_called_once_with(
+            plan.uuid
         )
 
 

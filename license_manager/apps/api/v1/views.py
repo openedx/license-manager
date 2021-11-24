@@ -25,7 +25,6 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_csv.renderers import CSVRenderer
-from simplejson.errors import JSONDecodeError
 
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
@@ -33,12 +32,12 @@ from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     activation_email_task,
-    enterprise_enrollment_license_subsidy_task,
     link_learners_to_enterprise_task,
     revoke_all_licenses_task,
     send_auto_applied_license_email_task,
     send_onboarding_email_task,
     send_reminder_email_task,
+    send_utilization_threshold_reached_email_task,
 )
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import constants, event_utils
@@ -104,6 +103,8 @@ def auto_apply_new_license(subscription_plan, user_email, lms_user_id):
     auto_applied_license.save()
     event_utils.track_license_changes([auto_applied_license], constants.SegmentEvents.LICENSE_ACTIVATED)
     event_utils.identify_braze_alias(lms_user_id, user_email)
+    send_utilization_threshold_reached_email_task.delay(subscription_plan.uuid)
+
     return auto_applied_license
 
 
@@ -242,7 +243,7 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
             uuid=customer_agreement_uuid
         )
 
-        # Check if there are auto-appliable SubscriptionPlans
+        # Check if there are auto-applicable SubscriptionPlans
         plan = customer_agreement.auto_applicable_subscription
         if not plan:
             error_message = (
