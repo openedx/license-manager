@@ -30,7 +30,6 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
-from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 def _related_object_link(admin_viewname, object_pk, object_str):
@@ -46,6 +45,7 @@ class LicenseAdmin(admin.ModelAdmin):
         'activation_key',
         'get_renewed_to',
         'get_renewed_from',
+        'auto_applied'
     ]
     exclude = ['history', 'renewed_to']
     list_display = (
@@ -351,6 +351,7 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
                 )
         except CustomerAgreementError as exc:
             messages.add_message(request, messages.ERROR, exc)
+
     sync_agreement_with_enterprise_customer.short_description = 'Sync enterprise customer fields for selected records'
 
     def save_model(self, request, obj, form, change):

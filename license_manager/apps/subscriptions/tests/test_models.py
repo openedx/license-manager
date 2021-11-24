@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 from unittest import mock
 
 import ddt
@@ -12,7 +13,11 @@ from license_manager.apps.subscriptions.constants import (
     SegmentEvents,
 )
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
-from license_manager.apps.subscriptions.models import License, Notification
+from license_manager.apps.subscriptions.models import (
+    License,
+    Notification,
+    SubscriptionPlan,
+)
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
@@ -72,6 +77,37 @@ class SubscriptionsModelTests(TestCase):
                 renewal_kwargs.update({'effective_date': renewed_subscription_plan.expiration_date})
             SubscriptionPlanRenewalFactory.create(**renewal_kwargs)
             self.assertEqual(renewed_subscription_plan.is_locked_for_renewal_processing, is_locked_for_renewal_processing)
+
+    def test_auto_apply_licenses_turned_on_at(self):
+        """
+        Tests that auto_apply_licenses_turned_on_at returns the correct time.
+        """
+        subscription_plan = SubscriptionPlanFactory.create()
+        subscription_plan.should_auto_apply_licenses = True
+        subscription_plan.save()
+        auto_apply_licenses_turned_on_at = subscription_plan.history.latest().history_date
+
+        subscription_plan.is_active = True
+        subscription_plan.save()
+        latest_history_date = subscription_plan.history.latest().history_date
+
+        self.assertEqual(subscription_plan.auto_apply_licenses_turned_on_at, auto_apply_licenses_turned_on_at)
+        self.assertNotEqual(subscription_plan.auto_apply_licenses_turned_on_at, latest_history_date)
+
+    def test_auto_applied_licenses_count_since(self):
+        """
+        Tests that the correct auto-applied license count is returned.
+        """
+        subscription_plan = SubscriptionPlanFactory.create(should_auto_apply_licenses=True)
+        timestamp_1 = localized_utcnow()
+        LicenseFactory.create_batch(1, subscription_plan=subscription_plan, auto_applied=True, activation_date=timestamp_1)
+        LicenseFactory.create_batch(3, subscription_plan=subscription_plan, auto_applied=False, activation_date=timestamp_1)
+
+        self.assertEqual(subscription_plan.auto_applied_licenses_count_since(), 1)
+        timestamp_2 = timestamp_1 + timedelta(seconds=1)
+        self.assertEqual(subscription_plan.auto_applied_licenses_count_since(timestamp_2), 0)
+        LicenseFactory.create_batch(5, subscription_plan=subscription_plan, auto_applied=True, activation_date=timestamp_2)
+        self.assertEqual(subscription_plan.auto_applied_licenses_count_since(timestamp_2), 5)
 
 
 class NotificationTests(TestCase):

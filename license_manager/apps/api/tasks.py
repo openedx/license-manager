@@ -2,15 +2,12 @@ import csv
 import logging
 import os
 from datetime import datetime
-from smtplib import SMTPException
 from tempfile import NamedTemporaryFile
 
-from braze.client import BrazeClient
 from braze.exceptions import BrazeClientError
 from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.dateparse import parse_datetime
 
@@ -20,11 +17,12 @@ from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
+    DAYS_BEFORE_INITIAL_UTILIZATION_EMAIL_SENT,
     ENTERPRISE_BRAZE_ALIAS_LABEL,
+    LICENSE_UTILIZATION_THRESHOLDS,
     NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD,
     PENDING_ACCOUNT_CREATION_BATCH_SIZE,
     REVOCABLE_LICENSE_STATUSES,
-    WEEKLY_UTILIZATION_EMAIL_INTERLUDE,
     NotificationChoices,
 )
 from license_manager.apps.subscriptions.models import (
@@ -35,6 +33,7 @@ from license_manager.apps.subscriptions.models import (
 )
 from license_manager.apps.subscriptions.utils import (
     chunks,
+    get_admin_portal_url,
     get_enterprise_reply_to_email,
     get_enterprise_sender_alias,
     localized_utcnow,
@@ -577,10 +576,23 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
         raise ex
 
 
+def _get_admin_users_for_enterprise(enterprise_customer_uuid):
+    api_client = EnterpriseApiClient()
+    admin_users = api_client.get_enterprise_admin_users(enterprise_customer_uuid)
+    return [
+        {
+            'lms_user_id': admin_user['id'],
+            'ecu_id': admin_user['ecu_id'],
+            'email': admin_user['email']
+        }
+        for admin_user in admin_users
+    ]
+
+
 def _send_license_utilization_email(
-    subscription_details,
+    subscription,
     campaign_id,
-    emails
+    users
 ):
     """
     Sends email with properties required to detail license utilization.
@@ -597,144 +609,149 @@ def _send_license_utilization_email(
                 'highest_utilization_threshold_reached': num
             }
         campaign_id: (str): The Braze campaign identifier
-        emails: (list of str): List of recipients to send the email to
+        users (list of dict): List of users to send the emails to in the format of
+            {
+                'lms_user_id': str,
+                'ecu_id': str,
+                'email': str,
+            }
 
     """
 
-    subscription_uuid = subscription_details['uuid']
+    if not users:
+        return
+
+    subscription_uuid = subscription.uuid
     try:
         braze_client = BrazeApiClient()
+        trigger_properties = {
+            'subscription_plan_title': subscription.title,
+            'subscription_plan_expiration_date': datetime.strftime(subscription.expiration_date, "%d/%m/%Y"),
+            'enterprise_customer_name': subscription.customer_agreement.enterprise_customer_name,
+            'num_allocated_licenses': subscription.num_allocated_licenses,
+            'num_licenses': subscription.num_licenses,
+            'admin_portal_url': get_admin_portal_url(subscription.customer_agreement.enterprise_customer_slug),
+            'num_auto_applied_licenses_since_turned_on': subscription.auto_applied_licenses_count_since()
+        }
+        recipients = [
+            {
+                'external_user_id': user['lms_user_id'],
+                'trigger_properties': {
+                    'email': user['email']
+                }
+            } for user in users
+        ]
         braze_client.send_campaign_message(
             campaign_id,
-            emails=emails,
-            trigger_properties={
-                'subscription_plan_title': subscription_details['title'],
-                'enterprise_customer_name': subscription_details['enterprise_customer_name'],
-                'num_allocated_licenses': subscription_details['num_allocated_licenses'],
-                'num_licenses': subscription_details['num_licenses']
-            }
+            recipients=recipients,
+            trigger_properties=trigger_properties
         )
-        msg = f'Sent {campaign_id} email for subscription {subscription_uuid} to {len(emails)} admins.'
+        msg = f'Sent {campaign_id} email for subscription {subscription_uuid} to {len(recipients)} admins.'
         logger.info(msg)
     except Exception as ex:
-        msg = f'Failed to send {campaign_id} email for subscription {subscription_uuid} to {len(emails)} admins.'
+        msg = f'Failed to send {campaign_id} email for subscription {subscription_uuid}.'
         logger.error(msg, exc_info=True)
         raise ex
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
-def send_weekly_utilization_email_task(subscription_details, recipients):
+def send_initial_utilization_email_task(subscription_uuid):
     """
-    Sends email to admins detailing license utilization for a subscription plan.
+    Sends email to admins detailing license utilization for a subscription plan after the initial week.
 
     Arguments:
-        subscription_details (dict): Dictionary containing subscription details in the format of
-            {
-                'uuid': uuid,
-                'title': str,
-                'enterprise_customer_uuid': str,
-                'enterprise_customer_name': str,
-                'num_allocated_licenses': str,
-                'num_licenses': num,
-                'highest_utilization_threshold_reached': num
-            }
-        recipients (list of dict): List of recipients to send the emails to in the format of
-            {
-                'ecu_id': str,
-                'email': str,
-                'created': str
-            }
+        subscription_uuid (str): The subscription plan's uuid
     """
-    if not recipients:
+
+    subscription = SubscriptionPlan.objects.get(uuid=subscription_uuid)
+
+    # check if the email has been sent for the subscription plan already
+    # we only want to send this email once for any given plan
+    has_email_been_sent_before = Notification.objects.filter(
+        subscripton_plan_id=subscription.uuid,
+        notification_type=NotificationChoices.PERIODIC_INFORMATIONAL
+    ).count() > 0
+
+    if has_email_been_sent_before:
         return
 
+    # get the date when the subscription was last turned on
+    auto_apply_licenses_turned_on_at = subscription.auto_apply_licenses_turned_on_at
     now = localized_utcnow()
-    emails = []
+    is_email_ready = (now - auto_apply_licenses_turned_on_at).days >= DAYS_BEFORE_INITIAL_UTILIZATION_EMAIL_SENT
+    if not is_email_ready:
+        return
+
+    admin_users = _get_admin_users_for_enterprise(subscription.customer_agreement.enterprise_customer_uuid)
 
     with transaction.atomic():
-
-        # determine eligibility for weekly email
-        for recipient in recipients:
-            activation_date = parse_datetime(recipient['created'])
-
-            user_is_eligible = (now - activation_date).days >= WEEKLY_UTILIZATION_EMAIL_INTERLUDE
-
-            if not user_is_eligible:
-                continue
-
-            notification, created = Notification.objects.get_or_create(
-                enterprise_customer_uuid=subscription_details['enterprise_customer_uuid'],
-                enterprise_customer_user_uuid=recipient['ecu_id'],
-                subscripton_plan_id=subscription_details['uuid'],
+        for admin_user in admin_users:
+            notification = Notification.objects.create(
+                enterprise_customer_uuid=subscription.customer_agreement.enterprise_customer_uuid,
+                enterprise_customer_user_uuid=admin_user['ecu_id'],
+                subscripton_plan_id=subscription.uuid,
                 notification_type=NotificationChoices.PERIODIC_INFORMATIONAL
             )
+            notification.save()
 
-            user_has_not_received_email_for_week = created or (now - notification.last_sent).days >= WEEKLY_UTILIZATION_EMAIL_INTERLUDE
-
-            if user_has_not_received_email_for_week:
-                emails.append(recipient['email'])
-                notification.last_sent = now
-                notification.save()
-
-        if emails:
-            # will raise exception and roll back changes if error occurs
-            _send_license_utilization_email(
-                subscription_details=subscription_details,
-                campaign_id=settings.WEEKLY_LICENSE_UTILIZATION_CAMPAIGN,
-                emails=emails
-            )
+        # will raise exception and roll back changes if error occurs
+        _send_license_utilization_email(
+            subscription=subscription,
+            campaign_id=settings.INITIAL_LICENSE_UTILIZATION_CAMPAIGN,
+            users=admin_users
+        )
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
-def send_utilization_threshold_reached_email_task(subscription_details, recipients):
+def send_utilization_threshold_reached_email_task(subscription_uuid):
     """
     Sends email to admins if a license utilization threshold for a subscription plan has been reached.
 
     Arguments:
-        subscription_details (dict): Dictionary containing subscription details in the format of
-            {
-                'uuid': uuid,
-                'title': str,
-                'enterprise_customer_uuid': str,
-                'enterprise_customer_name': str,
-                'num_allocated_licenses': str,
-                'num_licenses': num,
-                'highest_utilization_threshold_reached': num
-            }
-        recipients (list of dict): List of recipients to send the emails to in the format of
-            {
-                'ecu_id': str,
-                'email': str,
-                'created': str
-            }
+        subscription_uuid (str): The subscription plan's uuid
     """
-
-    if not recipients:
-        return
+    subscription = SubscriptionPlan.objects.get(uuid=subscription_uuid)
 
     # only send email for the highest threshold reached
-    highest_utilization_threshold_reached = subscription_details['highest_utilization_threshold_reached']
+    highest_utilization_threshold_reached = subscription.highest_utilization_threshold_reached
     if highest_utilization_threshold_reached is not None:
-        emails = []
 
         notification_type, campaign = NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD[highest_utilization_threshold_reached]
 
+        # check if we have already sent an email for the current threshold or any higher thresholds
+        # if we sent an email for 100% utilization reached and a license was revoked, we don't want to send an email
+        # when 75% utilization is reached
+        current_and_higher_thresholds = [threshold for threshold in LICENSE_UTILIZATION_THRESHOLDS if threshold >= highest_utilization_threshold_reached]
+        current_and_higher_thresholds_notification_choices = [
+            NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD[threshold][0] for threshold in current_and_higher_thresholds
+        ]
+
+        has_email_been_sent_before = Notification.objects.filter(
+            enterprise_customer_uuid=subscription.customer_agreement.enterprise_customer_uuid,
+            subscripton_plan_id=subscription.uuid,
+            notification_type__in=current_and_higher_thresholds_notification_choices
+        ).count() > 0
+
+        if has_email_been_sent_before:
+            message = (
+                'Not sending utilization threshold reached email for {subscription.uuid}, email has already been sent previously.'
+            )
+            logger.info(message)
+            return
+
+        admin_users = _get_admin_users_for_enterprise(subscription.customer_agreement.enterprise_customer_uuid)
         with transaction.atomic():
-            for recipient in recipients:
-                _, created = Notification.objects.get_or_create(
-                    enterprise_customer_uuid=subscription_details['enterprise_customer_uuid'],
-                    enterprise_customer_user_uuid=recipient['ecu_id'],
-                    subscripton_plan_id=subscription_details['uuid'],
+            for admin_user in admin_users:
+                Notification.objects.create(
+                    enterprise_customer_uuid=subscription.customer_agreement.enterprise_customer_uuid,
+                    enterprise_customer_user_uuid=admin_user['ecu_id'],
+                    subscripton_plan_id=subscription.uuid,
                     notification_type=notification_type
                 )
 
-                # created means the email for this threshold has not been sent yet
-                if created:
-                    emails.append(recipient['email'])
-            if emails:
-                # will raise exception and roll back changes if error occurs
-                _send_license_utilization_email(
-                    subscription_details=subscription_details,
-                    campaign_id=getattr(settings, campaign),
-                    emails=emails
-                )
+            # will raise exception and roll back changes if error occurs
+            _send_license_utilization_email(
+                subscription=subscription,
+                campaign_id=getattr(settings, campaign),
+                users=admin_users
+            )
