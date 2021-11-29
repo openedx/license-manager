@@ -1380,7 +1380,6 @@ class LicenseActivationView(LicenseBaseView):
             send_onboarding_email_task.delay(
                 user_license.subscription_plan.enterprise_customer_uuid,
                 user_license.user_email,
-                plan_type_id,
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
