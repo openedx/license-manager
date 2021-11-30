@@ -419,12 +419,6 @@ class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
         'prior_subscription_plan__title',
         'effective_date',
     )
-    list_filter = (
-        'prior_subscription_plan__title',
-        'processed',
-        'prior_subscription_plan__customer_agreement__enterprise_customer_uuid',
-        'prior_subscription_plan__enterprise_catalog_uuid',
-    )
     search_fields = (
         'prior_subscription_plan__title',
         'prior_subscription_plan__uuid__startswith',
