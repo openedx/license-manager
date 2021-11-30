@@ -25,6 +25,7 @@ from license_manager.apps.subscriptions.forms import (
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
+    Notification,
     PlanType,
     Product,
     SubscriptionPlan,
@@ -548,3 +549,25 @@ class ProductAdmin(admin.ModelAdmin):
         'name',
         'netsuite_id',
     )
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = (
+        'enterprise_customer_uuid',
+        'enterprise_customer_user_uuid',
+        'subscripton_plan_id',
+        'notification_type',
+        'last_sent',
+    )
+
+    list_filter = (
+        'notification_type',
+    )
+
+    search_fields = (
+        'subscripton_plan__uuid__startswith',
+    )
+
+    def has_change_permission(self, request, obj=None):
+        return False
