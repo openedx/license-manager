@@ -626,7 +626,7 @@ def _send_license_utilization_email(
         braze_client = BrazeApiClient()
         trigger_properties = {
             'subscription_plan_title': subscription.title,
-            'subscription_plan_expiration_date': datetime.strftime(subscription.expiration_date, "%d/%m/%Y"),
+            'subscription_plan_expiration_date': datetime.strftime(subscription.expiration_date, "%b %-d, %Y"),
             'enterprise_customer_name': subscription.customer_agreement.enterprise_customer_name,
             'num_allocated_licenses': subscription.num_allocated_licenses,
             'num_licenses': subscription.num_licenses,

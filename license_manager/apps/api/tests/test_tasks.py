@@ -659,7 +659,7 @@ class BaseLicenseUtilizationEmailTaskTests(TestCase):
         ]
         expected_trigger_properties = {
             'subscription_plan_title': subscription_plan.title,
-            'subscription_plan_expiration_date': datetime.strftime(subscription_plan.expiration_date, "%d/%m/%Y"),
+            'subscription_plan_expiration_date': datetime.strftime(subscription_plan.expiration_date, "%b %-d, %Y"),
             'enterprise_customer_name': subscription_plan.customer_agreement.enterprise_customer_name,
             'num_allocated_licenses': subscription_plan.num_allocated_licenses,
             'num_licenses': subscription_plan.num_licenses,
