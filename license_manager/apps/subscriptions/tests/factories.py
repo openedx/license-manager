@@ -120,6 +120,7 @@ class SubscriptionPlanRenewalFactory(factory.django.DjangoModelFactory):
         model = SubscriptionPlanRenewal
 
     prior_subscription_plan = factory.SubFactory(SubscriptionPlanFactory)
+    renewed_subscription_plan = None
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
     number_of_licenses = 5
     effective_date = localized_utcnow() + timedelta(days=366)
