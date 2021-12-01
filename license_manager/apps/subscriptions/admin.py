@@ -76,10 +76,18 @@ class LicenseAdmin(admin.ModelAdmin):
         'subscription_plan__title',
         'subscription_plan__uuid__startswith',
         'subscription_plan__customer_agreement__enterprise_customer_uuid__startswith',
-        'subscription_plan__enterprise_catalog_uuid__startswith',
+        'subscription_plan__customer_agreement__enterprise_customer_slug__startswith'
     )
 
     actions = ['revert_licenses_to_snapshot_time']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'subscription_plan',
+            'renewed_to'
+        ).prefetch_related(
+            'subscription_plan__customer_agreement'
+        )
 
     def get_subscription_plan_title(self, obj):
         return _related_object_link(
