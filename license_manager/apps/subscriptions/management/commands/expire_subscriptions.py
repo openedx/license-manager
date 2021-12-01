@@ -26,9 +26,6 @@ class Command(BaseCommand):
     help = (
         'Gets all subscriptions that have expired within a time range (default range is the last 24 hours) and sends an'
         ' task to terminate the enrollments any licensed users have.'
-
-        '\nIn the event the daily job fails and this needs to be run manually for subscriptions that expired more '
-        'than 24 hours ago this can be done by specifying ``days_since_expiration`` as an arg'
     )
 
     def add_arguments(self, parser):
@@ -73,6 +70,47 @@ class Command(BaseCommand):
             default=False,
         )
 
+    def _expire_subscription_plan(self, expired_subscription_plan):
+        """
+        Expires a single subscription plan.
+        """
+        expired_licenses = []
+
+        for lcs in expired_subscription_plan.licenses.iterator():
+            if lcs.status in [ASSIGNED, ACTIVATED]:
+                expired_licenses.append(lcs)
+
+        any_failures = False
+
+        # Terminate the licensed course enrollments
+        for license_chunk in chunks(expired_licenses, LICENSE_EXPIRATION_BATCH_SIZE):
+            try:
+                license_chunk_uuids = [str(lcs.uuid) for lcs in license_chunk]
+
+                # We might be running this command against a plan that expired further in the past to fix bad data. We don't
+                # want to modify a course enrollment if it's been modified after the plan expiration because a user might have upgraded
+                # the course.
+                ignore_enrollments_modified_after = expired_subscription_plan.expiration_date.isoformat() \
+                    if expired_subscription_plan.expiration_date < localized_utcnow() - timedelta(days=1) else None
+
+                license_expiration_task(
+                    license_chunk_uuids,
+                    ignore_enrollments_modified_after=ignore_enrollments_modified_after
+                )
+            except Exception:  # pylint: disable=broad-except
+                any_failures = True
+                msg = 'Failed to terminate course enrollments for learners in subscription: {}'.format(
+                    expired_subscription_plan.uuid)
+                logger.exception(msg)
+
+        if not any_failures:
+            message = 'Terminated course enrollments for learners in subscription: {}'.format(
+                expired_subscription_plan.uuid)
+            logger.info(message)
+
+            expired_subscription_plan.expiration_processed = True
+            expired_subscription_plan.save(update_fields=['expiration_processed'])
+
     def handle(self, *args, **options):
         expired_after_date = localized_datetime_from_datetime(
             datetime.strptime(options['expiration_date_from'], DATE_FORMAT))
@@ -116,38 +154,23 @@ class Command(BaseCommand):
 
         if not options['dry_run']:
             for expired_subscription_plan in expired_subscription_plans:
-                expired_licenses = [lcs for lcs in expired_subscription_plan.licenses.all() if lcs.status in [ASSIGNED, ACTIVATED]]
-                any_failures = False
+                renewal_for_plan = expired_subscription_plan.get_renewal()
 
-                # Terminate the licensed course enrollments for the given licenses,
-                # an alert will be triggered if any failures occur
-                for license_chunk in chunks(expired_licenses, LICENSE_EXPIRATION_BATCH_SIZE):
-                    try:
-                        license_chunk_uuids = [str(lcs.uuid) for lcs in license_chunk]
-                        ignore_enrollments_modified_after = expired_subscription_plan.expiration_date.isoformat() \
-                            if expired_subscription_plan.expiration_date < localized_utcnow() - timedelta(days=1) else None
-
-                        license_expiration_task(
-                            license_chunk_uuids,
-                            # we might be running this command on a plan that expired further in the past to fix bad data, and we don't
-                            # want to modify a course enrollment if it's been modified after the plan expiration because a user might have upgraded
-                            # a course.
-                            ignore_enrollments_modified_after=ignore_enrollments_modified_after
-                        )
-
-                    except Exception:  # pylint: disable=broad-except
-                        any_failures = True
-
-                if not any_failures:
-                    message = 'Terminated course enrollments for learners in subscription: {}'.format(
+                # If there is a renewal, we do not want to revoke licensed course enrollments
+                # until the last renewed plan expires
+                if renewal_for_plan:
+                    msg = 'Not processing expiration for subscription: {}, plan has a renewal.'.format(
                         expired_subscription_plan.uuid)
-                    logger.info(message)
+                    logger.info(msg)
+                    continue
 
-                    expired_subscription_plan.expiration_processed = True
-                    expired_subscription_plan.save(update_fields=['expiration_processed'])
-                else:
-                    message = 'Failed to process expiration for subscription: {}'.format(expired_subscription_plan.uuid)
-                    logger.error(message)
+                self._expire_subscription_plan(expired_subscription_plan)
+
+                prior_renewals = expired_subscription_plan.prior_renewals
+
+                # revoke licensed course enrollments for all previous plans
+                for prior_renewal in prior_renewals:
+                    self._expire_subscription_plan(prior_renewal.prior_subscription_plan)
         else:
             message = 'Dry-run result subscriptions that would be processed: {}'.format(
                 [str(sub.uuid) for sub in expired_subscription_plans])
