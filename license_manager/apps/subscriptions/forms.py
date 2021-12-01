@@ -36,6 +36,10 @@ class SubscriptionPlanForm(forms.ModelForm):
         widget=forms.HiddenInput()
     )
 
+    salesforce_opportunity_id = forms.CharField(
+        required=True,
+    )
+
     # Using a HiddenInput widget here allows us to hide the property
     # on the creation form while still displaying the property
     # as read-only on the SubscriptionPlan update form.
