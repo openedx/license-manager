@@ -266,13 +266,15 @@ def toggle_auto_apply_licenses(customer_agreement_uuid, subscription_uuid):
     off for the current plan.
 
     """
-    # there should only be one plan for auto-applied licenses
-    current_subs_for_auto_appled_licenses = SubscriptionPlan.objects.filter(
+    # There should only be one plan for auto-applied licenses at any given time
+    current_plan_for_auto_applied_licenses = SubscriptionPlan.objects.filter(
         customer_agreement_id=customer_agreement_uuid,
         should_auto_apply_licenses=True
-    )
+    ).first()
 
-    current_subs_for_auto_appled_licenses.update(should_auto_apply_licenses=False)
+    if current_plan_for_auto_applied_licenses:
+        current_plan_for_auto_applied_licenses.should_auto_apply_licenses = False
+        current_plan_for_auto_applied_licenses.save()
 
     if not subscription_uuid:
         return
