@@ -528,8 +528,8 @@ class ToggleAutoApplyLicensesTests(TestCase):
 
     @ddt.data(None, '')
     def test_toggle_auto_apply_licenses_no_subscription_uuid(self, subscription_uuid):
-        SubscriptionPlan.objects.all().update(should_auto_apply_licenses=True)
-        self.assertEqual(len(SubscriptionPlan.objects.filter(should_auto_apply_licenses=True)), 2)
+        self.subscription_plan_1.should_auto_apply_licenses = True
+        self.subscription_plan_1.save()
         api.toggle_auto_apply_licenses(
             customer_agreement_uuid=self.customer_agreement.uuid,
             subscription_uuid=subscription_uuid
