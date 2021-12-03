@@ -9,7 +9,6 @@ from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 from django.conf import settings
 from django.db import transaction
-from django.utils.dateparse import parse_datetime
 
 import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api import utils
@@ -19,6 +18,7 @@ from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
     DAYS_BEFORE_INITIAL_UTILIZATION_EMAIL_SENT,
     ENTERPRISE_BRAZE_ALIAS_LABEL,
+    LICENSE_BULK_OPERATION_BATCH_SIZE,
     LICENSE_UTILIZATION_THRESHOLDS,
     NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD,
     PENDING_ACCOUNT_CREATION_BATCH_SIZE,
@@ -426,6 +426,17 @@ def revoke_all_licenses_task(subscription_uuid):
 
     for result in revocation_results:
         subscriptions_api.execute_post_revocation_tasks(**result)
+
+
+@shared_task(base=LoggedTask)
+def increase_num_licenses_task(subscription_uuid, num_new_licenses):
+    subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
+
+    while num_new_licenses > 0:
+        batch_size = num_new_licenses if num_new_licenses < LICENSE_BULK_OPERATION_BATCH_SIZE else LICENSE_BULK_OPERATION_BATCH_SIZE
+        new_license_batch = [License(subscription_plan=subscription_plan) for _ in range(batch_size)]
+        num_new_licenses -= batch_size
+        License.bulk_create(new_license_batch)
 
 
 def _send_bulk_enrollment_results_email(

@@ -757,6 +757,14 @@ class SubscriptionPlan(TimeStampedModel):
         new_licenses = [License(subscription_plan=self) for _ in range(num_new_licenses)]
         License.bulk_create(new_licenses)
 
+    def increase_num_licenses_async(self, num_new_licenses):
+        """
+        Method to increase the number of licenses associated with an instance of SubscriptionPlan by num_new_licenses asynchronously.
+        """
+        from license_manager.apps.api.tasks import increase_num_licenses_task
+
+        increase_num_licenses_task.delay(self.uuid, num_new_licenses)
+
     def contains_content(self, content_ids):
         """
         Checks whether the subscription contains the given content by checking against its linked enterprise catalog.
