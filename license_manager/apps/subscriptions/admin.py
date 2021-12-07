@@ -206,10 +206,8 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         https://docs.python.org/3.6/whatsnew/3.6.html#new-dict-implementation
         """
         return [
-            field for field in
-            dict.fromkeys(writable_fields + read_only_fields)
-            if field not in
-            fields_displayed_first + fields_displayed_last
+            field for field in dict.fromkeys(writable_fields + read_only_fields)
+            if field not in fields_displayed_first + fields_displayed_last
         ]
 
     fields = fields_displayed_first + get_remaining_fields() + fields_displayed_last
@@ -234,7 +232,6 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'uuid__startswith',
         'title',
         'customer_agreement__enterprise_customer_uuid__startswith',
-        'enterprise_catalog_uuid__startswith',
     )
     ordering = (
         'title',
@@ -248,22 +245,10 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
     )
     actions = ['process_unused_licenses_post_freeze']
 
-    def save_model(self, request, obj, form, change):
-        # Record change reason for simple history
-        obj._change_reason = form.cleaned_data.get('change_reason')  # pylint: disable=protected-access
-
-        # If a uuid is not specified on the subscription itself, use the default one for the CustomerAgreement
-        customer_agreement_catalog = obj.customer_agreement.default_enterprise_catalog_uuid
-        obj.enterprise_catalog_uuid = (obj.enterprise_catalog_uuid or customer_agreement_catalog)
-
-        # assign netsuite_id using and plan_type using product until column is fully deprecated
-        obj.netsuite_product_id = obj.product.netsuite_id
-        obj.plan_type = obj.product.plan_type
-
-        # Create licenses to be associated with the subscription plan after creating the subscription plan
-        num_new_licenses = form.cleaned_data.get('num_licenses', 0) - obj.num_licenses
-        super().save_model(request, obj, form, change)
-        SubscriptionPlan.increase_num_licenses(obj, num_new_licenses)
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'customer_agreement',
+        )
 
     def get_readonly_fields(self, request, obj=None):
         """
@@ -299,6 +284,23 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
     process_unused_licenses_post_freeze.short_description = (
         'Freeze selected Subscription Plans (deletes unused licenses)'
     )
+
+    def save_model(self, request, obj, form, change):
+        # Record change reason for simple history
+        obj._change_reason = form.cleaned_data.get('change_reason')  # pylint: disable=protected-access
+
+        # If a uuid is not specified on the subscription itself, use the default one for the CustomerAgreement
+        customer_agreement_catalog = obj.customer_agreement.default_enterprise_catalog_uuid
+        obj.enterprise_catalog_uuid = (obj.enterprise_catalog_uuid or customer_agreement_catalog)
+
+        # assign netsuite_id using and plan_type using product until column is fully deprecated
+        obj.netsuite_product_id = obj.product.netsuite_id
+        obj.plan_type = obj.product.plan_type
+
+        # Create licenses to be associated with the subscription plan after creating the subscription plan
+        num_new_licenses = form.cleaned_data.get('num_licenses', 0) - obj.num_licenses
+        super().save_model(request, obj, form, change)
+        SubscriptionPlan.increase_num_licenses(obj, num_new_licenses)
 
 
 @admin.register(CustomerAgreement)

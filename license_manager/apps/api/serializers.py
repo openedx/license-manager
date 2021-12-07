@@ -1,5 +1,6 @@
 from django.conf import settings
 from rest_framework import serializers
+from rest_framework.fields import SerializerMethodField
 
 from license_manager.apps.subscriptions.constants import ACTIVATED, ASSIGNED
 from license_manager.apps.subscriptions.models import (
@@ -8,6 +9,7 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 class SubscriptionPlanRenewalSerializer(serializers.ModelSerializer):
@@ -98,8 +100,9 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
     """
     Serializer for the `CustomerAgreement` model.
     """
-    subscriptions = SubscriptionPlanSerializer(many=True)
+    subscriptions = SerializerMethodField()
     subscription_for_auto_applied_licenses = serializers.SerializerMethodField()
+    ordered_subscription_plan_expirations = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomerAgreement
@@ -115,8 +118,29 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
             'subscription_for_auto_applied_licenses'
         ]
 
+    @property
+    def serialize_active_plans_only(self):
+        return self.context.get('active_plans_only', True)
+
+    def get_ordered_subscription_plan_expirations(self, obj):
+        plan_expirations = obj.ordered_subscription_plan_expirations
+
+        if self.serialize_active_plans_only:
+            return [expiration for expiration in plan_expirations if expiration['is_active']]
+
+        return plan_expirations
+
+    def get_subscriptions(self, obj):
+        plans = obj.subscriptions.all()
+
+        if self.serialize_active_plans_only:
+            plans = [plan for plan in plans if plan.is_active]
+
+        serializer = SubscriptionPlanSerializer(plans, many=True)
+        return serializer.data
+
     def get_subscription_for_auto_applied_licenses(self, obj):
-        subscription_plan = obj.subscriptions.filter(should_auto_apply_licenses=True).first()
+        subscription_plan = obj.auto_applicable_subscription
         return subscription_plan.uuid if subscription_plan else None
 
 

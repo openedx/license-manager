@@ -232,7 +232,17 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
         if self.requested_customer_agreement_uuid:
             kwargs.update({'uuid': self.requested_customer_agreement_uuid})
 
-        return CustomerAgreement.objects.filter(**kwargs).order_by('uuid')
+        return CustomerAgreement.objects.filter(**kwargs).prefetch_related(
+            'subscriptions',
+            'subscriptions__renewal',
+            'subscriptions__origin_renewal',
+        ).order_by('uuid')
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        active_plans_only = self.request.query_params.get('active_plans_only', 'true').lower() == 'true'
+        context.update({'active_plans_only': active_plans_only})
+        return context
 
     @action(detail=True, url_path='auto-apply', methods=['post'])
     def auto_apply(self, request, customer_agreement_uuid=None):
