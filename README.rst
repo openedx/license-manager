@@ -1,8 +1,5 @@
-License Manager  |Travis|_ |Codecov|_
+License Manager  |Codecov|_
 ===================================================
-.. |Travis| image:: https://travis-ci.com/edx/license-manager.svg?branch=master
-.. _Travis: https://travis-ci.com/edx/license-manager
-
 .. |Codecov| image:: http://codecov.io/github/edx/license-manager/coverage.svg?branch=master
 .. _Codecov: http://codecov.io/github/edx/license-manager?branch=master
 
@@ -28,6 +25,7 @@ Quick Setup
   $ make dev.up
   $ make app-shell
   # make requirements
+  # make validate  # to run full test suite
 
 The server will run on ``localhost:18170``
 

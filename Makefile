@@ -60,7 +60,7 @@ django_shell: ## run Django shell
 	python manage.py shell
 
 test: clean ## run tests and generate coverage report
-	tox -e $(TOXENV)
+	pytest
 
 # To be run from CI context
 coverage: clean
@@ -77,7 +77,7 @@ style: ## run Python style checker
 	pycodestyle license_manager *.py
 
 lint: ## run Python code linting
-	pylint -j 0 --rcfile=pylintrc license_manager/ *.py
+	pylint -j 0 --django-settings-module=license_manager.settings.test --rcfile=pylintrc license_manager *.py
 
 quality: style isort_check lint ## check code style and import sorting, then lint
 
@@ -130,10 +130,7 @@ upgrade: piptools $(COMMON_CONSTRAINTS_TXT) ## update the requirements/*.txt fil
 	pip-compile --upgrade -o requirements/quality.txt requirements/quality.in
 	pip-compile --upgrade -o requirements/validation.txt requirements/validation.in
 	pip-compile --upgrade -o requirements/dev.txt requirements/dev.in
-	pip-compile --upgrade -o requirements/travis.txt requirements/travis.in
 	pip-compile --upgrade -o requirements/production.txt requirements/production.in
-	# Let tox control the Django version for tests
-	sed -i.tmp '/^django==/d' requirements/test.txt
 	rm requirements/test.txt.tmp
 
 extract_translations: ## extract strings to be translated, outputting .mo files

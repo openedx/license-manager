@@ -7,27 +7,30 @@ on:
     branches: [master]
 
 jobs:
-  build:
-    name: Tests
+  tests:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
-      max-parallel: 4
       matrix:
-        python-version: ['py38']
-        django-version: ['django32']
-
+        python-version: ["3.8"]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
-        python-version: '3.8'
+        python-version: ${{ matrix.python-version }}
         architecture: x64
-    - name: Start container
-      run: |
-        docker-compose -f .github/docker-compose-github.yml up -d
-    - name: Install test dependencies and run validation
-      run: |
-        docker exec -e TOXENV=${{ matrix.python-version }}-${{ matrix.django-version }} -u root license_manager.app /edx/app/license_manager/validate.sh
-    - name: Code Coverage
-      uses: codecov/codecov-action@v1
+    - name: Install requirements
+      run: make requirements
+    - name: Upgrade packages
+      run: pip install -U pip wheel codecov
+    - name: Validate translations
+      run: make validate_translations
+    - name: Run tests
+      run: make test
+    - name: Run pycodestyle
+      run: make style
+    - name: Run isort
+      run: make isort_check
+    - name: Run pii check
+      run: make pii_check
+    - name: Codecov
+      run: codecov
