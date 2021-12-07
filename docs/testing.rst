@@ -12,3 +12,9 @@ Code quality validation can be run independently with:
 .. code-block:: bash
 
     $ make quality
+
+Python tests can be run independently with:
+
+.. code-block:: bash
+
+    $ make test
