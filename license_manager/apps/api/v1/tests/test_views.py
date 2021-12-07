@@ -1060,9 +1060,9 @@ class LicenseViewSetActionMixin:
 
 
 @ddt.ddt
-class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
+class CustomerAgreementViewSetTests(LicenseViewSetActionMixin, TestCase):
     """
-    Tests for special actions on the CustomerAgreementViewSet.
+    Tests for the CustomerAgreementViewSet.
     """
 
     def setUp(self):
@@ -1095,12 +1095,42 @@ class CustomerAgreementViewSetActionTests(LicenseViewSetActionMixin, TestCase):
             is_active=True,
             should_auto_apply_licenses=False,
         )
+        cls.inactive_subscription_for_customer = SubscriptionPlanFactory.create(
+            customer_agreement=cls.customer_agreement,
+            enterprise_catalog_uuid=cls.enterprise_catalog_uuid,
+            is_active=False,
+        )
 
         # Routes setup
         cls.auto_apply_url = reverse(
             'api:v1:customer-agreement-auto-apply',
             kwargs={'customer_agreement_uuid': cls.customer_agreement.uuid}
         )
+        cls.list_url = reverse(
+            'api:v1:customer-agreement-list'
+        )
+
+    @ddt.data(None, True, False)
+    def test_active_plans_only_query_param(self, active_plans_only):
+        """
+        Tests that only active plans are serialized if the query param active_plans_only = True (default),
+        else all plans should be serialized in the CustomerAgreement.
+        """
+
+        query_params = '' if active_plans_only is None else f'active_plans_only={active_plans_only}'
+        url = self.list_url + f'?{query_params}'
+        self._setup_request_jwt(user=self.super_user)
+        response = self.api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        results = response.data['results']
+        result = [result for result in results if result['uuid'] == str(self.customer_agreement.uuid)][0]
+
+        only_active_expirations = all([expiration['is_active'] for expiration in result['ordered_subscription_plan_expirations']])
+        only_active_plans = all([plan['is_active'] for plan in result['subscriptions']])
+
+        all_active = only_active_expirations and only_active_plans
+        self.assertEqual(active_plans_only is None or active_plans_only, all_active)
 
     @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
     def test_auto_apply_422_if_no_applicable_subscriptions(self, mock_activation_task):
