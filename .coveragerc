@@ -10,3 +10,4 @@ omit =
     *admin.py
     *static*
     *templates*
+    license_manager/apps/subscriptions/event_bus_utils.py

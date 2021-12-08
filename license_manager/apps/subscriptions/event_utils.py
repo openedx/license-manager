@@ -6,7 +6,10 @@ import requests
 from django.conf import settings
 from django.db.models import prefetch_related_objects
 
+from license_manager.apps.subscriptions.constants import SegmentEvents
 from license_manager.apps.subscriptions.utils import localized_utcnow
+
+from .event_bus_utils import send_event_to_message_bus
 
 
 logger = logging.getLogger(__name__)
@@ -156,6 +159,7 @@ def track_event(lms_user_id, event_name, properties):
     Returns:
         None
     """
+
     if hasattr(settings, "SEGMENT_KEY") and settings.SEGMENT_KEY:
         try:  # We should never raise an exception when not able to send a tracking event
             if not lms_user_id:
@@ -175,6 +179,9 @@ def track_event(lms_user_id, event_name, properties):
         logger.warning(
             "Event {} for user_id {} not tracked because SEGMENT_KEY not set".format(event_name, lms_user_id)
         )
+
+    if getattr(settings, "KAFKA_ENABLED", False):  # pragma: no cover
+        send_event_to_message_bus(event_name, properties)
 
 
 def get_license_tracking_properties(license_obj):
