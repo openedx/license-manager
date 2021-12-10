@@ -127,6 +127,7 @@ def assign_new_licenses(subscription_plan, user_emails):
     License.bulk_update(
         licenses,
         ['user_email', 'status', 'activation_key', 'assigned_date', 'last_remind_date'],
+        batch_size=10,
     )
 
     event_utils.track_license_changes(list(licenses), constants.SegmentEvents.LICENSE_ASSIGNED)
