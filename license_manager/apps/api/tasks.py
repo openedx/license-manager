@@ -1,6 +1,7 @@
 import csv
 import logging
 import os
+import uuid
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 
@@ -25,6 +26,7 @@ from license_manager.apps.subscriptions.constants import (
     REVOCABLE_LICENSE_STATUSES,
     NotificationChoices,
 )
+from license_manager.apps.subscriptions.event_utils import track_license_changes
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
@@ -476,10 +478,16 @@ def _send_bulk_enrollment_results_email(
                 'bulk_enrollment_job_uuid': str(bulk_enrollment_job.uuid),
             }
         )
-        msg = f'success _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
+        msg = (
+            f'success _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
+            'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
+        )
         logger.info(msg)
     except Exception as ex:
-        msg = f'failed _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
+        msg = (
+            f'failed _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
+            'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
+        )
         logger.error(msg, exc_info=True)
         raise ex
 
@@ -487,18 +495,24 @@ def _send_bulk_enrollment_results_email(
 @shared_task(base=LoggedTask)
 def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterprise_customer_uuid, learner_emails, course_run_keys, notify_learners, subscription_uuid):
     """
-    Enroll a list of enterprise learners into a list of course runs with or without notifying them. Optionally, filter license check by a specific subscription.
+    Enroll a list of enterprise learners into a list of course runs with or without notifying them.
+    Optionally, filter license check by a specific subscription.
 
     Arguments:
-        bulk_enrollment_job_uuid (str): UUID (string representation) for a BulkEnrollmentJob created by the enqueuing process for logging and progress tracking table updates.
+        bulk_enrollment_job_uuid (str): UUID (string representation) for a BulkEnrollmentJob created
+            by the enqueuing process for logging and progress tracking table updates.
         enterprise_customer_uuid (str): UUID (string representation) the enterprise customer id
         learner_emails (list(str)): email addresses of the learners to enroll
         course_run_keys (list(str)): course keys of the courses to enroll the learners into
         notify_learners (bool): whether or not to send notifications of their enrollment to the learners
-        subscription_uuid (str): UUID (string representation) of the specific enterprise subscription to use when validating learner licenses
+        subscription_uuid (str): UUID (string representation) of the specific enterprise subscription to use when
+            validating learner licenses
     """
     try:
-        logger.info(f'starting enterprise_enrollment_license_subsidy_task for bulk_enrollment_job_uuid={bulk_enrollment_job_uuid} enterprise_customer_uuid={enterprise_customer_uuid}')
+        logger.info(
+            f'starting enterprise_enrollment_license_subsidy_task for '
+            'bulk_enrollment_job_uuid={bulk_enrollment_job_uuid} enterprise_customer_uuid={enterprise_customer_uuid}'
+        )
 
         # collect/return results (rather than just write to the CSV) to help testability
         results = []
@@ -509,15 +523,20 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
         # this is to avoid hitting timeouts on the enterprise enroll api
         # take course keys 25 at a time, for each course key chunk, take learners 25 at a time
         for course_run_key_batch in chunks(course_run_keys, 25):
-            logger.debug("enterprise_customer_uuid={} course_run_key_batch size: {}".format(enterprise_customer_uuid, len(course_run_key_batch)))
+            logger.debug("enterprise_customer_uuid={} course_run_key_batch size: {}".format(
+                enterprise_customer_uuid, len(course_run_key_batch)
+            ))
             for learner_enrollment_batch in chunks(learner_emails, 25):
-                logger.debug("enterprise_customer_uuid={} learner_enrollment_batch size: {}".format(enterprise_customer_uuid, len(learner_enrollment_batch)))
+                logger.debug("enterprise_customer_uuid={} learner_enrollment_batch size: {}".format(
+                    enterprise_customer_uuid, len(learner_enrollment_batch)
+                ))
 
-                missing_subscriptions, licensed_enrollment_info = utils.check_missing_licenses(customer_agreement,
-                                                                                               learner_enrollment_batch,
-                                                                                               course_run_key_batch,
-                                                                                               subscription_uuid=subscription_uuid,
-                                                                                               )
+                missing_subscriptions, licensed_enrollment_info = utils.check_missing_licenses(
+                    customer_agreement,
+                    learner_enrollment_batch,
+                    course_run_key_batch,
+                    subscription_uuid=subscription_uuid,
+                )
 
                 if missing_subscriptions:
                     for failed_email in missing_subscriptions.keys():
@@ -537,7 +556,10 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
                         results.append([success.get('email'), success.get('course_run_key'), 'success', ''])
 
                     for pending in enrollment_result['pending']:
-                        results.append([pending.get('email'), pending.get('course_run_key'), 'pending', 'pending license activation'])
+                        results.append([
+                            pending.get('email'), pending.get('course_run_key'),
+                            'pending', 'pending license activation'
+                        ])
 
                     for failure in enrollment_result['failures']:
                         results.append([failure.get('email'), failure.get('course_run_key'), 'failed', ''])
@@ -571,7 +593,10 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
 
         return results
     except Exception as ex:
-        msg = f'failed enterprise_enrollment_license_subsidy_task for bulk_enrollment_job_uuid={bulk_enrollment_job_uuid} enterprise_customer_uuid={enterprise_customer_uuid}'
+        msg = (
+            f'failed enterprise_enrollment_license_subsidy_task for '
+            'bulk_enrollment_job_uuid={bulk_enrollment_job_uuid} enterprise_customer_uuid={enterprise_customer_uuid}'
+        )
         logger.error(msg, exc_info=True)
         raise ex
 
@@ -716,12 +741,17 @@ def send_utilization_threshold_reached_email_task(subscription_uuid):
     highest_utilization_threshold_reached = subscription.highest_utilization_threshold_reached
     if highest_utilization_threshold_reached is not None:
 
-        notification_type, campaign = NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD[highest_utilization_threshold_reached]
+        notification_type, campaign = NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD[
+            highest_utilization_threshold_reached
+        ]
 
         # check if we have already sent an email for the current threshold or any higher thresholds
         # if we sent an email for 100% utilization reached and a license was revoked, we don't want to send an email
         # when 75% utilization is reached
-        current_and_higher_thresholds = [threshold for threshold in LICENSE_UTILIZATION_THRESHOLDS if threshold >= highest_utilization_threshold_reached]
+        current_and_higher_thresholds = [
+            threshold for threshold in LICENSE_UTILIZATION_THRESHOLDS
+            if threshold >= highest_utilization_threshold_reached
+        ]
         current_and_higher_thresholds_notification_choices = [
             NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD[threshold][0] for threshold in current_and_higher_thresholds
         ]
@@ -734,7 +764,8 @@ def send_utilization_threshold_reached_email_task(subscription_uuid):
 
         if has_email_been_sent_before:
             message = (
-                'Not sending utilization threshold reached email for {subscription.uuid}, email has already been sent previously.'
+                'Not sending utilization threshold reached email for {subscription.uuid}, '
+                'email has already been sent previously.'
             )
             logger.info(message)
             return
@@ -755,3 +786,29 @@ def send_utilization_threshold_reached_email_task(subscription_uuid):
                 campaign_id=getattr(settings, campaign),
                 users=admin_users
             )
+
+
+@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT, bind=True)
+def track_license_changes_task(self, license_uuids, event_name, properties=None):
+    """
+    Calls ``track_license_changes()`` on some chunks of licenses.
+
+    Args:
+        license_uuid (list): List of license uuids
+        event_name (str): Name of the event in the format of:
+            edx.server.license-manager.license-lifecycle.<new-status>, see constants.SegmentEvents
+        properties: (dict): Additional properties to track for each event,
+            overrides fields from get_license_tracking_properties
+    Returns:
+        None
+    """
+    properties = properties or {}
+    # We chunk these up as to not fetch too many license records from the DB in a single query.
+    for uuid_str_chunk in chunks(license_uuids, 10):
+        license_uuid_chunk = [uuid.UUID(uuid_str) for uuid_str in uuid_str_chunk]
+        licenses = License.objects.filter(uuid__in=license_uuid_chunk)
+        track_license_changes(licenses, event_name, properties)
+        logger.info('Task {} tracked license changes for license uuids {}'.format(
+            self.request.id,
+            license_uuid_chunk,
+        ))

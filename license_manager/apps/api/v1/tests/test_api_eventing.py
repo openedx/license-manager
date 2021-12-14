@@ -13,6 +13,7 @@ from django.urls import reverse
 from freezegun import freeze_time
 from rest_framework import status
 
+from license_manager.apps.api import tasks
 from license_manager.apps.api.v1.tests.test_views import (
     LicenseViewSetActionMixin,
     LicenseViewTestMixin,
@@ -30,8 +31,26 @@ logger = logging.getLogger(__name__)
 NOW = utils.localized_utcnow()
 
 
+class EventTestCaseBase(TestCase):
+    """
+    Mocks the call to ``track_license_changes_task.delay()``
+    to just be a simple python invocation of ``track_license_changes()``.
+    """
+    def setUp(self):
+        super().setUp()
+        self.mock_track_license_changes_mocker = mock.patch(
+            'license_manager.apps.api.v1.views.track_license_changes_task.delay',
+            wraps=tasks.track_license_changes_task,
+        )
+        self.mock_track_license_changes_mocker.start()
+
+    def tearDown(self):
+        super().tearDown()
+        self.mock_track_license_changes_mocker.stop()
+
+
 @ddt.ddt
-class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
+class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, EventTestCaseBase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -235,7 +254,7 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, TestCase):
 
 
 @ddt.ddt
-class LicenseLearnerActionsEventTests(LicenseViewTestMixin, TestCase):
+class LicenseLearnerActionsEventTests(LicenseViewTestMixin, EventTestCaseBase):
     @mock.patch('license_manager.apps.api.v1.views.send_onboarding_email_task.delay')
     def test_activate_an_assigned_license(self, _):
         self._assign_learner_roles(

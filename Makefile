@@ -60,7 +60,9 @@ django_shell: ## run Django shell
 	python manage.py shell
 
 test: clean ## run tests and generate coverage report
-	pytest
+	## ``--ds`` Has the highest settings precedence:
+	## https://pytest-django.readthedocs.io/en/latest/configuring_django.html#order-of-choosing-settings
+	pytest --ds=license_manager.settings.test
 
 # To be run from CI context
 coverage: clean
@@ -91,6 +93,9 @@ validate: test quality pii_check ## run tests, quality, and PII annotation check
 
 migrate: ## apply database migrations
 	python manage.py migrate
+
+app-migrate: ## apply database migrations without having to type `make app-shell` first
+	docker exec -u 0 -it license_manager.app python manage.py migrate
 
 html_coverage: ## generate and view HTML coverage report
 	coverage html && open htmlcov/index.html

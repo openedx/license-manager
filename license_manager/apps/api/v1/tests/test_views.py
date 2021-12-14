@@ -1018,6 +1018,7 @@ class LicenseViewSetActionMixin:
         """
         unassigned_licenses = LicenseFactory.create_batch(num_licenses)
         self.subscription_plan.licenses.set(unassigned_licenses)
+        return unassigned_licenses
 
     def _assert_licenses_assigned(self, user_emails):
         """
@@ -1362,6 +1363,14 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
             'api:v1:licenses-csv',
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
+
+    def setUp(self):
+        super().setUp()
+        self.mock_track_test_mocker = mock.patch('license_manager.apps.api.v1.views.track_license_changes_task')
+        self.mock_track_test_mocker.start()
+
+    def tearDown(self):
+        self.mock_track_test_mocker.stop()
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.activation_email_task.si')
@@ -1861,6 +1870,14 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             'api:v1:licenses-assign',
             kwargs={'subscription_uuid': cls.subscription_plan.uuid},
         )
+
+    def setUp(self):
+        super().setUp()
+        self.mock_track_test_mocker = mock.patch('license_manager.apps.api.v1.views.track_license_changes_task')
+        self.mock_track_test_mocker.start()
+
+    def tearDown(self):
+        self.mock_track_test_mocker.stop()
 
     @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
