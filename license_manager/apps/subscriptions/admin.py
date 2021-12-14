@@ -317,6 +317,7 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'default_enterprise_catalog_uuid',
         'disable_expiration_notifications',
         'license_duration_before_purge',
+        'disable_onboarding_notifications'
     )
     custom_fields = ('subscription_for_auto_applied_licenses',)
 

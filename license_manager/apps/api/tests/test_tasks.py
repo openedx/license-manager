@@ -52,7 +52,7 @@ from license_manager.apps.subscriptions.utils import (
 @ddt.ddt
 class EmailTaskTests(TestCase):
     """
-    Tests for activation_email_task and send_onboarding_email_task
+    Tests for send_assignment_email_task and send_post_activation_email_task.
     """
     def setUp(self):
         super().setUp()
@@ -69,11 +69,24 @@ class EmailTaskTests(TestCase):
         self.subscription_plan_type = self.subscription_plan.product.plan_type_id
         self.contact_email = 'cool_biz@example.com'
 
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    def test_create_braze_aliases_task(self, mock_braze_client):
+        """
+        Assert create_braze_aliases_task calls Braze API with the correct arguments.
+        """
+        tasks.create_braze_aliases_task(
+            self.email_recipient_list
+        )
+        mock_braze_client().create_braze_alias.assert_any_call(
+            self.email_recipient_list,
+            ENTERPRISE_BRAZE_ALIAS_LABEL,
+        )
+
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
     def test_activation_task(self, mock_braze_client, mock_enterprise_client):
         """
-        Assert activation_task calls Braze API with the correct arguments
+        Assert activation_task calls Braze API with the correct arguments.
         """
         mock_enterprise_client().get_enterprise_customer_data.return_value = {
             'slug': self.enterprise_slug,
@@ -82,7 +95,7 @@ class EmailTaskTests(TestCase):
             'contact_email': self.contact_email,
         }
 
-        tasks.activation_email_task(
+        tasks.send_assignment_email_task(
             self.custom_template_text,
             self.email_recipient_list,
             self.subscription_plan.uuid,
@@ -96,11 +109,6 @@ class EmailTaskTests(TestCase):
             mock_enterprise_client().get_enterprise_customer_data.assert_any_call(
                 self.subscription_plan.enterprise_customer_uuid
             )
-            mock_braze_client().create_braze_alias.assert_any_call(
-                [user_email],
-                ENTERPRISE_BRAZE_ALIAS_LABEL,
-            )
-
             expected_trigger_properties = {
                 'TEMPLATE_GREETING': 'Hello',
                 'TEMPLATE_CLOSING': 'Goodbye',
@@ -137,7 +145,7 @@ class EmailTaskTests(TestCase):
             'contact_email': self.contact_email,
         }
 
-        tasks.activation_email_task(
+        tasks.send_assignment_email_task(
             self.custom_template_text,
             self.email_recipient_list,
             self.subscription_plan.uuid
@@ -262,7 +270,7 @@ class EmailTaskTests(TestCase):
             'contact_email': self.contact_email,
         }
 
-        tasks.send_onboarding_email_task(self.enterprise_uuid, self.user_email)
+        tasks.send_post_activation_email_task(self.enterprise_uuid, self.user_email)
 
         mock_braze_client().create_braze_alias.assert_any_call(
             [self.user_email],
@@ -477,14 +485,11 @@ class RevokeAllLicensesTaskTests(TestCase):
             None
         ]
 
-        with self.assertLogs(level='INFO') as log, pytest.raises(LicenseRevocationError):
+        with pytest.raises(LicenseRevocationError):
             tasks.revoke_all_licenses_task(self.subscription_plan.uuid)
 
-        assert mock_revoke_license.call_args_list == [mock.call(self.assigned_license)]
-
-        assert 'Could not revoke license with uuid {} during revoke_all_licenses_task'.format(
-            self.assigned_license.uuid) in log.output[0]
-
+        assert len(mock_revoke_license.call_args_list) == 1
+        assert mock_revoke_license.call_args_list[0][0][0].uuid in [self.activated_license.uuid, self.assigned_license.uuid]
         assert mock_execute_post_revocation_tasks.call_count == 0
 
 
