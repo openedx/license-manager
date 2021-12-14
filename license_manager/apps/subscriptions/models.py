@@ -286,35 +286,6 @@ class Product(models.Model):
         return self.name
 
 
-class PlanEmailTemplates(models.Model):
-    """
-    Stores email templates associated with each enterprise Subscription plan type.
-    .. no_pii: This model has no PII
-    """
-    plaintext_template = models.TextField(
-        blank=False,
-    )
-    html_template = models.TextField(
-        blank=False,
-    )
-    subject_line = models.CharField(
-        max_length=100,
-        blank=False,
-        null=False,
-    )
-    plan_type = models.ForeignKey(
-        PlanType,
-        related_name='subscriptions',
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True,
-    )
-    template_type = models.TextField(
-        blank=False,
-        null=False,
-    )
-
-
 class Notification(TimeStampedModel):
     """
     Stores information regarding when notifications were sent out to users.

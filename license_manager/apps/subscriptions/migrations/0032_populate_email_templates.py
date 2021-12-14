@@ -899,6 +899,9 @@ Please alert Account Management (if applicable) and take appropriate steps to en
 
 
     PlanEmailTemplates = apps.get_model("subscriptions", "PlanEmailTemplates")
+    if not PlanEmailTemplates:
+      # defensively exit early if PlanEmailTemplates doesn't exist since this model is now deleted
+      return
     PlanType = apps.get_model('subscriptions', 'PlanType')
 
     # Standard Paid    
@@ -1003,6 +1006,9 @@ Please alert Account Management (if applicable) and take appropriate steps to en
 
 def depopulate_table(apps, schema_editor):
     PlanEmailTemplates = apps.get_model("subscriptions", "PlanEmailTemplates")
+    if not PlanEmailTemplates:
+      # defensively exit early if PlanEmailTemplates doesn't exist since this model is now deleted
+      return
     PlanEmailTemplates.objects.all().delete()
 
 class Migration(migrations.Migration):
