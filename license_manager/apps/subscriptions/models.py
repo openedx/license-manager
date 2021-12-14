@@ -106,6 +106,13 @@ class CustomerAgreement(TimeStampedModel):
         )
     )
 
+    disable_onboarding_notifications = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Used to disable onboarding notifications, i.e. license assignment and post-activation emails."
+        )
+    )
+
     # In MySQL, the value of this field is stored as a bigint of microseconds
     # https://docs.djangoproject.com/en/2.2/ref/models/fields/#django.db.models.DurationField
     # We use a DurationField because it makes subtracting from a datetime using an F()

@@ -31,11 +31,12 @@ from license_manager.apps.api.filters import LicenseFilter
 from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
-    activation_email_task,
+    create_braze_aliases_task,
     link_learners_to_enterprise_task,
     revoke_all_licenses_task,
+    send_assignment_email_task,
     send_auto_applied_license_email_task,
-    send_onboarding_email_task,
+    send_post_activation_email_task,
     send_reminder_email_task,
     send_utilization_threshold_reached_email_task,
     track_license_changes_task,
@@ -153,20 +154,36 @@ def link_and_notify_assigned_emails(request_data, subscription_plan, user_emails
     """
     Helper to create async chains of the pending learners and activation emails tasks with each batch of users
     The task signatures are immutable, hence the `si()` - we don't want the result of the
-    link_learners_to_enterprise_task passed to the "child" activation_email_task.
+    link_learners_to_enterprise_task passed to the "child" send_assignment_email_task.
+
+    If disable_onboarding_notifications is set to true on the CustomerAgreement,
+    Braze aliases will be created but no activation email will be sent:
     """
+
+    customer_agreement = subscription_plan.customer_agreement
+    disable_onboarding_notifications = customer_agreement.disable_onboarding_notifications
+
     for pending_learner_batch in chunks(user_emails, constants.PENDING_ACCOUNT_CREATION_BATCH_SIZE):
-        chain(
+        tasks = chain(
             link_learners_to_enterprise_task.si(
                 pending_learner_batch,
                 subscription_plan.enterprise_customer_uuid,
             ),
-            activation_email_task.si(
-                get_custom_text(request_data),
-                pending_learner_batch,
-                str(subscription_plan.uuid),
+            create_braze_aliases_task.si(
+                pending_learner_batch
             )
-        ).apply_async()
+        )
+
+        if not disable_onboarding_notifications:
+            tasks.link(
+                send_assignment_email_task.si(
+                    get_custom_text(request_data),
+                    pending_learner_batch,
+                    str(subscription_plan.uuid),
+                )
+            )
+
+        tasks.apply_async()
 
 
 class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
@@ -1390,14 +1407,12 @@ class LicenseActivationView(LicenseBaseView):
                                     event_properties)
             event_utils.identify_braze_alias(self.lms_user_id, self.user_email)
 
-            # Following successful license activation, send learner an email
-            # to help them get started using the Enterprise Learner Portal.
-            plan_type_id = user_license.subscription_plan.product.plan_type_id
-
-            send_onboarding_email_task.delay(
-                user_license.subscription_plan.enterprise_customer_uuid,
-                user_license.user_email,
-            )
+            customer_agreement = user_license.subscription_plan.customer_agreement
+            if not customer_agreement.disable_onboarding_notifications:
+                send_post_activation_email_task.delay(
+                    user_license.subscription_plan.enterprise_customer_uuid,
+                    user_license.user_email,
+                )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

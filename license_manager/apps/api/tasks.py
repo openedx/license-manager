@@ -10,7 +10,6 @@ from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 from django.conf import settings
 from django.db import transaction
-from django.utils.dateparse import parse_datetime
 
 import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api import utils
@@ -50,10 +49,29 @@ MAX_TIME_LIMIT = 960
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
-def activation_email_task(custom_template_text, email_recipient_list, subscription_uuid):
+def create_braze_aliases_task(user_emails):
     """
-    Sends license activation email(s) asynchronously, and creates pending enterprise users to link the email recipients
-    to the subscription's enterprise.
+    Creates a Braze alias for each email using the ENTERPRISE_BRAZE_ALIAS_LABEL.
+    A Braze alias must be created when sending emails to anonymous users.
+
+    Arguments:
+        user_emails (list of str): List of emails to create aliases for.
+
+    """
+    try:
+        braze_client_instance = BrazeApiClient()
+        braze_client_instance.create_braze_alias(
+            user_emails,
+            ENTERPRISE_BRAZE_ALIAS_LABEL,
+        )
+    except BrazeClientError as ex:
+        logger.exception(ex)
+
+
+@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+def send_assignment_email_task(custom_template_text, email_recipient_list, subscription_uuid):
+    """
+    Sends license assignment email(s) asynchronously.
 
     Arguments:
         custom_template_text (dict): Dictionary containing `greeting` and `closing` keys to be used for customizing
@@ -90,16 +108,11 @@ def activation_email_task(custom_template_text, email_recipient_list, subscripti
 
         try:
             braze_client_instance = BrazeApiClient()
-            braze_client_instance.create_braze_alias(
-                [user_email],
-                ENTERPRISE_BRAZE_ALIAS_LABEL,
-            )
             braze_client_instance.send_campaign_message(
                 braze_campaign_id,
                 recipients=[recipient],
                 trigger_properties=braze_trigger_properties,
             )
-
         except BrazeClientError:
             message = (
                 'License manager activation email sending received an '
@@ -189,9 +202,9 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
 
 
 @shared_task(base=LoggedTask)
-def send_onboarding_email_task(enterprise_customer_uuid, user_email):
+def send_post_activation_email_task(enterprise_customer_uuid, user_email):
     """
-    Asynchronously sends onboarding email to learner. Intended for use following license activation.
+    Asynchronously sends post license activation email to learner.
     """
     enterprise_customer = EnterpriseApiClient().get_enterprise_customer_data(enterprise_customer_uuid)
     enterprise_name = enterprise_customer.get('name')

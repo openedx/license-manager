@@ -51,6 +51,7 @@ class CustomerAgreementFactory(factory.django.DjangoModelFactory):
     enterprise_customer_slug = factory.Faker('slug')
     default_enterprise_catalog_uuid = factory.LazyFunction(uuid4)
     enterprise_customer_name = factory.LazyAttribute(lambda x: FAKER.company())
+    disable_onboarding_notifications = False
 
 
 class PlanTypeFactory(factory.django.DjangoModelFactory):
