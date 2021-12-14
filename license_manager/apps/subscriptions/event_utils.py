@@ -219,7 +219,7 @@ def get_license_tracking_properties(license_obj):
     return license_data
 
 
-def track_license_changes(licenses, event_name, properties={}):
+def track_license_changes(licenses, event_name, properties=None):
     """
     Send tracking events for changes to a list of licenses, useful when bulk changes are made.
     Prefetches related objects for licenses to prevent additional queries
@@ -231,15 +231,17 @@ def track_license_changes(licenses, event_name, properties={}):
     Returns:
         None
     """
-
+    properties = properties or {}
     # prefetch related objects used in get_license_tracking_properties
     prefetch_related_objects(licenses, '_renewed_from', 'subscription_plan', 'subscription_plan__customer_agreement')
 
     for lcs in licenses:
         event_properties = {**get_license_tracking_properties(lcs), **properties}
-        track_event(lcs.lms_user_id,  # None for unassigned licenses, track_event will handle users with unregistered emails
-                    event_name,
-                    event_properties)
+        track_event(
+            lcs.lms_user_id,  # None for unassigned licenses, track_event will handle users with unregistered emails
+            event_name,
+            event_properties,
+        )
 
 
 def get_enterprise_tracking_properties(customer_agreement):

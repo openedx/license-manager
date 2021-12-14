@@ -909,3 +909,82 @@ class SendUtilizationThresholdReachedEmailTaskTests(BaseLicenseUtilizationEmailT
             ).first()
 
             assert notification is None
+
+
+class TrackLicenseChangesTests(TestCase):
+    """
+    Tests for track_license_changes_task.
+    """
+    @classmethod
+    def setUpTestData(cls):
+        cls.subscription_plan = SubscriptionPlanFactory()
+
+    @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
+    def test_licenses_created(self, mock_track_event):
+        """
+        Tests that an underlying ``track_event()`` call is made when licenses are created.
+        """
+        unassigned_licenses = LicenseFactory.create_batch(
+            10,
+            status=constants.UNASSIGNED,
+            subscription_plan=self.subscription_plan,
+        )
+        provided_properties = {'superfluous_key': 'superfluous value'}
+        license_uuid_strs = [str(_lic.uuid) for _lic in unassigned_licenses]
+
+        tasks.track_license_changes_task(
+            license_uuid_strs,
+            constants.SegmentEvents.LICENSE_CREATED,
+            properties=provided_properties,
+        )
+
+        assert mock_track_event.call_count == 10
+        license_uuid_superset = set(license_uuid_strs)
+        for call in mock_track_event.call_args_list:
+            assert call[0][0] is None
+            assert call[0][1] == constants.SegmentEvents.LICENSE_CREATED
+            actual_properties = call[0][2]
+            assert 'superfluous_key' in actual_properties
+            assert actual_properties['license_uuid'] in license_uuid_superset
+
+    @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
+    def test_licenses_assigned(self, mock_track_event):
+        """
+        Tests that an underlying ``track_event()`` call is made when licenses are created.
+        """
+        alice_license = LicenseFactory.create(
+            lms_user_id=1,
+            user_email='alice@example.com',
+            status=constants.ASSIGNED,
+            subscription_plan=self.subscription_plan,
+        )
+        bob_license = LicenseFactory.create(
+            lms_user_id=2,
+            user_email='bob@example.com',
+            status=constants.ASSIGNED,
+            subscription_plan=self.subscription_plan,
+        )
+        license_uuid_strs = [
+            str(alice_license.uuid),
+            str(bob_license.uuid),
+        ]
+
+        tasks.track_license_changes_task(
+            license_uuid_strs,
+            constants.SegmentEvents.LICENSE_ASSIGNED,
+        )
+
+        assert mock_track_event.call_count == 2
+        license_uuid_superset = set(license_uuid_strs)
+        actual_properties = []
+        actual_lms_user_ids = []
+        for call in mock_track_event.call_args_list:
+            user_id_arg, event_name_arg, properties_arg = call[0]
+            assert event_name_arg == constants.SegmentEvents.LICENSE_ASSIGNED
+            actual_lms_user_ids.append(user_id_arg)
+            actual_properties.append(properties_arg)
+
+        for _license in (alice_license, bob_license):
+            assert str(_license.uuid) in [props['license_uuid'] for props in actual_properties]
+            assert _license.user_email in [props['assigned_email'] for props in actual_properties]
+            assert _license.lms_user_id in [props['assigned_lms_user_id'] for props in actual_properties]

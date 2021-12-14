@@ -38,6 +38,7 @@ from license_manager.apps.api.tasks import (
     send_onboarding_email_task,
     send_reminder_email_task,
     send_utilization_threshold_reached_email_task,
+    track_license_changes_task,
 )
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import constants, event_utils
@@ -130,7 +131,11 @@ def assign_new_licenses(subscription_plan, user_emails):
         batch_size=10,
     )
 
-    event_utils.track_license_changes(list(licenses), constants.SegmentEvents.LICENSE_ASSIGNED)
+    license_uuid_strs = [str(_license.uuid) for _license in licenses]
+    track_license_changes_task.delay(
+        license_uuid_strs,
+        constants.SegmentEvents.LICENSE_ASSIGNED,
+    )
     return licenses
 
 
