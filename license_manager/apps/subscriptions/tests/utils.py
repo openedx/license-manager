@@ -1,7 +1,7 @@
 """
 Testing utilities for the Subscriptions app.
 """
-from datetime import date, timedelta
+from datetime import timedelta
 
 from faker import Factory as FakerFactory
 
@@ -33,7 +33,6 @@ def make_bound_subscription_form(
     start_date=localized_utcnow(),
     expiration_date=localized_utcnow() + timedelta(days=366),
     enterprise_catalog_uuid=faker.uuid4(),
-    netsuite_product_id=faker.random_int(),
     salesforce_opportunity_id=get_random_salesforce_id(),
     num_licenses=0,
     is_active=False,
@@ -60,8 +59,6 @@ def make_bound_subscription_form(
         'expiration_date': expiration_date,
         'enterprise_catalog_uuid': enterprise_catalog_uuid,
         'product': product.id if has_product else None,
-        'netsuite_product_id': netsuite_product_id,
-        'plan_type': product.plan_type.id,
         'salesforce_opportunity_id': salesforce_opportunity_id,
         'num_licenses': num_licenses,
         'is_active': is_active,

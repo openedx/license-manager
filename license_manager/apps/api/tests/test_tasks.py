@@ -66,7 +66,6 @@ class EmailTaskTests(TestCase):
         self.enterprise_slug = 'mock-enterprise'
         self.enterprise_name = 'Mock Enterprise'
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
-        self.subscription_plan_type = self.subscription_plan.product.plan_type_id
         self.contact_email = 'cool_biz@example.com'
 
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
