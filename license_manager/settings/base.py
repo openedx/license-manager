@@ -55,6 +55,7 @@ THIRD_PARTY_APPS = (
 PROJECT_APPS = (
     'license_manager.apps.core',
     'license_manager.apps.api',
+    'license_manager.apps.subsidy_request.apps.SubsidyRequestConfig',
     'license_manager.apps.subscriptions.apps.SubscriptionsConfig',
 )
 
