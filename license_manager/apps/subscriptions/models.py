@@ -413,15 +413,6 @@ class SubscriptionPlan(TimeStampedModel):
         )
     )
 
-    netsuite_product_id = models.IntegerField(
-        blank=True,
-        null=True,
-        help_text=_(
-            "DEPRECATED in favor product.netsuite_id. "
-            "Locate the Sales Order record in NetSuite and copy the Product ID field (numeric)."
-        ),
-    )
-
     product = models.ForeignKey(
         Product,
         on_delete=models.DO_NOTHING,
@@ -433,17 +424,6 @@ class SubscriptionPlan(TimeStampedModel):
         default=False,
         help_text=_(
             "Whether this SubscriptionPlan is only for internal use (e.g. a test Subscription record)."
-        )
-    )
-
-    plan_type = models.ForeignKey(
-        PlanType,
-        on_delete=models.DO_NOTHING,
-        null=False,
-        blank=False,
-        help_text=_(
-            "DEPRECATED in favor product.plan_type. "
-            "Locate the Sales Order record in NetSuite and copy the Product ID field (numeric)."
         )
     )
 

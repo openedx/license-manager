@@ -76,6 +76,7 @@ class ProductFactory(factory.django.DjangoModelFactory):
     name = 'Test Product'
     description = 'Test Product'
     plan_type = factory.SubFactory(PlanTypeFactory)
+    netsuite_id = factory.Faker('random_int')
 
     class Meta:
         model = Product
@@ -101,12 +102,8 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     expiration_processed = False
     customer_agreement = factory.SubFactory(CustomerAgreementFactory)
     enterprise_catalog_uuid = factory.LazyFunction(uuid4)
-    netsuite_product_id = factory.Faker('random_int')
     salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
     product = factory.SubFactory(ProductFactory)
-    # By default, all the subscription plans created are Test type,
-    # though this can be overridden to test others
-    plan_type_id = 4
     can_freeze_unused_licenses = False
     should_auto_apply_licenses = False
 
