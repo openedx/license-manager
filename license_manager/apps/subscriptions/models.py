@@ -439,8 +439,8 @@ class SubscriptionPlan(TimeStampedModel):
     plan_type = models.ForeignKey(
         PlanType,
         on_delete=models.DO_NOTHING,
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
         help_text=_(
             "DEPRECATED in favor product.plan_type. "
             "Locate the Sales Order record in NetSuite and copy the Product ID field (numeric)."
