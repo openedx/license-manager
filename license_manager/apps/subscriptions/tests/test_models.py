@@ -1,5 +1,5 @@
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta
 from unittest import mock
 
 import ddt
@@ -26,6 +26,7 @@ from license_manager.apps.subscriptions.tests.factories import (
 )
 from license_manager.apps.subscriptions.utils import (
     localized_datetime,
+    localized_datetime_from_datetime,
     localized_utcnow,
 )
 
@@ -153,7 +154,9 @@ class LicenseModelTests(TestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
-        NOW = localized_datetime(2021, 7, 1)
+        # technically this will be off on leap years, but we just need something later than now, so it's not a problem
+        ONE_YEAR_FROM_NOW = localized_datetime_from_datetime(datetime.now() + timedelta(days=365))
+        TWO_YEARS_FROM_NOW = localized_datetime_from_datetime(datetime.now() + timedelta(days=730))
 
         cls.user_email = 'bob@example.com'
         cls.enterprise_customer_uuid = uuid.uuid4()
@@ -167,7 +170,7 @@ class LicenseModelTests(TestCase):
             customer_agreement=cls.customer_agreement,
             is_active=True,
             start_date=localized_datetime(2021, 1, 1),
-            expiration_date=localized_datetime(2021, 12, 31),
+            expiration_date=ONE_YEAR_FROM_NOW,
         )
         cls.active_current_license = LicenseFactory.create(
             user_email=cls.user_email,
@@ -178,7 +181,7 @@ class LicenseModelTests(TestCase):
             customer_agreement=cls.customer_agreement,
             is_active=False,
             start_date=localized_datetime(2021, 1, 1),
-            expiration_date=localized_datetime(2021, 12, 31),
+            expiration_date=ONE_YEAR_FROM_NOW,
         )
         cls.inactive_current_license = LicenseFactory.create(
             user_email=cls.user_email,
@@ -188,8 +191,8 @@ class LicenseModelTests(TestCase):
         cls.non_current_active_plan = SubscriptionPlanFactory.create(
             customer_agreement=cls.customer_agreement,
             is_active=True,
-            start_date=localized_datetime(2022, 1, 1),
-            expiration_date=localized_datetime(2022, 12, 31),
+            start_date=ONE_YEAR_FROM_NOW,
+            expiration_date=TWO_YEARS_FROM_NOW,
         )
         cls.non_current_active_license = LicenseFactory.create(
             user_email=cls.user_email,
@@ -199,8 +202,8 @@ class LicenseModelTests(TestCase):
         cls.non_current_inactive_plan = SubscriptionPlanFactory.create(
             customer_agreement=cls.customer_agreement,
             is_active=False,
-            start_date=localized_datetime(2022, 1, 1),
-            expiration_date=localized_datetime(2022, 12, 31),
+            start_date=ONE_YEAR_FROM_NOW,
+            expiration_date=TWO_YEARS_FROM_NOW,
         )
         cls.non_current_inactive_license = LicenseFactory.create(
             user_email=cls.user_email,
