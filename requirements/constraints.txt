@@ -10,32 +10,18 @@
 
 -c common_constraints.txt
 
-Django<4.0
-
-PyYAML>=5.1
-
-zipp<2.0
-
 # Celery 5.0 has some breaking changes, as python 3.8 is priority so,
 # we will look at it after python 3.8 deployment
 celery<5.0
 
-# 8.1.3 has a fix for the issue "AttributeError: 'PosixPath' object has no attribute 'startswith'"
-faker==8.1.3
-
-# Sphinx 4 and Jinja 3 are not playing nicely
-Sphinx<4.0
-jinja2<3.0
-MarkupSafe<2.0
-
-# Not sure why but this seems to be needed too
+# celery requires click<8.0.0 which would be fixed once https://github.com/celery/celery/issues/6753 is done.
 click<8.0
-
-# latest version causing issues.
-pylint==2.8.3
 
 # diff-cover latest requires (pluggy>=0.13.1,<0.14.0)
 # which conflicts with pytest(pluggy>=0.12,<2.0.0) and tox(pluggy>0.12) both of these fetch pluggy==1.0.0
 # but diff-cover latest has a pin (pluggy<1.0.0a1)
 # Using the same version of diff-cover which is being used currently in edx-platform to avoid this conflict.
 diff-cover==4.0.0
+
+# Constraint from astroid 2.3.3
+wrapt==1.11.*
