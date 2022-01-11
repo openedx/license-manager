@@ -28,6 +28,8 @@ jobs:
       run: make test
     - name: Run pycodestyle
       run: make style
+    - name: Run pylint
+      run: make lint
     - name: Run isort
       run: make isort_check
     - name: Run pii check
