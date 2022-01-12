@@ -185,7 +185,7 @@ def track_event(lms_user_id, event_name, properties):
         try:
             send_event_to_message_bus(event_name, properties)
         except Exception:
-            logger.exception("Exception sending event to message")
+            logger.exception("Exception sending event to message.")
 
 
 def get_license_tracking_properties(license_obj):

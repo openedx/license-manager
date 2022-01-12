@@ -13,6 +13,7 @@ from confluent_kafka.schema_registry.avro import AvroSerializer
 from confluent_kafka.serialization import StringSerializer
 from django.conf import settings
 
+
 logger = logging.getLogger(__name__)
 
 # Eventually this class should be moved to openedx_events and changed to an attrib class, and
