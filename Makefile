@@ -136,7 +136,6 @@ upgrade: piptools $(COMMON_CONSTRAINTS_TXT) ## update the requirements/*.txt fil
 	pip-compile --upgrade -o requirements/validation.txt requirements/validation.in
 	pip-compile --upgrade -o requirements/dev.txt requirements/dev.in
 	pip-compile --upgrade -o requirements/production.txt requirements/production.in
-	rm requirements/test.txt.tmp
 
 extract_translations: ## extract strings to be translated, outputting .mo files
 	python manage.py makemessages -l en -v1 -d django
