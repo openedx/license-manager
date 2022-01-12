@@ -26,6 +26,7 @@ edx-braze-client
 edx-celeryutils
 edx-django-utils
 edx-drf-extensions
+edx-toggles
 edx-rbac
 edx-rest-api-client
 mysqlclient
