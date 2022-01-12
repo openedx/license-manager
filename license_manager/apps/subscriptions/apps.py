@@ -30,8 +30,8 @@ class SubscriptionsConfig(AppConfig):
             analytics.write_key = settings.SEGMENT_KEY
 
         # TODO: (ARCHBOM-2004) remove pragma and add tests when finalizing
-        if KAFKA_ENABLED:  # pragma: no cover
+        if KAFKA_ENABLED.is_enabled():  # pragma: no cover
             try:
                 create_topic_if_not_exists(settings.LICENSE_TOPIC_NAME)
             except Exception as e:
-                logger.error(f"Error creating topic: {e}")
+                logger.exception(f"Error creating topic.")

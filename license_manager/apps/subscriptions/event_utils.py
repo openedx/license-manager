@@ -9,6 +9,7 @@ from django.db.models import prefetch_related_objects
 from license_manager.apps.subscriptions.constants import SegmentEvents
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
+from .apps import KAFKA_ENABLED
 from .event_bus_utils import send_event_to_message_bus
 
 
@@ -180,11 +181,11 @@ def track_event(lms_user_id, event_name, properties):
             "Event {} for user_id {} not tracked because SEGMENT_KEY not set".format(event_name, lms_user_id)
         )
 
-    if getattr(settings, "KAFKA_ENABLED", False):  # pragma: no cover
+    if KAFKA_ENABLED.is_enabled():  # pragma: no cover
         try:
             send_event_to_message_bus(event_name, properties)
-        except Exception as e:
-            logger.error("Exception sending event to message bus: {}".format(e))
+        except Exception:
+            logger.exception("Exception sending event to message")
 
 
 def get_license_tracking_properties(license_obj):
