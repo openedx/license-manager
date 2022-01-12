@@ -12,80 +12,11 @@ from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroSerializer
 from confluent_kafka.serialization import StringSerializer
 from django.conf import settings
+from openedx_events.enterprise.data import TrackingEvent
+from openedx_events.avro_attrs_bridge import KafkaWrapper
 
 
 logger = logging.getLogger(__name__)
-
-# Eventually this class should be moved to openedx_events and changed to an attrib class, and
-# the Attr<->Avro bridge used as a serializer
-# TODO: (ARCHBOM-2004) remove this file from the omit list in coverage.py and add tests when finalized
-
-
-class TrackingEvent:
-    """
-    License events to be put on event bus
-    """
-
-    def __init__(self, *args, **kwargs):
-        self.license_uuid = kwargs['license_uuid']
-        self.license_activation_key = kwargs['license_activation_key']
-        self.previous_license_uuid = kwargs['previous_license_uuid']
-        self.assigned_date = kwargs['assigned_date']
-        self.activation_date = kwargs['activation_date']
-        self.assigned_lms_user_id = kwargs['assigned_lms_user_id']
-        self.assigned_email = kwargs['assigned_email']
-        self.expiration_processed = kwargs['expiration_processed']
-        self.auto_applied = kwargs['auto_applied']
-        self.enterprise_customer_uuid = kwargs.get('enterprise_customer_uuid', None)
-        self.enterprise_customer_slug = kwargs.get('enterprise_customer_slug', None)
-        self.enterprise_customer_name = kwargs.get('enterprise_customer_name', None)
-        self.customer_agreement_uuid = kwargs.get('customer_agreement_uuid', None)
-
-    # Some paths will set assigned_lms_user_id to '' if empty, so need to allow strings in the schema
-    TRACKING_EVENT_AVRO_SCHEMA = """
-        {
-            "namespace": "license_manager.apps.subscriptions",
-            "name": "TrackingEvent",
-            "type": "record",
-            "fields": [
-                {"name": "license_uuid", "type": "string"},
-                {"name": "license_activation_key", "type": "string"},
-                {"name": "previous_license_uuid", "type": "string"},
-                {"name": "assigned_date", "type": "string"},
-                {"name": "assigned_lms_user_id", "type": ["int", "string", "null"], "default": "null"},
-                {"name": "assigned_email", "type":"string"},
-                {"name": "expiration_processed", "type": "boolean"},
-                {"name": "auto_applied", "type": "boolean", "default": "false"},
-                {"name": "enterprise_customer_uuid", "type": ["string", "null"], "default": "null"},
-                {"name": "customer_agreement_uuid", "type": ["string", "null"], "default": "null"},
-                {"name": "enterprise_customer_slug", "type": ["string", "null"], "default": "null"},
-                {"name": "enterprise_customer_name", "type": ["string", "null"], "default": "null"}
-            ]
-        }
-
-    """
-
-    @staticmethod
-    def from_dict(dict_instance, ctx):  # pylint: disable=unused-argument
-        return TrackingEvent(dict_instance)
-
-    @staticmethod
-    def to_dict(obj, ctx):  # pylint: disable=unused-argument
-        return {
-            'enterprise_customer_uuid': obj.enterprise_customer_uuid,
-            'customer_agreement_uuid': obj.customer_agreement_uuid,
-            'enterprise_customer_slug': obj.enterprise_customer_slug,
-            'enterprise_customer_name': obj.enterprise_customer_name,
-            "license_uuid": obj.license_uuid,
-            "license_activation_key": obj.license_activation_key,
-            "previous_license_uuid": obj.previous_license_uuid,
-            "assigned_date": obj.assigned_date,
-            "activation_date": obj.activation_date,
-            "assigned_lms_user_id": obj.assigned_lms_user_id,
-            "assigned_email": (obj.assigned_email or ''),
-            "expiration_processed": obj.expiration_processed,
-            "auto_applied": (obj.auto_applied or False),
-        }
 
 
 # Eventually the following should be moved into a plugin, app, library, or something more reusable
@@ -107,10 +38,13 @@ class TrackingEventSerializer:
                 'basic.auth.user.info': f"{getattr(settings,'SCHEMA_REGISTRY_API_KEY','')}"
                 f":{getattr(settings,'SCHEMA_REGISTRY_API_SECRET','')}",
             }
+
+            # create bridge for TrackingEvent
+            bridge = KafkaWrapper(TrackingEvent)
             schema_registry_client = SchemaRegistryClient(KAFKA_SCHEMA_REGISTRY_CONFIG)
-            cls.TRACKING_EVENT_SERIALIZER = AvroSerializer(schema_str=TrackingEvent.TRACKING_EVENT_AVRO_SCHEMA,
+            cls.TRACKING_EVENT_SERIALIZER = AvroSerializer(schema_str=bridge.schema_str(),
                                                            schema_registry_client=schema_registry_client,
-                                                           to_dict=TrackingEvent.to_dict)
+                                                           to_dict=bridge.to_dict)
             return cls.TRACKING_EVENT_SERIALIZER
         return cls.TRACKING_EVENT_SERIALIZER
 
