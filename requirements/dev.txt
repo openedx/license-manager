@@ -31,11 +31,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.20.32
+boto3==1.20.34
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.23.32
+botocore==1.23.34
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -74,7 +74,8 @@ code-annotations==1.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-lint
-confluent-kafka==1.7.0
+    #   edx-toggles
+confluent-kafka==1.8.2
     # via -r requirements/validation.txt
 coreapi==2.3.3
     # via
@@ -134,6 +135,7 @@ django==3.2.11
     #   edx-drf-extensions
     #   edx-i18n-tools
     #   edx-rbac
+    #   edx-toggles
     #   jsonfield
 django-cors-headers==3.11.0
     # via -r requirements/validation.txt
@@ -142,6 +144,7 @@ django-crum==0.7.9
     #   -r requirements/validation.txt
     #   edx-django-utils
     #   edx-rbac
+    #   edx-toggles
 django-debug-toolbar==3.2.4
     # via -r requirements/dev.in
 django-durationwidget==1.0.5
@@ -168,6 +171,7 @@ django-waffle==2.3.0
     #   -r requirements/validation.txt
     #   edx-django-utils
     #   edx-drf-extensions
+    #   edx-toggles
 djangorestframework==3.13.1
     # via
     #   -r requirements/validation.txt
@@ -202,6 +206,7 @@ edx-django-utils==4.4.1
     #   -r requirements/validation.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
+    #   edx-toggles
 edx-drf-extensions==8.0.1
     # via
     #   -r requirements/validation.txt
@@ -218,13 +223,15 @@ edx-rbac==1.5.1
     # via -r requirements/validation.txt
 edx-rest-api-client==5.4.1
     # via -r requirements/validation.txt
+edx-toggles==4.2.0
+    # via -r requirements/validation.txt
 factory-boy==3.2.1
     # via -r requirements/validation.txt
 faker==11.3.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
-fastavro==1.4.7
+fastavro==1.4.9
     # via -r requirements/validation.txt
 freezegun==1.1.0
     # via -r requirements/validation.txt
