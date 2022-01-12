@@ -13,7 +13,7 @@ from confluent_kafka.schema_registry.avro import AvroSerializer
 from confluent_kafka.serialization import StringSerializer
 from django.conf import settings
 from openedx_events.enterprise.data import TrackingEvent
-from openedx_events.avro_attrs_bridge import KafkaWrapper
+from openedx_events.avro_attrs_bridge import AvroAttrsBridgeKafkaWrapper
 
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class TrackingEventSerializer:
             }
 
             # create bridge for TrackingEvent
-            bridge = KafkaWrapper(TrackingEvent)
+            bridge = AvroAttrsBridgeKafkaWrapper(TrackingEvent)
             schema_registry_client = SchemaRegistryClient(KAFKA_SCHEMA_REGISTRY_CONFIG)
             cls.TRACKING_EVENT_SERIALIZER = AvroSerializer(schema_str=bridge.schema_str(),
                                                            schema_registry_client=schema_registry_client,
