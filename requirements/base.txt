@@ -33,6 +33,8 @@ cffi==1.15.0
     # via cryptography
 charset-normalizer==2.0.10
     # via requests
+confluent-kafka==1.7.0
+    # via -r requirements/base.in
 coreapi==2.3.3
     # via drf-yasg
 coreschema==0.0.4
@@ -136,6 +138,8 @@ edx-opaque-keys==2.2.2
 edx-rbac==1.5.1
     # via -r requirements/base.in
 edx-rest-api-client==5.4.1
+    # via -r requirements/base.in
+fastavro==1.4.7
     # via -r requirements/base.in
 future==0.18.2
     # via

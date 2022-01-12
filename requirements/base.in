@@ -5,6 +5,7 @@
 analytics-python
 backoff
 celery
+confluent-kafka
 Django
 django-cors-headers
 django-durationwidget
@@ -12,6 +13,7 @@ django-extensions
 django-filter
 django-model-utils
 django-ses
+fastavro
 rules
 django-simple-history
 django-waffle

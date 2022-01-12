@@ -88,6 +88,10 @@ code-annotations==1.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-lint
+confluent-kafka==1.7.0
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
 coreapi==2.3.3
     # via
     #   -r requirements/quality.txt
@@ -270,6 +274,10 @@ faker==11.3.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
+fastavro==1.4.7
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
 freezegun==1.1.0
     # via -r requirements/test.txt
 future==0.18.2

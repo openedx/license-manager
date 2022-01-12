@@ -89,6 +89,17 @@ SOCIAL_MEDIA_FOOTER_URLS = {
 # https://github.com/django-extensions/django-extensions#using-it
 INSTALLED_APPS += ('django_extensions',)
 
+################### Kafka Related Settings ##############################
+KAFKA_ACCESS_CONF_BASE = { 'bootstrap.servers': "edx.devstack.kafka:29092", 'client.id': 'edx.devstack.lms' }
+
+KAFKA_CONSUMER_CONF_BASE = {'bootstrap.servers': "edx.devstack.kafka:29092", 'group.id': 'lms'}
+
+KAFKA_SCHEMA_REGISTRY_CONF = {
+    'url': "http://edx.devstack.schema-registry:8081",
+}
+KAFKA_REPLICATION_FACTOR_PER_TOPIC=1
+LICENSE_TOPIC_NAME="license-event-dev"
+
 # Make some loggers less noisy (useful during test failure)
 import logging
 

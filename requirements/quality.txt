@@ -62,6 +62,8 @@ click-log==0.3.2
     # via edx-lint
 code-annotations==1.2.0
     # via edx-lint
+confluent-kafka==1.7.0
+    # via -r requirements/base.txt
 coreapi==2.3.3
     # via
     #   -r requirements/base.txt
@@ -181,6 +183,8 @@ edx-opaque-keys==2.2.2
 edx-rbac==1.5.1
     # via -r requirements/base.txt
 edx-rest-api-client==5.4.1
+    # via -r requirements/base.txt
+fastavro==1.4.7
     # via -r requirements/base.txt
 future==0.18.2
     # via

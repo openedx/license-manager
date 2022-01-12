@@ -74,6 +74,8 @@ code-annotations==1.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-lint
+confluent-kafka==1.7.0
+    # via -r requirements/validation.txt
 coreapi==2.3.3
     # via
     #   -r requirements/validation.txt
@@ -222,6 +224,8 @@ faker==11.3.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
+fastavro==1.4.7
+    # via -r requirements/validation.txt
 freezegun==1.1.0
     # via -r requirements/validation.txt
 future==0.18.2
