@@ -3,9 +3,9 @@ import logging
 import analytics
 from django.apps import AppConfig
 from django.conf import settings
+from edx_toggles.toggles import SettingToggle
 
 from .event_bus_utils import create_topic_if_not_exists
-from edx_toggles.toggles import SettingToggle
 
 
 logger = logging.getLogger(__name__)
