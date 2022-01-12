@@ -181,7 +181,10 @@ def track_event(lms_user_id, event_name, properties):
         )
 
     if getattr(settings, "KAFKA_ENABLED", False):  # pragma: no cover
-        send_event_to_message_bus(event_name, properties)
+        try:
+            send_event_to_message_bus(event_name, properties)
+        except Exception as e:
+            logger.error("Exception sending event to message bus: {}".format(e))
 
 
 def get_license_tracking_properties(license_obj):
