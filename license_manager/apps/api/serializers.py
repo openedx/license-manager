@@ -252,14 +252,6 @@ class CustomTextSerializer(serializers.Serializer):  # pylint: disable=abstract-
         ]
 
 
-class CustomTextWithSingleEmailSerializer(SingleEmailSerializer, CustomTextSerializer):  # pylint: disable=abstract-method
-    """
-    Serializer for specifying custom text to use in a license management email for a single user_email
-    """
-    class Meta:
-        fields = SingleEmailSerializer.Meta.fields + CustomTextSerializer.Meta.fields
-
-
 class CustomTextWithMultipleEmailsSerializer(MultipleEmailsSerializer, CustomTextSerializer):  # pylint: disable=abstract-method
     """
     Serializer for specifying custom text to use in a license management email for multiple user_emails
@@ -303,3 +295,78 @@ class CustomTextWithMultipleOrSingleEmailSerializer(MultipleOrSingleEmailSeriali
     """
     class Meta:
         fields = MultipleOrSingleEmailSerializer.Meta.fields + CustomTextSerializer.Meta.fields
+
+
+class LicenseAdminBulkActionSerializer(serializers.Serializer):  # pylint: disable=abstract-method
+    """
+    Serializer for license admin bulk actions.
+
+    Takes either a list of user_emails or a list of filters, but not both.
+    """
+
+    user_emails = serializers.ListField(
+        child=serializers.EmailField(
+            allow_blank=False,
+            write_only=True,
+        ),
+        allow_empty=False,
+        required=False,
+    )
+
+    filters = serializers.ListField(
+        child=serializers.DictField(),
+        allow_empty=False,
+        required=False
+    )
+
+    class Meta:
+        fields = ['user_emails', 'filters']
+
+    def _validate_filters(self, filters):
+        """
+        Validate filters that were passed in. Only user_email and status filters are supported.
+        """
+
+        if not filters:
+            return
+
+        supported_filters = ['user_email', 'status_in']
+
+        for fltr in filters:
+            filter_name = fltr.get('name')
+            filter_value = fltr.get('filter_value')
+
+            if filter_name not in supported_filters:
+                raise serializers.ValidationError(f'Malformed filters, supported filters are {supported_filters}.')
+
+            if filter_name == 'user_email' and not isinstance(filter_value, str):
+                raise serializers.ValidationError('Malformed filters, user_email must be a string.')
+
+            if filter_name == 'status_in' and not isinstance(filter_value, list) \
+                    and not all(isinstance(s, str) for s in filter_value):
+                raise serializers.ValidationError('Malformed filters, status_in must be a list of strings.')
+
+    def validate(self, attrs):
+        user_emails = attrs.get('user_emails')
+        filters = attrs.get('filters')
+
+        if not (user_emails or filters):
+            raise serializers.ValidationError('Either user_emails or filters must be provided.')
+
+        if user_emails and filters:
+            raise serializers.ValidationError('Either user_emails or filters must be provided, but not both.')
+
+        self._validate_filters(filters)
+        return super().validate(attrs)
+
+
+class LicenseAdminRemindActionSerializer(  # pylint: disable=abstract-method
+    LicenseAdminBulkActionSerializer,
+    CustomTextSerializer
+):
+    """
+    Serializer for the license admin remind action.
+    """
+
+    class Meta:
+        fields = LicenseAdminBulkActionSerializer.Meta.fields + CustomTextSerializer.Meta.fields
