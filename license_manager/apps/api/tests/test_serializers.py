@@ -2,7 +2,10 @@ import ddt
 from django.test import TestCase
 from pytest import mark
 
-from license_manager.apps.api.serializers import CustomerAgreementSerializer
+from license_manager.apps.api.serializers import (
+    CustomerAgreementSerializer,
+    LicenseAdminBulkActionSerializer,
+)
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     SubscriptionPlanFactory,
@@ -36,3 +39,25 @@ class TestCustomerAgreementSerializer(TestCase):
 
         all_active = only_active_expirations and only_active_plans
         self.assertEqual(all_active, active_plans_only)
+
+
+@ddt.ddt
+class TestLicenseAdminBulkActionSerializer(TestCase):
+    """
+    Tests for the LicenseAdminBulkActionSerializer.
+    """
+
+    @ddt.data(({}, False))
+    @ddt.data(({'user_emails': []}, False))
+    @ddt.data(({'filters': []}, False))
+    @ddt.data(({'user_emails': ['edx@example.com'], 'filters': [{'name': 'user_email', 'filter_value': 'edx'}]}, False))
+    @ddt.data(({'user_emails': ['edx@example.com']}, True))
+    @ddt.data(({'filters': [{'name': 'user_email', 'filter_value': 'edx'}]}, True))
+    @ddt.data(({'filters': [{'name': 'unsupported_filter', 'filter_value': 'edx'}]}, False))
+    @ddt.data(({'filters': [{'name': 'status_in', 'filter_value': 'not a list'}]}, False))
+    @ddt.data(({'filters': [{'name': 'status_in', 'filter_value': ['assigned']}]}, True))
+    @ddt.data(({'filters': [{'name': 'user_email', 'filter_value': 'edx'}, {'name': 'status_in', 'filter_value': ['assigned']}]}, True))
+    @ddt.unpack
+    def test_validate_data(self, data, expected_is_valid):
+        serializer = LicenseAdminBulkActionSerializer(data=data)
+        self.assertEqual(serializer.is_valid(), expected_is_valid)

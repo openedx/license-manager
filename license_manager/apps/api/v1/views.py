@@ -629,13 +629,13 @@ class BaseLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMod
         if self.action == 'assign':
             return serializers.CustomTextWithMultipleEmailsSerializer
         if self.action == 'remind':
-            return serializers.CustomTextWithMultipleOrSingleEmailSerializer
+            return serializers.LicenseAdminRemindActionSerializer
         if self.action == 'remind_all':
             return serializers.CustomTextSerializer
         if self.action == 'revoke':
             return serializers.SingleEmailSerializer
         if self.action == 'bulk_revoke':
-            return serializers.MultipleEmailsSerializer
+            return serializers.LicenseAdminBulkActionSerializer
         return serializers.LicenseSerializer
 
     @property
@@ -854,53 +854,56 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
     @action(detail=False, methods=['post'])
     def remind(self, request, subscription_uuid=None):
         """
-        Given a single email or a list of emails in the POST data, sends
-        reminder email(s) that they have a license pending activation.
+        Given a list of emails in the POST data, sends users
+        a reminder email that they have a license pending activation.
 
         This endpoint reminds users by sending an email to the given email
-        address(es), if there is a license which has not yet been activated
-        that is associated with the email address(es).
+        addresses if there is a an associated license which has not yet been activated.
         """
         # Validate the user_email and text sent in the data
         self._validate_data(request.data)
-
-        user_email = request.data.get('user_email')
-        user_emails = request.data.get('user_emails')
-
-        if not user_emails and not user_email:
-            msg = "user_email or user_emails is required"
-            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
-
-        emails_to_remind = []
-
-        if user_emails:
-            emails_to_remind.extend(user_emails)
-        else:
-            emails_to_remind.append(user_email)
-
-        # Make sure there is a license that is still pending activation associated with the given email
         subscription_plan = self._get_subscription_plan()
-        for email_item in emails_to_remind:
-            try:
-                License.objects.get(
-                    subscription_plan=subscription_plan,
-                    user_email=email_item,
-                    status=constants.ASSIGNED,
-                )
-            except ObjectDoesNotExist:
-                msg = 'Could not find any licenses pending activation that are associated with the email: {}'.format(
-                    email_item,
-                )
-                return Response(msg, status=status.HTTP_404_NOT_FOUND)
+
+        if not subscription_plan:
+            error_message = 'No SubscriptionPlan identified by {} exists'.format(
+                subscription_uuid,
+            )
+            return Response(error_message, status=status.HTTP_404_NOT_FOUND)
+
+        user_emails = request.data.get('user_emails')
+        should_validate_emails = True
+
+        # No emails passed in, use filters to fetch the licenses
+        if not user_emails:
+            licenses = self._get_licenses_from_payload_filters(request, subscription_plan)
+            user_emails = list(licenses.filter(status=constants.ASSIGNED).values_list('user_email', flat=True))
+            # Don't need to validate emails here we have a list that has already been filtered
+            should_validate_emails = False
+
+        if should_validate_emails:
+            # Make sure there is a license that is still pending activation associated with the given emails
+            licenses = License.objects.filter(
+                subscription_plan=subscription_plan,
+                user_email__in=user_emails,
+                status=constants.ASSIGNED,
+            )
+            license_by_email = {lcs.user_email: lcs for lcs in licenses}
+            for email in user_emails:
+                pending_license = license_by_email.get(email)
+                if not pending_license:
+                    error_message = 'Could not find any licenses pending activation that are associated with the email: {}'.format(
+                        email,
+                    )
+                    return Response(error_message, status=status.HTTP_404_NOT_FOUND)
 
         # Send activation reminder email
         send_reminder_email_task.delay(
             get_custom_text(request.data),
-            emails_to_remind,
+            user_emails,
             subscription_uuid,
         )
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['post'], url_path='remind-all')
     def remind_all(self, request, subscription_uuid=None):
@@ -925,7 +928,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             subscription_uuid,
         )
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _revoke_by_email_and_plan(self, user_email, subscription_plan):
         """
@@ -946,6 +949,26 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             logger.error(exc)
             raise
 
+    def _get_licenses_from_payload_filters(self, request, subscription_plan):
+        filters_from_request = request.data.get('filters', [])
+        query_params = {
+            'subscription_plan': subscription_plan
+        }
+
+        for fltr in filters_from_request:
+            filter_name = fltr['name']
+            filter_value = fltr['filter_value']
+
+            if filter_name == 'user_email':
+                query_params.update(user_email__icontains=filter_value)
+
+            if filter_name == 'status_in':
+                query_params.update(status__in=filter_value)
+
+        return License.objects.filter(
+            **query_params,
+        )
+
     @action(detail=False, methods=['post'], url_path='bulk-revoke')
     def bulk_revoke(self, request, subscription_uuid=None):
         """
@@ -956,21 +979,31 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         POST /api/v1/subscriptions/{subscription_uuid}/licenses/bulk-revoke/
 
-        Request payload:
-          {
-            "user_emails": [
-              "alice@example.com",
-              "carol@example.com"
-            ]
-          }
+        Request payload with user_emails:
+            {
+                "user_emails": [
+                    "alice@example.com",
+                    "carol@example.com"
+                ]
+            }
+
+        Request payload with filters:
+            {
+                "filters": [
+                    {
+                        "user_email": "al"
+                    }
+                ]
+            }
+
 
         Response:
-          204 No Content - All revocations were successful.
-          400 Bad Request - Some error occurred when processing one of the revocations, no revocations
-            were committed. An error message is provided.
-          404 Not Found - No license exists in the plan for one of the given email addresses,
-            or the license is not in an assigned or activated state.
-            An error message is provided.
+            204 No Content - All revocations were successful.
+            400 Bad Request - Some error occurred when processing one of the revocations, no revocations
+                were committed. An error message is provided.
+            404 Not Found - No license exists in the plan for one of the given email addresses,
+                or the license is not in an assigned or activated state.
+                An error message is provided.
 
         Error Response Message:
             "No license for email carol@example.com exists in plan {subscription_plan_uuid} "
@@ -979,19 +1012,24 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         The revocation of licenses is atomic: if an error occurs while processing any of the license revocations,
         no status change is committed for any of the licenses.
         """
-        self._validate_data(request.data)
 
-        user_emails = request.data.get('user_emails')
-        subscription_plan = self._get_subscription_plan()
+        self._validate_data(request.data)
 
         error_message = ''
         error_response_status = None
+
+        subscription_plan = self._get_subscription_plan()
 
         if not subscription_plan:
             error_message = 'No SubscriptionPlan identified by {} exists'.format(
                 subscription_uuid,
             )
             return Response(error_message, status=status.HTTP_404_NOT_FOUND)
+
+        user_emails = request.data.get('user_emails', [])
+        if not user_emails:
+            licenses = self._get_licenses_from_payload_filters(request, subscription_plan)
+            user_emails = licenses.exclude(status=constants.REVOKED).values_list('user_email', flat=True)
 
         if len(user_emails) > subscription_plan.num_revocations_remaining:
             error_message = 'Plan does not have enough revocations remaining.'

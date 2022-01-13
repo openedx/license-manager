@@ -1644,9 +1644,9 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         )
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
-    def test_remind_no_email(self, mock_send_reminder_emails_task):
+    def test_remind_no_emails(self, mock_send_reminder_emails_task):
         """
-        Verify that the remind endpoint returns a 400 if no email is provided.
+        Verify that the remind endpoint returns a 400 if no emails are provided.
         """
         response = self.api_client.post(self.remind_url)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -1662,11 +1662,11 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         self._test_and_assert_forbidden_user(self.remind_url, user_is_staff, mock_send_reminder_email_task)
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
-    def test_remind_invalid_email(self, mock_send_reminder_emails_task):
+    def test_remind_invalid_emails(self, mock_send_reminder_emails_task):
         """
         Verify that the remind endpoint returns a 400 if an invalid email is provided.
         """
-        response = self.api_client.post(self.remind_url, {'user_email': 'lkajsf'})
+        response = self.api_client.post(self.remind_url, {'user_emails': ['lkajsf']})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         mock_send_reminder_emails_task.assert_not_called()
 
@@ -1675,16 +1675,52 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         """
         Verify that the remind endpoint returns a 400 if an empty string is submitted for an email.
         """
-        response = self.api_client.post(self.remind_url, {'user_email': ''})
+        response = self.api_client.post(self.remind_url, {'user_emails': ['']})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         mock_send_reminder_emails_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
+    def test_remind_no_valid_subscription_plan(self, mock_send_reminder_emails_task):
+        """
+        Test that calls to remind fail with a 403 if no valid subscription plan uuid
+        is provided, for requests made by a regular user.  A 403 is expected because our
+        test user has an admin role assigned for a specific, existing enterprise, but (obviously)
+        there is no role assignment for an enterprise/subscription plan that does not exist.
+        """
+        response = self.api_client.post(
+            reverse('api:v1:licenses-remind', kwargs={'subscription_uuid': uuid4()}),
+            {'user_emails': ['edx@example.com']}
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_send_reminder_emails_task.assert_not_called()
+
+    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
+    def test_remind_no_valid_subscription_plan_superuser(self, mock_revoke_license):
+        """
+        Test that calls to bulk_revoke fail with a 404 if no valid subscription plan uuid
+        is provided, for requests made by a superuser.
+        """
+        self._setup_request_jwt(user=self.super_user)
+
+        request_payload = {
+            'user_emails': [
+                'alice@example.com',
+                'bob@example.com',
+            ],
+        }
+        response = self.api_client.post(
+            reverse('api:v1:licenses-remind', kwargs={'subscription_uuid': uuid4()}),
+            {'user_emails': ['edx@example.com']}
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        self.assertFalse(mock_revoke_license.called)
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
     def test_remind_no_license_for_user(self, mock_send_reminder_emails_task):
         """
         Verify that the remind endpoint returns a 404 if there is no license associated with the given email.
         """
-        response = self.api_client.post(self.remind_url, {'user_email': 'nolicense@example.com'})
+        response = self.api_client.post(self.remind_url, {'user_emails': ['nolicense@example.com']})
         assert response.status_code == status.HTTP_404_NOT_FOUND
         mock_send_reminder_emails_task.assert_not_called()
 
@@ -1696,7 +1732,7 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         activated_license = LicenseFactory.create(user_email=self.test_email, status=constants.ACTIVATED)
         self.subscription_plan.licenses.set([activated_license])
 
-        response = self.api_client.post(self.remind_url, {'user_email': self.test_email})
+        response = self.api_client.post(self.remind_url, {'user_emails': [self.test_email]})
         assert response.status_code == status.HTTP_404_NOT_FOUND
         mock_send_reminder_emails_task.assert_not_called()
 
@@ -1713,14 +1749,46 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
 
         response = self.api_client.post(
             self.remind_url,
-            {'user_email': self.test_email, 'greeting': self.greeting, 'closing': self.closing},
+            {'user_emails': [self.test_email], 'greeting': self.greeting, 'closing': self.closing},
         )
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_204_NO_CONTENT
         mock_send_reminder_emails_task.assert_called_with(
             {'greeting': self.greeting, 'closing': self.closing},
             [self.test_email],
             str(self.subscription_plan.uuid),
         )
+
+    @ddt.data(
+        ([{'name': 'user_email', 'filter_value': 'al'}], ['alice@example.com']),
+        ([{'name': 'status_in', 'filter_value': [constants.ACTIVATED]}], []),
+        ([{'name': 'status_in', 'filter_value': [constants.ASSIGNED, constants.ACTIVATED]}], ['alice@example.com', 'bob@example.com']),
+        ([{'name': 'user_email', 'filter_value': 'al'},
+          {'name': 'status_in', 'filter_value': [constants.ACTIVATED]}], []),
+        ([{'name': 'user_email', 'filter_value': 'al'},
+          {'name': 'status_in', 'filter_value': [constants.ASSIGNED]}], ['alice@example.com'])
+    )
+    @ddt.unpack
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
+    def test_remind_with_filters(self, filters, expected_reminded_emails, mock_send_reminder_emails_task):
+        """
+        Test that remind endpoint works with filters.
+        """
+        self._setup_request_jwt(user=self.user)
+        alice_license = LicenseFactory.create(user_email='alice@example.com', status=constants.ASSIGNED)
+        bob_license = LicenseFactory.create(user_email='bob@example.com', status=constants.ASSIGNED)
+        activated_license = LicenseFactory.create(user_email='sam@example.com', status=constants.ACTIVATED)
+        revoked_license = LicenseFactory.create(user_email='eve@example.com', status=constants.REVOKED)
+        self.subscription_plan.licenses.set([alice_license, bob_license, activated_license, revoked_license])
+
+        request_payload = {
+            'filters': filters
+        }
+
+        response = self.api_client.post(self.remind_url, request_payload)
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        revoked_emails = mock_send_reminder_emails_task.call_args[0][1]
+        assert sorted(revoked_emails) == expected_reminded_emails
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
     def test_remind_all_no_pending_licenses(self, mock_send_reminder_emails_task):
@@ -1746,7 +1814,7 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         self.subscription_plan.licenses.set(unassigned_licenses + pending_licenses)
 
         response = self.api_client.post(self.remind_all_url, {'greeting': self.greeting, 'closing': self.closing})
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # Verify emails sent to only the pending licenses
         mock_send_reminder_emails_task.assert_called_with(
@@ -1913,6 +1981,39 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             mock.call(**revoke_alice_license_result),
             mock.call(**revoke_bob_license_result),
         ])
+
+    @ddt.data(
+        ([{'name': 'user_email', 'filter_value': 'al'}], ['alice@example.com']),
+        ([{'name': 'status_in', 'filter_value': [constants.ACTIVATED]}], ['alice@example.com']),
+        ([{'name': 'status_in', 'filter_value': [constants.REVOKED]}], []),
+        ([{'name': 'status_in', 'filter_value': [constants.ASSIGNED, constants.ACTIVATED]}], ['alice@example.com', 'bob@example.com']),
+        ([{'name': 'user_email', 'filter_value': 'al'},
+          {'name': 'status_in', 'filter_value': [constants.ACTIVATED]}], ['alice@example.com']),
+        ([{'name': 'user_email', 'filter_value': 'al'},
+          {'name': 'status_in', 'filter_value': [constants.ASSIGNED]}], [])
+    )
+    @ddt.unpack
+    @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
+    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
+    def test_bulk_revoke_with_filters_happy_path(self, filters, expected_revoked_emails, mock_revoke_license, mock_execute_post_revocation_tasks):
+        """
+        Test that we can revoke multiple licenses from the bulk_revoke action using filters.
+        """
+        self._setup_request_jwt(user=self.user)
+        alice_license = LicenseFactory.create(user_email='alice@example.com', status=constants.ACTIVATED)
+        bob_license = LicenseFactory.create(user_email='bob@example.com', status=constants.ASSIGNED)
+        revoked_license = LicenseFactory.create(user_email='sam@example.com', status=constants.REVOKED)
+        self.subscription_plan.licenses.set([alice_license, bob_license, revoked_license])
+
+        request_payload = {
+            'filters': filters
+        }
+
+        response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        revoked_emails = [call_arg[0][0].user_email for call_arg in mock_revoke_license.call_args_list]
+        assert sorted(revoked_emails) == expected_revoked_emails
 
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
     def test_bulk_revoke_no_valid_subscription_plan(self, mock_revoke_license):
