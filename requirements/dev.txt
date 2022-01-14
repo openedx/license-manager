@@ -22,6 +22,7 @@ astroid==2.9.3
 attrs==21.4.0
     # via
     #   -r requirements/validation.txt
+    #   openedx-events
     #   pytest
 backoff==1.10.0
     # via
@@ -31,11 +32,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.20.32
+boto3==1.20.34
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.23.32
+botocore==1.23.34
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -74,7 +75,7 @@ code-annotations==1.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-lint
-confluent-kafka==1.7.0
+confluent-kafka==1.8.2
     # via -r requirements/validation.txt
 coreapi==2.3.3
     # via
@@ -135,6 +136,7 @@ django==3.2.11
     #   edx-i18n-tools
     #   edx-rbac
     #   jsonfield
+    #   openedx-events
 django-cors-headers==3.11.0
     # via -r requirements/validation.txt
 django-crum==0.7.9
@@ -210,10 +212,11 @@ edx-i18n-tools==0.8.1
     # via -r requirements/validation.txt
 edx-lint==5.2.1
     # via -r requirements/validation.txt
-edx-opaque-keys==2.2.2
+edx-opaque-keys[django]==2.2.2
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
+    #   openedx-events
 edx-rbac==1.5.1
     # via -r requirements/validation.txt
 edx-rest-api-client==5.4.1
@@ -224,8 +227,10 @@ faker==11.3.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
-fastavro==1.4.7
-    # via -r requirements/validation.txt
+fastavro==1.4.9
+    # via
+    #   -r requirements/validation.txt
+    #   openedx-events
 freezegun==1.1.0
     # via -r requirements/validation.txt
 future==0.18.2
@@ -309,6 +314,8 @@ oauthlib==3.1.1
     #   -r requirements/validation.txt
     #   requests-oauthlib
     #   social-auth-core
+openedx-events==0.7.1
+    # via -r requirements/validation.txt
 packaging==21.3
     # via
     #   -r requirements/validation.txt

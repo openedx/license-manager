@@ -12,7 +12,7 @@ from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroSerializer
 from confluent_kafka.serialization import StringSerializer
 from django.conf import settings
-from openedx_events.enterprise.data import TrackingEvent
+from openedx_events.enterprise.data import SubscriptionLicenseData
 from openedx_events.avro_attrs_bridge import AvroAttrsBridgeKafkaWrapper
 
 
@@ -29,7 +29,7 @@ class TrackingEventSerializer:
     @classmethod
     def get_serializer(cls):
         """
-        Get or create a single instance of the TrackingEvent serializer to be used throughout the life of the app
+        Get or create a single instance of the SubscriptionLicenseData serializer to be used throughout the life of the app
         :return: AvroSerializer
         """
         if cls.TRACKING_EVENT_SERIALIZER is None:
@@ -39,8 +39,8 @@ class TrackingEventSerializer:
                 f":{getattr(settings,'SCHEMA_REGISTRY_API_SECRET','')}",
             }
 
-            # create bridge for TrackingEvent
-            bridge = AvroAttrsBridgeKafkaWrapper(TrackingEvent)
+            # create bridge for SubscriptionLicenseData
+            bridge = AvroAttrsBridgeKafkaWrapper(SubscriptionLicenseData)
             schema_registry_client = SchemaRegistryClient(KAFKA_SCHEMA_REGISTRY_CONFIG)
             cls.TRACKING_EVENT_SERIALIZER = AvroSerializer(schema_str=bridge.schema_str(),
                                                            schema_registry_client=schema_registry_client,
@@ -120,7 +120,7 @@ def create_topic_if_not_exists(topic_name):
 
 def send_event_to_message_bus(event_name, event_properties):
     """
-    Create a TrackingEvent from event_properties and send it to the settings.LICENSE_TOPIC_NAME queue on
+    Create a SubscriptionLicenseData from event_properties and send it to the settings.LICENSE_TOPIC_NAME queue on
     the event bus
     :param event_name: same as segment event name
     :param event_properties: same as segment event properties
@@ -132,7 +132,7 @@ def send_event_to_message_bus(event_name, event_properties):
             TrackingEventSerializer.get_serializer()
         )
         license_event_producer.produce(settings.LICENSE_TOPIC_NAME, key=str(event_name),
-                                       value=TrackingEvent(**event_properties), on_delivery=verify_event)
+                                       value=SubscriptionLicenseData(**event_properties), on_delivery=verify_event)
         license_event_producer.poll()
     except ValueSerializationError as vse:
         logger.exception(vse)
