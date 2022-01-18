@@ -25,3 +25,6 @@ diff-cover==4.0.0
 
 # Constraint from astroid 2.3.3
 wrapt==1.11.*
+
+# redis 4 causes fires
+redis<4
