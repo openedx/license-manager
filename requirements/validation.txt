@@ -38,12 +38,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.20.36
+boto3==1.20.37
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.23.36
+botocore==1.23.37
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -122,11 +122,6 @@ defusedxml==0.7.1
     #   -r requirements/test.txt
     #   python3-openid
     #   social-auth-core
-deprecated==1.2.13
-    # via
-    #   -r requirements/quality.txt
-    #   -r requirements/test.txt
-    #   redis
 django==3.2.11
     # via
     #   -c requirements/common_constraints.txt
@@ -383,7 +378,6 @@ packaging==21.3
     #   -r requirements/test.txt
     #   drf-yasg
     #   pytest
-    #   redis
 path==16.3.0
     # via edx-i18n-tools
 pathlib2==2.3.6
@@ -517,8 +511,9 @@ pyyaml==6.0
     #   -r requirements/test.txt
     #   code-annotations
     #   edx-i18n-tools
-redis==4.1.0
+redis==3.5.3
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
 requests==2.27.1
@@ -594,7 +589,7 @@ social-auth-app-django==5.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.1.0
+social-auth-core==4.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -663,7 +658,6 @@ wrapt==1.11.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   astroid
-    #   deprecated
 zipp==3.7.0
     # via
     #   -r requirements/quality.txt
