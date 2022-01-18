@@ -33,5 +33,5 @@ class SubscriptionsConfig(AppConfig):
         if KAFKA_ENABLED.is_enabled():  # pragma: no cover
             try:
                 create_topic_if_not_exists(settings.LICENSE_TOPIC_NAME)
-            except Exception as e:
+            except Exception:
                 logger.exception(f"Error creating topic.")
