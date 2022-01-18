@@ -16,9 +16,10 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-# Eventually this class should be moved to openedx_events and changed to an attrib class, and
-# the Attr<->Avro bridge used as a serializer
-# TODO: (ARCHBOM-2004) remove this file from the omit list in coverage.py and add tests when finalized
+# TODO EVENT BUS:
+#  1. Move the TrackingEvent class to openedx_events and use the Attr<->Avro bridge as a serializer
+#  2. Remove the TrackingEventSerializer once (1) is complete
+#  3. (ARCHBOM-2004) remove this file from the omit list in coverage.py and add tests when finalized
 
 
 class TrackingEvent:
@@ -67,7 +68,7 @@ class TrackingEvent:
 
     @staticmethod
     def from_dict(dict_instance, ctx):  # pylint: disable=unused-argument
-        return TrackingEvent(dict_instance)
+        return TrackingEvent(**dict_instance)
 
     @staticmethod
     def to_dict(obj, ctx):  # pylint: disable=unused-argument
@@ -87,8 +88,6 @@ class TrackingEvent:
             "auto_applied": (obj.auto_applied or False),
         }
 
-
-# Eventually the following should be moved into a plugin, app, library, or something more reusable
 
 class TrackingEventSerializer:
     """ Wrapper class used to ensure a single instance of the tracking event serializer.
@@ -114,6 +113,8 @@ class TrackingEventSerializer:
             return cls.TRACKING_EVENT_SERIALIZER
         return cls.TRACKING_EVENT_SERIALIZER
 
+# TODO EVENT BUS: Move ProducerFactory, topic creation, and simple event sending
+#  to a reusable plugin accessible by other apps
 
 class ProducerFactory:
     """ Factory class to create event producers.
@@ -213,5 +214,5 @@ def verify_event(err, evt):
         logger.warning(f"Event delivery failed: {err}")
     else:
         # Don't log msg.value() because it may contain userids and/or emails
-        logger.debug(f"Event delivered to {evt.topic()}: key(bytes) - {evt.key()}; "
+        logger.info(f"Event delivered to {evt.topic()}: key(bytes) - {evt.key()}; "
                      f"partition - {evt.partition()}")
