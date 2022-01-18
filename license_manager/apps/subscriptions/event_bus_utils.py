@@ -116,6 +116,7 @@ class TrackingEventSerializer:
 # TODO EVENT BUS: Move ProducerFactory, topic creation, and simple event sending
 #  to a reusable plugin accessible by other apps
 
+
 class ProducerFactory:
     """ Factory class to create event producers.
     The factory pattern is used to ensure only one producer per event type, which is the confluent recommendation"""
@@ -215,4 +216,4 @@ def verify_event(err, evt):
     else:
         # Don't log msg.value() because it may contain userids and/or emails
         logger.info(f"Event delivered to {evt.topic()}: key(bytes) - {evt.key()}; "
-                     f"partition - {evt.partition()}")
+                    f"partition - {evt.partition()}")
