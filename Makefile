@@ -79,7 +79,9 @@ style: ## run Python style checker
 	pycodestyle license_manager *.py
 
 lint: ## run Python code linting
-	pylint -j 0 --django-settings-module=license_manager.settings.test --rcfile=pylintrc license_manager *.py
+	edx_lint write pylintrc  # first, write pylintrc in case tweaks have changed
+	DJANGO_SETTINGS_MODULE=license_manager.settings.test \
+	pylint --rcfile=pylintrc license_manager *.py
 
 quality: style isort_check lint ## check code style and import sorting, then lint
 

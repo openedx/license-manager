@@ -1,4 +1,3 @@
-from django.conf import settings
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
@@ -9,7 +8,6 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
-from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 class SubscriptionPlanRenewalSerializer(serializers.ModelSerializer):
@@ -123,6 +121,9 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
         return self.context.get('active_plans_only', True)
 
     def get_ordered_subscription_plan_expirations(self, obj):
+        """
+        Returns a list of ordered subscription plan expiration dates.
+        """
         plan_expirations = obj.ordered_subscription_plan_expirations
 
         if self.serialize_active_plans_only:
@@ -131,6 +132,9 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
         return plan_expirations
 
     def get_subscriptions(self, obj):
+        """
+        Returns a serialized dictionary of all or active-only plans in this agreement.
+        """
         plans = obj.subscriptions.all()
 
         if self.serialize_active_plans_only:

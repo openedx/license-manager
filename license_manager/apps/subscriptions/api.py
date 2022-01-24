@@ -6,7 +6,7 @@ import logging
 from django.db import transaction
 from requests.exceptions import HTTPError
 
-import license_manager.apps.api.tasks as tasks
+from license_manager.apps.api import tasks
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import event_utils
 

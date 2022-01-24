@@ -2,7 +2,6 @@
 Tests for the license-manager API celery tasks
 """
 from datetime import datetime, timedelta
-from smtplib import SMTPException
 from unittest import mock
 from uuid import uuid4
 
@@ -49,6 +48,7 @@ from license_manager.apps.subscriptions.utils import (
 )
 
 
+# pylint: disable=unused-argument
 @ddt.ddt
 class EmailTaskTests(TestCase):
     """
@@ -130,6 +130,7 @@ class EmailTaskTests(TestCase):
                 trigger_properties=expected_trigger_properties,
             )
 
+    # pylint: disable=unused-argument
     @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
@@ -254,7 +255,7 @@ class EmailTaskTests(TestCase):
         assert self.enterprise_slug == actual_enterprise_slug
         assert self.enterprise_name == actual_enterprise_name
         assert self.enterprise_sender_alias == actual_enterprise_sender_alias
-        assert self.subscription_plan_type == actual_subscription_plan_type
+        assert self.subscription_plan_type == actual_subscription_plan_type  # pylint: disable=no-member
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
@@ -361,7 +362,9 @@ class EmailTaskTests(TestCase):
     @ddt.unpack
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    def test_auto_applied_license_onboard_email(self, mock_enterprise_client, mock_braze_client, lp_search, identity_provider):
+    def test_auto_applied_license_onboard_email(
+        self, mock_enterprise_client, mock_braze_client, lp_search, identity_provider
+    ):
         """
         Tests braze API is called when everything works as expected.
         """
@@ -409,7 +412,9 @@ class EmailTaskTests(TestCase):
     @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', side_effect=Exception)
-    def test_auto_applied_license_onboard_email_ent_client_error(self, mock_enterprise_client, mock_braze_client, mock_logger):
+    def test_auto_applied_license_onboard_email_ent_client_error(
+        self, mock_enterprise_client, mock_braze_client, mock_logger
+    ):
         """
         Tests braze API is not called if enterprise client errors.
         """
@@ -421,7 +426,9 @@ class EmailTaskTests(TestCase):
     @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    def test_auto_applied_license_onboard_email_braze_client_error(self, mock_enterprise_client, mock_braze_client, mock_logger):
+    def test_auto_applied_license_onboard_email_braze_client_error(
+        self, mock_enterprise_client, mock_braze_client, mock_logger
+    ):
         """
         Tests error logged if brazy client errors.
         """
@@ -488,7 +495,8 @@ class RevokeAllLicensesTaskTests(TestCase):
             tasks.revoke_all_licenses_task(self.subscription_plan.uuid)
 
         assert len(mock_revoke_license.call_args_list) == 1
-        assert mock_revoke_license.call_args_list[0][0][0].uuid in [self.activated_license.uuid, self.assigned_license.uuid]
+        revokable_licenses = [self.activated_license.uuid, self.assigned_license.uuid]
+        assert mock_revoke_license.call_args_list[0][0][0].uuid in revokable_licenses
         assert mock_execute_post_revocation_tasks.call_count == 0
 
 
@@ -532,7 +540,9 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         SubscriptionPlan.objects.all().delete()
         CustomerAgreement.objects.all().delete()
 
-    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
+    @mock.patch(
+        'license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download"
+    )
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
     def test_bulk_enroll(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
@@ -557,7 +567,14 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
             'notify': True
         }
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(
+            str(self.bulk_enrollment_job.uuid),
+            self.enterprise_customer_uuid,
+            [self.user.email],
+            [self.course_key],
+            True,
+            self.active_subscription_for_customer.uuid
+        )
 
         mock_bulk_enroll_enterprise_learners.assert_called_with(
             str(self.enterprise_customer_uuid),
@@ -568,21 +585,36 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         assert len(results) == 1
         assert results[0][2] == 'success'
 
-    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
+    @mock.patch(
+        'license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download"
+    )
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll_revoked_license(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
+    def test_bulk_enroll_revoked_license(
+        self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results
+    ):
         # random, non-existant subscription uuid
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user2.email], [self.course_key], True, uuid4())
+        results = tasks.enterprise_enrollment_license_subsidy_task(
+            str(self.bulk_enrollment_job.uuid),
+            self.enterprise_customer_uuid,
+            [self.user2.email],
+            [self.course_key],
+            True,
+            uuid4(),
+        )
 
         mock_bulk_enroll_enterprise_learners.assert_not_called()
         assert len(results) == 1
         assert results[0][2] == 'failed'
 
-    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
+    @mock.patch(
+        'license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download"
+    )
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll_invalid_email_addresses(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
+    def test_bulk_enroll_invalid_email_addresses(
+        self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results
+    ):
         mock_enrollment_response = mock.Mock(spec=models.Response)
         mock_enrollment_response.json.return_value = {
             'successes': [],
@@ -593,16 +625,27 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_enrollment_response.status_code = 201
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(
+            str(self.bulk_enrollment_job.uuid),
+            self.enterprise_customer_uuid,
+            [self.user.email],
+            [self.course_key],
+            True,
+            self.active_subscription_for_customer.uuid,
+        )
 
         assert len(results) == 1
         assert results[0][2] == 'failed'
         assert results[0][3] == 'invalid email address'
 
-    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
+    @mock.patch(
+        'license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download"
+    )
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll_pending(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
+    def test_bulk_enroll_pending(
+        self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results
+    ):
         mock_enrollment_response = mock.Mock(spec=models.Response)
         mock_enrollment_response.json.return_value = {
             'successes': [],
@@ -612,15 +655,23 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_enrollment_response.status_code = 202
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(
+            str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid,
+            [self.user.email], [self.course_key],
+            True, self.active_subscription_for_customer.uuid,
+        )
 
         assert len(results) == 1
         assert results[0][2] == 'pending'
 
-    @mock.patch('license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download")
+    @mock.patch(
+        'license_manager.apps.api.tasks.BulkEnrollmentJob.upload_results', return_value="https://example.com/download"
+    )
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     @mock.patch('license_manager.apps.api_client.enterprise.EnterpriseApiClient.bulk_enroll_enterprise_learners')
-    def test_bulk_enroll_failures(self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results):
+    def test_bulk_enroll_failures(
+        self, mock_bulk_enroll_enterprise_learners, mock_contains_content, mock_upload_results
+    ):
         mock_enrollment_response = mock.Mock(spec=models.Response)
         mock_enrollment_response.json.return_value = {
             'successes': [],
@@ -630,7 +681,11 @@ class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):
         mock_enrollment_response.status_code = 201
         mock_bulk_enroll_enterprise_learners.return_value = mock_enrollment_response
 
-        results = tasks.enterprise_enrollment_license_subsidy_task(str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid, [self.user.email], [self.course_key], True, self.active_subscription_for_customer.uuid)
+        results = tasks.enterprise_enrollment_license_subsidy_task(
+            str(self.bulk_enrollment_job.uuid), self.enterprise_customer_uuid,
+            [self.user.email], [self.course_key],
+            True, self.active_subscription_for_customer.uuid,
+        )
 
         assert len(results) == 1
         assert results[0][2] == 'failed'
@@ -652,7 +707,9 @@ class BaseLicenseUtilizationEmailTaskTests(TestCase):
         super().setUpTestData()
 
         customer_agreement = CustomerAgreementFactory()
-        subscription_plan = SubscriptionPlanFactory(customer_agreement=customer_agreement, should_auto_apply_licenses=True)
+        subscription_plan = SubscriptionPlanFactory(
+            customer_agreement=customer_agreement, should_auto_apply_licenses=True,
+        )
         expected_recipients = [
             {
                 'external_user_id': cls.test_lms_user_id,
@@ -808,7 +865,9 @@ class SendUtilizationThresholdReachedEmailTaskTests(BaseLicenseUtilizationEmailT
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
-    def test_send_utilization_threshold_reached_email_task_previously_sent(self, mock_braze_api_client, mock_enterprise_api_client):
+    def test_send_utilization_threshold_reached_email_task_previously_sent(
+        self, mock_braze_api_client, mock_enterprise_api_client
+    ):
         """
         Tests that email is not sent if one has been sent before for the given threshold.
         """
@@ -885,7 +944,9 @@ class SendUtilizationThresholdReachedEmailTaskTests(BaseLicenseUtilizationEmailT
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
-    def test_send_utilization_threshold_reached_email_task_failure(self, mock_braze_api_client, mock_enterprise_api_client):
+    def test_send_utilization_threshold_reached_email_task_failure(
+        self, mock_braze_api_client, mock_enterprise_api_client
+    ):
         """
         Tests that db commits are rolled back if an error occurs.
         """
@@ -921,6 +982,7 @@ class TrackLicenseChangesTests(TestCase):
     """
     @classmethod
     def setUpTestData(cls):
+        super().setUpTestData()
         cls.subscription_plan = SubscriptionPlanFactory()
 
     @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
@@ -936,6 +998,7 @@ class TrackLicenseChangesTests(TestCase):
         provided_properties = {'superfluous_key': 'superfluous value'}
         license_uuid_strs = [str(_lic.uuid) for _lic in unassigned_licenses]
 
+        # pylint: disable=no-value-for-parameter
         tasks.track_license_changes_task(
             license_uuid_strs,
             constants.SegmentEvents.LICENSE_CREATED,
@@ -973,13 +1036,13 @@ class TrackLicenseChangesTests(TestCase):
             str(bob_license.uuid),
         ]
 
+        # pylint: disable=no-value-for-parameter
         tasks.track_license_changes_task(
             license_uuid_strs,
             constants.SegmentEvents.LICENSE_ASSIGNED,
         )
 
         assert mock_track_event.call_count == 2
-        license_uuid_superset = set(license_uuid_strs)
         actual_properties = []
         actual_lms_user_ids = []
         for call in mock_track_event.call_args_list:

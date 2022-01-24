@@ -5,7 +5,6 @@ import logging
 from unittest import mock
 from uuid import uuid4
 
-import pytest
 from django.test import TestCase
 
 from license_manager.apps.api import utils
@@ -21,12 +20,12 @@ from license_manager.apps.subscriptions.tests.factories import (
     SubscriptionPlanFactory,
     UserFactory,
 )
-from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=unused-argument
 class CheckMissingLicenseTests(TestCase):
     """
     Tests for check_missing_licenses
@@ -67,7 +66,7 @@ class CheckMissingLicenseTests(TestCase):
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     def test_assigned(self, mock_contains_content):
-        missing_subscriptions, licensed_enrollment_info = utils.check_missing_licenses(
+        _, licensed_enrollment_info = utils.check_missing_licenses(
             self.customer_agreement,
             [self.assigned_user.email],
             [self.course_key],
@@ -80,7 +79,7 @@ class CheckMissingLicenseTests(TestCase):
 
     @mock.patch('license_manager.apps.api.v1.views.SubscriptionPlan.contains_content')
     def test_active(self, mock_contains_content):
-        missing_subscriptions, licensed_enrollment_info = utils.check_missing_licenses(
+        _, licensed_enrollment_info = utils.check_missing_licenses(
             self.customer_agreement,
             [self.activated_user.email],
             [self.course_key],
@@ -102,6 +101,7 @@ class CheckMissingLicenseTests(TestCase):
         assert missing_subscriptions.get(self.unlicensed_user.email) is not None
 
 
+# pylint: disable=protected-access
 class FileUploadTests(TestCase):
     def test_get_short_file_name(self):
         file_name = "BulkEnroll-Results.csv"

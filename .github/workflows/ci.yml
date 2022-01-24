@@ -26,11 +26,28 @@ jobs:
       run: make validate_translations
     - name: Run tests
       run: make test
+    - name: Codecov
+      run: codecov
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8"]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: x64
+    - name: Install requirements
+      run: make requirements
+    - name: Upgrade packages
+      run: pip install -U pip wheel codecov
+    - name: Run pylint
+      run: make lint
     - name: Run pycodestyle
       run: make style
     - name: Run isort
       run: make isort_check
     - name: Run pii check
       run: make pii_check
-    - name: Codecov
-      run: codecov
