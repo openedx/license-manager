@@ -146,7 +146,10 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
                     }
                     # assigned, not yet activated, incliude activation URL
                     if user_license.status == constants.ASSIGNED:
-                        this_enrollment['activation_link'] = get_license_activation_link(enterprise_slug, user_license.activation_key)
+                        this_enrollment['activation_link'] = get_license_activation_link(
+                            enterprise_slug,
+                            user_license.activation_key,
+                        )
                     licensed_enrollment_info.append(this_enrollment)
                     plan_found = True
             if not plan_found:

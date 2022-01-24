@@ -1,13 +1,8 @@
-import random
-import string
-from datetime import timedelta
 from uuid import uuid4
 
 import factory
-from faker import Faker
 
 from license_manager.apps.api.models import BulkEnrollmentJob
-from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 class BulkEnrollmentJobFactory(factory.django.DjangoModelFactory):

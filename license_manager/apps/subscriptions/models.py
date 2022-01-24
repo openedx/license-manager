@@ -1,3 +1,6 @@
+"""
+Models for the subscriptions app.
+"""
 from datetime import timedelta
 from math import ceil, inf
 from operator import itemgetter
@@ -9,7 +12,6 @@ from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils.functional import cached_property
-from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rbac.utils import ALL_ACCESS_CONTEXT
@@ -130,6 +132,10 @@ class CustomerAgreement(TimeStampedModel):
 
     @property
     def ordered_subscription_plan_expirations(self):
+        """
+        Returns a sorted list of dicts about expiration data
+        for the Subscription Plans in this agreement.
+        """
         subscription_plan_expiration_data = [
             {
                 'uuid': subscription.uuid,
@@ -150,6 +156,10 @@ class CustomerAgreement(TimeStampedModel):
 
     @property
     def net_days_until_expiration(self):
+        """
+        Returns the max number of days until expiration
+        of _any_ plan in this agreement.
+        """
         net_days = 0
         for plan in self.subscriptions.all():
             net_days = max(net_days, plan.days_until_expiration_including_renewals)
@@ -328,7 +338,7 @@ class Notification(TimeStampedModel):
     )
     last_sent = models.DateTimeField(
         help_text="Date of the last time a notifcation was sent.",
-        default=now
+        default=localized_utcnow
     )
     history = HistoricalRecords()
 
@@ -653,6 +663,7 @@ class SubscriptionPlan(TimeStampedModel):
 
         result = None
 
+        # pylint: disable=no-member
         for history in self.history.iterator():
             if history.should_auto_apply_licenses:
                 result = history.history_date

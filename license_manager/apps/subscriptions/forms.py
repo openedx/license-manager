@@ -21,6 +21,9 @@ from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 class SubscriptionPlanForm(forms.ModelForm):
+    """
+    Form used for the SubscriptionPlan admin class.
+    """
     # Extra form field to specify the number of licenses to be associated with the subscription plan
     num_licenses = forms.IntegerField(
         label="Number of Licenses",
@@ -106,6 +109,9 @@ class SubscriptionPlanForm(forms.ModelForm):
 
 
 class SubscriptionPlanRenewalForm(forms.ModelForm):
+    """
+    Form for the renewal Django admin class.
+    """
     # Using a HiddenInput widget here allows us to hide the property
     # on the creation form while still displaying the property
     # as read-only on the SubscriptionPlanRenewalForm update form.
@@ -175,6 +181,10 @@ class CustomerAgreementAdminForm(forms.ModelForm):
                 self.populate_subscription_for_auto_applied_licenses_choices(instance)
 
     def populate_subscription_for_auto_applied_licenses_choices(self, instance):
+        """
+        Populates the choice field used to choose which plan
+        is used for auto-applied licenses in a Customer Agreement.
+        """
         now = localized_utcnow()
         active_plans = SubscriptionPlan.objects.filter(
             customer_agreement=instance,
@@ -214,6 +224,9 @@ class CustomerAgreementAdminForm(forms.ModelForm):
 
 
 class ProductForm(forms.ModelForm):
+    """
+    Form for the Product Django admin class.
+    """
     class Meta:
         model = Product
         fields = '__all__'

@@ -1,3 +1,6 @@
+"""
+Utility methods for sending events to Braze or Segment.
+"""
 import json
 import logging
 
@@ -6,7 +9,6 @@ import requests
 from django.conf import settings
 from django.db.models import prefetch_related_objects
 
-from license_manager.apps.subscriptions.constants import SegmentEvents
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
 from .apps import KAFKA_ENABLED
@@ -143,8 +145,10 @@ def identify_braze_alias(lms_user_id, email_address):
                 ],
             },
         )
+        return response
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception(exc)
+        return
 
 
 def track_event(lms_user_id, event_name, properties):
@@ -154,7 +158,8 @@ def track_event(lms_user_id, event_name, properties):
     Args:
         lms_user_id (str): LMS User ID of the user we want tracked with this event for cross-platform tracking.
                            IF None, tracking will be attempted via unregistered learner email address.
-        event_name (str): Name of the event in the format of: edx.server.license-manager.license-lifecycle.<new-status>, see constants.SegmentEvents
+        event_name (str): Name of the event in the format of:
+                          `edx.server.license-manager.license-lifecycle.<new-status>` -  see constants.SegmentEvents
         properties (dict): All the properties of an event. See docs/segment_events.rst
 
     Returns:
@@ -184,7 +189,7 @@ def track_event(lms_user_id, event_name, properties):
     if KAFKA_ENABLED.is_enabled():  # pragma: no cover
         try:
             send_event_to_message_bus(event_name, properties)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             logger.exception("Exception sending event to message.")
 
 
@@ -237,8 +242,10 @@ def track_license_changes(licenses, event_name, properties=None):
 
     Args:
         licenses (list): List of licenses
-        event_name (str): Name of the event in the format of: edx.server.license-manager.license-lifecycle.<new-status>, see constants.SegmentEvents
-        properties: (dict): Additional properties to track for each event, overrides fields from get_license_tracking_properties
+        event_name (str): Name of the event in the format of:
+                          `edx.server.license-manager.license-lifecycle.<new-status>` - see constants.SegmentEvents
+        properties: (dict): Additional properties to track for each event,
+                            overrides fields from get_license_tracking_properties
     Returns:
         None
     """

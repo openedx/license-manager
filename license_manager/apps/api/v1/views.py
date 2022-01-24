@@ -41,7 +41,6 @@ from license_manager.apps.api.tasks import (
     send_utilization_threshold_reached_email_task,
     track_license_changes_task,
 )
-from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import constants, event_utils
 from license_manager.apps.subscriptions.api import (
     execute_post_revocation_tasks,
@@ -186,6 +185,21 @@ def link_and_notify_assigned_emails(request_data, subscription_plan, user_emails
         tasks.apply_async()
 
 
+def _requested_enterprise_uuid(request):
+    """
+    Returns the enterprise uuid as a uuid.UUID object
+    based on the ``enterprise_customer_uuid`` query parameter in the given request,
+    or None if that paramter is not present.
+    """
+    enterprise_customer_uuid = request.query_params.get('enterprise_customer_uuid')
+    if not enterprise_customer_uuid:
+        return None
+    try:
+        return uuid.UUID(enterprise_customer_uuid)
+    except ValueError as exc:
+        raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.') from exc
+
+
 class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
     """ Viewset for read operations on CustomerAgreements. """
 
@@ -216,13 +230,7 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
 
     @property
     def requested_enterprise_uuid(self):
-        enterprise_customer_uuid = self.request.query_params.get('enterprise_customer_uuid')
-        if not enterprise_customer_uuid:
-            return None
-        try:
-            return uuid.UUID(enterprise_customer_uuid)
-        except ValueError as exc:
-            raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.') from exc
+        return _requested_enterprise_uuid(self.request)
 
     @property
     def requested_customer_agreement_uuid(self):
@@ -297,7 +305,10 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
         try:
             license_obj = auto_apply_new_license(plan, self.user_email, self.lms_user_id)
         except DatabaseError:
-            error_message = 'Database error occurred while auto-applying license, no auto-applied license was completed.'
+            error_message = (
+                'Database error occurred while auto-applying license, '
+                'no auto-applied license was completed.'
+            )
             logger.exception(error_message)
             return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         else:
@@ -353,8 +364,10 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
                 event_utils.track_event(self.lms_user_id,
                                         constants.SegmentEvents.LICENSE_NOT_ASSIGNED,
                                         event_properties)
-            except Exception:
-                logger.warning(f"Emitting segment event for 'no licenses for auto-apply' failed for plan: {plan}")
+            except Exception:  # pylint: disable=broad-except
+                logger.warning(
+                    f"Emitting segment event for 'no licenses for auto-apply' failed for plan: {plan}"
+                )
 
             return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
@@ -376,13 +389,7 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
 
     @property
     def requested_enterprise_uuid(self):
-        enterprise_customer_uuid = self.request.query_params.get('enterprise_customer_uuid')
-        if not enterprise_customer_uuid:
-            return None
-        try:
-            return uuid.UUID(enterprise_customer_uuid)
-        except ValueError as exc:
-            raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.') from exc
+        return _requested_enterprise_uuid(self.request)
 
     @property
     def requested_subscription_uuid(self):
@@ -891,8 +898,9 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             for email in user_emails:
                 pending_license = license_by_email.get(email)
                 if not pending_license:
-                    error_message = 'Could not find any licenses pending activation that are associated with the email: {}'.format(
-                        email,
+                    error_message = (
+                        'Could not find any licenses pending activation that are '
+                        f'associated with the email: {email}'
                     )
                     return Response(error_message, status=status.HTTP_404_NOT_FOUND)
 
@@ -950,8 +958,12 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             raise
 
     def _get_licenses_from_payload_filters(self, request, subscription_plan):
+        """
+        Returns a License queryset based on some search filters
+        provided in the given requests payload.
+        """
         filters_from_request = request.data.get('filters', [])
-        query_params = {
+        filter_kwargs = {
             'subscription_plan': subscription_plan
         }
 
@@ -960,13 +972,13 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             filter_value = fltr['filter_value']
 
             if filter_name == 'user_email':
-                query_params.update(user_email__icontains=filter_value)
+                filter_kwargs.update(user_email__icontains=filter_value)
 
             if filter_name == 'status_in':
-                query_params.update(status__in=filter_value)
+                filter_kwargs.update(status__in=filter_value)
 
         return License.objects.filter(
-            **query_params,
+            **filter_kwargs,
         )
 
     @action(detail=False, methods=['post'], url_path='bulk-revoke')
@@ -1089,6 +1101,9 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
     @action(detail=False, methods=['get'])
     def overview(self, request, subscription_uuid=None):  # pylint: disable=unused-argument
+        """
+        Returns an overview of license count by status.
+        """
         queryset = self.filter_queryset(self.get_queryset())
         queryset_values = queryset.values('status').annotate(count=Count('status')).order_by('-count')
         license_overview = list(queryset_values)
@@ -1153,26 +1168,27 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
     validation_errors = None
     missing_params = None
 
+    def _check_param_has_type(self, param_name, required_type):
+        """
+        Checks for given parameter name and that the param is of a required type.
+        Appends a validation error if not.
+        """
+        if param_value := self.request.data.get(param_name):
+            if not isinstance(param_value, required_type):
+                self.validation_errors.append(param_name)
+        return param_value
+
     @property
     def requested_notify_learners(self):
-        if not isinstance(self.request.data.get('notify'), bool):
-            if self.request.data.get('notify'):
-                self.validation_errors.append('notify')
-        return self.request.data.get('notify')
+        return self._check_param_has_type('notify', bool)
 
     @property
     def requested_course_run_keys(self):
-        if self.request.data.get('course_run_keys'):
-            if not isinstance(self.request.data.get('course_run_keys'), list):
-                self.validation_errors.append('course_run_keys')
-        return self.request.data.get('course_run_keys')
+        return self._check_param_has_type('course_run_keys', list)
 
     @property
     def requested_user_emails(self):
-        if self.request.data.get('emails'):
-            if not isinstance(self.request.data.get('emails'), list):
-                self.validation_errors.append('emails')
-        return self.request.data.get('emails')
+        return self._check_param_has_type('emails', list)
 
     @property
     def requested_enterprise_id(self):
@@ -1268,8 +1284,8 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
             )
 
         # check to be sure we have a customer agreement
-        customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
-        # enqueuing_user_id, enterprise_customer_uuid, user_emails, course_run_keys, notify_learners, subscription_uuid = None
+        utils.get_customer_agreement_from_request_enterprise_uuid(request)
+
         bulk_enrollment_job = BulkEnrollmentJob.create_bulk_enrollment_job(
             self.lms_user_id,
             self.requested_enterprise_id,
@@ -1283,12 +1299,16 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
 
     @permission_required(
         constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
-        fn=lambda request: utils.get_context_for_customer_agreement_from_request(request),  # pylint: disable=unnecessary-lambda
+        # pylint: disable=unnecessary-lambda
+        fn=lambda request: utils.get_context_for_customer_agreement_from_request(request),
     )
     def get(self, request):
-        param_validation = self._validate_status_request_params()
-        if param_validation:
-            return Response(param_validation, status=status.HTTP_400_BAD_REQUEST)
+        """
+        Returns the status of a given bulk enrollment job id.
+        """
+        param_validation_error_message = self._validate_status_request_params()
+        if param_validation_error_message:
+            return Response(param_validation_error_message, status=status.HTTP_400_BAD_REQUEST)
 
         bulk_enrollment_job = get_object_or_404(
             BulkEnrollmentJob,

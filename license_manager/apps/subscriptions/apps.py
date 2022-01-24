@@ -1,3 +1,6 @@
+"""
+Defines the Django app config for subscriptions.
+"""
 import logging
 
 import analytics
@@ -15,12 +18,17 @@ logger = logging.getLogger(__name__)
 # .. toggle_implementation: SettingToggle
 # .. toggle_default: False
 # .. toggle_description: Enable producing events to the Kafka event bus
-# .. toggle_creation_date: 2021-01-12
+# .. toggle_creation_date: 2022-01-12
+# .. toggle_target_removal_date: 2022-03-31
 # .. toggle_tickets: https://openedx.atlassian.net/browse/ARCHBOM-1991
+# .. toggle_use_cases: temporary
 KAFKA_ENABLED = SettingToggle("KAFKA_ENABLED", default=False)
 
 
 class SubscriptionsConfig(AppConfig):
+    """
+    The app config for subscriptions.
+    """
     name = 'license_manager.apps.subscriptions'
     default = False
 
@@ -33,5 +41,5 @@ class SubscriptionsConfig(AppConfig):
         if KAFKA_ENABLED.is_enabled():  # pragma: no cover
             try:
                 create_topic_if_not_exists(settings.LICENSE_TOPIC_NAME)
-            except Exception:
-                logger.exception(f"Error creating topic.")
+            except Exception:  # pylint: disable=broad-except
+                logger.exception("Error creating topic.")

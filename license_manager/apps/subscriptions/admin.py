@@ -121,12 +121,12 @@ class LicenseAdmin(admin.ModelAdmin):
         """
         Parses settings.LICENSE_REVERT_SNAPSHOT_TIMESTAMP into a UTC-localized datetime object.
         """
-        return UTC.localize(
-            datetime.strptime(
-                settings.LICENSE_REVERT_SNAPSHOT_TIMESTAMP,
-                '%Y-%m-%d %H:%M:%S',
-            )
+        snapshot_datetime = datetime.strptime(
+            settings.LICENSE_REVERT_SNAPSHOT_TIMESTAMP,
+            '%Y-%m-%d %H:%M:%S',
         )
+        # pylint: disable=no-value-for-parameter
+        return UTC.localize(snapshot_datetime)
 
     def revert_licenses_to_snapshot_time(self, request, queryset):
         """
@@ -139,7 +139,7 @@ class LicenseAdmin(admin.ModelAdmin):
                     # https://github.com/jazzband/django-simple-history/issues/617
                     snapshot_record = _license.history.as_of(snapshot_datetime)
                     _license = snapshot_record
-                    _license._state.adding = False
+                    _license._state.adding = False  # pylint: disable=protected-access
                     _license.save(force_update=True)
                 messages.add_message(
                     request,
@@ -192,12 +192,14 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'change_reason',
     ]
 
+    # pylint: disable=dangerous-default-value,no-self-argument
     def get_remaining_fields(
         writable_fields=writable_fields,
         read_only_fields=read_only_fields,
         fields_displayed_first=fields_displayed_first,
         fields_displayed_last=fields_displayed_last,
     ):
+        # pylint: disable=line-too-long
         """
         Scoping is weird for class-scoped variables -
         hence this function to determine the "remaining_fields".
@@ -259,6 +261,9 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         return ()
 
     def get_customer_agreement_link(self, obj):
+        """
+        Returns a link to the customer agreement for this plan.
+        """
         if obj.customer_agreement:
             return _related_object_link(
                 'admin:subscriptions_customeragreement_change',
@@ -269,11 +274,17 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
     get_customer_agreement_link.short_description = 'Customer Agreement'
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """
+        Injects a CustomerAgreement queryset as a real FK in the form.
+        """
         if db_field.name == 'customer_agreement':
             kwargs['queryset'] = CustomerAgreement.objects.filter().order_by('enterprise_customer_slug')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def process_unused_licenses_post_freeze(self, request, queryset):
+        """
+        Used as an action; this function deletes unused licenses after a plan is frozen.
+        """
         try:
             with transaction.atomic():
                 for subscription_plan in queryset:
@@ -396,6 +407,9 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         )
 
     def get_subscription_plan_links(self, obj):
+        """
+        Gets links to all active subscription plans for this customer agreement.
+        """
         links = []
         for subscription_plan in obj.subscriptions.all():
             if subscription_plan.is_active:
@@ -464,6 +478,9 @@ class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
         'prior_subscription_plan__enterprise_catalog_uuid'
 
     def get_renewed_plan_link(self, obj):
+        """
+        Returns a link to the renewed subscription plan.
+        """
         if obj.renewed_subscription_plan:
             return _related_object_link(
                 'admin:subscriptions_subscriptionplan_change',

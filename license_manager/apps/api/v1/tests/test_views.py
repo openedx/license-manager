@@ -1,4 +1,4 @@
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,missing-function-docstring
 """
 Tests for the Subscription and License V1 API view sets.
 """
@@ -24,7 +24,6 @@ from edx_rest_framework_extensions.auth.jwt.tests.utils import (
     generate_unversioned_payload,
 )
 from freezegun import freeze_time
-from requests import Response, models
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -34,7 +33,6 @@ from license_manager.apps.api.v1.tests.constants import (
     LEARNER_ROLES,
     SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
 )
-from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
@@ -213,7 +211,10 @@ def _subscriptions_detail_request(api_client, user, subscription_uuid):
     return api_client.get(url)
 
 
-def _licenses_list_request(api_client, subscription_uuid, page_size=None, active_only=None, search=None, ignore_null_emails=None, status=None):
+def _licenses_list_request(
+        api_client, subscription_uuid, page_size=None, active_only=None,
+        search=None, ignore_null_emails=None, status=None
+):
     """
     Helper method that requests a list of licenses for a given subscription_uuid.
     """
@@ -798,7 +799,12 @@ def test_license_list_ignore_null_emails_query_param(api_client, staff_user, boo
     revoked_license.user_email = None
     revoked_license.save()
 
-    response = _licenses_list_request(api_client, subscription.uuid, ignore_null_emails=boolean_toggle, status='revoked')
+    response = _licenses_list_request(
+        api_client,
+        subscription.uuid,
+        ignore_null_emails=boolean_toggle,
+        status='revoked',
+    )
     expected_license_uuids = [] if boolean_toggle else [str(revoked_license.uuid)]
     actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
     assert actual_license_uuids == expected_license_uuids
@@ -1127,8 +1133,12 @@ class CustomerAgreementViewSetTests(LicenseViewSetActionMixin, TestCase):
         results = response.data['results']
         result = [result for result in results if result['uuid'] == str(self.customer_agreement.uuid)][0]
 
-        only_active_expirations = all([expiration['is_active'] for expiration in result['ordered_subscription_plan_expirations']])
-        only_active_plans = all([plan['is_active'] for plan in result['subscriptions']])
+        only_active_expirations = all(
+            expiration['is_active'] for expiration in result['ordered_subscription_plan_expirations']
+        )
+        only_active_plans = all(
+            plan['is_active'] for plan in result['subscriptions']
+        )
 
         all_active = only_active_expirations and only_active_plans
         self.assertEqual(active_plans_only is None or active_plans_only, all_active)
@@ -1237,7 +1247,9 @@ class CustomerAgreementViewSetTests(LicenseViewSetActionMixin, TestCase):
 
     @mock.patch('license_manager.apps.api.tasks.send_utilization_threshold_reached_email_task.delay')
     @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
-    def test_auto_apply_endpoint_idempotent(self, mock_send_assignment_email_task, mock_send_utilization_threshold_reached_email_task):
+    def test_auto_apply_endpoint_idempotent(
+            self, mock_send_assignment_email_task, mock_send_utilization_threshold_reached_email_task
+    ):
         """
         Endpoint should only associate user with license on auto-applicable
         subscription once, even if you hit the end point a bunch of times.
@@ -1257,7 +1269,7 @@ class CustomerAgreementViewSetTests(LicenseViewSetActionMixin, TestCase):
         assert License.objects.filter(user_email=user_email).count() == 0
         self._setup_request_jwt(user=self.super_user)
         for _ in range(7):
-            response = self.api_client.post(self.auto_apply_url)
+            self.api_client.post(self.auto_apply_url)
         assert License.objects.filter(user_email=user_email).count() == 1
 
         # Check whether tasks were run
@@ -1302,7 +1314,9 @@ class CustomerAgreementViewSetTests(LicenseViewSetActionMixin, TestCase):
 
     @mock.patch('license_manager.apps.api.tasks.send_utilization_threshold_reached_email_task.delay')
     @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
-    def test_auto_apply_200_if_successful(self, mock_send_assignment_email_task, mock_send_utilization_threshold_reached_email_task):
+    def test_auto_apply_200_if_successful(
+            self, mock_send_assignment_email_task, mock_send_utilization_threshold_reached_email_task
+    ):
         """
         Endpoint should return 200 if applicable subscriptions found, and
         License successfully auto applied.
@@ -1370,6 +1384,7 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         self.mock_track_test_mocker.start()
 
     def tearDown(self):
+        super().tearDown()
         self.mock_track_test_mocker.stop()
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
@@ -1702,12 +1717,6 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         """
         self._setup_request_jwt(user=self.super_user)
 
-        request_payload = {
-            'user_emails': [
-                'alice@example.com',
-                'bob@example.com',
-            ],
-        }
         response = self.api_client.post(
             reverse('api:v1:licenses-remind', kwargs={'subscription_uuid': uuid4()}),
             {'user_emails': ['edx@example.com']}
@@ -1761,7 +1770,10 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
     @ddt.data(
         ([{'name': 'user_email', 'filter_value': 'al'}], ['alice@example.com']),
         ([{'name': 'status_in', 'filter_value': [constants.ACTIVATED]}], []),
-        ([{'name': 'status_in', 'filter_value': [constants.ASSIGNED, constants.ACTIVATED]}], ['alice@example.com', 'bob@example.com']),
+        (
+            [{'name': 'status_in', 'filter_value': [constants.ASSIGNED, constants.ACTIVATED]}],
+            ['alice@example.com', 'bob@example.com']
+        ),
         ([{'name': 'user_email', 'filter_value': 'al'},
           {'name': 'status_in', 'filter_value': [constants.ACTIVATED]}], []),
         ([{'name': 'user_email', 'filter_value': 'al'},
@@ -1846,7 +1858,10 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         expected_response = [
             {'status': constants.UNASSIGNED, 'count': len(unassigned_licenses)},
             {'status': constants.ASSIGNED, 'count': len(pending_licenses)},
-            {'status': constants.REVOKED, 'count': len(revoked_licenses) - 1 if ignore_null_emails else len(revoked_licenses)},
+            {
+                'status': constants.REVOKED,
+                'count': len(revoked_licenses) - 1 if ignore_null_emails else len(revoked_licenses)
+            },
         ]
         actual_response = response.data
         assert expected_response == actual_response
@@ -1945,6 +1960,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         self.mock_track_test_mocker.start()
 
     def tearDown(self):
+        super().tearDown()
         self.mock_track_test_mocker.stop()
 
     @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
@@ -1986,7 +2002,10 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         ([{'name': 'user_email', 'filter_value': 'al'}], ['alice@example.com']),
         ([{'name': 'status_in', 'filter_value': [constants.ACTIVATED]}], ['alice@example.com']),
         ([{'name': 'status_in', 'filter_value': [constants.REVOKED]}], []),
-        ([{'name': 'status_in', 'filter_value': [constants.ASSIGNED, constants.ACTIVATED]}], ['alice@example.com', 'bob@example.com']),
+        (
+            [{'name': 'status_in', 'filter_value': [constants.ASSIGNED, constants.ACTIVATED]}],
+            ['alice@example.com', 'bob@example.com']
+        ),
         ([{'name': 'user_email', 'filter_value': 'al'},
           {'name': 'status_in', 'filter_value': [constants.ACTIVATED]}], ['alice@example.com']),
         ([{'name': 'user_email', 'filter_value': 'al'},
@@ -1995,7 +2014,9 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
     @ddt.unpack
     @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_bulk_revoke_with_filters_happy_path(self, filters, expected_revoked_emails, mock_revoke_license, mock_execute_post_revocation_tasks):
+    def test_bulk_revoke_with_filters_happy_path(
+            self, filters, expected_revoked_emails, mock_revoke_license, mock_execute_post_revocation_tasks
+    ):
         """
         Test that we can revoke multiple licenses from the bulk_revoke action using filters.
         """
@@ -2014,6 +2035,8 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
 
         revoked_emails = [call_arg[0][0].user_email for call_arg in mock_revoke_license.call_args_list]
         assert sorted(revoked_emails) == expected_revoked_emails
+
+        assert mock_execute_post_revocation_tasks.call_count == len(expected_revoked_emails)
 
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
     def test_bulk_revoke_no_valid_subscription_plan(self, mock_revoke_license):
@@ -2191,7 +2214,9 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(request_url, {})
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        expected_response_message = 'Cannot revoke all licenses when revocation cap is enabled for the subscription plan'
+        expected_response_message = (
+            'Cannot revoke all licenses when revocation cap is enabled for the subscription plan'
+        )
         self.assertEqual(expected_response_message, response.json())
 
     @mock.patch('license_manager.apps.api.tasks.revoke_all_licenses_task.delay')
@@ -2470,7 +2495,7 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
 
         assert response.status_code == status.HTTP_200_OK
         if not customer_match:
-            content = response.json()
+            content = response.json()  # pylint: disable=no-member
             assert content['results'] == []
 
     @ddt.data(
@@ -2568,7 +2593,7 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
             fourth_license,
         ]
         response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid)
-        for expected, actual in zip(expected_response, response.json()['results']):
+        for expected, actual in zip(expected_response, response.json()['results']):  # pylint: disable=no-member
             # Ensure UUIDs are in expected order
             assert str(expected.uuid) == actual['uuid']
 
@@ -2613,7 +2638,9 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
             str(active_sub_license.uuid),
             str(inactive_sub_license.uuid),
         ]
-        actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
+        actual_license_uuids = [
+            user_license['uuid'] for user_license in response.json()['results']  # pylint: disable=no-member
+        ]
         self.assertEqual(actual_license_uuids, expected_license_uuids)
 
         # We should get licenses from only the active plan if active_plans_only is true.
@@ -2623,7 +2650,9 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         expected_license_uuids = [
             str(active_sub_license.uuid),
         ]
-        actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
+        actual_license_uuids = [
+            user_license['uuid'] for user_license in response.json()['results']  # pylint: disable=no-member
+        ]
         self.assertEqual(actual_license_uuids, expected_license_uuids)
 
     def test_endpoint_respects_current_only_query_parameter(self):
@@ -2664,7 +2693,9 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
             str(current_sub_license.uuid),
             str(non_current_sub_license.uuid),
         ]
-        actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
+        actual_license_uuids = [
+            user_license['uuid'] for user_license in response.json()['results']  # pylint: disable=no-member
+        ]
         self.assertEqual(actual_license_uuids, expected_license_uuids)
 
         # We should get licenses from only the current plan if current_plans_only and active_plans_only are true
@@ -2674,7 +2705,9 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         expected_license_uuids = [
             str(current_sub_license.uuid),
         ]
-        actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
+        actual_license_uuids = [
+            user_license['uuid'] for user_license in response.json()['results']  # pylint: disable=no-member
+        ]
         self.assertEqual(actual_license_uuids, expected_license_uuids)
 
 
@@ -2794,7 +2827,10 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         assert response.status_code == 400
         assert response.json() == constants.BULK_ENROLL_TOO_MANY_ENROLLMENTS
 
-    @mock.patch('license_manager.apps.api.v1.views.BulkEnrollmentJob.generate_download_url', return_value="https://example.com/download")
+    @mock.patch(
+        'license_manager.apps.api.v1.views.BulkEnrollmentJob.generate_download_url',
+        return_value="https://example.com/download"
+    )
     def test_bulk_enroll_status(self, mock_generate_download_url):
         self._assign_learner_roles()
         url = self._get_url_with_params(bulk_enrollment_job_uuid=self.bulk_enrollment_job.uuid)
@@ -3494,4 +3530,4 @@ class StaffLicenseLookupViewTests(LicenseViewTestMixin, TestCase):
                 ),
                 'subscription_plan_title': self.active_subscription_for_customer.title,
             },
-        ], response.json())
+        ], response.json())  # pylint: disable=no-member

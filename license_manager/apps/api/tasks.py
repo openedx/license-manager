@@ -1,6 +1,5 @@
 import csv
 import logging
-import os
 import uuid
 from datetime import datetime
 from tempfile import NamedTemporaryFile
@@ -35,7 +34,6 @@ from license_manager.apps.subscriptions.models import (
 from license_manager.apps.subscriptions.utils import (
     chunks,
     get_admin_portal_url,
-    get_enterprise_reply_to_email,
     get_enterprise_sender_alias,
     localized_utcnow,
 )
@@ -258,7 +256,7 @@ def send_auto_applied_license_email_task(enterprise_customer_uuid, user_email):
         identity_provider = enterprise_customer.get('identity_provider')
         enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
         enterprise_contact_email = enterprise_customer.get('contact_email')
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         message = (
             f'Error getting data about the enterprise_customer {enterprise_customer_uuid}. '
             f'Onboarding email to {user_email} for auto applied license failed.'
@@ -506,7 +504,14 @@ def _send_bulk_enrollment_results_email(
 
 
 @shared_task(base=LoggedTask)
-def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterprise_customer_uuid, learner_emails, course_run_keys, notify_learners, subscription_uuid):
+def enterprise_enrollment_license_subsidy_task(
+    bulk_enrollment_job_uuid,
+    enterprise_customer_uuid,
+    learner_emails,
+    course_run_keys,
+    notify_learners,
+    subscription_uuid,
+):
     """
     Enroll a list of enterprise learners into a list of course runs with or without notifying them.
     Optionally, filter license check by a specific subscription.
@@ -521,10 +526,14 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
         subscription_uuid (str): UUID (string representation) of the specific enterprise subscription to use when
             validating learner licenses
     """
+    # AED 2022-01-24 - I don't have enough context to unwind this sanely.
+    # Declaring bankruptcy for now.
+    # pylint: disable=too-many-nested-blocks
     try:
         logger.info(
-            f'starting enterprise_enrollment_license_subsidy_task for '
-            'bulk_enrollment_job_uuid={bulk_enrollment_job_uuid} enterprise_customer_uuid={enterprise_customer_uuid}'
+            'starting enterprise_enrollment_license_subsidy_task for '
+            f'bulk_enrollment_job_uuid={bulk_enrollment_job_uuid} '
+            f'enterprise_customer_uuid={enterprise_customer_uuid}'
         )
 
         # collect/return results (rather than just write to the CSV) to help testability
@@ -552,8 +561,8 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
                 )
 
                 if missing_subscriptions:
-                    for failed_email in missing_subscriptions.keys():
-                        for course_key in missing_subscriptions[failed_email]:
+                    for failed_email, course_keys in missing_subscriptions.items():
+                        for course_key in course_keys:
                             results.append([failed_email, course_key, 'failed', 'missing subscription'])
 
                 if licensed_enrollment_info:
@@ -582,8 +591,7 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
                             for course_key in course_run_key_batch:
                                 results.append([result_email, course_key, 'failed', 'invalid email address'])
 
-        result_file = NamedTemporaryFile(mode='w', delete=False)
-        try:
+        with NamedTemporaryFile(mode='w', delete=False) as result_file:
             result_writer = csv.writer(result_file)
             result_writer.writerow(['email address', 'course key', 'enrollment status', 'notes'])
             for result in results:
@@ -600,15 +608,12 @@ def enterprise_enrollment_license_subsidy_task(bulk_enrollment_job_uuid, enterpr
                     campaign_id=settings.BULK_ENROLL_RESULT_CAMPAIGN,
                 )
 
-        finally:
-            result_file.close()
-            os.unlink(result_file.name)
-
         return results
     except Exception as ex:
         msg = (
-            f'failed enterprise_enrollment_license_subsidy_task for '
-            'bulk_enrollment_job_uuid={bulk_enrollment_job_uuid} enterprise_customer_uuid={enterprise_customer_uuid}'
+            'failed enterprise_enrollment_license_subsidy_task for '
+            f'bulk_enrollment_job_uuid={bulk_enrollment_job_uuid} '
+            f'enterprise_customer_uuid={enterprise_customer_uuid}'
         )
         logger.error(msg, exc_info=True)
         raise ex
