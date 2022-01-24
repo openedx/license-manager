@@ -38,15 +38,9 @@ class TestCustomerAgreementSerializer(TestCase):
         )
         data = serializer.data
 
-        only_active_expirations = all(
-            expiration['is_active'] for expiration in data['ordered_subscription_plan_expirations']
-        )
-        only_active_plans = all(
-            plan['is_active'] for plan in data['subscriptions']
-        )
+        only_active_plans = all(plan['is_active'] for plan in data['subscriptions'])
 
-        all_active = only_active_expirations and only_active_plans
-        self.assertEqual(all_active, active_plans_only)
+        self.assertEqual(only_active_plans, active_plans_only)
 
 
 @ddt.ddt

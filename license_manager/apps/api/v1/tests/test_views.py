@@ -278,7 +278,6 @@ def _assert_customer_agreement_response_correct(response, customer_agreement):
     assert response['enterprise_customer_uuid'] == str(customer_agreement.enterprise_customer_uuid)
     assert response['enterprise_customer_slug'] == customer_agreement.enterprise_customer_slug
     assert response['default_enterprise_catalog_uuid'] == str(customer_agreement.default_enterprise_catalog_uuid)
-    assert response['ordered_subscription_plan_expirations'] == customer_agreement.ordered_subscription_plan_expirations
     assert response['net_days_until_expiration'] == customer_agreement.net_days_until_expiration
     for response_subscription, agreement_subscription in zip(
         response['subscriptions'],
@@ -325,13 +324,14 @@ def _assert_license_response_correct(response, subscription_license):
         'user_email',
         'activation_date',
         'last_remind_date',
-        'subscription_plan',
+        'subscription_plan_uuid',
         'activation_date',
         'revoked_date',
         'activation_key',
     }
     assert set(response.keys()) == expected_fields
     assert response['uuid'] == str(subscription_license.uuid)
+    assert response['subscription_plan_uuid'] == str(subscription_license.subscription_plan.uuid)
     assert response['status'] == subscription_license.status
     assert response['user_email'] == subscription_license.user_email
     assert response['activation_key'] == str(subscription_license.activation_key)
@@ -1133,15 +1133,9 @@ class CustomerAgreementViewSetTests(LicenseViewSetActionMixin, TestCase):
         results = response.data['results']
         result = [result for result in results if result['uuid'] == str(self.customer_agreement.uuid)][0]
 
-        only_active_expirations = all(
-            expiration['is_active'] for expiration in result['ordered_subscription_plan_expirations']
-        )
-        only_active_plans = all(
-            plan['is_active'] for plan in result['subscriptions']
-        )
+        only_active_plans = all(plan['is_active'] for plan in result['subscriptions'])
 
-        all_active = only_active_expirations and only_active_plans
-        self.assertEqual(active_plans_only is None or active_plans_only, all_active)
+        self.assertEqual(active_plans_only is None or active_plans_only, only_active_plans)
 
     @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
     def test_auto_apply_422_if_no_applicable_subscriptions(self, mock_send_assignment_email_task):
