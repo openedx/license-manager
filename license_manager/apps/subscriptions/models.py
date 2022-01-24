@@ -3,7 +3,6 @@ Models for the subscriptions app.
 """
 from datetime import timedelta
 from math import ceil, inf
-from operator import itemgetter
 from uuid import uuid4
 
 from django.conf import settings
@@ -129,30 +128,6 @@ class CustomerAgreement(TimeStampedModel):
     )
 
     history = HistoricalRecords()
-
-    @property
-    def ordered_subscription_plan_expirations(self):
-        """
-        Returns a sorted list of dicts about expiration data
-        for the Subscription Plans in this agreement.
-        """
-        subscription_plan_expiration_data = [
-            {
-                'uuid': subscription.uuid,
-                'days_until_expiration': subscription.days_until_expiration,
-                'days_until_expiration_including_renewals': subscription.days_until_expiration_including_renewals,
-                'is_active': subscription.is_active,
-            }
-            for subscription in self.subscriptions.all()
-        ]
-
-        ordered_subscription_plan_data = sorted(
-            subscription_plan_expiration_data,
-            key=itemgetter('is_active', 'days_until_expiration_including_renewals'),
-            reverse=True,
-        )
-
-        return ordered_subscription_plan_data
 
     @property
     def net_days_until_expiration(self):

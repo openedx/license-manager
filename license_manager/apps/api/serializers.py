@@ -14,8 +14,9 @@ class SubscriptionPlanRenewalSerializer(serializers.ModelSerializer):
     """
     Serializer for the `SubscriptionPlanRenewal` model.
     """
-    prior_subscription_plan_start_date = serializers.SerializerMethodField()
-    renewed_subscription_plan_start_date = serializers.SerializerMethodField()
+
+    prior_subscription_plan_start_date = serializers.UUIDField(source='prior_subscription_plan.start_date')
+    renewed_subscription_plan_start_date = serializers.UUIDField(source='renewed_subscription_plan.start_date')
 
     class Meta:
         model = SubscriptionPlanRenewal
@@ -25,12 +26,6 @@ class SubscriptionPlanRenewalSerializer(serializers.ModelSerializer):
             'renewed_subscription_plan_id',
             'renewed_subscription_plan_start_date',
         ]
-
-    def get_prior_subscription_plan_start_date(self, obj):
-        return obj.prior_subscription_plan.start_date
-
-    def get_renewed_subscription_plan_start_date(self, obj):
-        return obj.renewed_subscription_plan.start_date
 
 
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
@@ -100,7 +95,6 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
     """
     subscriptions = SerializerMethodField()
     subscription_for_auto_applied_licenses = serializers.SerializerMethodField()
-    ordered_subscription_plan_expirations = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomerAgreement
@@ -109,7 +103,6 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
             'enterprise_customer_uuid',
             'enterprise_customer_slug',
             'default_enterprise_catalog_uuid',
-            'ordered_subscription_plan_expirations',
             'subscriptions',
             'disable_expiration_notifications',
             'net_days_until_expiration',
@@ -119,17 +112,6 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
     @property
     def serialize_active_plans_only(self):
         return self.context.get('active_plans_only', True)
-
-    def get_ordered_subscription_plan_expirations(self, obj):
-        """
-        Returns a list of ordered subscription plan expiration dates.
-        """
-        plan_expirations = obj.ordered_subscription_plan_expirations
-
-        if self.serialize_active_plans_only:
-            return [expiration for expiration in plan_expirations if expiration['is_active']]
-
-        return plan_expirations
 
     def get_subscriptions(self, obj):
         """
@@ -152,7 +134,8 @@ class LicenseSerializer(serializers.ModelSerializer):
     """
     Serializer for the `License` model.
     """
-    subscription_plan = SubscriptionPlanSerializer(read_only=True)
+
+    subscription_plan_uuid = serializers.UUIDField(source='subscription_plan_id')
 
     class Meta:
         model = License
@@ -162,7 +145,7 @@ class LicenseSerializer(serializers.ModelSerializer):
             'user_email',
             'activation_date',
             'last_remind_date',
-            'subscription_plan',
+            'subscription_plan_uuid',
             'revoked_date',
             'activation_key',
         ]
@@ -173,8 +156,9 @@ class StaffLicenseSerializer(serializers.ModelSerializer):
     Serializer for the ``License`` model that is usable by views
     that are restricted to staff/admin users.
     """
-    subscription_plan_title = serializers.SerializerMethodField()
-    subscription_plan_expiration_date = serializers.SerializerMethodField()
+
+    subscription_plan_title = serializers.CharField(source='subscription_plan.title')
+    subscription_plan_expiration_date = serializers.DateTimeField(source='subscription_plan.expiration_date')
 
     class Meta:
         model = License
@@ -188,12 +172,6 @@ class StaffLicenseSerializer(serializers.ModelSerializer):
             'subscription_plan_expiration_date',
             'activation_link',
         ]
-
-    def get_subscription_plan_title(self, obj):
-        return obj.subscription_plan.title
-
-    def get_subscription_plan_expiration_date(self, obj):
-        return obj.subscription_plan.expiration_date
 
 
 class SingleEmailSerializer(serializers.Serializer):  # pylint: disable=abstract-method
