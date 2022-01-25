@@ -6,7 +6,7 @@
         migrate html_coverage upgrade extract_translation dummy_translations \
         compile_translations fake_translations  pull_translations \
         push_translations start-devstack open-devstack  pkg-devstack \
-        detect_changed_source_translations validate_translations
+        detect_changed_source_translations validate_translations check_keywords
 
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
@@ -233,3 +233,6 @@ docker_push: docker_tag docker_auth ## push to docker hub
 	docker push "openedx/license-manager:$$GITHUB_SHA-devstack"
 	docker push 'openedx/license-manager:latest-newrelic'
 	docker push "openedx/license-manager:$$GITHUB_SHA-newrelic"
+
+check_keywords: ## Scan the Django models in all installed apps in this project for restricted field names
+	python manage.py check_reserved_keywords --override_file db_keyword_overrides.yml
