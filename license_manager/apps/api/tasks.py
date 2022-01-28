@@ -8,7 +8,10 @@ from braze.exceptions import BrazeClientError
 from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
+from django.db.utils import OperationalError
+from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests.exceptions import Timeout as RequestsTimeoutError
 
 import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api import utils
@@ -46,7 +49,28 @@ SOFT_TIME_LIMIT = 900
 MAX_TIME_LIMIT = 960
 
 
-@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
+    """
+    Shared base task that allows tasks that raise some common exceptions to retry automatically.
+
+    See https://docs.celeryproject.org/en/stable/userguide/tasks.html#automatic-retry-for-known-exceptions for
+    more documentation.
+    """
+    autoretry_for = (
+        RequestsConnectionError,
+        RequestsTimeoutError,
+        IntegrityError,
+        OperationalError,
+        BrazeClientError,
+    )
+    retry_kwargs = {'max_retries': 3}
+    # Use exponential backoff for retrying tasks
+    retry_backoff = True
+    # Add randomness to backoff delays to prevent all tasks in queue from executing simultaneously
+    retry_jitter = True
+
+
+@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def create_braze_aliases_task(user_emails):
     """
     Creates a Braze alias for each email using the ENTERPRISE_BRAZE_ALIAS_LABEL.
@@ -62,11 +86,12 @@ def create_braze_aliases_task(user_emails):
             user_emails,
             ENTERPRISE_BRAZE_ALIAS_LABEL,
         )
-    except BrazeClientError as ex:
-        logger.exception(ex)
+    except BrazeClientError as exc:
+        logger.exception(exc)
+        raise exc
 
 
-@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def send_assignment_email_task(custom_template_text, email_recipient_list, subscription_uuid):
     """
     Sends license assignment email(s) asynchronously.
@@ -111,13 +136,13 @@ def send_assignment_email_task(custom_template_text, email_recipient_list, subsc
                 recipients=[recipient],
                 trigger_properties=braze_trigger_properties,
             )
-        except BrazeClientError:
+        except BrazeClientError as exc:
             message = (
                 'License manager activation email sending received an '
                 f'exception for enterprise: {enterprise_name}.'
             )
-            logger.error(message, exc_info=True)
-            return
+            logger.exception(message)
+            raise exc
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -138,7 +163,7 @@ def link_learners_to_enterprise_task(learner_emails, enterprise_customer_uuid):
         )
 
 
-@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def send_reminder_email_task(custom_template_text, email_recipient_list, subscription_uuid):
     """
     Sends license activation reminder email(s) asynchronously.
@@ -188,18 +213,18 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
                 trigger_properties=braze_trigger_properties,
             )
 
-        except BrazeClientError:
+        except BrazeClientError as exc:
             message = (
                 'Error hitting Braze API. '
                 f'reminder email to {user_email} for license failed.'
             )
-            logger.error(message, exc_info=True)
-            return
+            logger.exception(message)
+            raise exc
 
     License.set_date_fields_to_now(pending_licenses, ['last_remind_date'])
 
 
-@shared_task(base=LoggedTask)
+@shared_task(base=LoggedTaskWithRetry)
 def send_post_activation_email_task(enterprise_customer_uuid, user_email):
     """
     Asynchronously sends post license activation email to learner.
@@ -230,16 +255,16 @@ def send_post_activation_email_task(enterprise_customer_uuid, user_email):
             recipients=[recipient],
             trigger_properties=braze_trigger_properties,
         )
-
-    except BrazeClientError:
+    except BrazeClientError as exc:
         message = (
             'Error hitting Braze API. '
             f'Onboarding email to {user_email} for license failed.'
         )
-        logger.error(message, exc_info=True)
+        logger.exception(message)
+        raise exc
 
 
-@shared_task(base=LoggedTask)
+@shared_task(base=LoggedTaskWithRetry)
 def send_auto_applied_license_email_task(enterprise_customer_uuid, user_email):
     """
     Asynchronously sends onboarding email to learner. Intended for use following automatic license activation.
@@ -356,7 +381,7 @@ def license_expiration_task(license_uuids, ignore_enrollments_modified_after=Non
         raise exc
 
 
-@shared_task(base=LoggedTask)
+@shared_task(base=LoggedTaskWithRetry)
 def send_revocation_cap_notification_email_task(subscription_uuid):
     """
     Sends revocation cap email notification to ECS asynchronously.
@@ -393,9 +418,10 @@ def send_revocation_cap_notification_email_task(subscription_uuid):
             trigger_properties=braze_trigger_properties,
         )
 
-    except BrazeClientError:
+    except BrazeClientError as exc:
         message = 'Revocation cap notification email sending received an exception.'
-        logger.error(message, exc_info=True)
+        logger.exception(message)
+        raise exc
 
 
 def _aliased_recipient_object_from_email(user_email):
@@ -693,11 +719,11 @@ def _send_license_utilization_email(
         logger.info(msg)
     except Exception as ex:
         msg = f'Failed to send {campaign_id} email for subscription {subscription_uuid}.'
-        logger.error(msg, exc_info=True)
+        logger.exception(msg)
         raise ex
 
 
-@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def send_initial_utilization_email_task(subscription_uuid):
     """
     Sends email to admins detailing license utilization for a subscription plan after the initial week.
@@ -745,7 +771,7 @@ def send_initial_utilization_email_task(subscription_uuid):
         )
 
 
-@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def send_utilization_threshold_reached_email_task(subscription_uuid):
     """
     Sends email to admins if a license utilization threshold for a subscription plan has been reached.
