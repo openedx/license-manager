@@ -81,6 +81,16 @@ class EmailTaskTests(TestCase):
             ENTERPRISE_BRAZE_ALIAS_LABEL,
         )
 
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
+    def test_create_braze_aliases_task_reraises_braze_exceptions(self, _):
+        """
+        Assert create_braze_aliases_task reraises any braze exceptions.
+        """
+        with self.assertRaises(BrazeClientError):
+            tasks.create_braze_aliases_task(
+                self.email_recipient_list
+            )
+
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
     def test_activation_task(self, mock_braze_client, mock_enterprise_client):
@@ -138,20 +148,22 @@ class EmailTaskTests(TestCase):
         """
         Tests that when sending the activate email fails, an error gets logged
         """
-        mock_enterprise_client().get_enterprise_customer_data.return_value = {
-            'slug': self.enterprise_slug,
-            'name': self.enterprise_name,
-            'sender_alias': self.enterprise_sender_alias,
-            'contact_email': self.contact_email,
-        }
 
-        tasks.send_assignment_email_task(
-            self.custom_template_text,
-            self.email_recipient_list,
-            self.subscription_plan.uuid
-        )
+        with self.assertRaises(BrazeClientError):
+            mock_enterprise_client().get_enterprise_customer_data.return_value = {
+                'slug': self.enterprise_slug,
+                'name': self.enterprise_name,
+                'sender_alias': self.enterprise_sender_alias,
+                'contact_email': self.contact_email,
+            }
 
-        mock_logger.error.assert_called_once()
+            tasks.send_assignment_email_task(
+                self.custom_template_text,
+                self.email_recipient_list,
+                self.subscription_plan.uuid
+            )
+
+        mock_logger.exception.assert_called_once()
 
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
@@ -226,11 +238,13 @@ class EmailTaskTests(TestCase):
             'contact_email': self.contact_email,
         }
 
-        tasks.send_reminder_email_task(
-            self.custom_template_text,
-            self.email_recipient_list,
-            self.subscription_plan.uuid
-        )
+        with self.assertRaises(BrazeClientError):
+            tasks.send_reminder_email_task(
+                self.custom_template_text,
+                self.email_recipient_list,
+                self.subscription_plan.uuid
+            )
+
         assert_date_fields_correct(
             self.subscription_plan.licenses.filter(user_email__in=self.email_recipient_list),
             ['last_remind_date'],
@@ -259,7 +273,7 @@ class EmailTaskTests(TestCase):
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
-    def test_onboarding_email_task(self, mock_braze_client, mock_enterprise_client):
+    def test_send_post_activation_email_task(self, mock_braze_client, mock_enterprise_client):
         """
         Tests that the onboarding email task sends the email
         """
@@ -295,6 +309,22 @@ class EmailTaskTests(TestCase):
             recipients=[expected_recipient],
             trigger_properties=expected_trigger_properties,
         )
+
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
+    def test_send_post_activation_email_task_reraises_braze_exceptions(self, _, mock_enterprise_client):
+        """
+        Assert send_post_activation_email_task reraises any braze exceptions.
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'contact_email': self.contact_email,
+        }
+
+        with self.assertRaises(BrazeClientError):
+            tasks.send_post_activation_email_task(self.enterprise_uuid, self.user_email)
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
@@ -338,6 +368,24 @@ class EmailTaskTests(TestCase):
                 settings.BRAZE_REVOKE_CAP_EMAIL_CAMPAIGN,
                 recipients=[expected_recipient],
                 trigger_properties=expected_trigger_properties,
+            )
+
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
+    def test_revocation_cap_email_task_reraises_braze_exceptions(self, _, mock_enterprise_client):
+        """
+        Assert send_revocation_cap_notification_email_task reraises any braze exceptions.
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'contact_email': self.contact_email,
+        }
+
+        with self.assertRaises(BrazeClientError):
+            tasks.send_revocation_cap_notification_email_task(
+                self.subscription_plan.uuid
             )
 
     @override_settings(AUTOAPPLY_WITH_LEARNER_PORTAL_CAMPAIGN='LP-campaign-id')
