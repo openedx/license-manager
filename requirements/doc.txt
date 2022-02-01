@@ -12,7 +12,7 @@ amqp==2.6.1
     #   kombu
 analytics-python==1.4.0
     # via -r requirements/test.txt
-asgiref==3.4.1
+asgiref==3.5.0
     # via
     #   -r requirements/test.txt
     #   django
@@ -37,11 +37,11 @@ billiard==3.6.4.0
     #   celery
 bleach==4.1.0
     # via readme-renderer
-boto3==1.20.37
+boto3==1.20.46
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.23.37
+botocore==1.23.46
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -59,7 +59,7 @@ cffi==1.15.0
     # via
     #   -r requirements/test.txt
     #   cryptography
-charset-normalizer==2.0.10
+charset-normalizer==2.0.11
     # via
     #   -r requirements/test.txt
     #   requests
@@ -90,7 +90,7 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==6.2
+coverage[toml]==6.3
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -150,7 +150,7 @@ django-model-utils==4.2.0
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==2.3.1
+django-ses==2.4.0
     # via -r requirements/test.txt
 django-simple-history==3.0.0
     # via -r requirements/test.txt
@@ -191,13 +191,13 @@ drf-yasg==1.20.0
     #   edx-api-doc-tools
 edx-api-doc-tools==1.5.0
     # via -r requirements/test.txt
-edx-auth-backends==4.0.1
+edx-auth-backends==4.1.0
     # via -r requirements/test.txt
 edx-braze-client==0.1.0
     # via -r requirements/test.txt
-edx-celeryutils==1.1.1
+edx-celeryutils==1.2.1
     # via -r requirements/test.txt
-edx-django-utils==4.4.1
+edx-django-utils==4.5.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -209,21 +209,21 @@ edx-drf-extensions==8.0.1
     #   edx-rbac
 edx-lint==5.2.1
     # via -r requirements/test.txt
-edx-opaque-keys==2.2.2
+edx-opaque-keys==2.3.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-rbac==1.5.1
+edx-rbac==1.6.0
     # via -r requirements/test.txt
-edx-rest-api-client==5.4.1
+edx-rest-api-client==5.5.0
     # via -r requirements/test.txt
 edx-sphinx-theme==3.0.0
     # via -r requirements/doc.in
-edx-toggles==4.2.0
+edx-toggles==4.3.1
     # via -r requirements/test.txt
 factory-boy==3.2.1
     # via -r requirements/test.txt
-faker==11.3.0
+faker==12.0.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -298,11 +298,11 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.1.0
     # via -r requirements/test.txt
-newrelic==7.2.4.171
+newrelic==7.4.0.172
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-oauthlib==3.1.1
+oauthlib==3.2.0
     # via
     #   -r requirements/test.txt
     #   requests-oauthlib
@@ -338,7 +338,7 @@ pycparser==2.21
     # via
     #   -r requirements/test.txt
     #   cffi
-pycryptodomex==3.12.0
+pycryptodomex==3.14.0
     # via
     #   -r requirements/test.txt
     #   pyjwkest
@@ -379,11 +379,11 @@ pylint-plugin-utils==0.7
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.0.1
+pymongo==3.12.3
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
-pyparsing==3.0.6
+pyparsing==3.0.7
     # via
     #   -r requirements/test.txt
     #   packaging
@@ -428,6 +428,7 @@ readme-renderer==32.0
     # via -r requirements/doc.in
 redis==3.5.3
     # via
+    #   -c requirements/common_constraints.txt
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
 requests==2.27.1
@@ -442,7 +443,7 @@ requests==2.27.1
     #   slumber
     #   social-auth-core
     #   sphinx
-requests-oauthlib==1.3.0
+requests-oauthlib==1.3.1
     # via
     #   -r requirements/test.txt
     #   social-auth-core
@@ -527,7 +528,6 @@ stevedore==3.5.0
 text-unidecode==1.3
     # via
     #   -r requirements/test.txt
-    #   faker
     #   python-slugify
 toml==0.10.2
     # via
