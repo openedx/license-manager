@@ -161,7 +161,6 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'expiration_processed',
         'customer_agreement',
         'last_freeze_timestamp',
-        'should_auto_apply_licenses'
     ]
     writable_fields = [
         'title',
@@ -176,6 +175,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         'for_internal_use_only',
         'change_reason',
         'can_freeze_unused_licenses',
+        'should_auto_apply_licenses',
     ]
 
     # There are some fields we want to come first/last in the form for cognitive ease.
