@@ -105,7 +105,7 @@ diff-cover==4.0.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/dev.in
-django==3.2.11
+django==3.2.14
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/validation.txt
