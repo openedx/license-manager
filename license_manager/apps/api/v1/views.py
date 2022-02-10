@@ -730,12 +730,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         """
         Given a list of emails, assigns a license to those user emails and sends an activation email.
 
-        This endpoint allows the assignment of licenses to users who have previously had a license revoked.
-        We re-assign the currently associated revoked license to the user email.
-        Furthermore, we delete an existing ``unassigned`` license from the plan's pool, to account
-        for the fact that we previously added an additional license to the pool during the revoke action.
-        See ADR 0005-unrevoking-licenses.rst for further details.
-
         Example request:
           POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
 
@@ -762,32 +756,18 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         try:
             with transaction.atomic():
-                # Get the revoked licenses that are attempting to be assigned to
-                revoked_licenses_for_assignment = subscription_plan.licenses.filter(
-                    status=constants.REVOKED,
-                    user_email__in=user_emails,
-                )
+                available_licenses_count = subscription_plan.unassigned_licenses.count()
+                required_licenses_count = len(user_emails)
 
-                enough_open_licenses, num_potential_unassigned_licenses = self._enough_open_licenses_for_assignment(
-                    subscription_plan,
-                    user_emails,
-                    revoked_licenses_for_assignment,
-                )
-                if not enough_open_licenses:
+                if available_licenses_count < required_licenses_count:
                     response_message = (
                         'There are not enough licenses that can be assigned to complete your request.'
                         'You attempted to assign {} licenses, but there are only {} potentially available.'
-                    ).format(len(user_emails), num_potential_unassigned_licenses)
+                    ).format(required_licenses_count, available_licenses_count)
                     return Response(response_message, status=status.HTTP_400_BAD_REQUEST)
 
-                user_emails_ex_revoked = self._reassign_revoked_licenses(
-                    user_emails, revoked_licenses_for_assignment,
-                )
                 assign_new_licenses(
-                    subscription_plan, user_emails_ex_revoked,
-                )
-                self._delete_unentitled_unassigned_licenses(
-                    subscription_plan, len(revoked_licenses_for_assignment),
+                    subscription_plan, user_emails,
                 )
         except DatabaseError:
             error_message = 'Database error occurred while assigning licenses, no assignments were completed'
@@ -804,6 +784,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             'num_successful_assignments': len(user_emails),
             'num_already_associated': len(already_associated_emails)
         }
+
         return Response(data=response_data, status=status.HTTP_200_OK)
 
     def _trim_already_associated_emails(self, subscription_plan, user_emails):
@@ -826,37 +807,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                 trimmed_emails.remove(email.lower())
 
         return trimmed_emails, already_associated_emails
-
-    def _enough_open_licenses_for_assignment(self, subscription_plan, user_emails, revoked_licenses_for_assignment):
-        """
-        Make sure there are enough licenses that we can assign to.
-        Since we flip the status of revoked licenses when admins attempt to re-assign that learner to a new
-        license, we check that there are enough unassigned licenses when combined with the revoked licenses that
-        will have their status change.
-        """
-        num_unassigned_licenses = subscription_plan.unassigned_licenses.count()
-        num_potential_unassigned_licenses = num_unassigned_licenses + revoked_licenses_for_assignment.count()
-        return len(user_emails) <= num_potential_unassigned_licenses, num_potential_unassigned_licenses
-
-    def _delete_unentitled_unassigned_licenses(self, subscription_plan, num_to_delete):
-        """
-        Deletes unassigned licenses to which the plan should not be entitled.
-        See ADR 0005.
-        """
-        for unassigned_license in subscription_plan.unassigned_licenses[:num_to_delete]:
-            unassigned_license.delete()
-
-    def _reassign_revoked_licenses(self, user_emails, revoked_licenses_for_assignment):
-        """
-        Unrevoke licenses for user emails associated with previously revoked licenses.
-        Returns a copy of the user_emails list with such emails removed.
-        """
-        user_emails_ex_revoked = user_emails.copy()
-        for revoked_license in revoked_licenses_for_assignment:
-            revoked_license.unrevoke()
-            user_emails_ex_revoked.remove(revoked_license.user_email)
-
-        return user_emails_ex_revoked
 
     @action(detail=False, methods=['post'])
     def remind(self, request, subscription_uuid=None):

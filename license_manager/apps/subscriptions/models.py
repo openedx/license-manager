@@ -10,6 +10,7 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
+from django.forms import ValidationError
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from edx_rbac.models import UserRole, UserRoleAssignment
@@ -44,10 +45,7 @@ from license_manager.apps.subscriptions.event_utils import (
     track_event,
     track_license_changes,
 )
-from license_manager.apps.subscriptions.exceptions import (
-    CustomerAgreementError,
-    LicenseUnrevokeError,
-)
+from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.utils import (
     days_until,
     get_license_activation_link,
@@ -963,12 +961,6 @@ class License(TimeStampedModel):
 
     history = HistoricalRecords()
 
-    class Meta:
-        unique_together = (
-            ('subscription_plan', 'user_email'),
-            ('subscription_plan', 'lms_user_id'),
-        )
-
     def __str__(self):
         """
         Return human-readable string representation.
@@ -981,6 +973,31 @@ class License(TimeStampedModel):
                 subscription_plan_uuid=self.subscription_plan.uuid,
             )
         )
+
+    def clean(self):
+        """
+        Override to perform additional validations.
+        """
+        super().clean()
+
+        if self.status in [ASSIGNED, ACTIVATED]:
+            has_existing_license = License.objects.filter(
+                user_email=self.user_email,
+                status__in=[ASSIGNED, ACTIVATED],
+                subscription_plan=self.subscription_plan,
+            ).exclude(uuid=self.uuid).exists()
+
+            if has_existing_license:
+                raise ValidationError(
+                    f'User with email {self.user_email} already has an assigned or activated license.'
+                )
+
+    def save(self, *args, **kwargs):
+        """
+        Override to ensure that full_clean()/clean() is always called.
+        """
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     @cached_property
     def activation_link(self):
@@ -1045,28 +1062,6 @@ class License(TimeStampedModel):
         event_properties = get_license_tracking_properties(self)
         track_event(self.lms_user_id,
                     SegmentEvents.LICENSE_REVOKED,
-                    event_properties)
-
-    def unrevoke(self):
-        """
-        Moves a revoked license's status back to ASSIGNED and
-        sets its revoked_date to null.
-        """
-        if self.status != REVOKED:
-            raise LicenseUnrevokeError(self.uuid, 'status does not equal REVOKED')
-
-        revoked_lms_user_id = self.lms_user_id
-        now = localized_utcnow()
-        self.status = ASSIGNED
-        self.lms_user_id = None
-        self.revoked_date = None
-        self.activation_date = None
-        self.assigned_date = now
-        self.last_remind_date = now
-        self.save()
-        event_properties = get_license_tracking_properties(self)
-        track_event(revoked_lms_user_id,
-                    SegmentEvents.LICENSE_ASSIGNED,
                     event_properties)
 
     @staticmethod

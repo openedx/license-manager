@@ -41,13 +41,6 @@ class LicenseRevocationError(LicenseError):
     action = 'license revocation'
 
 
-class LicenseUnrevokeError(Exception):
-    """
-    Exception raised for failed license un-revocations.
-    """
-    action = 'license un-revocation'
-
-
 class LicenseNotFoundError(Exception):
     """
     Raised when no license exists for a given (email, subscription_plan, statuses) combination.
