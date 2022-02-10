@@ -4,10 +4,13 @@ from unittest import mock
 
 import ddt
 import freezegun
+from django.forms import ValidationError
 from django.test import TestCase
 from requests.exceptions import HTTPError
 
 from license_manager.apps.subscriptions.constants import (
+    ACTIVATED,
+    ASSIGNED,
     REVOKED,
     UNASSIGNED,
     SegmentEvents,
@@ -143,6 +146,7 @@ class NotificationTests(TestCase):
         assert Notification.objects.count() == 3
 
 
+@ddt.ddt
 class LicenseModelTests(TestCase):
     """
     Tests for the License model.
@@ -334,6 +338,27 @@ class LicenseModelTests(TestCase):
         )
 
         self.assertCountEqual(actual_licenses, expected_licenses)
+
+    @ddt.data(ASSIGNED, ACTIVATED)
+    def test_save(self, new_status):
+        """
+        Test that validation for duplicate assigned/activated licenses occurs on save.
+        """
+        LicenseFactory.create(
+            user_email=self.user_email,
+            subscription_plan=self.active_current_plan,
+            status=ASSIGNED
+        )
+
+        unassigned_license = LicenseFactory.create(
+            user_email=self.user_email,
+            subscription_plan=self.active_current_plan,
+            status=UNASSIGNED
+        )
+
+        with self.assertRaises(ValidationError):
+            unassigned_license.status = new_status
+            unassigned_license.save()
 
 
 class CustomerAgreementTests(TestCase):

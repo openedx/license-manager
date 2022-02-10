@@ -1031,8 +1031,8 @@ class LicenseViewSetActionMixin:
         Helper that verifies that there is an assigned license associated with each email in `user_emails`.
         """
         for email in user_emails:
-            user_license = self.subscription_plan.licenses.get(user_email=email)
-            assert user_license.status == constants.ASSIGNED
+            assigned_licenses = self.subscription_plan.licenses.filter(user_email=email, status=constants.ASSIGNED)
+            assert assigned_licenses.count() == 1
 
     def _test_and_assert_forbidden_user(self, url, user_is_staff, mock_task):
         """
@@ -1044,26 +1044,6 @@ class LicenseViewSetActionMixin:
         response = self.api_client.post(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
         mock_task.assert_not_called()
-
-    def _create_revoked_license(self):
-        """
-        Helper to create a revoked license
-        """
-        original_timestamp = localized_utcnow() - datetime.timedelta(days=10)
-        unrevoke_timestamp = localized_utcnow()
-        original_activation_key = uuid4()
-        revoked_license = LicenseFactory.create(
-            subscription_plan=self.subscription_plan,
-            user_email=self.test_email,
-            status=constants.REVOKED,
-            lms_user_id=1,
-            last_remind_date=original_timestamp,
-            activation_date=original_timestamp,
-            assigned_date=original_timestamp,
-            revoked_date=original_timestamp,
-            activation_key=original_activation_key,
-        )
-        return revoked_license, unrevoke_timestamp, original_activation_key
 
 
 @ddt.ddt
@@ -1590,65 +1570,6 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         )
         mock_link_learners_task.assert_called_with(
             [self.test_email.lower()],
-            self.subscription_plan.customer_agreement.enterprise_customer_uuid
-        )
-
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
-    def test_assign_to_revoked_user(self, mock_send_assignment_email_task, mock_link_learners_task):
-        """
-        Verify that the assign endpoint allows assigning a license to a user
-        who previously had a license revoked.  The existing revoked license
-        should switch back to ASSIGNED.  Since we're unrevoking here,
-        an existing unassigned license in the plan should be deleted as part
-        of the assignment action.
-        """
-        revoked_license, unrevoke_timestamp, original_activation_key = self._create_revoked_license()
-
-        # Create a batch of unassigned licenses for this plan - we should
-        # see the count of these decrease by 1 after assignment.
-        original_num_unassigned_licenses = 10
-        LicenseFactory.create_batch(
-            original_num_unassigned_licenses,
-            subscription_plan=self.subscription_plan,
-            status=constants.UNASSIGNED,
-        )
-
-        # Do a pre-check that there are 11 total licenses in our plan.
-        self.assertEqual(
-            self.subscription_plan.licenses.all().count(),
-            original_num_unassigned_licenses + 1,
-        )
-
-        with freeze_time(unrevoke_timestamp):
-            response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
-
-        assert response.status_code == status.HTTP_200_OK
-        # Verify all the attributes on the formerly revoked license are correct
-        revoked_license.refresh_from_db()
-
-        self.assertEqual(revoked_license.user_email, self.test_email)
-        self.assertEqual(revoked_license.status, constants.ASSIGNED)
-        self.assertIsNone(revoked_license.lms_user_id)
-        self.assertIsNone(revoked_license.activation_date)
-        self.assertIsNone(revoked_license.revoked_date)
-        self.assertEqual(revoked_license.activation_key, original_activation_key)
-        self.assertEqual(revoked_license.last_remind_date, unrevoke_timestamp)
-        self.assertEqual(revoked_license.assigned_date, unrevoke_timestamp)
-
-        # Assert that one of the unassigned licenses went away
-        self.assertEqual(
-            self.subscription_plan.unassigned_licenses.count(),
-            original_num_unassigned_licenses - 1,
-        )
-
-        mock_send_assignment_email_task.assert_called_with(
-            {'greeting': '', 'closing': ''},
-            [self.test_email],
-            str(self.subscription_plan.uuid),
-        )
-        mock_link_learners_task.assert_called_with(
-            [self.test_email],
             self.subscription_plan.customer_agreement.enterprise_customer_uuid
         )
 

@@ -82,41 +82,6 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, EventTestCaseBas
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
-    def test_assign_previously_revoked_eventing(self, _, __):
-        """
-        Verify that when we assign a license to a user
-        who previously had a license revoked that that user gets a fresh
-        assignment event and that an unused license gets deleted.
-        """
-        revoked_license, unrevoke_timestamp, _ = self._create_revoked_license()
-
-        # Create an unassigned license that will get 'consumed' (aka deleted) when we unrevoke the other license.
-        unassigned_licenses = LicenseFactory.create_batch(
-            1,
-            subscription_plan=self.subscription_plan,
-            status=constants.UNASSIGNED,
-        )
-
-        with mock.patch('license_manager.apps.subscriptions.models.track_event') as mock_track_event:
-            with freeze_time(unrevoke_timestamp):
-                response = self.api_client.post(self.assign_url, {'user_emails': [self.test_email]})
-
-            assert response.status_code == status.HTTP_200_OK
-            revoked_license.refresh_from_db()
-
-            # We should have a fresh assignment event and deleted event for 2 different licenses:
-            assert mock_track_event.call_count == 2
-            assignment_call = mock_track_event.call_args_list[0]
-            deletion_call = mock_track_event.call_args_list[1]
-
-            assert assignment_call[0][1] == constants.SegmentEvents.LICENSE_ASSIGNED
-            assert assignment_call[0][2]['license_uuid'] == str(revoked_license.uuid)
-
-            assert deletion_call[0][1] == constants.SegmentEvents.LICENSE_DELETED
-            assert deletion_call[0][2]['license_uuid'] == str(unassigned_licenses[0].uuid)
-
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
     def test_assign_dedupe_eventing(self, _, __):
         """
         Verify the assign endpoint deduplicates submitted emails.
