@@ -517,8 +517,8 @@ class RevokeAllLicensesTaskTests(TestCase):
         License.objects.all().delete()
         SubscriptionPlan.objects.all().delete()
 
-    @mock.patch('license_manager.apps.subscriptions.api.execute_post_revocation_tasks')
-    @mock.patch('license_manager.apps.subscriptions.api.revoke_license')
+    @mock.patch('license_manager.apps.api.api.execute_post_revocation_tasks')
+    @mock.patch('license_manager.apps.api.tasks.revoke_license')
     def test_revoke_all_licenses_task(self, mock_revoke_license, mock_execute_post_revocation_tasks):
         """
         Verify that revoke_license and execute_post_revocation_tasks is called for each revocable license
@@ -528,8 +528,8 @@ class RevokeAllLicensesTaskTests(TestCase):
         mock_revoke_license.assert_has_calls(expected_calls, any_order=True)
         assert mock_execute_post_revocation_tasks.call_count == 2
 
-    @mock.patch('license_manager.apps.subscriptions.api.execute_post_revocation_tasks')
-    @mock.patch('license_manager.apps.subscriptions.api.revoke_license')
+    @mock.patch('license_manager.apps.api.api.execute_post_revocation_tasks')
+    @mock.patch('license_manager.apps.api.tasks.revoke_license')
     def test_revoke_all_licenses_task_error(self, mock_revoke_license, mock_execute_post_revocation_tasks):
         """
         Verify that revoke_license handles any errors

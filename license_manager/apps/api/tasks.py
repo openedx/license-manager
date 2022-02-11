@@ -13,11 +13,12 @@ from django.db.utils import OperationalError
 from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import Timeout as RequestsTimeoutError
 
-import license_manager.apps.subscriptions.api as subscriptions_api
+import license_manager.apps.api.api as rest_api_api
 from license_manager.apps.api import utils
 from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
+from license_manager.apps.subscriptions.api import revoke_license
 from license_manager.apps.subscriptions.constants import (
     DAYS_BEFORE_INITIAL_UTILIZATION_EMAIL_SENT,
     ENTERPRISE_BRAZE_ALIAS_LABEL,
@@ -457,14 +458,14 @@ def revoke_all_licenses_task(subscription_uuid):
 
         for sl in subscription_licenses:
             try:
-                revocation_results.append(subscriptions_api.revoke_license(sl))
+                revocation_results.append(revoke_license(sl))
             except Exception:
                 logger.error('Could not revoke license with uuid {} during revoke_all_licenses_task'.format(sl.uuid),
                              exc_info=True)
                 raise
 
     for result in revocation_results:
-        subscriptions_api.execute_post_revocation_tasks(**result)
+        rest_api_api.execute_post_revocation_tasks(**result)
 
 
 def _send_bulk_enrollment_results_email(
