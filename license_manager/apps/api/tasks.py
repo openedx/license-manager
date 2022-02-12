@@ -19,6 +19,7 @@ from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
+    ACTIVATED,
     DAYS_BEFORE_INITIAL_UTILIZATION_EMAIL_SENT,
     ENTERPRISE_BRAZE_ALIAS_LABEL,
     LICENSE_UTILIZATION_THRESHOLDS,
@@ -352,6 +353,32 @@ def revoke_course_enrollments_for_user_task(user_id, enterprise_id):
         )
 
 
+def execute_post_revocation_tasks(revoked_license, original_status):
+    """
+    Executes a set of tasks after a license has been revoked.
+
+    Tasks:
+        - Revoke enrollments if the License has an original status of ACTIVATED.
+        - Send email notification to ECS if the Subscription Plan has reached its revocation cap.
+    """
+
+    # We should only need to revoke enrollments if the License has an original
+    # status of ACTIVATED, pending users shouldn't have any enrollments.
+    if original_status == ACTIVATED:
+        revoke_course_enrollments_for_user_task.delay(
+            user_id=revoked_license.lms_user_id,
+            enterprise_id=str(revoked_license.subscription_plan.enterprise_customer_uuid),
+        )
+
+    if not revoked_license.subscription_plan.has_revocations_remaining:
+        # Send email notification to ECS that the Subscription Plan has reached its revocation cap
+        send_revocation_cap_notification_email_task.delay(
+            subscription_uuid=revoked_license.subscription_plan.uuid,
+        )
+
+    logger.info('License {} has been revoked'.format(revoked_license.uuid))
+
+
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def license_expiration_task(license_uuids, ignore_enrollments_modified_after=None):
     """
@@ -464,7 +491,7 @@ def revoke_all_licenses_task(subscription_uuid):
                 raise
 
     for result in revocation_results:
-        subscriptions_api.execute_post_revocation_tasks(**result)
+        execute_post_revocation_tasks(**result)
 
 
 def _send_bulk_enrollment_results_email(
@@ -856,3 +883,23 @@ def track_license_changes_task(self, license_uuids, event_name, properties=None)
             self.request.id,
             license_uuid_chunk,
         ))
+
+
+@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+def update_user_email_for_licenses_task(lms_user_id, new_email):
+    """
+    Updates the user_email field on all licenses associated with the given lms_user_id.
+
+    Arguments:
+        lms_user_id (str): The lms_user_id associated with licenses that should be updated
+        new_email (str): The email that will overwrite curent user_email fields
+
+    """
+
+    user_licenses = License.objects.filter(
+        lms_user_id=lms_user_id,
+    )
+    for lcs in user_licenses:
+        lcs.user_email = new_email
+
+    License.bulk_update(user_licenses, ['user_email'])

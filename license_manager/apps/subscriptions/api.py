@@ -6,7 +6,6 @@ import logging
 from django.db import transaction
 from requests.exceptions import HTTPError
 
-from license_manager.apps.api import tasks
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions import event_utils
 
@@ -70,32 +69,6 @@ def revoke_license(user_license):
         'revoked_license': user_license,
         'original_status': original_status
     }
-
-
-def execute_post_revocation_tasks(revoked_license, original_status):
-    """
-    Executes a set of tasks after a license has been revoked.
-
-    Tasks:
-        - Revoke enrollments if the License has an original status of ACTIVATED.
-        - Send email notification to ECS if the Subscription Plan has reached its revocation cap.
-    """
-
-    # We should only need to revoke enrollments if the License has an original
-    # status of ACTIVATED, pending users shouldn't have any enrollments.
-    if original_status == ACTIVATED:
-        tasks.revoke_course_enrollments_for_user_task.delay(
-            user_id=revoked_license.lms_user_id,
-            enterprise_id=str(revoked_license.subscription_plan.enterprise_customer_uuid),
-        )
-
-    if not revoked_license.subscription_plan.has_revocations_remaining:
-        # Send email notification to ECS that the Subscription Plan has reached its revocation cap
-        tasks.send_revocation_cap_notification_email_task.delay(
-            subscription_uuid=revoked_license.subscription_plan.uuid,
-        )
-
-    logger.info('License {} has been revoked'.format(revoked_license.uuid))
 
 
 def renew_subscription(subscription_plan_renewal, is_auto_renewed=False):

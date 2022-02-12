@@ -18,6 +18,7 @@ from requests import models
 from license_manager.apps.api import tasks
 from license_manager.apps.api.tests.factories import BulkEnrollmentJobFactory
 from license_manager.apps.subscriptions import constants
+from license_manager.apps.subscriptions.api import revoke_license
 from license_manager.apps.subscriptions.constants import (
     ASSIGNED,
     DAYS_BEFORE_INITIAL_UTILIZATION_EMAIL_SENT,
@@ -494,6 +495,7 @@ class EmailTaskTests(TestCase):
         mock_logger.error.assert_called_once()
 
 
+@ddt.ddt
 class RevokeAllLicensesTaskTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -504,6 +506,7 @@ class RevokeAllLicensesTaskTests(TestCase):
         assigned_license = LicenseFactory.create(status=constants.ASSIGNED, subscription_plan=subscription_plan)
         activated_license = LicenseFactory.create(status=constants.ACTIVATED, subscription_plan=subscription_plan)
 
+        cls.now = localized_utcnow()
         cls.subscription_plan = subscription_plan
         cls.unassigned_license = unassigned_license
         cls.assigned_license = assigned_license
@@ -517,7 +520,7 @@ class RevokeAllLicensesTaskTests(TestCase):
         License.objects.all().delete()
         SubscriptionPlan.objects.all().delete()
 
-    @mock.patch('license_manager.apps.subscriptions.api.execute_post_revocation_tasks')
+    @mock.patch('license_manager.apps.api.tasks.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.subscriptions.api.revoke_license')
     def test_revoke_all_licenses_task(self, mock_revoke_license, mock_execute_post_revocation_tasks):
         """
@@ -528,7 +531,7 @@ class RevokeAllLicensesTaskTests(TestCase):
         mock_revoke_license.assert_has_calls(expected_calls, any_order=True)
         assert mock_execute_post_revocation_tasks.call_count == 2
 
-    @mock.patch('license_manager.apps.subscriptions.api.execute_post_revocation_tasks')
+    @mock.patch('license_manager.apps.api.tasks.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.subscriptions.api.revoke_license')
     def test_revoke_all_licenses_task_error(self, mock_revoke_license, mock_execute_post_revocation_tasks):
         """
@@ -546,6 +549,48 @@ class RevokeAllLicensesTaskTests(TestCase):
         revokable_licenses = [self.activated_license.uuid, self.assigned_license.uuid]
         assert mock_revoke_license.call_args_list[0][0][0].uuid in revokable_licenses
         assert mock_execute_post_revocation_tasks.call_count == 0
+
+    @ddt.data(
+        {'original_status': constants.ACTIVATED, 'revoke_max_percentage': 200},
+        {'original_status': constants.ACTIVATED, 'revoke_max_percentage': 100},
+        {'original_status': constants.ASSIGNED, 'revoke_max_percentage': 100}
+    )
+    @ddt.unpack
+    @mock.patch('license_manager.apps.api.tasks.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.api.tasks.send_revocation_cap_notification_email_task.delay')
+    def test_execute_post_revocation_tasks(
+        self,
+        mock_cap_email_delay,
+        mock_revoke_enrollments_delay,
+        original_status,
+        revoke_max_percentage
+    ):
+        agreement = CustomerAgreementFactory.create(
+            enterprise_customer_uuid=uuid4(),
+        )
+
+        subscription_plan = SubscriptionPlanFactory.create(
+            customer_agreement=agreement,
+            is_revocation_cap_enabled=True,
+            num_revocations_applied=0,
+            revoke_max_percentage=revoke_max_percentage,
+        )
+
+        original_license = LicenseFactory.create(
+            status=original_status,
+            subscription_plan=subscription_plan,
+            lms_user_id=123,
+        )
+
+        with freezegun.freeze_time(self.now):
+            revocation_result = revoke_license(original_license)
+            tasks.execute_post_revocation_tasks(**revocation_result)
+
+        is_license_revoked = original_status == constants.ACTIVATED
+        revoke_limit_reached = is_license_revoked and revoke_max_percentage <= 100
+
+        self.assertEqual(mock_revoke_enrollments_delay.called, is_license_revoked)
+        self.assertEqual(mock_cap_email_delay.called, revoke_limit_reached)
 
 
 class EnterpriseEnrollmentLicenseSubsidyTaskTests(TestCase):

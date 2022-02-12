@@ -16,11 +16,7 @@ from license_manager.apps.subscriptions.constants import (
     SegmentEvents,
 )
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
-from license_manager.apps.subscriptions.models import (
-    License,
-    Notification,
-    SubscriptionPlan,
-)
+from license_manager.apps.subscriptions.models import License, Notification
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
@@ -219,6 +215,7 @@ class LicenseModelTests(TestCase):
         """
         Removes all test instances of License that have been created.
         """
+        super().tearDownClass()
         License.objects.all().delete()
 
     def test_license_renewed_to_and_from(self):
@@ -282,7 +279,7 @@ class LicenseModelTests(TestCase):
             assert self.CREATE_HISTORY_TYPE == user_license.history.earliest().history_type
             assert self.UPDATE_HISTORY_TYPE == user_license.history.first().history_type
 
-    def test_for_email_and_customer_no_kwargs(self):
+    def test_for_user_and_customer_no_kwargs(self):
         expected_licenses = [
             self.active_current_license,
             self.inactive_current_license,
@@ -290,49 +287,53 @@ class LicenseModelTests(TestCase):
             self.non_current_inactive_license,
         ]
 
-        actual_licenses = License.for_email_and_customer(
-            self.user_email,
-            self.enterprise_customer_uuid,
+        actual_licenses = License.for_user_and_customer(
+            user_email=self.user_email,
+            lms_user_id=None,
+            enterprise_customer_uuid=self.enterprise_customer_uuid,
         )
 
         self.assertCountEqual(actual_licenses, expected_licenses)
 
-    def test_for_email_and_customer_active_only(self):
+    def test_for_user_and_customer_active_only(self):
         expected_licenses = [
             self.active_current_license,
             self.non_current_active_license,
         ]
 
-        actual_licenses = License.for_email_and_customer(
-            self.user_email,
-            self.enterprise_customer_uuid,
+        actual_licenses = License.for_user_and_customer(
+            user_email=self.user_email,
+            lms_user_id=None,
+            enterprise_customer_uuid=self.enterprise_customer_uuid,
             active_plans_only=True,
         )
 
         self.assertCountEqual(actual_licenses, expected_licenses)
 
-    def test_for_email_and_customer_current_only(self):
+    def test_for_user_and_customer_current_only(self):
         expected_licenses = [
             self.active_current_license,
             self.inactive_current_license,
         ]
 
-        actual_licenses = License.for_email_and_customer(
-            self.user_email,
-            self.enterprise_customer_uuid,
+        actual_licenses = License.for_user_and_customer(
+            user_email=self.user_email,
+            lms_user_id=None,
+            enterprise_customer_uuid=self.enterprise_customer_uuid,
             current_plans_only=True,
         )
 
         self.assertCountEqual(actual_licenses, expected_licenses)
 
-    def test_for_email_and_customer_active_and_current_only(self):
+    def test_for_user_and_customer_active_and_current_only(self):
         expected_licenses = [
             self.active_current_license,
         ]
 
-        actual_licenses = License.for_email_and_customer(
-            self.user_email,
-            self.enterprise_customer_uuid,
+        actual_licenses = License.for_user_and_customer(
+            user_email=self.user_email,
+            lms_user_id=None,
+            enterprise_customer_uuid=self.enterprise_customer_uuid,
             active_plans_only=True,
             current_plans_only=True,
         )

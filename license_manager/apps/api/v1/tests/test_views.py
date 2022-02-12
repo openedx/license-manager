@@ -1257,7 +1257,7 @@ class CustomerAgreementViewSetTests(LicenseViewSetActionMixin, TestCase):
         )
 
     @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
-    @mock.patch('license_manager.apps.api.v1.views.auto_apply_new_license')
+    @mock.patch('license_manager.apps.api.v1.views.CustomerAgreementViewSet._auto_apply_new_license')
     def test_auto_apply_422_if_DB_error(self, mock_auto_apply_new_licenses, mock_send_assignment_email_task):
         """
         Endpoint should return 422 if database error occurs.
@@ -1289,7 +1289,9 @@ class CustomerAgreementViewSetTests(LicenseViewSetActionMixin, TestCase):
     @mock.patch('license_manager.apps.api.tasks.send_utilization_threshold_reached_email_task.delay')
     @mock.patch('license_manager.apps.api.v1.views.send_auto_applied_license_email_task.apply_async')
     def test_auto_apply_200_if_successful(
-            self, mock_send_assignment_email_task, mock_send_utilization_threshold_reached_email_task
+        self,
+        mock_send_assignment_email_task,
+        mock_send_utilization_threshold_reached_email_task,
     ):
         """
         Endpoint should return 200 if applicable subscriptions found, and
@@ -2150,8 +2152,8 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
     )
     @ddt.unpack
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
+    @mock.patch('license_manager.apps.api.tasks.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.api.tasks.send_revocation_cap_notification_email_task.delay')
     @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
     def test_assign_after_license_revoke_end_to_end(
         self,
@@ -2201,7 +2203,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             self.subscription_plan.customer_agreement.enterprise_customer_uuid
         )
 
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.api.tasks.revoke_course_enrollments_for_user_task.delay')
     def test_revoke_total_and_allocated_count_end_to_end(
         self,
         mock_revoke_course_enrollments_for_user_task,
@@ -2624,6 +2626,52 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
             user_license['uuid'] for user_license in response.json()['results']  # pylint: disable=no-member
         ]
         self.assertEqual(actual_license_uuids, expected_license_uuids)
+
+    def test_user_changed_email(self):
+        """
+        Test that if a user changes their email, they would still be able to fetch their licenses
+        and the licenses will be updated with the new email.
+        """
+        active_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            expiration_date=self.now + datetime.timedelta(weeks=20),
+            is_active=True,
+        )
+        # License with old email in current sub
+        current_sub_license = LicenseFactory(
+            lms_user_id=self.user.id,
+            user_email=self.user.email,
+            subscription_plan=active_sub,
+        )
+
+        new_email = 'new_email@testing.edx.org'
+        self.user.email = new_email
+
+        _assign_role_via_jwt_or_db(
+            self.api_client,
+            self.user,
+            self.enterprise_customer_uuid,
+            assign_via_jwt=True,
+            system_role=constants.SYSTEM_ENTERPRISE_LEARNER_ROLE,
+            subscriptions_role=constants.SUBSCRIPTIONS_LEARNER_ROLE
+        )
+
+        # We should get still get the license
+        response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid)
+
+        expected_license_uuids = [
+            str(current_sub_license.uuid),
+        ]
+
+        results = response.json()['results']  # pylint: disable=no-member
+        actual_license_uuids = [
+            user_license['uuid'] for user_license in results
+        ]
+        self.assertEqual(actual_license_uuids, expected_license_uuids)
+        current_sub_license.refresh_from_db()
+        self.assertEqual(results[0]['user_email'], new_email)
+        self.assertEqual(current_sub_license.user_email, new_email)
 
 
 class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):

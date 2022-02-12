@@ -8,6 +8,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.core.validators import MinLengthValidator
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.forms import ValidationError
@@ -1106,33 +1107,34 @@ class License(TimeStampedModel):
         bulk_update_with_history(license_objects, cls, field_names, batch_size=batch_size)
 
     @classmethod
-    def by_user_email(cls, user_email):
+    def by_user_email_or_lms_user_id(cls, user_email, lms_user_id=None):
         """
-        Returns all licenses asssociated with the given user email.
+        Returns all licenses asssociated with the given user email or lms_user_id.
         """
         return cls.objects.filter(
-            user_email=user_email,
+            Q(user_email=user_email) | Q(lms_user_id=lms_user_id)
         ).select_related(
             'subscription_plan',
             'subscription_plan__customer_agreement',
         )
 
     @classmethod
-    def for_email_and_customer(
+    def for_user_and_customer(
         cls,
         user_email,
+        lms_user_id,
         enterprise_customer_uuid,
         active_plans_only=False,
         current_plans_only=False,
     ):
         """
-        Returns all licenses asssociated with the given user email that are associated
-        with a particular customer's SubscrptionPlans.  The optional ``active_plans_only``
+        Returns all licenses asssociated with the given user email or lms_user_id that are associated
+        with a particular customer's SubscrptionPlan. The optional ``active_plans_only``
         and ``current_plans_only`` allow the caller to filter for licenses whose plans
         are marked ``active`` or that are current (the current time is within the plan's
         start/end range), respectively.
         """
-        queryset = cls.by_user_email(user_email)
+        queryset = cls.by_user_email_or_lms_user_id(user_email, lms_user_id)
         kwargs = {
             'subscription_plan__customer_agreement__enterprise_customer_uuid': enterprise_customer_uuid,
         }
