@@ -127,8 +127,8 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, EventTestCaseBas
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.revoke_course_enrollments_for_user_task.delay')
-    @mock.patch('license_manager.apps.subscriptions.api.tasks.send_revocation_cap_notification_email_task.delay')
+    @mock.patch('license_manager.apps.api.tasks.revoke_course_enrollments_for_user_task.delay')
+    @mock.patch('license_manager.apps.api.tasks.send_revocation_cap_notification_email_task.delay')
     def test_bulk_revoked_event(self, *_):
         """
         Test that bulk revoking licenses  triggers the right set of events:

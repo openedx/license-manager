@@ -6,14 +6,33 @@ import uuid
 import boto3
 from django.shortcuts import get_object_or_404
 from edx_rbac.utils import get_decoded_jwt
-from rest_framework.exceptions import ParseError
+from rest_framework.exceptions import ParseError, status
 
 from license_manager.apps.subscriptions import constants
+from license_manager.apps.subscriptions.exceptions import (
+    LicenseNotFoundError,
+    LicenseRevocationError,
+)
 from license_manager.apps.subscriptions.models import CustomerAgreement, License
 from license_manager.apps.subscriptions.utils import (
     get_license_activation_link,
     localized_utcnow,
 )
+
+
+def get_requested_enterprise_uuid(request):
+    """
+    Returns the enterprise uuid as a uuid.UUID object
+    based on the ``enterprise_customer_uuid`` query parameter in the given request,
+    or None if that paramter is not present.
+    """
+    enterprise_customer_uuid = request.query_params.get('enterprise_customer_uuid')
+    if not enterprise_customer_uuid:
+        return None
+    try:
+        return uuid.UUID(enterprise_customer_uuid)
+    except ValueError as exc:
+        raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.') from exc
 
 
 def get_customer_agreement_from_request_enterprise_uuid(request):
@@ -159,6 +178,29 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
                     missing_subscriptions[email] = [course_key]
 
     return missing_subscriptions, licensed_enrollment_info
+
+
+STATUS_CODES_BY_EXCEPTION = {
+    LicenseNotFoundError: status.HTTP_404_NOT_FOUND,
+    LicenseRevocationError: status.HTTP_400_BAD_REQUEST,
+}
+
+
+def get_http_status_for_exception(exc):
+    return STATUS_CODES_BY_EXCEPTION.get(
+        exc.__class__,
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
+
+
+def get_custom_text(data):
+    """
+    Returns a dictionary with the custom text given in the POST data.
+    """
+    return {
+        'greeting': data.get('greeting', ''),
+        'closing': data.get('closing', ''),
+    }
 
 
 def _get_short_file_name(long_file_name):

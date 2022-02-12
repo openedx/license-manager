@@ -1,5 +1,4 @@
 import logging
-import uuid
 from collections import OrderedDict
 from uuid import uuid4
 
@@ -10,7 +9,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
-from django.utils.functional import cached_property
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
 from edx_rbac.mixins import PermissionRequiredForListingMixin
@@ -28,10 +26,12 @@ from rest_framework_csv.renderers import CSVRenderer
 
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
+from license_manager.apps.api.mixins import UserDetailsFromJwtMixin
 from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     create_braze_aliases_task,
+    execute_post_revocation_tasks,
     link_learners_to_enterprise_task,
     revoke_all_licenses_task,
     send_assignment_email_task,
@@ -40,12 +40,10 @@ from license_manager.apps.api.tasks import (
     send_reminder_email_task,
     send_utilization_threshold_reached_email_task,
     track_license_changes_task,
+    update_user_email_for_licenses_task,
 )
 from license_manager.apps.subscriptions import constants, event_utils
-from license_manager.apps.subscriptions.api import (
-    execute_post_revocation_tasks,
-    revoke_license,
-)
+from license_manager.apps.subscriptions.api import revoke_license
 from license_manager.apps.subscriptions.exceptions import (
     LicenseNotFoundError,
     LicenseRevocationError,
@@ -67,140 +65,11 @@ from license_manager.apps.subscriptions.utils import (
 logger = logging.getLogger(__name__)
 
 
-STATUS_CODES_BY_EXCEPTION = {
-    LicenseNotFoundError: status.HTTP_404_NOT_FOUND,
-    LicenseRevocationError: status.HTTP_400_BAD_REQUEST,
-}
-
-
-def get_http_status_for_exception(exc):
-    return STATUS_CODES_BY_EXCEPTION.get(
-        exc.__class__,
-        status.HTTP_500_INTERNAL_SERVER_ERROR,
-    )
-
-
-def auto_apply_new_license(subscription_plan, user_email, lms_user_id):
-    """
-    Auto-apply licenses for the given user_email and lms_user_id.
-
-    Returns the auto-applied (activated) license.
-    """
-    now = localized_utcnow()
-
-    auto_applied_license = subscription_plan.unassigned_licenses.first()
-    if not auto_applied_license:
-        return None
-
-    auto_applied_license.user_email = user_email
-    auto_applied_license.lms_user_id = lms_user_id
-    auto_applied_license.status = constants.ACTIVATED
-    auto_applied_license.activation_key = str(uuid4())
-    auto_applied_license.activation_date = now
-    auto_applied_license.assigned_date = now
-    auto_applied_license.last_remind_date = now
-    auto_applied_license.auto_applied = True
-
-    auto_applied_license.save()
-    event_utils.track_license_changes([auto_applied_license], constants.SegmentEvents.LICENSE_ACTIVATED)
-    event_utils.identify_braze_alias(lms_user_id, user_email)
-    send_utilization_threshold_reached_email_task.delay(subscription_plan.uuid)
-
-    return auto_applied_license
-
-
-def assign_new_licenses(subscription_plan, user_emails):
-    """
-    Assign licenses for the given user_emails (that have not already been revoked).
-
-    Returns a QuerySet of licenses that are assigned.
-    """
-    licenses = subscription_plan.unassigned_licenses[:len(user_emails)]
-    now = localized_utcnow()
-    for unassigned_license, email in zip(licenses, user_emails):
-        # Assign each email to a license and mark the license as assigned
-        unassigned_license.user_email = email
-        unassigned_license.status = constants.ASSIGNED
-        unassigned_license.activation_key = str(uuid4())
-        unassigned_license.assigned_date = now
-        unassigned_license.last_remind_date = now
-
-    License.bulk_update(
-        licenses,
-        ['user_email', 'status', 'activation_key', 'assigned_date', 'last_remind_date'],
-        batch_size=10,
-    )
-
-    license_uuid_strs = [str(_license.uuid) for _license in licenses]
-    track_license_changes_task.delay(
-        license_uuid_strs,
-        constants.SegmentEvents.LICENSE_ASSIGNED,
-    )
-    return licenses
-
-
-def get_custom_text(data):
-    """
-    Returns a dictionary with the custom text given in the POST data.
-    """
-    return {
-        'greeting': data.get('greeting', ''),
-        'closing': data.get('closing', ''),
-    }
-
-
-def link_and_notify_assigned_emails(request_data, subscription_plan, user_emails):
-    """
-    Helper to create async chains of the pending learners and activation emails tasks with each batch of users
-    The task signatures are immutable, hence the `si()` - we don't want the result of the
-    link_learners_to_enterprise_task passed to the "child" send_assignment_email_task.
-
-    If disable_onboarding_notifications is set to true on the CustomerAgreement,
-    Braze aliases will be created but no activation email will be sent:
-    """
-
-    customer_agreement = subscription_plan.customer_agreement
-    disable_onboarding_notifications = customer_agreement.disable_onboarding_notifications
-
-    for pending_learner_batch in chunks(user_emails, constants.PENDING_ACCOUNT_CREATION_BATCH_SIZE):
-        tasks = chain(
-            link_learners_to_enterprise_task.si(
-                pending_learner_batch,
-                subscription_plan.enterprise_customer_uuid,
-            ),
-            create_braze_aliases_task.si(
-                pending_learner_batch
-            )
-        )
-
-        if not disable_onboarding_notifications:
-            tasks.link(
-                send_assignment_email_task.si(
-                    get_custom_text(request_data),
-                    pending_learner_batch,
-                    str(subscription_plan.uuid),
-                )
-            )
-
-        tasks.apply_async()
-
-
-def _requested_enterprise_uuid(request):
-    """
-    Returns the enterprise uuid as a uuid.UUID object
-    based on the ``enterprise_customer_uuid`` query parameter in the given request,
-    or None if that paramter is not present.
-    """
-    enterprise_customer_uuid = request.query_params.get('enterprise_customer_uuid')
-    if not enterprise_customer_uuid:
-        return None
-    try:
-        return uuid.UUID(enterprise_customer_uuid)
-    except ValueError as exc:
-        raise ParseError(f'{enterprise_customer_uuid} is not a valid uuid.') from exc
-
-
-class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
+class CustomerAgreementViewSet(
+    PermissionRequiredForListingMixin,
+    UserDetailsFromJwtMixin,
+    viewsets.ReadOnlyModelViewSet,
+):
     """ Viewset for read operations on CustomerAgreements. """
 
     authentication_classes = [JwtAuthentication]
@@ -216,21 +85,9 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
 
-    @cached_property
-    def decoded_jwt(self):
-        return utils.get_decoded_jwt(self.request)
-
-    @property
-    def lms_user_id(self):
-        return utils.get_key_from_jwt(self.decoded_jwt, 'user_id')
-
-    @property
-    def user_email(self):
-        return utils.get_key_from_jwt(self.decoded_jwt, 'email')
-
     @property
     def requested_enterprise_uuid(self):
-        return _requested_enterprise_uuid(self.request)
+        return utils.get_requested_enterprise_uuid(self.request)
 
     @property
     def requested_customer_agreement_uuid(self):
@@ -275,6 +132,34 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
         context.update({'active_plans_only': active_plans_only})
         return context
 
+    def _auto_apply_new_license(self, subscription_plan, user_email, lms_user_id):
+        """
+        Auto-apply licenses for the given user_email and lms_user_id.
+
+        Returns the auto-applied (activated) license.
+        """
+        now = localized_utcnow()
+
+        auto_applied_license = subscription_plan.unassigned_licenses.first()
+        if not auto_applied_license:
+            return None
+
+        auto_applied_license.user_email = user_email
+        auto_applied_license.lms_user_id = lms_user_id
+        auto_applied_license.status = constants.ACTIVATED
+        auto_applied_license.activation_key = str(uuid4())
+        auto_applied_license.activation_date = now
+        auto_applied_license.assigned_date = now
+        auto_applied_license.last_remind_date = now
+        auto_applied_license.auto_applied = True
+
+        auto_applied_license.save()
+        event_utils.track_license_changes([auto_applied_license], constants.SegmentEvents.LICENSE_ACTIVATED)
+        event_utils.identify_braze_alias(lms_user_id, user_email)
+        send_utilization_threshold_reached_email_task.delay(subscription_plan.uuid)
+
+        return auto_applied_license
+
     @action(detail=True, url_path='auto-apply', methods=['post'])
     def auto_apply(self, request, customer_agreement_uuid=None):
         """
@@ -303,7 +188,7 @@ class CustomerAgreementViewSet(PermissionRequiredForListingMixin, viewsets.ReadO
 
         # Auto-apply (activate) a license
         try:
-            license_obj = auto_apply_new_license(plan, self.user_email, self.lms_user_id)
+            license_obj = self._auto_apply_new_license(plan, self.user_email, self.lms_user_id)
         except DatabaseError:
             error_message = (
                 'Database error occurred while auto-applying license, '
@@ -389,7 +274,7 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
 
     @property
     def requested_enterprise_uuid(self):
-        return _requested_enterprise_uuid(self.request)
+        return utils.get_requested_enterprise_uuid(self.request)
 
     @property
     def requested_subscription_uuid(self):
@@ -443,7 +328,12 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
         return queryset.order_by('-start_date')
 
 
-class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, viewsets.GenericViewSet):
+class LearnerLicensesViewSet(
+    PermissionRequiredForListingMixin,
+    ListModelMixin,
+    UserDetailsFromJwtMixin,
+    viewsets.GenericViewSet
+):
     """
     This Viewset allows read operations of all Licenses associated with the email address
     of the requesting user that are associated with a given enterprise customer UUID.
@@ -556,18 +446,28 @@ class LearnerLicensesViewSet(PermissionRequiredForListingMixin, ListModelMixin, 
         if not self.enterprise_customer_uuid:
             return License.objects.none()
 
-        user_email = self.request.user.email
         active_plans_only = self.request.query_params.get('active_plans_only', 'true').lower() == 'true'
         current_plans_only = self.request.query_params.get('current_plans_only', 'true').lower() == 'true'
 
-        return License.for_email_and_customer(
-            user_email=user_email,
+        licenses = License.for_user_and_customer(
+            user_email=self.user_email,
+            lms_user_id=self.lms_user_id,
             enterprise_customer_uuid=self.enterprise_customer_uuid,
             active_plans_only=active_plans_only,
             current_plans_only=current_plans_only,
         ).exclude(
             status=constants.REVOKED,
         ).order_by('status', '-subscription_plan__expiration_date')
+
+        # Update user_email on licenses if the user has changed their email.
+        # Ideally we would receive an event when a user changes their info from the lms and update
+        # licenses that way, but this will work for now.
+        license_with_oudated_email = next((lcs for lcs in licenses if lcs.user_email != self.user_email), None)
+        if license_with_oudated_email:
+            # This should be a very infrequent operation
+            update_user_email_for_licenses_task(self.lms_user_id, self.user_email)
+
+        return licenses
 
 
 class PageNumberPaginationWithCount(PageNumberPagination):
@@ -725,6 +625,91 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         serializer = serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
 
+    def _trim_already_associated_emails(self, subscription_plan, user_emails):
+        """
+        Find any emails that have already been associated with a non-revoked license in the subscription
+        and remove from user_emails list.
+        """
+        trimmed_emails = user_emails.copy()
+
+        already_associated_licenses = subscription_plan.licenses.filter(
+            user_email__in=user_emails,
+            status__in=[constants.ASSIGNED, constants.ACTIVATED],
+        )
+        already_associated_emails = []
+        if already_associated_licenses:
+            already_associated_emails = list(
+                already_associated_licenses.values_list('user_email', flat=True)
+            )
+            for email in already_associated_emails:
+                trimmed_emails.remove(email.lower())
+
+        return trimmed_emails, already_associated_emails
+
+    def _link_and_notify_assigned_emails(self, request_data, subscription_plan, user_emails):
+        """
+        Helper to create async chains of the pending learners and activation emails tasks with each batch of users
+        The task signatures are immutable, hence the `si()` - we don't want the result of the
+        link_learners_to_enterprise_task passed to the "child" send_assignment_email_task.
+
+        If disable_onboarding_notifications is set to true on the CustomerAgreement,
+        Braze aliases will be created but no activation email will be sent:
+        """
+
+        customer_agreement = subscription_plan.customer_agreement
+        disable_onboarding_notifications = customer_agreement.disable_onboarding_notifications
+
+        for pending_learner_batch in chunks(user_emails, constants.PENDING_ACCOUNT_CREATION_BATCH_SIZE):
+            tasks = chain(
+                link_learners_to_enterprise_task.si(
+                    pending_learner_batch,
+                    subscription_plan.enterprise_customer_uuid,
+                ),
+                create_braze_aliases_task.si(
+                    pending_learner_batch
+                )
+            )
+
+            if not disable_onboarding_notifications:
+                tasks.link(
+                    send_assignment_email_task.si(
+                        utils.get_custom_text(request_data),
+                        pending_learner_batch,
+                        str(subscription_plan.uuid),
+                    )
+                )
+
+            tasks.apply_async()
+
+    def _assign_new_licenses(self, subscription_plan, user_emails):
+        """
+        Assign licenses for the given user_emails (that have not already been revoked).
+
+        Returns a QuerySet of licenses that are assigned.
+        """
+        licenses = subscription_plan.unassigned_licenses[:len(user_emails)]
+        now = localized_utcnow()
+        for unassigned_license, email in zip(licenses, user_emails):
+            # Assign each email to a license and mark the license as assigned
+            unassigned_license.user_email = email
+            unassigned_license.status = constants.ASSIGNED
+            unassigned_license.activation_key = str(uuid4())
+            unassigned_license.assigned_date = now
+            unassigned_license.last_remind_date = now
+
+        License.bulk_update(
+            licenses,
+            ['user_email', 'status', 'activation_key', 'assigned_date', 'last_remind_date'],
+            batch_size=10,
+        )
+
+        license_uuid_strs = [str(_license.uuid) for _license in licenses]
+        track_license_changes_task.delay(
+            license_uuid_strs,
+            constants.SegmentEvents.LICENSE_ASSIGNED,
+        )
+        return licenses
+
     @action(detail=False, methods=['post'])
     def assign(self, request, subscription_uuid=None):  # pylint: disable=unused-argument
         """
@@ -766,7 +751,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                     ).format(required_licenses_count, available_licenses_count)
                     return Response(response_message, status=status.HTTP_400_BAD_REQUEST)
 
-                assign_new_licenses(
+                self._assign_new_licenses(
                     subscription_plan, user_emails,
                 )
         except DatabaseError:
@@ -774,7 +759,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             logger.exception(error_message)
             return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         else:
-            link_and_notify_assigned_emails(
+            self._link_and_notify_assigned_emails(
                 request.data,
                 subscription_plan,
                 user_emails,
@@ -856,7 +841,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         # Send activation reminder email
         send_reminder_email_task.delay(
-            get_custom_text(request.data),
+            utils.get_custom_text(request.data),
             user_emails,
             subscription_uuid,
         )
@@ -881,7 +866,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         pending_user_emails = [license.user_email for license in pending_licenses]
         # Send activation reminder email to all pending users
         send_reminder_email_task.delay(
-            get_custom_text(request.data),
+            utils.get_custom_text(request.data),
             sorted(pending_user_emails),
             subscription_uuid,
         )
@@ -1006,7 +991,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                     revocation_results.append(revocation_result)
                 except (LicenseNotFoundError, LicenseRevocationError) as exc:
                     error_message = str(exc)
-                    error_response_status = get_http_status_for_exception(exc)
+                    error_response_status = utils.get_http_status_for_exception(exc)
                     break
 
         if error_response_status:
@@ -1079,24 +1064,13 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         return Response(csv_data, status=status.HTTP_200_OK, content_type='text/csv')
 
 
-class LicenseBaseView(APIView):
+class LicenseBaseView(UserDetailsFromJwtMixin, APIView):
     """
     Base view for creating specific, one-off views
     that deal with licenses.
     """
     permission_classes = [permissions.IsAuthenticated]
-
-    @cached_property
-    def decoded_jwt(self):
-        return utils.get_decoded_jwt(self.request)
-
-    @property
-    def lms_user_id(self):
-        return utils.get_key_from_jwt(self.decoded_jwt, 'user_id')
-
-    @property
-    def user_email(self):
-        return utils.get_key_from_jwt(self.decoded_jwt, 'email')
+    authentication_classes = [JwtAuthentication]
 
 
 class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
@@ -1533,7 +1507,6 @@ class StaffLicenseLookupView(LicenseBaseView):
       }
     ]
     """
-    authentication_classes = [JwtAuthentication]
     permission_classes = [permissions.IsAdminUser]
 
     def post(self, request):
@@ -1549,7 +1522,7 @@ class StaffLicenseLookupView(LicenseBaseView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user_licenses = License.by_user_email(user_email)
+        user_licenses = License.by_user_email_or_lms_user_id(user_email=user_email)
         if not user_licenses:
             return Response(
                 status=status.HTTP_404_NOT_FOUND,
