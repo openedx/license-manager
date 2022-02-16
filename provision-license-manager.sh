@@ -8,7 +8,7 @@ docker-compose up -d --build
 
 # Wait for MySQL
 echo "Waiting for MySQL"
-until docker exec -i license_manager.mysql mysql -u root -se "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = 'root')" &> /dev/null
+until docker exec -i license-manager.mysql mysql -u root -se "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = 'root')" &> /dev/null
 do
   printf "."
   sleep 1
@@ -17,17 +17,17 @@ sleep 5
 
 # Run migrations
 echo -e "${GREEN}Running migrations for ${name}...${NC}"
-docker exec -t license_manager.app bash -c "cd /edx/app/${name}/ && make migrate"
+docker exec -t license-manager.app bash -c "cd /edx/app/${name}/ && make migrate"
 
 # Seed data for development
 echo -e "${GREEN}Seeding development data..."
-docker exec -t license_manager.app bash -c "python manage.py seed_development_data"
+docker exec -t license-manager.app bash -c "python manage.py seed_development_data"
 # Some migrations require development data to be seeded, hence migrating again.
-docker exec -t license_manager.app bash -c "make migrate"
+docker exec -t license-manager.app bash -c "make migrate"
 
 # Create superuser
 echo -e "${GREEN}Creating super-user for ${name}...${NC}"
-docker exec -t license_manager.app bash -c "echo 'from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser(\"edx\", \"edx@example.com\", \"edx\") if not User.objects.filter(username=\"edx\").exists() else None' | python /edx/app/${name}/manage.py shell"
+docker exec -t license-manager.app bash -c "echo 'from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser(\"edx\", \"edx@example.com\", \"edx\") if not User.objects.filter(username=\"edx\").exists() else None' | python /edx/app/${name}/manage.py shell"
 
 # Provision IDA User in LMS
 echo -e "${GREEN}Provisioning ${name}_worker in LMS...${NC}"

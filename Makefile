@@ -97,7 +97,7 @@ migrate: ## apply database migrations
 	python manage.py migrate
 
 app-migrate: ## apply database migrations without having to type `make app-shell` first
-	docker exec -u 0 -it license_manager.app python manage.py migrate
+	docker exec -u 0 -it license-manager.app python manage.py migrate
 
 html_coverage: ## generate and view HTML coverage report
 	coverage html && open htmlcov/index.html
@@ -158,10 +158,10 @@ push_translations: ## push source translation files (.po) from Transifex
 	tx push -s
 
 open-devstack: ## open a shell on the server started by start-devstack
-	docker exec -it license_manager /edx/app/license_manager/devstack.sh open
+	docker exec -it license-manager /edx/app/license_manager/devstack.sh open
 
-pkg-devstack: ## build the license_manager image from the latest configuration and code
-	docker build -t license_manager:latest -f docker/build/license_manager/Dockerfile git://github.com/edx/configuration
+pkg-devstack: ## build the license-manager image from the latest configuration and code
+	docker build -t license-manager:latest -f docker/build/license_manager/Dockerfile git://github.com/edx/configuration
 
 detect_changed_source_translations: ## check if translation files are up-to-date
 	cd license_manager && i18n_tool changed
@@ -189,10 +189,10 @@ dev.stop: # Stops containers so they can be restarted
 	docker-compose stop
 
 %-shell: # Run a shell, as root, on the specified service container
-	docker exec -u 0 -it license_manager.$* bash
+	docker exec -u 0 -it license-manager.$* bash
 
 mysql-client-shell: # Will drop you directly into a mysql client shell.
-	docker exec -u 0 -it license_manager.mysql mysql license_manager
+	docker exec -u 0 -it license-manager.mysql mysql license_manager
 
 %-logs: # View the logs of the specified service container
 	docker-compose logs -f --tail=500 $*
@@ -201,7 +201,7 @@ mysql-client-shell: # Will drop you directly into a mysql client shell.
 	docker-compose restart $*
 
 %-attach:
-	docker attach license_manager.$*
+	docker attach license-manager.$*
 
 app-restart-devserver: ## Kill the license-manager development server. Watcher should restart it.
 	docker-compose exec app bash -c 'kill $$(ps aux | egrep "manage.py ?\w* runserver" | egrep -v "while|grep" | awk "{print \$$2}")'

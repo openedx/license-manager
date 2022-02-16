@@ -2,7 +2,7 @@ version: "2.1"
 services:
   mysql:
     image: mysql:5.7
-    container_name: license_manager.mysql
+    container_name: license-manager.mysql
     environment:
       MYSQL_ROOT_PASSWORD: ""
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
@@ -15,7 +15,7 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
-    container_name: license_manager.app
+    container_name: license-manager.app
     volumes:
       - ..:/edx/app/license_manager
     # Use the Django devserver, so that we can hot-reload code changes
