@@ -2,6 +2,7 @@ from license_manager.settings.local import *
 
 # Generic OAuth2 variables irrespective of SSO/backend service key types.
 OAUTH2_PROVIDER_URL = 'http://edx.devstack.lms:18000/oauth2'
+ALLOWED_HOSTS = ['*']
 
 DATABASES = {
     'default': {
@@ -9,7 +10,7 @@ DATABASES = {
         'NAME': 'license_manager',
         'USER': 'root',
         'PASSWORD': '',
-        'HOST': 'license_manager.mysql',
+        'HOST': 'license-manager.mysql',
         'PORT': '3306',
     }
 }
