@@ -174,6 +174,7 @@ class StaffLicenseSerializer(serializers.ModelSerializer):
         ]
 
 
+# Action Serializers
 class SingleEmailSerializer(serializers.Serializer):  # pylint: disable=abstract-method
     """
     Serializer for specifying a single email
@@ -352,3 +353,16 @@ class LicenseAdminRemindActionSerializer(  # pylint: disable=abstract-method
 
     class Meta:
         fields = LicenseAdminBulkActionSerializer.Meta.fields + CustomTextSerializer.Meta.fields
+
+
+class LicenseAdminAssignActionSerializer(CustomTextWithMultipleEmailsSerializer):  # pylint: disable=abstract-method
+    """
+    Serializer for the license admin assign action.
+    """
+
+    notify_users = serializers.BooleanField(required=False)
+
+    class Meta:
+        fields = CustomTextWithMultipleEmailsSerializer.Meta.fields + [
+            'notify_users',
+        ]
