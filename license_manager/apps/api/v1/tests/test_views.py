@@ -1575,6 +1575,45 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
             self.subscription_plan.customer_agreement.enterprise_customer_uuid
         )
 
+    @ddt.data(
+        (True, False, True),
+        (True, True, False),
+        (False, False, False),
+        (False, True, False),
+    )
+    @ddt.unpack
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.create_braze_aliases_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
+    def test_assign_notify_users(
+        self,
+        notify_users,
+        disable_onboarding_notifications,
+        should_send_assignment_email,
+        mock_send_assignment_email_task,
+        _,
+        __,
+    ):
+        """
+        Verify that users are not sent a license assignment email if notify_users=False
+        or disable_onboarding_notifications=True.
+        """
+
+        customer_agreement = self.subscription_plan.customer_agreement
+        customer_agreement.disable_onboarding_notifications = disable_onboarding_notifications
+        customer_agreement.save()
+
+        self._create_available_licenses()
+        user_emails = [self.test_email, self.test_email.upper()]
+        response = self.api_client.post(
+            self.assign_url,
+            {'user_emails': user_emails, 'notify_users': notify_users},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        self._assert_licenses_assigned([self.test_email])
+
+        assert mock_send_assignment_email_task.called == should_send_assignment_email
+
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
     def test_remind_no_emails(self, mock_send_reminder_emails_task):
         """

@@ -534,7 +534,7 @@ class BaseLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMod
 
     def get_serializer_class(self):
         if self.action == 'assign':
-            return serializers.CustomTextWithMultipleEmailsSerializer
+            return serializers.LicenseAdminAssignActionSerializer
         if self.action == 'remind':
             return serializers.LicenseAdminRemindActionSerializer
         if self.action == 'remind_all':
@@ -646,14 +646,20 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         return trimmed_emails, already_associated_emails
 
-    def _link_and_notify_assigned_emails(self, request_data, subscription_plan, user_emails):
+    def _link_and_notify_assigned_emails(
+        self,
+        user_emails,
+        subscription_plan,
+        notify_users,
+        custom_template_text,
+    ):
         """
-        Helper to create async chains of the pending learners and activation emails tasks with each batch of users
-        The task signatures are immutable, hence the `si()` - we don't want the result of the
-        link_learners_to_enterprise_task passed to the "child" send_assignment_email_task.
+        Helper to create async chains of link_learners_to_enterprise_task, create_braze_aliases_task,
+        and send_assignment_email_task for each batch of users. The task signatures are immutable,
+        hence the `si()` - we don't want the result of each task passed to the next task in the chain.
 
-        If disable_onboarding_notifications is set to true on the CustomerAgreement,
-        Braze aliases will be created but no activation email will be sent:
+        If disable_onboarding_notifications is set to true on the CustomerAgreement or notify_users=False,
+        Braze aliases will be created but no license assignment email will be sent.
         """
 
         customer_agreement = subscription_plan.customer_agreement
@@ -670,10 +676,10 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                 )
             )
 
-            if not disable_onboarding_notifications:
+            if notify_users and not disable_onboarding_notifications:
                 tasks.link(
                     send_assignment_email_task.si(
-                        utils.get_custom_text(request_data),
+                        custom_template_text,
                         pending_learner_batch,
                         str(subscription_plan.uuid),
                     )
@@ -739,35 +745,49 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             user_emails,
         )
 
-        try:
-            with transaction.atomic():
-                available_licenses_count = subscription_plan.unassigned_licenses.count()
-                required_licenses_count = len(user_emails)
+        assigned_licenses = []
 
-                if available_licenses_count < required_licenses_count:
-                    response_message = (
-                        'There are not enough licenses that can be assigned to complete your request.'
-                        'You attempted to assign {} licenses, but there are only {} potentially available.'
-                    ).format(required_licenses_count, available_licenses_count)
-                    return Response(response_message, status=status.HTTP_400_BAD_REQUEST)
+        if user_emails:
+            try:
+                with transaction.atomic():
+                    available_licenses_count = subscription_plan.unassigned_licenses.count()
+                    required_licenses_count = len(user_emails)
 
-                self._assign_new_licenses(
-                    subscription_plan, user_emails,
+                    if available_licenses_count < required_licenses_count:
+                        response_message = (
+                            'There are not enough licenses that can be assigned to complete your request.'
+                            'You attempted to assign {} licenses, but there are only {} potentially available.'
+                        ).format(required_licenses_count, available_licenses_count)
+                        return Response(response_message, status=status.HTTP_400_BAD_REQUEST)
+
+                    assigned_licenses = self._assign_new_licenses(
+                        subscription_plan, user_emails,
+                    )
+            except DatabaseError:
+                error_message = 'Database error occurred while assigning licenses, no assignments were completed'
+                logger.exception(error_message)
+                return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            else:
+                notify_users = request.data.get('notify_users', True)
+                custom_template_text = utils.get_custom_text(request.data)
+                self._link_and_notify_assigned_emails(
+                    user_emails,
+                    subscription_plan,
+                    notify_users,
+                    custom_template_text
                 )
-        except DatabaseError:
-            error_message = 'Database error occurred while assigning licenses, no assignments were completed'
-            logger.exception(error_message)
-            return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         else:
-            self._link_and_notify_assigned_emails(
-                request.data,
-                subscription_plan,
-                user_emails,
-            )
+            logger.info('All given emails are already associated with a license.')
 
         response_data = {
             'num_successful_assignments': len(user_emails),
-            'num_already_associated': len(already_associated_emails)
+            'num_already_associated': len(already_associated_emails),
+            'license_assignments': [
+                {
+                    'user_email': lcs.user_email,
+                    'license': lcs.uuid,
+                } for lcs in assigned_licenses
+            ]
         }
 
         return Response(data=response_data, status=status.HTTP_200_OK)
