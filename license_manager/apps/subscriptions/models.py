@@ -1111,9 +1111,14 @@ class License(TimeStampedModel):
         """
         Returns all licenses asssociated with the given user email or lms_user_id.
         """
-        return cls.objects.filter(
-            Q(user_email=user_email) | Q(lms_user_id=lms_user_id)
-        ).select_related(
+        if lms_user_id is not None:
+            qs = cls.objects.filter(
+                Q(user_email=user_email) | Q(lms_user_id=lms_user_id)
+            )
+        else:
+            qs = cls.objects.filter(Q(user_email=user_email))
+
+        return qs.select_related(
             'subscription_plan',
             'subscription_plan__customer_agreement',
         )
