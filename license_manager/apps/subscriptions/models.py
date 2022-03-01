@@ -931,11 +931,13 @@ class License(TimeStampedModel):
     user_email = models.EmailField(
         blank=True,
         null=True,
+        db_index=True,
     )
 
     lms_user_id = models.IntegerField(
         blank=True,
         null=True,
+        db_index=True,
     )
 
     subscription_plan = models.ForeignKey(
