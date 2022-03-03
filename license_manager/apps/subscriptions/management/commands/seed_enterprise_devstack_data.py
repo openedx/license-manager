@@ -108,9 +108,7 @@ class Command(BaseCommand):
             expiration_date=timestamp + timedelta(days=365),
             is_active=True,
             for_internal_use_only=True,
-            netsuite_product_id=0,
             salesforce_opportunity_id=123456789123456789,
-            plan_type=PlanType.objects.get(label="Standard Paid"),
             product=Product.objects.get(name="B2B Paid")
         )
         with transaction.atomic():
