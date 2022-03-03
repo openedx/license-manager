@@ -789,7 +789,7 @@ def test_license_list_ignore_null_emails_query_param(api_client, staff_user, boo
     """
     Assert the endpoint respects the ``ignore_null_emails`` query parameter.
     """
-    subscription, _, _, _, revoked_license = _subscription_and_licenses()
+    subscription, assigned_license, unassigned_license, active_license, revoked_license = _subscription_and_licenses()
     _assign_role_via_jwt_or_db(
         api_client,
         staff_user,
@@ -802,12 +802,20 @@ def test_license_list_ignore_null_emails_query_param(api_client, staff_user, boo
     response = _licenses_list_request(
         api_client,
         subscription.uuid,
-        ignore_null_emails=boolean_toggle,
-        status='revoked',
+        ignore_null_emails=boolean_toggle
     )
-    expected_license_uuids = [] if boolean_toggle else [str(revoked_license.uuid)]
+    expected_license_uuids = [
+        str(assigned_license.uuid),
+        str(unassigned_license.uuid),
+        str(active_license.uuid)
+    ] if boolean_toggle else [
+        str(assigned_license.uuid),
+        str(unassigned_license.uuid),
+        str(active_license.uuid),
+        str(revoked_license.uuid)
+    ]
     actual_license_uuids = [user_license['uuid'] for user_license in response.json()['results']]
-    assert actual_license_uuids == expected_license_uuids
+    assert sorted(actual_license_uuids) == sorted(expected_license_uuids)
 
 
 @pytest.mark.django_db
