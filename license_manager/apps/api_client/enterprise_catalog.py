@@ -13,7 +13,7 @@ class EnterpriseCatalogApiClient(BaseOAuthClient):
 
     def contains_content_items(self, catalog_uuid, content_ids):
         """
-        Checks whether the specified enterprise catalog contains the given content.
+        Check whether the specified enterprise catalog contains the given content.
 
         Arguments:
             catalog_uuid (UUID): UUID of the enterprise catalog to check.
@@ -49,3 +49,18 @@ class EnterpriseCatalogApiClient(BaseOAuthClient):
             self.distinct_catalog_queries_endpoint,
             json=request_data,
         ).json()
+
+    def get_enterprise_catalog(self, catalog_uuid):
+        """
+        Fetch the enterprise catalog with the given uuid.
+
+        Arguments:
+            catalog_uuid (UUID): UUID of the enterprise catalog
+
+        Returns:
+            A dictionary representing the enterprise catalog.
+        """
+        endpoint = self.enterprise_catalog_endpoint + str(catalog_uuid)
+        response = self.client.get(endpoint)
+        response.raise_for_status()
+        return response.json()

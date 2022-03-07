@@ -33,6 +33,7 @@ def make_bound_subscription_form(
     start_date=localized_utcnow(),
     expiration_date=localized_utcnow() + timedelta(days=366),
     enterprise_catalog_uuid=faker.uuid4(),
+    enterprise_customer_uuid=faker.uuid4(),
     salesforce_opportunity_id=get_random_salesforce_id(),
     num_licenses=0,
     is_active=False,
@@ -47,9 +48,12 @@ def make_bound_subscription_form(
     Builds a bound SubscriptionPlanForm
     """
     if customer_agreement_has_default_catalog:
-        customer_agreement = CustomerAgreementFactory()
+        customer_agreement = CustomerAgreementFactory(enterprise_customer_uuid=enterprise_customer_uuid)
     else:
-        customer_agreement = CustomerAgreementFactory(default_enterprise_catalog_uuid=None)
+        customer_agreement = CustomerAgreementFactory(
+            enterprise_customer_uuid=enterprise_customer_uuid,
+            default_enterprise_catalog_uuid=None
+        )
 
     product = ProductFactory(plan_type=PlanTypeFactory(sf_id_required=is_sf_id_required))
 
