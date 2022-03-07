@@ -1,9 +1,12 @@
 from datetime import timedelta
+from unittest import mock
 from uuid import uuid4
 
 import ddt
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from pytest import mark
+from requests.exceptions import HTTPError
+from rest_framework import status
 
 from license_manager.apps.subscriptions.constants import (
     MAX_NUM_LICENSES,
@@ -66,6 +69,46 @@ class TestSubscriptionPlanForm(TestCase):
             customer_agreement_has_default_catalog=customer_agreement_has_default_catalog
         )
         assert form.is_valid() is is_valid
+
+    @ddt.data(
+        (False, True, True),
+        (False, False, False),
+        (status.HTTP_404_NOT_FOUND, False, False),
+        (status.HTTP_500_INTERNAL_SERVER_ERROR, False, False),
+    )
+    @ddt.unpack
+    @mock.patch(
+        'license_manager.apps.subscriptions.forms.EnterpriseCatalogApiClient')
+    @override_settings(VALIDATE_FORM_EXTERNAL_FIELDS=True)
+    def test_validate_catalog_uuid(
+        self,
+        http_status_code,
+        catalog_enterprise_customer_matches,
+        expected_is_valid,
+        mock_catalog_api_client,
+    ):
+
+        catalog_uuid = uuid4()
+        enterprise_customer_uuid = uuid4()
+
+        if http_status_code:
+            error = HTTPError()
+            error.response = mock.MagicMock()
+            error.response.status_code = http_status_code
+            mock_catalog_api_client().get_enterprise_catalog.side_effect = error
+        else:
+            mock_catalog_api_client().get_enterprise_catalog.return_value = {
+                'enterprise_customer': str(enterprise_customer_uuid) if catalog_enterprise_customer_matches else str(uuid4())
+            }
+
+        form = make_bound_subscription_form(
+            enterprise_customer_uuid=enterprise_customer_uuid,
+            enterprise_catalog_uuid=catalog_uuid,
+            customer_agreement_has_default_catalog=True
+        )
+
+        assert form.is_valid() is expected_is_valid
+        assert mock_catalog_api_client().get_enterprise_catalog.called
 
     def test_change_reason_is_required(self):
         """
@@ -140,6 +183,7 @@ class TestSubscriptionPlanRenewalForm(TestCase):
         assert not form.is_valid()
 
 
+@ddt.ddt
 @mark.django_db
 class TestCustomerAgreementAdminForm(TestCase):
 
@@ -201,6 +245,100 @@ class TestCustomerAgreementAdminForm(TestCase):
         self.assertEqual(choices[0], ('', '------'))
         self.assertEqual(choices[1], (sub_for_customer_agreement_1.uuid, sub_for_customer_agreement_1.title))
         self.assertEqual(field.initial, choices[0], ('', '------'))
+
+    @ddt.data(
+        (None, True),
+        (True, False),
+    )
+    @ddt.unpack
+    @mock.patch(
+        'license_manager.apps.subscriptions.forms.EnterpriseApiClient'
+    )
+    @mock.patch(
+        'license_manager.apps.subscriptions.forms.EnterpriseCatalogApiClient'
+    )
+    @override_settings(VALIDATE_FORM_EXTERNAL_FIELDS=True)
+    def test_validate_enterprise_customer_uuid(
+        self,
+        has_http_error,
+        expected_is_valid,
+        mock_catalog_api_client,
+        mock_enterprise_api_client,
+    ):
+
+        catalog_uuid = uuid4()
+        enterprise_customer_uuid = uuid4()
+        mock_catalog_api_client().get_enterprise_catalog.return_value = {
+            'enterprise_customer': str(enterprise_customer_uuid)
+        }
+
+        if has_http_error:
+            error = HTTPError()
+            error.response = mock.MagicMock()
+            error.response.status_code = 404
+            mock_enterprise_api_client().get_enterprise_customer_data.side_effect = error
+        else:
+            mock_enterprise_api_client().get_enterprise_customer_data.return_value = {
+                'slug': 'test',
+                'name': 'test-enterprise'
+            }
+
+        form = make_bound_customer_agreement_form(
+            customer_agreement=CustomerAgreementFactory(enterprise_customer_uuid=enterprise_customer_uuid),
+            default_enterprise_catalog_uuid=catalog_uuid,
+            subscription_for_auto_applied_licenses=None
+        )
+        assert form.is_valid() is expected_is_valid
+        assert mock_enterprise_api_client().get_enterprise_customer_data.called
+
+    @ddt.data(
+        (False, True, True),
+        (False, False, False),
+        (status.HTTP_404_NOT_FOUND, False, False),
+        (status.HTTP_500_INTERNAL_SERVER_ERROR, False, False),
+    )
+    @ddt.unpack
+    @mock.patch(
+        'license_manager.apps.subscriptions.forms.EnterpriseApiClient'
+    )
+    @mock.patch(
+        'license_manager.apps.subscriptions.forms.EnterpriseCatalogApiClient'
+    )
+    @override_settings(VALIDATE_FORM_EXTERNAL_FIELDS=True)
+    def test_validate_catalog_uuid(
+        self,
+        http_status_code,
+        catalog_enterprise_customer_matches,
+        expected_is_valid,
+        mock_catalog_api_client,
+        mock_enterprise_api_client,
+    ):
+
+        catalog_uuid = uuid4()
+        enterprise_customer_uuid = uuid4()
+
+        mock_enterprise_api_client().get_enterprise_customer_data.return_value = {
+            'slug': 'test',
+            'name': 'test-enterprise'
+        }
+
+        if http_status_code:
+            error = HTTPError()
+            error.response = mock.MagicMock()
+            error.response.status_code = http_status_code
+            mock_catalog_api_client().get_enterprise_catalog.side_effect = error
+        else:
+            mock_catalog_api_client().get_enterprise_catalog.return_value = {
+                'enterprise_customer': str(enterprise_customer_uuid) if catalog_enterprise_customer_matches else str(uuid4())
+            }
+
+        form = make_bound_customer_agreement_form(
+            customer_agreement=CustomerAgreementFactory(enterprise_customer_uuid=enterprise_customer_uuid),
+            default_enterprise_catalog_uuid=catalog_uuid,
+            subscription_for_auto_applied_licenses=None
+        )
+        assert form.is_valid() is expected_is_valid
+        assert mock_catalog_api_client().get_enterprise_catalog.called
 
 
 @mark.django_db

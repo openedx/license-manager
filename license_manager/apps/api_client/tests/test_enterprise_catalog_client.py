@@ -42,3 +42,14 @@ class EnterpriseCatalogApiClientTests(TestCase):
         mock_oauth_client().get.return_value.json.return_value = {'contains_content_items': contains_content}
         client = EnterpriseCatalogApiClient()
         assert client.contains_content_items(self.uuid, self.content_ids) is contains_content
+
+    @mock.patch('license_manager.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
+    def test_get_enterprise_catalog(self, mock_oauth_client):
+        """
+        Verify the `test_get_enterprise_catalog` method returns the value given by the response.
+        """
+        # Mock out the response from the enterprise catalog service
+        mock_json_response = {"enterprise_customer": str(self.uuid)}
+        mock_oauth_client().get.return_value.json.return_value = mock_json_response
+        client = EnterpriseCatalogApiClient()
+        assert client.get_enterprise_catalog(self.uuid) == mock_json_response

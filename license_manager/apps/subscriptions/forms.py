@@ -2,10 +2,19 @@
 Forms to be used in the subscriptions django app.
 """
 
+import logging
+
 from django import forms
+from django.conf import settings
 from django.utils.translation import gettext as _
 from durationwidget.widgets import TimeDurationWidget
+from requests.exceptions import HTTPError
+from rest_framework import status
 
+from license_manager.apps.api_client.enterprise import EnterpriseApiClient
+from license_manager.apps.api_client.enterprise_catalog import (
+    EnterpriseCatalogApiClient,
+)
 from license_manager.apps.subscriptions.constants import (
     MAX_NUM_LICENSES,
     MIN_NUM_LICENSES,
@@ -18,6 +27,9 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlanRenewal,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
+
+
+logger = logging.getLogger(__name__)
 
 
 class SubscriptionPlanForm(forms.ModelForm):
@@ -53,6 +65,34 @@ class SubscriptionPlanForm(forms.ModelForm):
         required=True,
         label="Reason for change",
     )
+
+    def _validate_enterprise_catalog_uuid(self):
+        """
+        Verifies that the enterprise customer has a catalog with the given enterprise_catalog_uuid.
+        """
+
+        try:
+            catalog = EnterpriseCatalogApiClient().get_enterprise_catalog(self.instance.enterprise_catalog_uuid)
+            catalog_enterprise_customer_uuid = catalog['enterprise_customer']
+            if str(self.instance.enterprise_customer_uuid) != catalog_enterprise_customer_uuid:
+                self.add_error(
+                    'enterprise_catalog_uuid',
+                    'A catalog with the given UUID does not exist for this enterprise customer.',
+                )
+                return False
+            return True
+        except HTTPError as ex:
+            if ex.response.status_code == status.HTTP_404_NOT_FOUND:
+                self.add_error(
+                    'enterprise_catalog_uuid',
+                    'A catalog with the given UUID does not exist for this enterprise customer.',
+                )
+            else:
+                self.add_error(
+                    'enterprise_catalog_uuid',
+                    f'Could not verify the given UUID: {ex}. Please try again.',
+                )
+            return False
 
     def is_valid(self):
         # Perform original validation and return if false
@@ -99,6 +139,10 @@ class SubscriptionPlanForm(forms.ModelForm):
                 'salesforce_opportunity_id',
                 'You must specify Salesforce ID for selected product.',
             )
+            return False
+
+        if settings.VALIDATE_FORM_EXTERNAL_FIELDS and self.instance.enterprise_catalog_uuid and \
+                not self._validate_enterprise_catalog_uuid():
             return False
 
         return True
@@ -203,6 +247,80 @@ class CustomerAgreementAdminForm(forms.ModelForm):
             initial=empty_choice if not current_plan else (current_plan.uuid, current_plan.title)
         )
         self.fields['subscription_for_auto_applied_licenses'] = choice_field
+
+    def _validate_enterprise_customer_uuid(self):
+        """
+        Verifies that a customer with the given enterprise_customer_uuid exists
+        """
+        enterprise_customer_uuid = self.instance.enterprise_customer_uuid
+        try:
+            customer_data = EnterpriseApiClient().get_enterprise_customer_data(
+                enterprise_customer_uuid
+            )
+            self.instance.enterprise_customer_slug = customer_data.get('slug')
+            self.instance.enterprise_customer_name = customer_data.get('name')
+            return True
+        except HTTPError as ex:
+            logger.exception(f'Could not validate enterprise_customer_uuid {enterprise_customer_uuid}.')
+            if ex.response.status_code == status.HTTP_404_NOT_FOUND:
+                self.add_error(
+                    'enterprise_customer_uuid',
+                    f'An enterprise customer with uuid: {enterprise_customer_uuid} does not exist.',
+                )
+            else:
+                self.add_error(
+                    'enterprise_customer_uuid',
+                    f'Could not verify the given UUID: {ex}. Please try again.',
+                )
+
+            return False
+
+    def _validate_default_enterprise_catalog_uuid(self):
+        """
+        Verifies that the enterprise customer has a catalog with the given default_enterprise_catalog_uuid.
+        """
+        default_enterprise_catalog_uuid = self.instance.default_enterprise_catalog_uuid
+
+        if not default_enterprise_catalog_uuid:
+            return True
+
+        try:
+            catalog = EnterpriseCatalogApiClient().get_enterprise_catalog(default_enterprise_catalog_uuid)
+            catalog_enterprise_customer_uuid = catalog['enterprise_customer']
+            if str(self.instance.enterprise_customer_uuid) != catalog_enterprise_customer_uuid:
+                self.add_error(
+                    'default_enterprise_catalog_uuid',
+                    'A catalog with the given UUID does not exist for this enterprise customer.',
+                )
+                return False
+            return True
+        except HTTPError as ex:
+            logger.exception(f'Could not validate default_enterprise_catalog_uuid {default_enterprise_catalog_uuid}.')
+            if ex.response.status_code == status.HTTP_404_NOT_FOUND:
+                self.add_error(
+                    'default_enterprise_catalog_uuid',
+                    'A catalog with the given UUID does not exist for this enterprise customer.',
+                )
+            else:
+                self.add_error(
+                    'default_enterprise_catalog_uuid',
+                    f'Could not verify the given UUID: {ex}. Please try again.',
+                )
+            return False
+
+    def is_valid(self):
+        # Perform original validation and return if false
+        if not super().is_valid():
+            return False
+
+        if settings.VALIDATE_FORM_EXTERNAL_FIELDS:
+            if not all([
+                self._validate_enterprise_customer_uuid(),
+                self._validate_default_enterprise_catalog_uuid()
+            ]):
+                return False
+
+        return True
 
     class Meta:
         model = CustomerAgreement

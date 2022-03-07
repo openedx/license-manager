@@ -76,7 +76,7 @@ class ProductFactory(factory.django.DjangoModelFactory):
     name = 'Test Product'
     description = 'Test Product'
     plan_type = factory.SubFactory(PlanTypeFactory)
-    netsuite_id = factory.Faker('random_int')
+    netsuite_id = factory.Faker('random_int', min=0, max=99999)
 
     class Meta:
         model = Product

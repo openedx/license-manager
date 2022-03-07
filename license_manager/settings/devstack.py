@@ -84,6 +84,9 @@ SOCIAL_MEDIA_FOOTER_URLS = {
     'youtube': 'https://www.youtube.com/user/edxonline',
 }
 
+# Django Admin Settings
+VALIDATE_FORM_EXTERNAL_FIELDS = False
+
 # Feature Toggles
 
 # Install django-extensions for improved dev experiences
