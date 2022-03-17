@@ -1,14 +1,15 @@
 [main]
 host = https://www.transifex.com
 
-[edx-platform.license-manager]
+[o:open-edx:p:edx-platform:r:license-manager]
 file_filter = license-manager/conf/locale/<lang>/LC_MESSAGES/django.po
 source_file = license-manager/conf/locale/en/LC_MESSAGES/django.po
 source_lang = en
-type = PO
+type        = PO
 
-[edx-platform.license-manager-js]
+[o:open-edx:p:edx-platform:r:license-manager-js]
 file_filter = license-manager/conf/locale/<lang>/LC_MESSAGES/djangojs.po
 source_file = license-manager/conf/locale/en/LC_MESSAGES/djangojs.po
 source_lang = en
-type = PO
+type        = PO
+
