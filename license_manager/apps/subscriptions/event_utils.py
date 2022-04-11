@@ -1,14 +1,18 @@
 """
 Utility methods for sending events to Braze or Segment.
 """
-import json
 import logging
 
 import analytics
 import requests
+from braze.exceptions import BrazeClientError
 from django.conf import settings
 from django.db.models import prefetch_related_objects
 
+from license_manager.apps.api_client.braze import BrazeApiClient
+from license_manager.apps.subscriptions.constants import (
+    ENTERPRISE_BRAZE_ALIAS_LABEL,
+)
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
 from .apps import KAFKA_ENABLED
@@ -32,73 +36,63 @@ def _track_event_via_braze_alias(email, event_name, properties):
     """ Private helper to allow tracking for a user without an LMS User Id.
         Should be called from inside the track_event module only for exception handling.
     """
-    if not (hasattr(settings, "BRAZE_API_KEY") and hasattr(settings, "BRAZE_URL")
-            and settings.BRAZE_API_KEY and settings.BRAZE_URL):
-        logger.warning("Event {} not tracked because BRAZE_API_KEY and BRAZE_URL not set".format(event_name))
-        return
+    try:
+        braze_client_instance = BrazeApiClient()
 
-    alias_url = "{}/users/alias/new".format(settings.BRAZE_URL)
-    payload = {
-        'user_aliases': [{
-            'alias_name': email,
-            'alias_label': 'Enterprise'  # Do Not change this, this is consistent with other uses across edX repos.
-        }]
-    }
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer {}'.format(settings.BRAZE_API_KEY),
-        'Accept-Encoding': 'identity'
-    }
+        # first create an alias for this email address with the ent label
+        braze_client_instance.create_braze_alias(
+            [email],
+            ENTERPRISE_BRAZE_ALIAS_LABEL,
+        )
+        logger.info('Added alias for pending learner to Braze for license {}, enterprise {}.'
+                    .format(properties['license_uuid'],
+                            properties['enterprise_customer_slug']))
 
-    alias_response = requests.request("POST", alias_url, headers=headers, data=json.dumps(payload))
-    logger.info('Added alias for pending learner to Braze for license {}, enterprise {}.\nResponse:{} {}'
-                .format(properties['license_uuid'],
-                        properties['enterprise_customer_slug'],
-                        alias_response.status_code,
-                        alias_response.json()))
+        user_alias = {
+            "alias_name": email,
+            "alias_label": ENTERPRISE_BRAZE_ALIAS_LABEL,
+        }
 
-    track_url = "{}/users/track".format(settings.BRAZE_URL)
-    track_payload = {
-        "attributes": [
-            {
-                "user_alias": {
-                    "alias_name": email,
-                    "alias_label": "Enterprise"
-                },
-                "email": email,
-                "is_enterprise_learner": True,
-                "_update_existing_only": False
-            }],
-        "events": [
-            {
-                "user_alias": {
-                    'alias_name': email,
-                    'alias_label': 'Enterprise'
-                },
-                "name": event_name,
-                "time": _iso_8601_format_string(localized_utcnow()),
-                "properties": properties,
-                "_update_existing_only": False
-            }]
-    }
+        # we want an email & is_enterprise_learner attribute
+        # we want _update_existing_only=False so we create a new profile if needed
+        attributes = {
+            "user_alias": user_alias,
+            "email": email,
+            "is_enterprise_learner": True,
+            "_update_existing_only": False,
+        }
 
-    # event-level properties are not always available for personalization in braze
-    event_properites_to_copy_to_profile = ['enterprise_customer_uuid',
-                                           'enterprise_customer_slug',
-                                           'enterprise_customer_name',
-                                           'license_uuid',
-                                           'license_activation_key']
-    for event_property in event_properites_to_copy_to_profile:
-        if properties.get(event_property) is not None:
-            track_payload['attributes'][0][event_property] = properties.get(event_property)
+        events = {
+            "user_alias": user_alias,
+            "name": event_name,
+            "time": _iso_8601_format_string(localized_utcnow()),
+            "properties": properties,
+            "_update_existing_only": False,
+        }
 
-    track_response = requests.request("POST", track_url, headers=headers, data=json.dumps(track_payload))
-    logger.info('Sent "{}" event to Braze for license {}, enterprise {}.\nResponse:{} {}'
-                .format(event_name,
-                        properties['license_uuid'],
-                        properties['enterprise_customer_slug'],
-                        track_response.status_code,
-                        track_response.json()))
+        # event-level properties are not always available for personalization in braze
+        # we'll copy these specific event properties into the profile attributes if we see them
+        event_properites_to_copy_to_profile = [
+            'enterprise_customer_uuid',
+            'enterprise_customer_slug',
+            'enterprise_customer_name',
+            'license_uuid',
+            'license_activation_key',
+        ]
+
+        for event_property in event_properites_to_copy_to_profile:
+            if properties.get(event_property) is not None:
+                attributes[event_property] = properties.get(event_property)
+
+        braze_client_instance.track_user(attributes=[attributes], events=[events])
+        logger.info('Sent "{}" event to Braze for license {}, enterprise {}.'
+                    .format(event_name,
+                            properties['license_uuid'],
+                            properties['enterprise_customer_slug']))
+
+    except BrazeClientError as exc:
+        logger.exception()
+        raise exc
 
 
 def identify_braze_alias(lms_user_id, email_address):

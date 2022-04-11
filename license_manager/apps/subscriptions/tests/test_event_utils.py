@@ -6,9 +6,14 @@ from unittest import mock
 from django.test.utils import override_settings
 from pytest import mark
 
-from license_manager.apps.subscriptions.constants import ASSIGNED, SegmentEvents
+from license_manager.apps.subscriptions.constants import (
+    ASSIGNED,
+    ENTERPRISE_BRAZE_ALIAS_LABEL,
+    SegmentEvents,
+)
 from license_manager.apps.subscriptions.event_utils import (
     _iso_8601_format_string,
+    _track_event_via_braze_alias,
     get_license_tracking_properties,
     track_license_changes,
 )
@@ -16,6 +21,7 @@ from license_manager.apps.subscriptions.tests.factories import (
     LicenseFactory,
     SubscriptionPlanFactory,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 @mark.django_db
@@ -88,3 +94,42 @@ def test_send_event_to_message_bus(mock_send_event):
 def test_do_not_send_event_to_message_bus(mock_send_event):
     licenses = LicenseFactory.create_batch(5)
     assert mock_send_event.call_count == 0
+
+
+@mark.django_db
+@mock.patch('license_manager.apps.subscriptions.event_utils.BrazeApiClient', return_value=mock.MagicMock())
+def test_track_event_via_braze_alias(mock_braze_client):
+    test_email = 'edx@myexample.com'
+    assigned_license = LicenseFactory.create(
+        subscription_plan=SubscriptionPlanFactory.create(),
+        lms_user_id=5,
+        user_email=test_email,
+        status=ASSIGNED,
+        auto_applied=True)
+    test_event_name = 'test-event-name'
+    test_event_properties = {
+        'license_uuid': str(assigned_license.uuid),
+        'enterprise_customer_slug': assigned_license.subscription_plan.customer_agreement.enterprise_customer_slug,
+    }
+    expected_user_alias = {
+        "alias_name": test_email,
+        "alias_label": ENTERPRISE_BRAZE_ALIAS_LABEL,
+    }
+    expected_attributes = {
+        "user_alias": expected_user_alias,
+        "email": test_email,
+        "is_enterprise_learner": True,
+        "_update_existing_only": False,
+        "license_uuid": str(assigned_license.uuid),
+        "enterprise_customer_slug": assigned_license.subscription_plan.customer_agreement.enterprise_customer_slug,
+    }
+    expected_event = {
+        "user_alias": expected_user_alias,
+        "name": test_event_name,
+        "time": _iso_8601_format_string(localized_utcnow()),
+        "properties": test_event_properties,
+        "_update_existing_only": False,
+    }
+    _track_event_via_braze_alias(test_email, test_event_name, test_event_properties)
+    mock_braze_client().create_braze_alias.assert_any_call([test_email], ENTERPRISE_BRAZE_ALIAS_LABEL)
+    mock_braze_client().track_user.assert_any_call(attributes=[expected_attributes], events=[expected_event])
