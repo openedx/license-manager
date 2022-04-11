@@ -66,7 +66,7 @@ class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
     )
     retry_kwargs = {'max_retries': 3}
     # Use exponential backoff for retrying tasks
-    retry_backoff = True
+    retry_backoff = 10  # delay factor of 10 seconds
     # Add randomness to backoff delays to prevent all tasks in queue from executing simultaneously
     retry_jitter = True
 
