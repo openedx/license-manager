@@ -34,7 +34,6 @@ class TrackingEvent:
         self.assigned_date = kwargs['assigned_date']
         self.activation_date = kwargs['activation_date']
         self.assigned_lms_user_id = kwargs['assigned_lms_user_id']
-        self.assigned_email = kwargs['assigned_email']
         self.expiration_processed = kwargs['expiration_processed']
         self.auto_applied = kwargs['auto_applied']
         self.enterprise_customer_uuid = kwargs.get('enterprise_customer_uuid', None)
@@ -54,7 +53,6 @@ class TrackingEvent:
                 {"name": "previous_license_uuid", "type": "string"},
                 {"name": "assigned_date", "type": "string"},
                 {"name": "assigned_lms_user_id", "type": ["int", "string", "null"], "default": "null"},
-                {"name": "assigned_email", "type":"string"},
                 {"name": "expiration_processed", "type": "boolean"},
                 {"name": "auto_applied", "type": "boolean", "default": "false"},
                 {"name": "enterprise_customer_uuid", "type": ["string", "null"], "default": "null"},
@@ -83,7 +81,6 @@ class TrackingEvent:
             "assigned_date": obj.assigned_date,
             "activation_date": obj.activation_date,
             "assigned_lms_user_id": obj.assigned_lms_user_id,
-            "assigned_email": (obj.assigned_email or ''),
             "expiration_processed": obj.expiration_processed,
             "auto_applied": (obj.auto_applied or False),
         }
@@ -135,15 +132,20 @@ class ProducerFactory:
         existing_producer = cls._type_to_producer.get(event_type)
         if existing_producer is not None:
             return existing_producer
+
         producer_settings = {
-            'bootstrap.servers': getattr(settings, 'KAFKA_BOOTSTRAP_SERVER', ''),
-            'sasl.mechanism': 'PLAIN',
-            'security.protocol': 'SASL_SSL',
-            'sasl.username': getattr(settings, 'KAFKA_API_KEY', ''),
-            'sasl.password': getattr(settings, 'KAFKA_API_SECRET', ''),
+            'bootstrap.servers': 'edx.devstack.kafka:29092',
             'key.serializer': event_key_serializer,
             'value.serializer': event_value_serializer,
         }
+
+        if getattr(settings, 'KAFKA_API_KEY', None) and getattr(settings, 'KAFKA_API_SECRET', None):
+            producer_settings.update({
+                'sasl.mechanism': 'PLAIN',
+            'security.protocol': 'SASL_SSL',
+            'sasl.username': getattr(settings, 'KAFKA_API_KEY', ''),
+            'sasl.password': getattr(settings, 'KAFKA_API_SECRET', ''),
+            })
 
         new_producer = SerializingProducer(producer_settings)
         cls._type_to_producer[event_type] = new_producer
@@ -155,12 +157,18 @@ def create_topic_if_not_exists(topic_name):
     Create a topic in the event bus
     :param topic_name: topic to create
     """
-    KAFKA_ACCESS_CONF_BASE = {'bootstrap.servers': getattr(settings, 'KAFKA_BOOTSTRAP_SERVER', ''),
-                              'sasl.mechanism': 'PLAIN',
-                              'security.protocol': 'SASL_SSL',
-                              'sasl.username': getattr(settings, 'KAFKA_API_KEY', ''),
-                              'sasl.password': getattr(settings, 'KAFKA_API_SECRET', '')
+    KAFKA_ACCESS_CONF_BASE = {'bootstrap.servers': 'edx.devstack.kafka:29092',
+
                               }
+
+    if getattr(settings, 'KAFKA_API_KEY', None) and getattr(settings, 'KAFKA_API_SECRET', None):
+        KAFKA_ACCESS_CONF_BASE.update({
+            'sasl.mechanism': 'PLAIN',
+            'security.protocol': 'SASL_SSL',
+            'sasl.username': getattr(settings, 'KAFKA_API_KEY', ''),
+            'sasl.password': getattr(settings, 'KAFKA_API_SECRET', '')
+        })
+
 
     a = AdminClient(KAFKA_ACCESS_CONF_BASE)
 
