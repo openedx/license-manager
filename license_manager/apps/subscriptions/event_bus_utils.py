@@ -134,7 +134,7 @@ class ProducerFactory:
             return existing_producer
 
         producer_settings = {
-            'bootstrap.servers': 'edx.devstack.kafka:29092',
+            'bootstrap.servers': getattr(settings, 'KAFKA_BOOTSTRAP_SERVER', None),
             'key.serializer': event_key_serializer,
             'value.serializer': event_value_serializer,
         }
@@ -142,9 +142,9 @@ class ProducerFactory:
         if getattr(settings, 'KAFKA_API_KEY', None) and getattr(settings, 'KAFKA_API_SECRET', None):
             producer_settings.update({
                 'sasl.mechanism': 'PLAIN',
-            'security.protocol': 'SASL_SSL',
-            'sasl.username': getattr(settings, 'KAFKA_API_KEY', ''),
-            'sasl.password': getattr(settings, 'KAFKA_API_SECRET', ''),
+                'security.protocol': 'SASL_SSL',
+                'sasl.username': getattr(settings, 'KAFKA_API_KEY', ''),
+                'sasl.password': getattr(settings, 'KAFKA_API_SECRET', ''),
             })
 
         new_producer = SerializingProducer(producer_settings)
@@ -157,9 +157,7 @@ def create_topic_if_not_exists(topic_name):
     Create a topic in the event bus
     :param topic_name: topic to create
     """
-    KAFKA_ACCESS_CONF_BASE = {'bootstrap.servers': 'edx.devstack.kafka:29092',
-
-                              }
+    KAFKA_ACCESS_CONF_BASE = {'bootstrap.servers': getattr(settings, 'KAFKA_BOOTSTRAP_SERVER', None)}
 
     if getattr(settings, 'KAFKA_API_KEY', None) and getattr(settings, 'KAFKA_API_SECRET', None):
         KAFKA_ACCESS_CONF_BASE.update({
@@ -168,7 +166,6 @@ def create_topic_if_not_exists(topic_name):
             'sasl.username': getattr(settings, 'KAFKA_API_KEY', ''),
             'sasl.password': getattr(settings, 'KAFKA_API_SECRET', '')
         })
-
 
     a = AdminClient(KAFKA_ACCESS_CONF_BASE)
 
