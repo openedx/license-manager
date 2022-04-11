@@ -167,14 +167,14 @@ def create_topic_if_not_exists(topic_name):
             'sasl.password': getattr(settings, 'KAFKA_API_SECRET', '')
         })
 
-    a = AdminClient(KAFKA_ACCESS_CONF_BASE)
+    admin_client = AdminClient(KAFKA_ACCESS_CONF_BASE)
 
     license_event_topic = NewTopic(topic_name,
                                    num_partitions=settings.KAFKA_PARTITIONS_PER_TOPIC,
                                    replication_factor=settings.KAFKA_REPLICATION_FACTOR_PER_TOPIC)
     # Call create_topics to asynchronously create topic.
     # Wait for each operation to finish.
-    topic_futures = a.create_topics([license_event_topic])
+    topic_futures = admin_client.create_topics([license_event_topic])
 
     # TODO: (ARCHBOM-2004) programmatically update permissions so the calling app can write to the created topic
 
