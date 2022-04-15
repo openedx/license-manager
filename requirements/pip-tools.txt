@@ -10,7 +10,7 @@ click==7.1.2
     #   pip-tools
 pep517==0.12.0
     # via pip-tools
-pip-tools==6.5.1
+pip-tools==6.6.0
     # via -r requirements/pip-tools.in
 tomli==2.0.1
     # via pep517
