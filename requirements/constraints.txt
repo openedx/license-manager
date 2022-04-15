@@ -10,13 +10,6 @@
 
 -c common_constraints.txt
 
-# Celery 5.0 has some breaking changes, as python 3.8 is priority so,
-# we will look at it after python 3.8 deployment
-celery<5.0
-
-# celery requires click<8.0.0 which would be fixed once https://github.com/celery/celery/issues/6753 is done.
-click<8.0
-
 # diff-cover latest requires (pluggy>=0.13.1,<0.14.0)
 # which conflicts with pytest(pluggy>=0.12,<2.0.0) and tox(pluggy>0.12) both of these fetch pluggy==1.0.0
 # but diff-cover latest has a pin (pluggy<1.0.0a1)
