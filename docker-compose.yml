@@ -1,7 +1,7 @@
 version: "2.1"
 services:
   mysql:
-    image: mysql:5.7
+    image: mysql:8.0.28-oracle
     container_name: license-manager.mysql
     environment:
       MYSQL_ROOT_PASSWORD: ""
