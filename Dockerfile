@@ -30,6 +30,12 @@ apt-get upgrade -qy && apt-get install language-pack-en locales git \
 python3.8-dev python3.8-venv libmysqlclient-dev libssl-dev build-essential wget unzip -qy && \
 rm -rf /var/lib/apt/lists/*
 
+WORKDIR /tmp
+RUN wget https://packages.confluent.io/clients/deb/pool/main/libr/librdkafka/librdkafka_1.8.2.orig.tar.gz
+RUN tar -xf librdkafka_1.8.2.orig.tar.gz
+WORKDIR /tmp/librdkafka-1.8.2
+RUN ./configure && make && make install && ldconfig
+
 ENV VIRTUAL_ENV=/edx/app/license-manager/venvs/license-manager
 RUN python3.8 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
