@@ -15,6 +15,12 @@ auth.Permission:
   ".. no_pii:": "This model has no PII"
 contenttypes.ContentType:
   ".. no_pii:": "This model has no PII"
+django_celery_results.ChordCounter:
+  ".. no_pii:": "This model has no PII"
+django_celery_results.GroupResult:
+  ".. no_pii:": "This model has no PII"
+django_celery_results.TaskResult:
+  ".. no_pii:": "This model has no PII"
 sessions.Session:
   ".. no_pii:": "This model has no PII"
 social_django.Association:

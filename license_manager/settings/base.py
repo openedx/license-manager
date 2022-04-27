@@ -56,6 +56,7 @@ PROJECT_APPS = (
     'license_manager.apps.core',
     'license_manager.apps.api',
     'license_manager.apps.subscriptions.apps.SubscriptionsConfig',
+    'django_celery_results',
 )
 
 INSTALLED_APPS += THIRD_PARTY_APPS
