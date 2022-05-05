@@ -15,6 +15,9 @@ from license_manager.apps.subscriptions.event_bus_utils import (
 logger = logging.getLogger(__name__)
 
 
+# TODO (EventBus):
+#   1. (ARCHBOM-2004) Move simple event sending to a reusable plugin accessible by other apps
+
 @receiver(SUBSCRIPTION_LICENSE_MODIFIED)
 def send_event_to_message_bus(**kwargs):
     """

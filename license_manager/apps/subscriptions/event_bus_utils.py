@@ -17,7 +17,8 @@ from openedx_events.enterprise.signals import SUBSCRIPTION_LICENSE_MODIFIED
 logger = logging.getLogger(__name__)
 
 # TODO (EventBus):
-#   (ARCHBOM-2004) remove this file from the omit list in coverage.py and add tests when finalized
+#   1. (ARCHBOM-2004) remove this file from the omit list in coverage.py and add tests when finalized
+#   2. Move ProducerFactory, serializer creation, topic creation, to a reusable plugin accessible by other apps
 
 
 class SubscriptionLicenseEventSerializer:
@@ -51,8 +52,7 @@ class SubscriptionLicenseEventSerializer:
             return cls.SERIALIZER
         return cls.SERIALIZER
 
-# TODO EVENT BUS: Move ProducerFactory, topic creation, and simple event sending
-#  to a reusable plugin accessible by other apps
+# TODO (EventBus):
 
 
 class ProducerFactory:
