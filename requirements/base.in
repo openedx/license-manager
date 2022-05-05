@@ -31,6 +31,7 @@ edx-toggles
 edx-rbac
 edx-rest-api-client
 mysqlclient
+openedx-events
 pytz
 redis
 rules

@@ -94,9 +94,7 @@ VALIDATE_FORM_EXTERNAL_FIELDS = False
 INSTALLED_APPS += ('django_extensions',)
 
 ################### Kafka Related Settings ##############################
-KAFKA_ACCESS_CONF_BASE = { 'bootstrap.servers': "edx.devstack.kafka:29092", 'client.id': 'edx.devstack.lms' }
-
-KAFKA_CONSUMER_CONF_BASE = {'bootstrap.servers': "edx.devstack.kafka:29092", 'group.id': 'lms'}
+KAFKA_BOOTSTRAP_SERVER = "edx.devstack.kafka:29092"
 
 KAFKA_SCHEMA_REGISTRY_CONF = {
     'url': "http://edx.devstack.schema-registry:8081",

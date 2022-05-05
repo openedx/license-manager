@@ -10,6 +10,8 @@ analytics-python==1.4.0
     # via -r requirements/base.in
 asgiref==3.5.0
     # via django
+attrs==21.4.0
+    # via openedx-events
 backoff==1.10.0
     # via
     #   -r requirements/base.in
@@ -87,6 +89,7 @@ django==3.2.13
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
+    #   openedx-events
 django-celery-results==2.3.0
     # via -r requirements/base.in
 django-cors-headers==3.11.0
@@ -152,8 +155,10 @@ edx-drf-extensions==8.0.1
     # via
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys==2.3.0
-    # via edx-drf-extensions
+edx-opaque-keys[django]==2.3.0
+    # via
+    #   edx-drf-extensions
+    #   openedx-events
 edx-rbac==1.7.0
     # via -r requirements/base.in
 edx-rest-api-client==5.5.0
@@ -161,7 +166,9 @@ edx-rest-api-client==5.5.0
 edx-toggles==4.3.1
     # via -r requirements/base.in
 fastavro==1.4.10
-    # via -r requirements/base.in
+    # via
+    #   -r requirements/base.in
+    #   openedx-events
 future==0.18.2
     # via
     #   edx-celeryutils
@@ -196,6 +203,8 @@ oauthlib==3.2.0
     # via
     #   requests-oauthlib
     #   social-auth-core
+openedx-events==0.9.0
+    # via -r requirements/base.in
 packaging==21.3
     # via drf-yasg
 pbr==5.8.1
