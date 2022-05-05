@@ -19,7 +19,10 @@ astroid==2.11.2
     #   pylint
     #   pylint-celery
 attrs==21.4.0
-    # via pytest
+    # via
+    #   -r requirements/base.txt
+    #   openedx-events
+    #   pytest
 backoff==1.10.0
     # via
     #   -r requirements/base.txt
@@ -136,6 +139,7 @@ django==3.2.13
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
+    #   openedx-events
 django-celery-results==2.3.0
     # via -r requirements/base.txt
 django-cors-headers==3.11.0
@@ -210,10 +214,11 @@ edx-drf-extensions==8.0.1
     #   edx-rbac
 edx-lint==5.2.2
     # via -r requirements/test.in
-edx-opaque-keys==2.3.0
+edx-opaque-keys[django]==2.3.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
+    #   openedx-events
 edx-rbac==1.7.0
     # via -r requirements/base.txt
 edx-rest-api-client==5.5.0
@@ -225,7 +230,9 @@ factory-boy==3.2.1
 faker==13.3.4
     # via factory-boy
 fastavro==1.4.10
-    # via -r requirements/base.txt
+    # via
+    #   -r requirements/base.txt
+    #   openedx-events
 freezegun==1.2.1
     # via -r requirements/test.in
 future==0.18.2
@@ -290,6 +297,8 @@ oauthlib==3.2.0
     #   -r requirements/base.txt
     #   requests-oauthlib
     #   social-auth-core
+openedx-events==0.9.0
+    # via -r requirements/base.txt
 packaging==21.3
     # via
     #   -r requirements/base.txt

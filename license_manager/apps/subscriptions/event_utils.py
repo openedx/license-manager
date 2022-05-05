@@ -8,6 +8,8 @@ import requests
 from braze.exceptions import BrazeClientError
 from django.conf import settings
 from django.db.models import prefetch_related_objects
+from openedx_events.enterprise.data import SubscriptionLicenseData
+from openedx_events.enterprise.signals import SUBSCRIPTION_LICENSE_MODIFIED
 
 from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.subscriptions.constants import (
@@ -16,7 +18,6 @@ from license_manager.apps.subscriptions.constants import (
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
 from .apps import KAFKA_ENABLED
-from .event_bus_utils import send_event_to_message_bus
 
 
 logger = logging.getLogger(__name__)
@@ -182,7 +183,8 @@ def track_event(lms_user_id, event_name, properties):
 
     if KAFKA_ENABLED.is_enabled():  # pragma: no cover
         try:
-            send_event_to_message_bus(event_name, properties)
+            license_data = SubscriptionLicenseData(**properties)
+            SUBSCRIPTION_LICENSE_MODIFIED.send_event(license=license_data)
         except Exception:  # pylint: disable=broad-except
             logger.exception("Exception sending event to message.")
 

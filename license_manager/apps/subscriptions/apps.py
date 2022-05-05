@@ -40,6 +40,7 @@ class SubscriptionsConfig(AppConfig):
         # TODO: (ARCHBOM-2004) remove pragma and add tests when finalizing
         if KAFKA_ENABLED.is_enabled():  # pragma: no cover
             try:
+                from .signals import receivers  # pylint: disable=unused-import,import-outside-toplevel
                 create_topic_if_not_exists(settings.LICENSE_TOPIC_NAME)
             except Exception:  # pylint: disable=broad-except
                 logger.exception("Error creating topic.")
