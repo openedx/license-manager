@@ -52,8 +52,6 @@ class SubscriptionLicenseEventSerializer:
             return cls.SERIALIZER
         return cls.SERIALIZER
 
-# TODO (EventBus):
-
 
 class ProducerFactory:
     """ Factory class to create event producers.
