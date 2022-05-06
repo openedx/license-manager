@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 #   1. (ARCHBOM-2004) Move simple event sending to a reusable plugin accessible by other apps
 
 @receiver(SUBSCRIPTION_LICENSE_MODIFIED)
-def send_event_to_message_bus(**kwargs):
+def send_event_to_message_bus(**kwargs):  # pragma: no cover
     """
     Forward a SUBSCRIPTION_LICENSE_MODIFIED event to the settings.LICENSE_TOPIC_NAME queue on the event bus
 
