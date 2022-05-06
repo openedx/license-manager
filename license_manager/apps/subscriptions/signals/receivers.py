@@ -40,7 +40,7 @@ def send_event_to_message_bus(**kwargs):  # pragma: no cover
         logger.exception(vse)
 
 
-def verify_event(err, evt):
+def verify_event(err, evt):  # pragma: no cover
     """
     Simple callback method for debugging event production
 
