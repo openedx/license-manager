@@ -16,7 +16,12 @@ logger = logging.getLogger(__name__)
 
 
 # TODO (EventBus):
-#   1. (ARCHBOM-2004) Move simple event sending to a reusable plugin accessible by other apps
+#   1. (ARCHBOM-2004) Move simple event sending and constants to a reusable plugin accessible by other apps
+
+# CloudEvent standard name for the event type header, see
+# https://github.com/cloudevents/spec/blob/v1.0.1/kafka-protocol-binding.md#325-example
+EVENT_TYPE_HEADER_KEY = "ce_type"
+
 
 @receiver(SUBSCRIPTION_LICENSE_MODIFIED)
 def send_event_to_message_bus(**kwargs):  # pragma: no cover
@@ -37,7 +42,7 @@ def send_event_to_message_bus(**kwargs):  # pragma: no cover
 
         license_event_producer.produce(settings.LICENSE_TOPIC_NAME, key=message_key,
                                        value=license_event_data, on_delivery=verify_event,
-                                       headers={"event_type": event_type})
+                                       headers={EVENT_TYPE_HEADER_KEY: event_type})
         license_event_producer.poll()
     except ValueSerializationError as vse:
         logger.exception(vse)
