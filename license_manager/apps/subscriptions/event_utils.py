@@ -184,7 +184,7 @@ def track_event(lms_user_id, event_name, properties):
     if KAFKA_ENABLED.is_enabled():  # pragma: no cover
         try:
             # assigned_lms_user_id expects an integer or None, but elsewhere it is defaulted to ''
-            properties_copy = dict(properties.items())
+            properties_copy = properties.copy()
             if properties_copy['assigned_lms_user_id'] == "":
                 properties_copy['assigned_lms_user_id'] = None
             license_data = SubscriptionLicenseData(**properties_copy)
