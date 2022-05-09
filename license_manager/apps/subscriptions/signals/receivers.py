@@ -32,9 +32,12 @@ def send_event_to_message_bus(**kwargs):  # pragma: no cover
             SubscriptionLicenseEventSerializer.get_serializer()
         )
         license_event_data = {"license": kwargs['license']}
+        message_key = license_event_data['license'].enterprise_customer_uuid
+        event_type = kwargs['signal'].event_type
 
-        license_event_producer.produce(settings.LICENSE_TOPIC_NAME, key=kwargs['signal'].event_type,
-                                       value=license_event_data, on_delivery=verify_event)
+        license_event_producer.produce(settings.LICENSE_TOPIC_NAME, key=message_key,
+                                       value=license_event_data, on_delivery=verify_event,
+                                       headers={"event_type": event_type})
         license_event_producer.poll()
     except ValueSerializationError as vse:
         logger.exception(vse)
