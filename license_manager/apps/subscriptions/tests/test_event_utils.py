@@ -84,7 +84,8 @@ def test_track_license_changes_with_properties(mock_track_event, _):
 @override_settings(KAFKA_ENABLED=True)
 @override_settings(LICENSE_TOPIC_NAME="test")
 @mock.patch('license_manager.apps.subscriptions.signals.receivers.send_event_to_message_bus')
-def test_send_event_to_message_bus(mock_send_event):
+@mock.patch('license_manager.apps.subscriptions.signals.receivers.ProducerFactory')
+def test_send_event_to_message_bus(mock_send_event, factory_mock):  # pylint: disable=unused-argument
     SUBSCRIPTION_LICENSE_MODIFIED.connect(mock_send_event)
     LicenseFactory.create_batch(5)
     assert mock_send_event.call_count == 5

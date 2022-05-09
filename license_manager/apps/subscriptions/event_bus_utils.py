@@ -62,7 +62,7 @@ class ProducerFactory:
     @classmethod
     def get_or_create_event_producer(cls, event_type, event_key_serializer, event_value_serializer):
         """
-        Factory method to create or return the correct producer for the event type
+        Factory method to create (if needed) and return the correct producer for the event type
 
         :param event_type: name of event (same as segment events)
         :param event_key_serializer:  AvroSerializer instance for serializing event key

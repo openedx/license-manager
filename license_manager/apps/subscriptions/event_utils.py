@@ -184,9 +184,10 @@ def track_event(lms_user_id, event_name, properties):
     if KAFKA_ENABLED.is_enabled():  # pragma: no cover
         try:
             # assigned_lms_user_id expects an integer or None, but elsewhere it is defaulted to ''
-            if properties['assigned_lms_user_id'] == "":
-                properties['assigned_lms_user_id'] = None
-            license_data = SubscriptionLicenseData(**properties)
+            properties_copy = {key: value for key, value in properties.items()}
+            if properties_copy['assigned_lms_user_id'] == "":
+                properties_copy['assigned_lms_user_id'] = None
+            license_data = SubscriptionLicenseData(**properties_copy)
             SUBSCRIPTION_LICENSE_MODIFIED.send_event(license=license_data)
         except Exception:  # pylint: disable=broad-except
             logger.exception("Exception sending event to message.")
