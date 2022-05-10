@@ -4,6 +4,7 @@ Utility methods for sending events to Braze or Segment.
 import logging
 
 import analytics
+import attrs
 import requests
 from braze.exceptions import BrazeClientError
 from django.conf import settings
@@ -182,12 +183,18 @@ def track_event(lms_user_id, event_name, properties):
         )
 
     if KAFKA_ENABLED.is_enabled():  # pragma: no cover
+        logger.info("Kafka is enabled. Creating SubscriptionLicenseData to emit.")
         try:
             # assigned_lms_user_id expects an integer or None, but elsewhere it is defaulted to ''
             properties_copy = properties.copy()
             if properties_copy['assigned_lms_user_id'] == "":
                 properties_copy['assigned_lms_user_id'] = None
             license_data = SubscriptionLicenseData(**properties_copy)
+            non_pii_fields = attrs.asdict(license_data,
+                                          filter=lambda attr, value: attr.name not in ["assigned_lms_user_id",
+                                                                                       "assigned_email"])
+            logger.info(f"Emitting SUBSCRIPTION_LICENSE_MODIFIED signal with license_data"
+                        f" with SubscriptionLicenseData {non_pii_fields}")
             SUBSCRIPTION_LICENSE_MODIFIED.send_event(license=license_data)
         except Exception:  # pylint: disable=broad-except
             logger.exception("Exception sending event to message.")
