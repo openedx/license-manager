@@ -26,8 +26,10 @@ class EnterpriseCatalogApiClient(BaseOAuthClient):
         """
         query_params = {'course_run_ids': content_ids}
         endpoint = self.enterprise_catalog_endpoint + str(catalog_uuid) + '/contains_content_items/'
-        response = self.client.get(endpoint, params=query_params).json()
-        return response.get('contains_content_items', False)
+        response = self.client.get(endpoint, params=query_params)
+        response.raise_for_status()
+        response_json = response.json()
+        return response_json.get('contains_content_items', False)
 
     def get_distinct_catalog_queries(self, enterprise_catalog_uuids):
         """
@@ -45,10 +47,12 @@ class EnterpriseCatalogApiClient(BaseOAuthClient):
         request_data = {
             'enterprise_catalog_uuids': enterprise_catalog_uuids,
         }
-        return self.client.post(
+        response = self.client.post(
             self.distinct_catalog_queries_endpoint,
             json=request_data,
-        ).json()
+        )
+        response.raise_for_status()
+        return response.json()
 
     def get_enterprise_catalog(self, catalog_uuid):
         """
