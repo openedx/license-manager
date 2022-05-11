@@ -10,7 +10,7 @@ services:
     networks:
       - devstack_default
     volumes:
-      - license_manager_mysql:/var/lib/mysql
+      - license_manager_mysql8:/var/lib/mysql
 
   app:
     image: openedx/license-manager
@@ -80,4 +80,4 @@ networks:
     external: true
 
 volumes:
-  license_manager_mysql:
+  license_manager_mysql8:
