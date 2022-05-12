@@ -101,7 +101,7 @@ KAFKA_SCHEMA_REGISTRY_CONF = {
 }
 KAFKA_REPLICATION_FACTOR_PER_TOPIC=1
 LICENSE_TOPIC_NAME="license-event-dev"
-
+SCHEMA_REGISTRY_URL="http://edx.devstack.schema-registry:8081"
 # Make some loggers less noisy (useful during test failure)
 import logging
 

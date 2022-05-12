@@ -1,6 +1,5 @@
 import logging
 
-import attrs
 from confluent_kafka.error import ValueSerializationError
 from confluent_kafka.serialization import StringSerializer
 from django.conf import settings
@@ -36,10 +35,6 @@ def send_event_to_message_bus(**kwargs):  # pragma: no cover
     if not license_data or not isinstance(license_data, SubscriptionLicenseData):
         logger.error("Received null or incorrect data from SUBSCRIPTION_LICENSE_MODIFIED")
         return
-    non_pii_fields = attrs.asdict(license_data,
-                                  filter=lambda attr, value: attr.name not in ["assigned_lms_user_id",
-                                                                               "assigned_email"])
-    logger.info(f"Received SUBSCRIPTION_LICENSE_MODIFIED signal for {non_pii_fields}")
     try:
         license_event_producer = ProducerFactory.get_or_create_event_producer(
             settings.LICENSE_TOPIC_NAME,
@@ -49,8 +44,6 @@ def send_event_to_message_bus(**kwargs):  # pragma: no cover
         license_event_data = {"license": license_data}
         message_key = license_data.enterprise_customer_uuid
         event_type = kwargs['signal'].event_type
-        logger.info(f"Producing event for license with uuid {license_data.license_uuid} to event bus"
-                    f" topic {settings.LICENSE_TOPIC_NAME}")
         license_event_producer.produce(settings.LICENSE_TOPIC_NAME, key=message_key,
                                        value=license_event_data, on_delivery=verify_event,
                                        headers={EVENT_TYPE_HEADER_KEY: event_type})
