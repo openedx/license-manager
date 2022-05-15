@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-amqp==5.1.0
+amqp==5.1.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -13,12 +13,12 @@ analytics-python==1.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-asgiref==3.5.0
+asgiref==3.5.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django
-astroid==2.11.2
+astroid==2.11.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -40,12 +40,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.21.42
+boto3==1.23.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.24.42
+botocore==1.26.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -67,12 +67,13 @@ cffi==1.15.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   cryptography
+    #   pynacl
 charset-normalizer==2.0.12
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
-click==8.1.2
+click==8.1.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -82,6 +83,7 @@ click==8.1.2
     #   click-plugins
     #   click-repl
     #   code-annotations
+    #   edx-django-utils
     #   edx-lint
 click-didyoumean==0.3.0
     # via
@@ -124,11 +126,11 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==6.3.2
+coverage[toml]==6.3.3
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==36.0.2
+cryptography==37.0.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -173,11 +175,11 @@ django==3.2.13
     #   edx-toggles
     #   jsonfield
     #   openedx-events
-django-celery-results==2.3.0
+django-celery-results==2.3.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-cors-headers==3.11.0
+django-cors-headers==3.12.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -214,6 +216,7 @@ django-ses==3.0.1
     #   -r requirements/test.txt
 django-simple-history==3.0.0
     # via
+    #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
 django-waffle==2.4.1
@@ -267,7 +270,7 @@ edx-celeryutils==1.2.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-django-utils==4.6.0
+edx-django-utils==4.8.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -299,17 +302,17 @@ edx-rest-api-client==5.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-toggles==4.3.1
+edx-toggles==5.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
 factory-boy==3.2.1
     # via -r requirements/test.txt
-faker==13.3.4
+faker==13.11.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
-fastavro==1.4.10
+fastavro==1.4.11
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -346,7 +349,7 @@ itypes==1.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   coreapi
-jinja2==3.1.1
+jinja2==3.1.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -417,12 +420,12 @@ path==16.4.0
     # via edx-i18n-tools
 pathlib2==2.3.7.post1
     # via -r requirements/validation.in
-pbr==5.8.1
+pbr==5.9.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   stevedore
-platformdirs==2.5.1
+platformdirs==2.5.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -466,7 +469,7 @@ pyjwkest==1.4.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-pyjwt[crypto]==2.3.0
+pyjwt[crypto]==2.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -475,7 +478,7 @@ pyjwt[crypto]==2.3.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==2.13.5
+pylint==2.13.9
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -504,12 +507,17 @@ pymongo==3.12.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-opaque-keys
-pyparsing==3.0.8
+pynacl==1.5.0
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   edx-django-utils
+pyparsing==3.0.9
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   packaging
-pytest==7.1.1
+pytest==7.1.2
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -527,7 +535,7 @@ python-dateutil==2.8.2
     #   edx-drf-extensions
     #   faker
     #   freezegun
-python-slugify==6.1.1
+python-slugify==6.1.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -660,7 +668,7 @@ tomli==2.0.1
     #   coverage
     #   pylint
     #   pytest
-typing-extensions==4.1.1
+typing-extensions==4.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
