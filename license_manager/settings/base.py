@@ -42,6 +42,7 @@ THIRD_PARTY_APPS = (
     'csrf.apps.CsrfAppConfig',  # Enables frontend apps to retrieve CSRF tokens
     'django_celery_results',
     'django_filters',
+    'djangoql',
     'durationwidget',
     'rest_framework',
     'drf_yasg',
