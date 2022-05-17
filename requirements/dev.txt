@@ -10,7 +10,7 @@ amqp==5.1.1
     #   kombu
 analytics-python==1.4.0
     # via -r requirements/validation.txt
-asgiref==3.5.1
+asgiref==3.5.2
     # via
     #   -r requirements/validation.txt
     #   django
@@ -32,11 +32,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.23.0
+boto3==1.23.3
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.26.0
+botocore==1.26.3
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -46,7 +46,7 @@ celery==5.2.6
     #   -r requirements/validation.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2021.10.8
+certifi==2022.5.18
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -195,6 +195,8 @@ django-waffle==2.4.1
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
+djangoql==0.17.1
+    # via -r requirements/validation.txt
 djangorestframework==3.13.1
     # via
     #   -r requirements/validation.txt
@@ -255,7 +257,7 @@ faker==13.11.1
     # via
     #   -r requirements/validation.txt
     #   factory-boy
-fastavro==1.4.11
+fastavro==1.4.12
     # via
     #   -r requirements/validation.txt
     #   openedx-events
@@ -373,6 +375,10 @@ pluggy==1.0.0
     #   -r requirements/validation.txt
     #   diff-cover
     #   pytest
+ply==3.11
+    # via
+    #   -r requirements/validation.txt
+    #   djangoql
 polib==1.1.1
     # via
     #   -r requirements/validation.txt

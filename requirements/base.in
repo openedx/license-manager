@@ -13,6 +13,7 @@ django-durationwidget
 django-extensions
 django-filter
 django-model-utils
+djangoql
 django-ses
 fastavro
 rules

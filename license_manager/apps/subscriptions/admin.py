@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.db import transaction
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from djangoql.admin import DjangoQLSearchMixin
 from pytz import UTC
 from simple_history.admin import SimpleHistoryAdmin
 
@@ -41,7 +42,7 @@ def get_related_object_link(admin_viewname, object_pk, object_str):
 
 
 @admin.register(License)
-class LicenseAdmin(admin.ModelAdmin):
+class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     readonly_fields = [
         'activation_key',
         'get_renewed_to',
