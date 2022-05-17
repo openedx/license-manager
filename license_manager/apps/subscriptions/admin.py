@@ -33,7 +33,7 @@ from license_manager.apps.subscriptions.models import (
 )
 
 
-def _related_object_link(admin_viewname, object_pk, object_str):
+def get_related_object_link(admin_viewname, object_pk, object_str):
     return mark_safe('<a href="{href}">{object_string}</a><br/>'.format(
         href=reverse(admin_viewname, args=(object_pk,)),
         object_string=object_str,
@@ -57,11 +57,6 @@ class LicenseAdmin(admin.ModelAdmin):
         'activation_date',
         'user_email',
     )
-    ordering = (
-        'assigned_date',
-        'status',
-        'user_email',
-    )
     sortable_by = (
         'assigned_date',
         'status',
@@ -74,7 +69,6 @@ class LicenseAdmin(admin.ModelAdmin):
         'uuid__startswith',
         'user_email',
         'subscription_plan__title',
-        'subscription_plan__uuid__startswith',
         'subscription_plan__customer_agreement__enterprise_customer_uuid__startswith',
         'subscription_plan__customer_agreement__enterprise_customer_slug__startswith'
     )
@@ -84,13 +78,10 @@ class LicenseAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
             'subscription_plan',
-            'renewed_to'
-        ).prefetch_related(
-            'subscription_plan__customer_agreement'
         )
 
     def get_subscription_plan_title(self, obj):
-        return _related_object_link(
+        return get_related_object_link(
             'admin:subscriptions_subscriptionplan_change',
             obj.subscription_plan.uuid,
             obj.subscription_plan.title,
@@ -100,7 +91,7 @@ class LicenseAdmin(admin.ModelAdmin):
     def get_renewed_to(self, obj):
         if not obj.renewed_to:
             return ''
-        return _related_object_link(
+        return get_related_object_link(
             'admin:subscriptions_license_change',
             obj.renewed_to.uuid,
             obj.renewed_to.uuid,
@@ -110,7 +101,7 @@ class LicenseAdmin(admin.ModelAdmin):
     def get_renewed_from(self, obj):
         if not obj.renewed_from:
             return ''
-        return _related_object_link(
+        return get_related_object_link(
             'admin:subscriptions_license_change',
             obj.renewed_from.uuid,
             obj.renewed_from.uuid,
@@ -265,7 +256,7 @@ class SubscriptionPlanAdmin(SimpleHistoryAdmin):
         Returns a link to the customer agreement for this plan.
         """
         if obj.customer_agreement:
-            return _related_object_link(
+            return get_related_object_link(
                 'admin:subscriptions_customeragreement_change',
                 obj.customer_agreement.uuid,
                 obj.customer_agreement.enterprise_customer_slug,
@@ -414,7 +405,7 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         for subscription_plan in obj.subscriptions.all():
             if subscription_plan.is_active:
                 links.append(
-                    _related_object_link(
+                    get_related_object_link(
                         'admin:subscriptions_subscriptionplan_change',
                         subscription_plan.uuid,
                         '{}: {}'.format(subscription_plan.title, subscription_plan.uuid),
@@ -482,7 +473,7 @@ class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
         Returns a link to the renewed subscription plan.
         """
         if obj.renewed_subscription_plan:
-            return _related_object_link(
+            return get_related_object_link(
                 'admin:subscriptions_subscriptionplan_change',
                 obj.renewed_subscription_plan.uuid,
                 '{}: {}'.format(obj.renewed_subscription_plan.title, obj.renewed_subscription_plan.uuid),
