@@ -179,7 +179,7 @@ def track_event(lms_user_id, event_name, properties):
             "Event {} for user_id {} not tracked because SEGMENT_KEY not set".format(event_name, lms_user_id)
         )
 
-    if KAFKA_ENABLED.is_enabled():  # pragma: no cover
+    if KAFKA_ENABLED.is_enabled():
         try:
             # assigned_lms_user_id expects an integer or None, but elsewhere it is defaulted to ''
             properties_copy = properties.copy()
