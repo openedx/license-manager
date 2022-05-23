@@ -1,9 +1,11 @@
 """ Utility functions. """
+import logging
 import os
 import urllib
 import uuid
 
 import boto3
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from edx_rbac.utils import get_decoded_jwt
 from rest_framework.exceptions import ParseError, status
@@ -18,6 +20,9 @@ from license_manager.apps.subscriptions.utils import (
     get_license_activation_link,
     localized_utcnow,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_requested_enterprise_uuid(request):
@@ -104,14 +109,26 @@ def get_context_from_subscription_plan_by_activation_key(request):
     Returns: The ``enterprise_customer_uuid`` associated with the user's license.
     """
     today = localized_utcnow()
-    user_license = get_object_or_404(
-        License,
-        activation_key=get_activation_key_from_request(request),
-        user_email=get_email_from_request(request),
-        subscription_plan__is_active=True,
-        subscription_plan__start_date__lte=today,
-        subscription_plan__expiration_date__gte=today,
-    )
+    activation_key = get_activation_key_from_request(request)
+
+    try:
+        user_license = License.objects.get(
+            activation_key=activation_key,
+            user_email=get_email_from_request(request),
+            subscription_plan__is_active=True,
+            subscription_plan__start_date__lte=today,
+            subscription_plan__expiration_date__gte=today,
+        )
+    except License.DoesNotExist as exc:
+        decoded_jwt = get_decoded_jwt(request)
+        lms_user_id = get_key_from_jwt(decoded_jwt, 'user_id')
+        logger.exception(
+            'License not found for activation key %s for user %s',
+            activation_key,
+            lms_user_id
+        )
+        raise Http404('No License matches the given query.') from exc
+
     return user_license.subscription_plan.customer_agreement.enterprise_customer_uuid
 
 
