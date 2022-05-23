@@ -185,6 +185,7 @@ def track_event(lms_user_id, event_name, properties):
             properties_copy = properties.copy()
             if properties_copy['assigned_lms_user_id'] == "":
                 properties_copy['assigned_lms_user_id'] = None
+            properties_copy.pop('assigned_email', None)
             license_data = SubscriptionLicenseData(**properties_copy)
             SUBSCRIPTION_LICENSE_MODIFIED.send_event(license=license_data)
         except Exception:  # pylint: disable=broad-except
