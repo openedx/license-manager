@@ -344,7 +344,9 @@ oauthlib==3.2.0
     #   requests-oauthlib
     #   social-auth-core
 openedx-events==0.9.1
-    # via -r requirements/validation.txt
+    # via
+    #   -c requirements/constraints.txt
+    #   -r requirements/validation.txt
 packaging==21.3
     # via
     #   -r requirements/validation.txt

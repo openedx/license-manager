@@ -412,6 +412,7 @@ oauthlib==3.2.0
     #   social-auth-core
 openedx-events==0.9.1
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
 packaging==21.3
