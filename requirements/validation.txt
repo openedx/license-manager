@@ -410,9 +410,8 @@ oauthlib==3.2.0
     #   -r requirements/test.txt
     #   requests-oauthlib
     #   social-auth-core
-openedx-events==0.9.1
+openedx-events==0.10.0
     # via
-    #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
 packaging==21.3

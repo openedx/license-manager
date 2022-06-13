@@ -272,10 +272,8 @@ oauthlib==3.2.0
     #   -r requirements/base.txt
     #   requests-oauthlib
     #   social-auth-core
-openedx-events==0.9.1
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/base.txt
+openedx-events==0.10.0
+    # via -r requirements/base.txt
 packaging==21.3
     # via
     #   -r requirements/base.txt
