@@ -10,7 +10,7 @@ from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroSerializer
 from django.conf import settings
-from openedx_events.bridge.avro_attrs_bridge import AvroAttrsBridge
+from openedx_events.event_bus.avro.serializer import AvroSignalSerializer
 from openedx_events.enterprise.signals import SUBSCRIPTION_LICENSE_MODIFIED
 
 
@@ -41,12 +41,12 @@ class SubscriptionLicenseEventSerializer:
                 'basic.auth.user.info': f"{getattr(settings,'SCHEMA_REGISTRY_API_KEY','')}"
                 f":{getattr(settings,'SCHEMA_REGISTRY_API_SECRET','')}",
             }
-            bridge = AvroAttrsBridge(SUBSCRIPTION_LICENSE_MODIFIED)
+            signal_serializer = AvroSignalSerializer(SUBSCRIPTION_LICENSE_MODIFIED)
 
             def inner_to_dict(event_data, ctx=None):  # pylint: disable=unused-argument
-                return bridge.to_dict(event_data)
+                return signal_serializer.to_dict(event_data)
             schema_registry_client = SchemaRegistryClient(KAFKA_SCHEMA_REGISTRY_CONFIG)
-            cls.SERIALIZER = AvroSerializer(schema_str=bridge.schema_str(),
+            cls.SERIALIZER = AvroSerializer(schema_str=signal_serializer.schema_string(),
                                             schema_registry_client=schema_registry_client,
                                             to_dict=inner_to_dict)
             return cls.SERIALIZER
