@@ -21,7 +21,3 @@ wrapt==1.11.*
 
 # redis 4 causes fires
 redis<4
-
-# Known breaking changes in the event bus utilities in v0.10.0. Unpinning is a subtask of
-# https://github.com/openedx/openedx-events/issues/65
-openedx-events<0.10.0
