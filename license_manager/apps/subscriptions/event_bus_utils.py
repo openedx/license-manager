@@ -10,8 +10,8 @@ from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroSerializer
 from django.conf import settings
-from openedx_events.event_bus.avro.serializer import AvroSignalSerializer
 from openedx_events.enterprise.signals import SUBSCRIPTION_LICENSE_MODIFIED
+from openedx_events.event_bus.avro.serializer import AvroSignalSerializer
 
 
 logger = logging.getLogger(__name__)
