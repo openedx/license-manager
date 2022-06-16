@@ -209,6 +209,12 @@ app-restart-devserver: ## Kill the license-manager development server. Watcher s
 dev.stats: ## Get per-container CPU and memory utilization data.
 	docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 
+dev.backup: dev.up
+	docker run --rm --volumes-from license-manager.mysql -v $$(pwd)/.dev/backups:/backup debian:jessie tar zcvf /backup/mysql57.tar.gz /var/lib/mysql
+
+dev.restore: dev.up
+	docker run --rm --volumes-from license-manager.mysql -v $$(pwd)/.dev/backups:/backup debian:jessie tar zxvf /backup/mysql57.tar.gz
+
 docker_build:
 	docker build . -f Dockerfile --target app -t openedx/license-manager
 	docker build . -f Dockerfile --target devstack -t openedx/license-manager:latest-devstack

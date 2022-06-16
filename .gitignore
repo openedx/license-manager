@@ -91,3 +91,5 @@ docs/_build/
 scripts/
 
 .vscode/
+
+.dev/

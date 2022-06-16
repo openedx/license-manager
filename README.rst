@@ -37,6 +37,27 @@ Running migrations
   $ make app-shell
   # ./manage.py migrate
 
+Running backup/restore to switch mysql volumes
+----------------------------------------------
+Sometimes the names of volumes must change due to upgrades, etc.
+To dump data from an old mysql volume to the new mysql8 volume:
+
+- Temporarily modify docker-compose.yml to switch the mysql volume name from mysql8 to just mysql
+- Create a backup directory in your license-manager repo: ``mkdir -p .dev/backups``
+  (although the next steps might actually do this for you)
+
+Then::
+
+  make dev.down
+  make dev.backup
+  make dev.down
+
+Next:
+
+- Remove your temp changes from above in docker-compose.yml
+- ``make dev.restore``
+- ``make dev.down dev.up`` - might be necessary if you lost connection between the app container and the mysql container.
+
 Documentation
 -------------
 .. |ReadtheDocs| image:: https://readthedocs.org/projects/license-manager/badge/?version=latest
