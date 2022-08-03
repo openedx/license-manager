@@ -326,6 +326,7 @@ def _assert_license_response_correct(response, subscription_license):
         'subscription_plan_uuid',
         'revoked_date',
         'activation_key',
+        'activation_date',
     }
     assert set(response.keys()) == expected_fields
     assert response['uuid'] == str(subscription_license.uuid)
