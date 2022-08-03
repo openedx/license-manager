@@ -26,11 +26,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.24.43
+boto3==1.24.44
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.27.43
+botocore==1.27.44
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -99,7 +99,7 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-django==3.2.14
+django==3.2.15
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
