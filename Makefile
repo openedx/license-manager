@@ -130,7 +130,10 @@ upgrade: piptools $(COMMON_CONSTRAINTS_TXT) ## update the requirements/*.txt fil
 	sed 's/drf-jwt<1.19.1//g' requirements/common_constraints.txt > requirements/common_constraints.tmp
 	mv requirements/common_constraints.tmp requirements/common_constraints.txt
 	# Make sure to compile files after any other files they include!
+	pip-compile --upgrade --rebuild --allow-unsafe -o requirements/pip.txt requirements/pip.in
 	pip-compile --upgrade -o requirements/pip-tools.txt requirements/pip-tools.in
+	pip install -qr requirements/pip.txt
+	pip install -qr requirements/pip-tools.txt
 	pip-compile --upgrade -o requirements/base.txt requirements/base.in
 	pip-compile --upgrade -o requirements/test.txt requirements/test.in
 	pip-compile --upgrade -o requirements/doc.txt requirements/doc.in
