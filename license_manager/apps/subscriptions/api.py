@@ -185,7 +185,7 @@ def _original_licenses_to_copy(original_plan, license_types_to_copy):
     a future plan as part of the renewal process.
     """
     if license_types_to_copy == LicenseTypesToRenew.NOTHING:
-        return[]
+        return []
 
     if license_types_to_copy == LicenseTypesToRenew.ASSIGNED_AND_ACTIVATED:
         license_status_kwargs = {'status__in': (ASSIGNED, ACTIVATED)}

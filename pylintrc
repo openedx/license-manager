@@ -286,7 +286,6 @@ disable =
 	illegal-waffle-usage,
 	
 	logging-fstring-interpolation,
-	native-string,
 	import-outside-toplevel,
 	inconsistent-return-statements,
 	no-else-break,
@@ -395,4 +394,4 @@ int-import-graph =
 [EXCEPTIONS]
 overgeneral-exceptions = Exception
 
-# f31aecbb8d29842ddc7301aa899e5433c920b116
+# b3119db8eca2f8802cc51a15cb9ced6073a18a26

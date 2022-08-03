@@ -324,7 +324,6 @@ def _assert_license_response_correct(response, subscription_license):
         'user_email',
         'last_remind_date',
         'subscription_plan_uuid',
-        'activation_date',
         'revoked_date',
         'activation_key',
     }
