@@ -1,4 +1,4 @@
-FROM ubuntu:bionic as app
+FROM ubuntu:focal as app
 MAINTAINER devops@edx.org
 
 
