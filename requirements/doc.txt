@@ -38,11 +38,11 @@ billiard==3.6.4.0
     #   celery
 bleach==5.0.1
     # via readme-renderer
-boto3==1.24.44
+boto3==1.24.51
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.27.44
+botocore==1.27.51
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -97,7 +97,7 @@ code-annotations==1.3.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-confluent-kafka==1.9.0
+confluent-kafka==1.9.2
     # via -r requirements/test.txt
 coreapi==2.3.3
     # via
@@ -108,7 +108,7 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==6.4.2
+coverage[toml]==6.4.3
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -117,7 +117,7 @@ cryptography==37.0.4
     #   -r requirements/test.txt
     #   pyjwt
     #   social-auth-core
-ddt==1.5.0
+ddt==1.6.0
     # via -r requirements/test.txt
 defusedxml==0.7.1
     # via
@@ -253,7 +253,7 @@ edx-toggles==5.0.0
     # via -r requirements/test.txt
 factory-boy==3.2.1
     # via -r requirements/test.txt
-faker==13.15.1
+faker==14.0.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -261,7 +261,7 @@ fastavro==1.5.4
     # via
     #   -r requirements/test.txt
     #   openedx-events
-freezegun==1.2.1
+freezegun==1.2.2
     # via -r requirements/test.txt
 future==0.18.2
     # via
@@ -346,7 +346,7 @@ packaging==21.3
     #   drf-yasg
     #   pytest
     #   sphinx
-pbr==5.9.0
+pbr==5.10.0
     # via
     #   -r requirements/test.txt
     #   stevedore
@@ -456,7 +456,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/test.txt
     #   social-auth-core
-pytz==2022.1
+pytz==2022.2.1
     # via
     #   -r requirements/test.txt
     #   babel
@@ -469,7 +469,7 @@ pyyaml==6.0
     # via
     #   -r requirements/test.txt
     #   code-annotations
-readme-renderer==35.0
+readme-renderer==36.0
     # via -r requirements/doc.in
 redis==3.5.3
     # via
@@ -581,7 +581,7 @@ tomli==2.0.1
     #   doc8
     #   pylint
     #   pytest
-tomlkit==0.11.1
+tomlkit==0.11.4
     # via
     #   -r requirements/test.txt
     #   pylint
