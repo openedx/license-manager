@@ -5,7 +5,6 @@
 analytics-python
 backoff
 celery
-confluent-kafka
 Django
 django-celery-results
 django-cors-headers
@@ -15,7 +14,6 @@ django-filter
 django-model-utils
 djangoql
 django-ses
-fastavro
 rules
 django-simple-history
 django-waffle
@@ -32,7 +30,6 @@ edx-toggles
 edx-rbac
 edx-rest-api-client
 mysqlclient
-openedx-events
 pytz
 redis
 rules
