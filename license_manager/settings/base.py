@@ -328,6 +328,10 @@ CELERY_BROKER_URL = '{}://{}:{}@{}/{}'.format(
 )
 CELERY_RESULT_BACKEND = 'django-db'
 
+# see https://github.com/celery/django-celery-results/issues/326
+# on CELERY_RESULT_EXTENDED
+CELERY_RESULT_EXTENDED = True
+
 # Celery task time limits.
 # Tasks will be asked to quit after four minutes, and un-gracefully killed
 # after five.
