@@ -93,15 +93,6 @@ VALIDATE_FORM_EXTERNAL_FIELDS = False
 # https://github.com/django-extensions/django-extensions#using-it
 INSTALLED_APPS += ('django_extensions',)
 
-################### Kafka Related Settings ##############################
-KAFKA_BOOTSTRAP_SERVER = "edx.devstack.kafka:29092"
-
-KAFKA_SCHEMA_REGISTRY_CONF = {
-    'url': "http://edx.devstack.schema-registry:8081",
-}
-KAFKA_REPLICATION_FACTOR_PER_TOPIC=1
-LICENSE_TOPIC_NAME="license-event-dev"
-SCHEMA_REGISTRY_URL="http://edx.devstack.schema-registry:8081"
 # Make some loggers less noisy (useful during test failure)
 import logging
 

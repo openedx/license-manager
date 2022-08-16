@@ -17,8 +17,6 @@ from license_manager.apps.subscriptions.constants import (
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
-from .apps import KAFKA_ENABLED
-
 
 logger = logging.getLogger(__name__)
 
@@ -178,18 +176,6 @@ def track_event(lms_user_id, event_name, properties):
         logger.warning(
             "Event {} for user_id {} not tracked because SEGMENT_KEY not set".format(event_name, lms_user_id)
         )
-
-    if KAFKA_ENABLED.is_enabled():
-        try:
-            # assigned_lms_user_id expects an integer or None, but elsewhere it is defaulted to ''
-            properties_copy = properties.copy()
-            if properties_copy['assigned_lms_user_id'] == "":
-                properties_copy['assigned_lms_user_id'] = None
-            properties_copy.pop('assigned_email', None)
-            license_data = SubscriptionLicenseData(**properties_copy)
-            SUBSCRIPTION_LICENSE_MODIFIED.send_event(license=license_data)
-        except Exception:  # pylint: disable=broad-except
-            logger.exception("Exception sending event to message.")
 
 
 def get_license_tracking_properties(license_obj):
