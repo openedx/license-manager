@@ -7,6 +7,7 @@ import analytics
 from django.apps import AppConfig
 from django.conf import settings
 
+
 logger = logging.getLogger(__name__)
 
 
