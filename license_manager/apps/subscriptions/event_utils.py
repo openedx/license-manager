@@ -8,8 +8,6 @@ import requests
 from braze.exceptions import BrazeClientError
 from django.conf import settings
 from django.db.models import prefetch_related_objects
-from openedx_events.enterprise.data import SubscriptionLicenseData
-from openedx_events.enterprise.signals import SUBSCRIPTION_LICENSE_MODIFIED
 
 from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.subscriptions.constants import (
