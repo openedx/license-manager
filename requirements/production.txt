@@ -14,10 +14,6 @@ asgiref==3.5.2
     # via
     #   -r requirements/base.txt
     #   django
-attrs==22.1.0
-    # via
-    #   -r requirements/base.txt
-    #   openedx-events
 backoff==1.10.0
     # via
     #   -r requirements/base.txt
@@ -78,8 +74,6 @@ code-annotations==1.3.0
     # via
     #   -r requirements/base.txt
     #   edx-toggles
-confluent-kafka==1.9.2
-    # via -r requirements/base.txt
 coreapi==2.3.3
     # via
     #   -r requirements/base.txt
@@ -122,7 +116,6 @@ django==3.2.15
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
-    #   openedx-events
 django-celery-results==2.4.0
     # via -r requirements/base.txt
 django-cors-headers==3.13.0
@@ -197,21 +190,16 @@ edx-drf-extensions==8.0.1
     # via
     #   -r requirements/base.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.3.0
+edx-opaque-keys==2.3.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-    #   openedx-events
 edx-rbac==1.7.0
     # via -r requirements/base.txt
 edx-rest-api-client==5.5.0
     # via -r requirements/base.txt
 edx-toggles==5.0.0
     # via -r requirements/base.txt
-fastavro==1.5.4
-    # via
-    #   -r requirements/base.txt
-    #   openedx-events
 future==0.18.2
     # via
     #   -r requirements/base.txt
@@ -272,8 +260,6 @@ oauthlib==3.2.0
     #   -r requirements/base.txt
     #   requests-oauthlib
     #   social-auth-core
-openedx-events==0.11.1
-    # via -r requirements/base.txt
 packaging==21.3
     # via
     #   -r requirements/base.txt

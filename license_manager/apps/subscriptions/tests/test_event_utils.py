@@ -4,7 +4,6 @@ Tests for the event_utils.py module.
 from unittest import mock
 
 from django.test.utils import override_settings
-from openedx_events.enterprise.signals import SUBSCRIPTION_LICENSE_MODIFIED
 from pytest import mark
 
 from license_manager.apps.subscriptions.constants import (
@@ -78,26 +77,6 @@ def test_track_license_changes_with_properties(mock_track_event, _):
     track_license_changes(licenses, SegmentEvents.LICENSE_CREATED, {'counter': 2})
     assert mock_track_event.call_count == 5
     mock_track_event.assert_called_with(None, SegmentEvents.LICENSE_CREATED, {'counter': 2})
-
-
-@mark.django_db
-@override_settings(KAFKA_ENABLED=True)
-@override_settings(LICENSE_TOPIC_NAME="test")
-@mock.patch('license_manager.apps.subscriptions.signals.receivers.send_event_to_message_bus')
-@mock.patch('license_manager.apps.subscriptions.signals.receivers.ProducerFactory')
-def test_send_event_to_message_bus(mock_send_event, factory_mock):  # pylint: disable=unused-argument
-    SUBSCRIPTION_LICENSE_MODIFIED.connect(mock_send_event)
-    LicenseFactory.create_batch(5)
-    assert mock_send_event.call_count == 5
-
-
-@mark.django_db
-@override_settings(KAFKA_ENABLED=False)
-@mock.patch('license_manager.apps.subscriptions.signals.receivers.send_event_to_message_bus')
-def test_do_not_send_event_to_message_bus(mock_send_event):
-    SUBSCRIPTION_LICENSE_MODIFIED.connect(mock_send_event)
-    LicenseFactory.create_batch(5)
-    assert mock_send_event.call_count == 0
 
 
 @mark.django_db
