@@ -14,7 +14,7 @@ asgiref==3.5.2
     # via
     #   -r requirements/validation.txt
     #   django
-astroid==2.11.7
+astroid==2.12.5
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -31,11 +31,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.24.51
+boto3==1.24.64
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.27.51
+botocore==1.27.64
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -58,7 +58,7 @@ cffi==1.15.1
     #   -r requirements/validation.txt
     #   cryptography
     #   pynacl
-charset-normalizer==2.1.0
+charset-normalizer==2.1.1
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -105,7 +105,7 @@ coreschema==0.0.4
     #   -r requirements/validation.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==6.4.3
+coverage[toml]==6.4.4
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -166,7 +166,7 @@ django-crum==0.7.9
     #   edx-django-utils
     #   edx-rbac
     #   edx-toggles
-django-debug-toolbar==3.5.0
+django-debug-toolbar==3.6.0
     # via -r requirements/dev.in
 django-durationwidget==1.0.5
     # via -r requirements/validation.txt
@@ -183,13 +183,13 @@ django-model-utils==4.2.0
     #   -r requirements/validation.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.1.0
+django-ses==3.1.2
     # via -r requirements/validation.txt
 django-simple-history==3.0.0
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/validation.txt
-django-waffle==2.6.0
+django-waffle==3.0.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -232,7 +232,7 @@ edx-django-utils==5.0.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.0.1
+edx-drf-extensions==8.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-rbac
@@ -252,7 +252,7 @@ edx-toggles==5.0.0
     # via -r requirements/validation.txt
 factory-boy==3.2.1
     # via -r requirements/validation.txt
-faker==14.0.0
+faker==14.2.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -329,7 +329,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.1.1
     # via -r requirements/validation.txt
-newrelic==7.16.0.178
+newrelic==8.0.0.179
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -400,11 +400,11 @@ pycryptodomex==3.15.0
     # via
     #   -r requirements/validation.txt
     #   pyjwkest
-pydantic==1.9.2
+pydantic==1.10.1
     # via inflect
 pydocstyle==6.1.1
     # via -r requirements/validation.txt
-pygments==2.12.0
+pygments==2.13.0
     # via diff-cover
 pyjwkest==1.4.2
     # via
@@ -418,7 +418,7 @@ pyjwt[crypto]==2.4.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==2.14.5
+pylint==2.15.0
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -604,7 +604,7 @@ uritemplate==4.1.1
     #   -r requirements/validation.txt
     #   coreapi
     #   drf-yasg
-urllib3==1.26.11
+urllib3==1.26.12
     # via
     #   -r requirements/validation.txt
     #   botocore

@@ -14,7 +14,7 @@ asgiref==3.5.2
     # via
     #   -r requirements/base.txt
     #   django
-astroid==2.11.7
+astroid==2.12.5
     # via
     #   pylint
     #   pylint-celery
@@ -26,11 +26,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.24.51
+boto3==1.24.64
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.27.51
+botocore==1.27.64
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -49,7 +49,7 @@ cffi==1.15.1
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==2.1.0
+charset-normalizer==2.1.1
     # via
     #   -r requirements/base.txt
     #   requests
@@ -148,13 +148,13 @@ django-model-utils==4.2.0
     #   -r requirements/base.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.1.0
+django-ses==3.1.2
     # via -r requirements/base.txt
 django-simple-history==3.0.0
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
-django-waffle==2.6.0
+django-waffle==3.0.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -197,7 +197,7 @@ edx-django-utils==5.0.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.0.1
+edx-drf-extensions==8.2.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -266,7 +266,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.1.1
     # via -r requirements/base.txt
-newrelic==7.16.0.178
+newrelic==8.0.0.179
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -321,7 +321,7 @@ pyjwt[crypto]==2.4.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==2.14.5
+pylint==2.15.0
     # via
     #   edx-lint
     #   pylint-celery
@@ -470,7 +470,7 @@ uritemplate==4.1.1
     #   -r requirements/base.txt
     #   coreapi
     #   drf-yasg
-urllib3==1.26.11
+urllib3==1.26.12
     # via
     #   -r requirements/base.txt
     #   botocore
@@ -491,6 +491,3 @@ wrapt==1.11.2
     #   astroid
 zipp==3.8.1
     # via -r requirements/base.txt
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
