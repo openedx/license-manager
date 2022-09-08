@@ -228,11 +228,16 @@ class Product(models.Model):
         blank=False,
         null=False,
     )
+    salesforce_product_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
     netsuite_id = models.IntegerField(
         blank=True,
         null=True,
         help_text=_(
-            "The Product ID field (numeric) of what was sold to the customer."
+            "(Deprecated) The Product ID field (numeric) of what was sold to the customer."
         ),
     )
     plan_type = models.ForeignKey(

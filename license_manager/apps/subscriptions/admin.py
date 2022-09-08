@@ -546,15 +546,19 @@ class ProductAdmin(admin.ModelAdmin):
         'description',
         'netsuite_id',
         'plan_type',
+        'salesforce_product_id',
     )
     list_display = fields
+    readonly_fields = ['netsuite_id']
     ordering = (
         'plan_type',
         'name',
+        'salesforce_product_id',
         'netsuite_id',
     )
     sortable_by = (
         'name',
+        'salesforce_product_id',
         'netsuite_id',
         'plan_type',
     )
@@ -564,6 +568,7 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = (
         'name',
         'netsuite_id',
+        'salesforce_product_id',
     )
 
 
