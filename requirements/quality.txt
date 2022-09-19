@@ -16,6 +16,7 @@ asgiref==3.5.2
     #   django
 astroid==2.11.7
     # via
+    #   -c requirements/constraints.txt
     #   pylint
     #   pylint-celery
 backoff==1.10.0
@@ -26,11 +27,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.24.51
+boto3==1.24.75
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.27.51
+botocore==1.27.75
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -40,7 +41,7 @@ celery==5.2.7
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2022.6.15
+certifi==2022.9.14
     # via
     #   -r requirements/base.txt
     #   requests
@@ -49,7 +50,7 @@ cffi==1.15.1
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==2.1.0
+charset-normalizer==2.1.1
     # via
     #   -r requirements/base.txt
     #   requests
@@ -92,7 +93,7 @@ coreschema==0.0.4
     #   -r requirements/base.txt
     #   coreapi
     #   drf-yasg
-cryptography==37.0.4
+cryptography==38.0.1
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -139,7 +140,7 @@ django-crum==0.7.9
     #   edx-toggles
 django-durationwidget==1.0.5
     # via -r requirements/base.txt
-django-extensions==3.2.0
+django-extensions==3.2.1
     # via -r requirements/base.txt
 django-filter==22.1
     # via -r requirements/base.txt
@@ -148,13 +149,13 @@ django-model-utils==4.2.0
     #   -r requirements/base.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.1.0
+django-ses==3.1.2
     # via -r requirements/base.txt
 django-simple-history==3.0.0
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
-django-waffle==2.6.0
+django-waffle==3.0.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -191,18 +192,20 @@ edx-braze-client==0.1.4
     # via -r requirements/base.txt
 edx-celeryutils==1.2.1
     # via -r requirements/base.txt
-edx-django-utils==5.0.0
+edx-django-utils==5.0.1
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.0.1
+edx-drf-extensions==8.3.1
     # via
     #   -r requirements/base.txt
     #   edx-rbac
-edx-lint==5.2.4
-    # via -r requirements/quality.in
+edx-lint==5.2.5
+    # via
+    #   -c requirements/constraints.txt
+    #   -r requirements/quality.in
 edx-opaque-keys==2.3.0
     # via
     #   -r requirements/base.txt
@@ -218,7 +221,7 @@ future==0.18.2
     #   -r requirements/base.txt
     #   edx-celeryutils
     #   pyjwkest
-idna==3.3
+idna==3.4
     # via
     #   -r requirements/base.txt
     #   requests
@@ -266,11 +269,11 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.1.1
     # via -r requirements/base.txt
-newrelic==7.16.0.178
+newrelic==8.1.0.180
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-oauthlib==3.2.0
+oauthlib==3.2.1
     # via
     #   -r requirements/base.txt
     #   requests-oauthlib
@@ -289,11 +292,11 @@ ply==3.11
     # via
     #   -r requirements/base.txt
     #   djangoql
-prompt-toolkit==3.0.30
+prompt-toolkit==3.0.31
     # via
     #   -r requirements/base.txt
     #   click-repl
-psutil==5.9.1
+psutil==5.9.2
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -313,7 +316,7 @@ pyjwkest==1.4.2
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-pyjwt[crypto]==2.4.0
+pyjwt[crypto]==2.5.0
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -323,6 +326,7 @@ pyjwt[crypto]==2.4.0
     #   social-auth-core
 pylint==2.14.5
     # via
+    #   -c requirements/constraints.txt
     #   edx-lint
     #   pylint-celery
     #   pylint-django
@@ -457,6 +461,10 @@ tomli==2.0.1
     # via pylint
 tomlkit==0.11.4
     # via pylint
+types-cryptography==3.3.23
+    # via
+    #   -r requirements/base.txt
+    #   pyjwt
 typing-extensions==4.3.0
     # via
     #   astroid
@@ -470,7 +478,7 @@ uritemplate==4.1.1
     #   -r requirements/base.txt
     #   coreapi
     #   drf-yasg
-urllib3==1.26.11
+urllib3==1.26.12
     # via
     #   -r requirements/base.txt
     #   botocore
