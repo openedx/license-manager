@@ -18,6 +18,7 @@ asgiref==3.5.2
     #   django
 astroid==2.11.7
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/test.txt
     #   pylint
     #   pylint-celery
@@ -37,11 +38,11 @@ billiard==3.6.4.0
     #   celery
 bleach==5.0.1
     # via readme-renderer
-boto3==1.24.51
+boto3==1.24.75
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.27.51
+botocore==1.27.75
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -51,7 +52,7 @@ celery==5.2.7
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2022.6.15
+certifi==2022.9.14
     # via
     #   -r requirements/test.txt
     #   requests
@@ -60,7 +61,7 @@ cffi==1.15.1
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==2.1.0
+charset-normalizer==2.1.1
     # via
     #   -r requirements/test.txt
     #   requests
@@ -105,11 +106,11 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==6.4.3
+coverage[toml]==6.4.4
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==37.0.4
+cryptography==38.0.1
     # via
     #   -r requirements/test.txt
     #   pyjwt
@@ -162,7 +163,7 @@ django-durationwidget==1.0.5
     # via -r requirements/test.txt
 django-dynamic-fixture==3.1.2
     # via -r requirements/test.txt
-django-extensions==3.2.0
+django-extensions==3.2.1
     # via -r requirements/test.txt
 django-filter==22.1
     # via -r requirements/test.txt
@@ -171,13 +172,13 @@ django-model-utils==4.2.0
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.1.0
+django-ses==3.1.2
     # via -r requirements/test.txt
 django-simple-history==3.0.0
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
-django-waffle==2.6.0
+django-waffle==3.0.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -222,18 +223,20 @@ edx-braze-client==0.1.4
     # via -r requirements/test.txt
 edx-celeryutils==1.2.1
     # via -r requirements/test.txt
-edx-django-utils==5.0.0
+edx-django-utils==5.0.1
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.0.1
+edx-drf-extensions==8.3.1
     # via
     #   -r requirements/test.txt
     #   edx-rbac
-edx-lint==5.2.4
-    # via -r requirements/test.txt
+edx-lint==5.2.5
+    # via
+    #   -c requirements/constraints.txt
+    #   -r requirements/test.txt
 edx-opaque-keys==2.3.0
     # via
     #   -r requirements/test.txt
@@ -248,7 +251,7 @@ edx-toggles==5.0.0
     # via -r requirements/test.txt
 factory-boy==3.2.1
     # via -r requirements/test.txt
-faker==14.0.0
+faker==14.2.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -259,7 +262,7 @@ future==0.18.2
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   pyjwkest
-idna==3.3
+idna==3.4
     # via
     #   -r requirements/test.txt
     #   requests
@@ -320,11 +323,11 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.1.1
     # via -r requirements/test.txt
-newrelic==7.16.0.178
+newrelic==8.1.0.180
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-oauthlib==3.2.0
+oauthlib==3.2.1
     # via
     #   -r requirements/test.txt
     #   requests-oauthlib
@@ -351,11 +354,11 @@ ply==3.11
     # via
     #   -r requirements/test.txt
     #   djangoql
-prompt-toolkit==3.0.30
+prompt-toolkit==3.0.31
     # via
     #   -r requirements/test.txt
     #   click-repl
-psutil==5.9.1
+psutil==5.9.2
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -371,7 +374,7 @@ pycryptodomex==3.15.0
     # via
     #   -r requirements/test.txt
     #   pyjwkest
-pygments==2.12.0
+pygments==2.13.0
     # via
     #   doc8
     #   readme-renderer
@@ -380,7 +383,7 @@ pyjwkest==1.4.2
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-pyjwt[crypto]==2.4.0
+pyjwt[crypto]==2.5.0
     # via
     #   -r requirements/test.txt
     #   drf-jwt
@@ -390,6 +393,7 @@ pyjwt[crypto]==2.4.0
     #   social-auth-core
 pylint==2.14.5
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/test.txt
     #   edx-lint
     #   pylint-celery
@@ -420,7 +424,7 @@ pyparsing==3.0.9
     # via
     #   -r requirements/test.txt
     #   packaging
-pytest==7.1.2
+pytest==7.1.3
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -458,7 +462,7 @@ pyyaml==6.0
     # via
     #   -r requirements/test.txt
     #   code-annotations
-readme-renderer==36.0
+readme-renderer==37.1
     # via -r requirements/doc.in
 redis==3.5.3
     # via
@@ -574,6 +578,10 @@ tomlkit==0.11.4
     # via
     #   -r requirements/test.txt
     #   pylint
+types-cryptography==3.3.23
+    # via
+    #   -r requirements/test.txt
+    #   pyjwt
 typing-extensions==4.3.0
     # via
     #   -r requirements/test.txt
@@ -588,7 +596,7 @@ uritemplate==4.1.1
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-urllib3==1.26.11
+urllib3==1.26.12
     # via
     #   -r requirements/test.txt
     #   botocore

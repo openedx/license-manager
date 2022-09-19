@@ -18,3 +18,5 @@ disable+ =
     consider-using-f-string,
     missing-module-docstring,
     missing-class-docstring,
+    useless-option-value,
+    unknown-option-value,
