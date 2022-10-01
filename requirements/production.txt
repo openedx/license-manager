@@ -22,11 +22,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.24.75
+boto3==1.24.84
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.27.75
+botocore==1.27.84
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -36,7 +36,7 @@ celery==5.2.7
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2022.9.14
+certifi==2022.9.24
     # via
     #   -r requirements/base.txt
     #   requests
@@ -137,7 +137,7 @@ django-model-utils==4.2.0
     #   -r requirements/base.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.1.2
+django-ses==3.2.0
     # via -r requirements/base.txt
 django-simple-history==3.0.0
     # via
@@ -151,7 +151,7 @@ django-waffle==3.0.0
     #   edx-toggles
 djangoql==0.17.1
     # via -r requirements/base.txt
-djangorestframework==3.13.1
+djangorestframework==3.14.0
     # via
     #   -r requirements/base.txt
     #   djangorestframework-csv
@@ -168,7 +168,7 @@ drf-jwt==1.19.2
     #   edx-drf-extensions
 drf-nested-routers==0.93.4
     # via -r requirements/base.txt
-drf-yasg==1.21.3
+drf-yasg==1.21.4
     # via
     #   -r requirements/base.txt
     #   edx-api-doc-tools
@@ -180,7 +180,7 @@ edx-braze-client==0.1.4
     # via -r requirements/base.txt
 edx-celeryutils==1.2.1
     # via -r requirements/base.txt
-edx-django-utils==5.0.1
+edx-django-utils==5.1.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -251,7 +251,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.1.1
     # via -r requirements/base.txt
-newrelic==8.1.0.180
+newrelic==8.2.0.181
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -405,7 +405,7 @@ social-auth-core==4.3.0
     #   -r requirements/base.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.4.2
+sqlparse==0.4.3
     # via
     #   -r requirements/base.txt
     #   django

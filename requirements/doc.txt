@@ -38,11 +38,11 @@ billiard==3.6.4.0
     #   celery
 bleach==5.0.1
     # via readme-renderer
-boto3==1.24.75
+boto3==1.24.84
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.27.75
+botocore==1.27.84
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -52,7 +52,7 @@ celery==5.2.7
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2022.9.14
+certifi==2022.9.24
     # via
     #   -r requirements/test.txt
     #   requests
@@ -106,7 +106,7 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==6.4.4
+coverage[toml]==6.5.0
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -172,7 +172,7 @@ django-model-utils==4.2.0
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.1.2
+django-ses==3.2.0
     # via -r requirements/test.txt
 django-simple-history==3.0.0
     # via
@@ -186,7 +186,7 @@ django-waffle==3.0.0
     #   edx-toggles
 djangoql==0.17.1
     # via -r requirements/test.txt
-djangorestframework==3.13.1
+djangorestframework==3.14.0
     # via
     #   -r requirements/test.txt
     #   djangorestframework-csv
@@ -211,7 +211,7 @@ drf-jwt==1.19.2
     #   edx-drf-extensions
 drf-nested-routers==0.93.4
     # via -r requirements/test.txt
-drf-yasg==1.21.3
+drf-yasg==1.21.4
     # via
     #   -r requirements/test.txt
     #   edx-api-doc-tools
@@ -223,7 +223,7 @@ edx-braze-client==0.1.4
     # via -r requirements/test.txt
 edx-celeryutils==1.2.1
     # via -r requirements/test.txt
-edx-django-utils==5.0.1
+edx-django-utils==5.1.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -251,7 +251,7 @@ edx-toggles==5.0.0
     # via -r requirements/test.txt
 factory-boy==3.2.1
     # via -r requirements/test.txt
-faker==14.2.0
+faker==15.0.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -323,7 +323,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.1.1
     # via -r requirements/test.txt
-newrelic==8.1.0.180
+newrelic==8.2.0.181
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -429,7 +429,7 @@ pytest==7.1.3
     #   -r requirements/test.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==3.0.0
+pytest-cov==4.0.0
     # via -r requirements/test.txt
 pytest-django==4.5.2
     # via -r requirements/test.txt
@@ -462,7 +462,7 @@ pyyaml==6.0
     # via
     #   -r requirements/test.txt
     #   code-annotations
-readme-renderer==37.1
+readme-renderer==37.2
     # via -r requirements/doc.in
 redis==3.5.3
     # via
@@ -536,7 +536,7 @@ social-auth-core==4.3.0
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sphinx==5.1.1
+sphinx==5.2.3
     # via
     #   -r requirements/doc.in
     #   edx-sphinx-theme
@@ -552,7 +552,7 @@ sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
-sqlparse==0.4.2
+sqlparse==0.4.3
     # via
     #   -r requirements/test.txt
     #   django
@@ -574,7 +574,7 @@ tomli==2.0.1
     #   doc8
     #   pylint
     #   pytest
-tomlkit==0.11.4
+tomlkit==0.11.5
     # via
     #   -r requirements/test.txt
     #   pylint
