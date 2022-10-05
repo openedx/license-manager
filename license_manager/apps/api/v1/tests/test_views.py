@@ -2743,6 +2743,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         use_enterprise_customer=True,
         subscription_uuid=None,
         bulk_enrollment_job_uuid=None,
+        enroll_all=None
     ):
         """
         Helper to add the appropriate query parameters to the base url if specified.
@@ -2756,6 +2757,8 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
             query_params['subscription_uuid'] = subscription_uuid
         if bulk_enrollment_job_uuid:
             query_params['bulk_enrollment_job_uuid'] = bulk_enrollment_job_uuid
+        if enroll_all:
+            query_params['enroll_all'] = enroll_all
         return url + '/?' + query_params.urlencode()
 
     def test_bulk_enroll_with_missing_role(self):
@@ -2803,6 +2806,125 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         mock_send_task.assert_called()
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json().get('job_id')
+
+    @mock.patch('license_manager.apps.api.models.current_app.send_task')
+    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
+    def test_bulk_enroll_all(self, mock_get_decoded_jwt, mock_send_task):
+        """
+        Verify the view returns the correct response for a course in the user's subscription's catalog.
+        """
+        self._assign_learner_roles()
+        mock_get_decoded_jwt.return_value = self._decoded_jwt
+        data = {
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params(subscription_uuid=self.active_subscription_for_customer.uuid, enroll_all=True)
+        response = self.api_client.post(url, data)
+
+        mock_send_task.assert_called()
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json().get('job_id')
+
+    @mock.patch('license_manager.apps.api.models.uuid4')
+    @mock.patch('license_manager.apps.api.models.current_app.send_task')
+    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
+    def test_bulk_enroll_all_ignores_revoked_licenses(
+        self,
+        mock_get_decoded_jwt,
+        mock_send_task,
+        mock_enrollment_job_uuid
+    ):
+        """
+        Verify the view returns the correct response for a course in the user's subscription's catalog.
+        """
+        job_uuid = uuid4()
+        mock_enrollment_job_uuid.return_value = job_uuid
+        inactive_user = UserFactory()
+        LicenseFactory.create(
+            status=constants.REVOKED,
+            user_email=inactive_user.email,
+            subscription_plan=self.active_subscription_for_customer,
+        )
+        self._assign_learner_roles()
+        mock_get_decoded_jwt.return_value = self._decoded_jwt
+        data = {
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params(subscription_uuid=self.active_subscription_for_customer.uuid, enroll_all=True)
+        response = self.api_client.post(url, data)
+        mock_send_task.assert_called_once_with(
+            'license_manager.apps.api.tasks.enterprise_enrollment_license_subsidy_task',
+            (
+                str(job_uuid),
+                str(self.enterprise_customer_uuid),
+                [self.user.email],
+                [self.course_key],
+                True,
+                str(self.active_subscription_for_customer.uuid),
+            ),
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json().get('job_id')
+
+    @mock.patch('license_manager.apps.api.models.uuid4')
+    @mock.patch('license_manager.apps.api.models.current_app.send_task')
+    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
+    def test_bulk_enroll_all_uses_assigned_and_active_licenses(
+        self,
+        mock_get_decoded_jwt,
+        mock_send_task,
+        mock_enrollment_job_uuid
+    ):
+        """
+        Verify the view returns the correct response for a course in the user's subscription's catalog.
+        """
+        job_uuid = uuid4()
+        mock_enrollment_job_uuid.return_value = job_uuid
+        assigned_user = UserFactory()
+        LicenseFactory.create(
+            status=constants.ASSIGNED,
+            user_email=assigned_user.email,
+            subscription_plan=self.active_subscription_for_customer,
+        )
+        self._assign_learner_roles()
+        mock_get_decoded_jwt.return_value = self._decoded_jwt
+        data = {
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params(subscription_uuid=self.active_subscription_for_customer.uuid, enroll_all=True)
+        response = self.api_client.post(url, data)
+        mock_send_task.assert_called_once_with(
+            'license_manager.apps.api.tasks.enterprise_enrollment_license_subsidy_task',
+            (
+                str(job_uuid),
+                str(self.enterprise_customer_uuid),
+                [self.user.email, assigned_user.email],
+                [self.course_key],
+                True,
+                str(self.active_subscription_for_customer.uuid),
+            ),
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json().get('job_id')
+
+    def test_bulk_licensed_enrollment_with_enroll_all_no_sub_uuid(self):
+        """
+        Test that we properly handle requests with enroll_all params and no sub uuid
+        """
+        self._assign_learner_roles()
+        data = {
+            'emails': ['ayylmao@foobar.com'],
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params(enroll_all=True)
+        response = self.api_client.post(url, data)
+        assert response.status_code == 400
+
+        assert response.json() == "Missing the following required request data: ['subscription_id']"
 
     def test_bulk_licensed_enrollment_with_missing_emails(self):
         """

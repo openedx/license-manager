@@ -559,7 +559,7 @@ def _send_bulk_enrollment_results_email(
         raise ex
 
 
-@shared_task(base=LoggedTask)
+@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def enterprise_enrollment_license_subsidy_task(
     bulk_enrollment_job_uuid,
     enterprise_customer_uuid,

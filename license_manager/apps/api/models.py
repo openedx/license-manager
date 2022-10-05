@@ -16,6 +16,8 @@ from license_manager.apps.api.utils import (
     create_presigned_url,
     upload_file_to_s3,
 )
+from license_manager.apps.subscriptions import constants
+from license_manager.apps.subscriptions.models import License
 
 
 logger = logging.getLogger(__name__)
@@ -59,15 +61,29 @@ class BulkEnrollmentJob(TimeStampedModel):
         user_emails,
         course_run_keys,
         notify_learners,
-        subscription_uuid=None
+        subscription_uuid=None,
+        enroll_all=None,
     ):
         """
         Creates an asynchronous ``enterprise_enrollment_license_subsidy_task``
         for the given batch of (users, courses).
         """
+        # If enroll all is supplied, a subscription uuid must be provided.
+        if enroll_all:
+            if subscription_uuid:
+                user_emails = list(License.objects.filter(
+                    subscription_plan__in=[subscription_uuid],
+                    status__in=[constants.ACTIVATED, constants.ASSIGNED]
+                ).values_list('user_email', flat=True))
+            else:
+                raise Exception(
+                    'create_bulk_enrollment_job requires subscription_uuid when enroll_all is provided'
+                )
+
         bulk_enrollment_job = cls(
             enterprise_customer_uuid=enterprise_customer_uuid,
             lms_user_id=enqueuing_user_id,
+            uuid=uuid4()
         )
         bulk_enrollment_job.save()
         logger.info(
