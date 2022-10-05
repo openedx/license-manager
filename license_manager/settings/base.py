@@ -418,18 +418,3 @@ LICENSE_REVERT_SNAPSHOT_TIMESTAMP = '9999-12-31 23:59:59'
 
 # Django Admin Settings
 VALIDATE_FORM_EXTERNAL_FIELDS = True
-
-################### Kafka Related Settings ##############################
-KAFKA_BOOTSTRAP_SERVER = ''
-KAFKA_API_KEY = ''
-KAFKA_API_SECRET = ''
-SCHEMA_REGISTRY_API_KEY = ''
-SCHEMA_REGISTRY_API_SECRET=''
-SCHEMA_REGISTRY_URL=''
-
-
-KAFKA_PARTITIONS_PER_TOPIC=1
-# This number is dictated by the cluster setup
-KAFKA_REPLICATION_FACTOR_PER_TOPIC=3
-
-KAFKA_ENABLED = False
