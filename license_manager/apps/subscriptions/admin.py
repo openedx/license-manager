@@ -144,7 +144,7 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
 
 
 @admin.register(SubscriptionPlan)
-class SubscriptionPlanAdmin(SimpleHistoryAdmin):
+class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
     form = SubscriptionPlanForm
     # This is not to be confused with readonly_fields of the BaseModelAdmin class
     read_only_fields = [
@@ -417,9 +417,10 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
 
 
 @admin.register(SubscriptionPlanRenewal)
-class SubscriptionPlanRenewalAdmin(admin.ModelAdmin):
+class SubscriptionPlanRenewalAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     form = SubscriptionPlanRenewalForm
-    readonly_fields = ['renewed_subscription_plan']
+    readonly_fields = ['renewed_subscription_plan', 'processed', 'processed_datetime']
+    raw_id_fields = ['prior_subscription_plan']
     list_display = (
         'get_prior_subscription_plan_title',
         'effective_date',
