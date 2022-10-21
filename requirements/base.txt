@@ -16,9 +16,9 @@ backoff==1.10.0
     #   analytics-python
 billiard==3.6.4.0
     # via celery
-boto3==1.24.75
+boto3==1.24.91
     # via django-ses
-botocore==1.27.75
+botocore==1.27.91
     # via
     #   boto3
     #   s3transfer
@@ -27,7 +27,7 @@ celery==5.2.7
     #   -r requirements/base.in
     #   django-celery-results
     #   edx-celeryutils
-certifi==2022.9.14
+certifi==2022.9.24
     # via requests
 cffi==1.15.1
     # via
@@ -65,7 +65,7 @@ defusedxml==0.7.1
     # via
     #   python3-openid
     #   social-auth-core
-django==3.2.15
+django==3.2.16
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.in
@@ -108,7 +108,7 @@ django-model-utils==4.2.0
     #   -r requirements/base.in
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.1.2
+django-ses==3.2.0
     # via -r requirements/base.in
 django-simple-history==3.0.0
     # via
@@ -122,7 +122,7 @@ django-waffle==3.0.0
     #   edx-toggles
 djangoql==0.17.1
     # via -r requirements/base.in
-djangorestframework==3.13.1
+djangorestframework==3.14.0
     # via
     #   -r requirements/base.in
     #   djangorestframework-csv
@@ -137,7 +137,7 @@ drf-jwt==1.19.2
     # via edx-drf-extensions
 drf-nested-routers==0.93.4
     # via -r requirements/base.in
-drf-yasg==1.21.3
+drf-yasg==1.21.4
     # via edx-api-doc-tools
 edx-api-doc-tools==1.6.0
     # via -r requirements/base.in
@@ -147,7 +147,7 @@ edx-braze-client==0.1.4
     # via -r requirements/base.in
 edx-celeryutils==1.2.1
     # via -r requirements/base.in
-edx-django-utils==5.0.1
+edx-django-utils==5.2.0
     # via
     #   -r requirements/base.in
     #   edx-drf-extensions
@@ -193,7 +193,7 @@ monotonic==1.6
     # via analytics-python
 mysqlclient==2.1.1
     # via -r requirements/base.in
-newrelic==8.1.0.180
+newrelic==8.2.1
     # via edx-django-utils
 oauthlib==3.2.1
     # via
@@ -237,7 +237,7 @@ python-slugify==6.1.2
     # via code-annotations
 python3-openid==3.2.0
     # via social-auth-core
-pytz==2022.2.1
+pytz==2022.4
     # via
     #   -r requirements/base.in
     #   celery
@@ -293,9 +293,9 @@ social-auth-core==4.3.0
     # via
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.4.2
+sqlparse==0.4.3
     # via django
-stevedore==4.0.0
+stevedore==4.0.1
     # via
     #   code-annotations
     #   edx-django-utils
@@ -321,5 +321,5 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.5
     # via prompt-toolkit
-zipp==3.8.1
+zipp==3.9.0
     # via -r requirements/base.in
