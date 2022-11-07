@@ -29,11 +29,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.24.91
+boto3==1.25.5
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.27.91
+botocore==1.28.5
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -112,7 +112,7 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-dill==0.3.5.1
+dill==0.3.6
     # via pylint
 django==3.2.16
     # via
@@ -160,7 +160,7 @@ django-model-utils==4.2.0
     #   -r requirements/base.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.2.0
+django-ses==3.2.2
     # via -r requirements/base.txt
 django-simple-history==3.0.0
     # via
@@ -227,6 +227,8 @@ edx-rest-api-client==5.5.0
     # via -r requirements/base.txt
 edx-toggles==5.0.0
     # via -r requirements/base.txt
+exceptiongroup==1.0.0
+    # via pytest
 factory-boy==3.2.1
     # via -r requirements/test.in
 faker==15.1.1
@@ -272,7 +274,7 @@ kombu==5.2.4
     # via
     #   -r requirements/base.txt
     #   celery
-lazy-object-proxy==1.7.1
+lazy-object-proxy==1.8.0
     # via astroid
 markupsafe==2.1.1
     # via
@@ -286,11 +288,11 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.1.1
     # via -r requirements/base.txt
-newrelic==8.2.1
+newrelic==8.4.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-oauthlib==3.2.1
+oauthlib==3.2.2
     # via
     #   -r requirements/base.txt
     #   requests-oauthlib
@@ -300,7 +302,7 @@ packaging==21.3
     #   -r requirements/base.txt
     #   drf-yasg
     #   pytest
-pbr==5.10.0
+pbr==5.11.0
     # via
     #   -r requirements/base.txt
     #   stevedore
@@ -316,12 +318,10 @@ prompt-toolkit==3.0.31
     # via
     #   -r requirements/base.txt
     #   click-repl
-psutil==5.9.2
+psutil==5.9.3
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-py==1.11.0
-    # via pytest
 pycparser==2.21
     # via
     #   -r requirements/base.txt
@@ -334,7 +334,7 @@ pyjwkest==1.4.2
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-pyjwt[crypto]==2.5.0
+pyjwt[crypto]==2.6.0
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -369,7 +369,7 @@ pyparsing==3.0.9
     # via
     #   -r requirements/base.txt
     #   packaging
-pytest==7.1.3
+pytest==7.2.0
     # via
     #   pytest-cov
     #   pytest-django
@@ -393,7 +393,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-pytz==2022.4
+pytz==2022.6
     # via
     #   -r requirements/base.txt
     #   celery
@@ -428,7 +428,7 @@ ruamel-yaml==0.17.21
     # via
     #   -r requirements/base.txt
     #   drf-yasg
-ruamel-yaml-clib==0.2.6
+ruamel-yaml-clib==0.2.7
     # via
     #   -r requirements/base.txt
     #   ruamel-yaml
@@ -474,7 +474,7 @@ sqlparse==0.4.3
     # via
     #   -r requirements/base.txt
     #   django
-stevedore==4.0.1
+stevedore==4.1.0
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -489,12 +489,8 @@ tomli==2.0.1
     #   coverage
     #   pylint
     #   pytest
-tomlkit==0.11.5
+tomlkit==0.11.6
     # via pylint
-types-cryptography==3.3.23
-    # via
-    #   -r requirements/base.txt
-    #   pyjwt
 typing-extensions==4.4.0
     # via
     #   astroid
@@ -527,7 +523,7 @@ wrapt==1.11.2
     # via
     #   -c requirements/constraints.txt
     #   astroid
-zipp==3.9.0
+zipp==3.10.0
     # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:
