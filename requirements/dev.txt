@@ -32,11 +32,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.25.5
+boto3==1.26.9
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.28.5
+botocore==1.29.9
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -110,7 +110,7 @@ coverage[toml]==6.5.0
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==38.0.1
+cryptography==38.0.3
     # via
     #   -r requirements/validation.txt
     #   pyjwt
@@ -223,7 +223,7 @@ edx-api-doc-tools==1.6.0
     # via -r requirements/validation.txt
 edx-auth-backends==4.1.0
     # via -r requirements/validation.txt
-edx-braze-client==0.1.4
+edx-braze-client==0.1.5
     # via -r requirements/validation.txt
 edx-celeryutils==1.2.1
     # via -r requirements/validation.txt
@@ -253,13 +253,13 @@ edx-rest-api-client==5.5.0
     # via -r requirements/validation.txt
 edx-toggles==5.0.0
     # via -r requirements/validation.txt
-exceptiongroup==1.0.0
+exceptiongroup==1.0.3
     # via
     #   -r requirements/validation.txt
     #   pytest
 factory-boy==3.2.1
     # via -r requirements/validation.txt
-faker==15.1.1
+faker==15.3.2
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -366,9 +366,9 @@ pep517==0.13.0
     # via
     #   -r requirements/pip-tools.txt
     #   build
-pip-tools==6.9.0
+pip-tools==6.10.0
     # via -r requirements/pip-tools.txt
-platformdirs==2.5.2
+platformdirs==2.5.4
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -385,11 +385,11 @@ polib==1.1.1
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
-prompt-toolkit==3.0.31
+prompt-toolkit==3.0.32
     # via
     #   -r requirements/validation.txt
     #   click-repl
-psutil==5.9.3
+psutil==5.9.4
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -442,7 +442,7 @@ pylint-plugin-utils==0.7
     #   -r requirements/validation.txt
     #   pylint-celery
     #   pylint-django
-pymongo==3.12.3
+pymongo==3.13.0
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
@@ -532,7 +532,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-simplejson==3.17.6
+simplejson==3.18.0
     # via -r requirements/validation.txt
 six==1.16.0
     # via
@@ -570,7 +570,7 @@ sqlparse==0.4.3
     #   -r requirements/validation.txt
     #   django
     #   django-debug-toolbar
-stevedore==4.1.0
+stevedore==4.1.1
     # via
     #   -r requirements/validation.txt
     #   code-annotations
@@ -623,7 +623,7 @@ wcwidth==0.2.5
     # via
     #   -r requirements/validation.txt
     #   prompt-toolkit
-wheel==0.37.1
+wheel==0.38.4
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
