@@ -144,7 +144,7 @@ dill==0.3.5.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==3.2.15
+django==3.2.16
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
