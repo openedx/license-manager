@@ -12,7 +12,7 @@ amqp==5.1.1
     #   kombu
 analytics-python==1.4.0
     # via -r requirements/test.txt
-asgiref==3.5.2
+asgiref==3.6.0
     # via
     #   -r requirements/test.txt
     #   django
@@ -22,7 +22,7 @@ astroid==2.11.7
     #   -r requirements/test.txt
     #   pylint
     #   pylint-celery
-attrs==22.1.0
+attrs==22.2.0
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -38,11 +38,11 @@ billiard==3.6.4.0
     #   celery
 bleach==5.0.1
     # via readme-renderer
-boto3==1.26.33
+boto3==1.26.41
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.29.33
+botocore==1.29.41
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -106,7 +106,7 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.0.0
+coverage[toml]==7.0.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -197,7 +197,7 @@ djangorestframework==3.14.0
     #   edx-drf-extensions
 djangorestframework-csv==2.1.1
     # via -r requirements/test.txt
-doc8==1.0.0
+doc8==1.1.1
     # via -r requirements/doc.in
 docutils==0.19
     # via
@@ -229,7 +229,7 @@ edx-django-utils==5.2.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.3.1
+edx-drf-extensions==8.4.0
     # via
     #   -r requirements/test.txt
     #   edx-rbac
@@ -249,7 +249,7 @@ edx-sphinx-theme==3.0.0
     # via -r requirements/doc.in
 edx-toggles==5.0.0
     # via -r requirements/test.txt
-exceptiongroup==1.0.4
+exceptiongroup==1.1.0
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -282,7 +282,7 @@ iniconfig==1.1.1
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==5.11.3
+isort==5.11.4
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -346,7 +346,7 @@ pbr==5.11.0
     # via
     #   -r requirements/test.txt
     #   stevedore
-platformdirs==2.6.0
+platformdirs==2.6.2
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -532,7 +532,7 @@ social-auth-core==4.3.0
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sphinx==5.3.0
+sphinx==6.0.0
     # via
     #   -r requirements/doc.in
     #   edx-sphinx-theme

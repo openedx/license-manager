@@ -13,7 +13,7 @@ analytics-python==1.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-asgiref==3.5.2
+asgiref==3.6.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -25,7 +25,7 @@ astroid==2.11.7
     #   -r requirements/test.txt
     #   pylint
     #   pylint-celery
-attrs==22.1.0
+attrs==22.2.0
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -39,12 +39,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.26.33
+boto3==1.26.41
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.29.33
+botocore==1.29.41
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -121,7 +121,7 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.0.0
+coverage[toml]==7.0.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -275,7 +275,7 @@ edx-django-utils==5.2.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.3.1
+edx-drf-extensions==8.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -304,7 +304,7 @@ edx-toggles==5.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-exceptiongroup==1.0.4
+exceptiongroup==1.1.0
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -336,7 +336,7 @@ iniconfig==1.1.1
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==5.11.3
+isort==5.11.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -418,7 +418,7 @@ pbr==5.11.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   stevedore
-platformdirs==2.6.0
+platformdirs==2.6.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
