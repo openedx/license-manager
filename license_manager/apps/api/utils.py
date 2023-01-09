@@ -151,11 +151,17 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
     enterprise_slug = customer_agreement.enterprise_customer_slug
 
     subscription_plan_filter = [subscription_uuid] if subscription_uuid else customer_agreement.subscriptions.all()
+
+    logger.info('[check_missing_licenses] Starting to iterate over all `user_emails`...')
+
     for email in set(user_emails):
+        logger.info(f'[check_missing_licenses] handling user email {email}')
         filtered_licenses = License.objects.filter(
             subscription_plan__in=subscription_plan_filter,
             user_email=email,
         )
+
+        logger.info('[check_missing_licenses] user licenses for email %s: %s', email, filtered_licenses)
 
         # order licenses by their associated subscription plan expiration date
         ordered_licenses_by_expiration = sorted(
@@ -163,9 +169,11 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
             key=lambda user_license: user_license.subscription_plan.expiration_date,
             reverse=True,
         )
+
         for course_key in set(course_run_keys):
             plan_found = False
             for user_license in ordered_licenses_by_expiration:
+                logger.info('[check_missing_licenses] handling user license %s', str(user_license.uuid))
                 subscription_plan = user_license.subscription_plan
                 plan_key = f'{subscription_plan.uuid}_{course_key}'
                 if plan_key in subscription_plan_course_map:
@@ -173,7 +181,11 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
                 else:
                     plan_contains_content = subscription_plan.contains_content([course_key])
                     subscription_plan_course_map[plan_key] = plan_contains_content
-
+                logger.info(
+                    '[check_missing_licenses] does plan (%s) contain content?: %s',
+                    str(subscription_plan.uuid),
+                    plan_contains_content,
+                )
                 if plan_contains_content:
                     this_enrollment = {
                         'email': email,
@@ -189,6 +201,7 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
                     licensed_enrollment_info.append(this_enrollment)
                     plan_found = True
             if not plan_found:
+                logger.info('[check_missing_licenses] subscription plan not found plan')
                 if missing_subscriptions.get(email):
                     missing_subscriptions[email].append(course_key)
                 else:
