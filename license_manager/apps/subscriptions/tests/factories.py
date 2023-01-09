@@ -73,8 +73,8 @@ class ProductFactory(factory.django.DjangoModelFactory):
     """
     Test factory for the `Product` model.
     """
-    name = 'Test Product'
-    description = 'Test Product'
+    name = factory.LazyAttribute(lambda p: 'Test Product {} {}'.format(FAKER.word(), random.randint(0, 1000000)))
+    description = factory.LazyAttribute(lambda p: 'Test Product {} {}'.format(FAKER.word(), random.randint(0, 1000000)))
     plan_type = factory.SubFactory(PlanTypeFactory)
     netsuite_id = factory.Faker('random_int', min=0, max=9999999)
 

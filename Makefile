@@ -164,7 +164,7 @@ open-devstack: ## open a shell on the server started by start-devstack
 	docker exec -it license-manager /edx/app/license_manager/devstack.sh open
 
 pkg-devstack: ## build the license-manager image from the latest configuration and code
-	docker build -t license-manager:latest -f docker/build/license_manager/Dockerfile git://github.com/edx/configuration
+	docker build -t license-manager:latest -f docker/build/license_manager/Dockerfile git://github.com/openedx/configuration
 
 detect_changed_source_translations: ## check if translation files are up-to-date
 	cd license_manager && i18n_tool changed

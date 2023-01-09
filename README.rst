@@ -12,11 +12,11 @@ Prerequisites
 ^^^^^^^^^^^^^
 - Set the ``DEVSTACK_WORKSPACE`` env variable (either locally or in your shell config file: ``.bash_rc``, ``.zshrc``, or equivalent) to the folder which contains this repo and the `devstack` repo.
   e.g ``export DEVSTACK_WORKSPACE=/home/<your_user>/edx``
-- Set up `devstack <https://github.com/edx/devstack>`_
+- Set up `devstack <https://github.com/openedx/devstack>`_
 
 Quick Setup
 ^^^^^^^^^^^
-`More detailed setup instructions <https://github.com/edx/license-manager/blob/master/docs/getting_started.rst>`_
+`More detailed setup instructions <https://github.com/openedx/license-manager/blob/master/docs/getting_started.rst>`_
 
 ::
 
@@ -63,21 +63,21 @@ Documentation
 .. |ReadtheDocs| image:: https://readthedocs.org/projects/license-manager/badge/?version=latest
 .. _ReadtheDocs: http://license-manager.readthedocs.io/en/latest/
 
-`Documentation <https://license-manager.readthedocs.io/en/latest/>`_ is hosted on Read the Docs. The source is hosted in this repo's `docs <https://github.com/edx/license-manager/tree/master/docs>`_ directory. To contribute, please open a PR against this repo.
+`Documentation <https://license-manager.readthedocs.io/en/latest/>`_ is hosted on Read the Docs. The source is hosted in this repo's `docs <https://github.com/openedx/license-manager/tree/master/docs>`_ directory. To contribute, please open a PR against this repo.
 
-For instructions on starting local development, see `Getting Started <https://github.com/edx/license-manager/blob/master/docs/getting_started.rst>`_.
+For instructions on starting local development, see `Getting Started <https://github.com/openedx/license-manager/blob/master/docs/getting_started.rst>`_.
 
 License
 -------
 
 The code in this repository is licensed under version 3 of the AGPL unless otherwise noted. Please see the LICENSE_ file for details.
 
-.. _LICENSE: https://github.com/edx/license-manager/blob/master/LICENSE
+.. _LICENSE: https://github.com/openedx/license-manager/blob/master/LICENSE
 
 How To Contribute
 -----------------
 
-Contributions are welcome. Please read `How To Contribute <https://github.com/edx/edx-platform/blob/master/CONTRIBUTING.rst>`_ for details. Even though it was written with ``edx-platform`` in mind, these guidelines should be followed for Open edX code in general.
+Contributions are welcome. Please read `How To Contribute <https://github.com/openedx/edx-platform/blob/master/CONTRIBUTING.rst>`_ for details. Even though it was written with ``edx-platform`` in mind, these guidelines should be followed for Open edX code in general.
 
 Reporting Security Issues
 -------------------------
