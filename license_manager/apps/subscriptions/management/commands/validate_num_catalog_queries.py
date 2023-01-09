@@ -20,8 +20,22 @@ class Command(BaseCommand):
         'all SubscriptionPlans in the license-manager service exist in the enterprise-catalog service.'
     )
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--catalog-id-reporting-threshold',
+            action='store',
+            dest='catalog_id_reporting_threshold',
+            help=(
+                'The number of catalog uuids associated with an unaccounted-for catalog query, '
+                'below which number such catalog uuids will be printed in an error message. '
+                'Defaults to 50.'
+            ),
+            type=int,
+            default=50,
+        )
+
     def handle(self, *args, **options):
-        # Filter any subscriptions that have expired or are FIUO
+        # Filter any subscriptions that have expired or are for internal use only.
         customer_subs = SubscriptionPlan.objects.filter(
             expiration_processed=False,
             for_internal_use_only=False,
@@ -30,28 +44,41 @@ class Command(BaseCommand):
             str(uuid) for uuid in customer_subs.values_list('enterprise_catalog_uuid', flat=True).distinct()
         ]
 
-        # Batch the catalog UUIDs and aggregate API response data in a set
+        # Batch the catalog UUIDs and aggregate API response data into a set
+        # keyed by catalog query id and valued by lists of catalogs that
+        # use that key as their catalog query.
         catalog_uuids_by_catalog_query_id = defaultdict(list)
         for catalog_uuid_batch in chunks(distinct_catalog_uuids, constants.VALIDATE_NUM_CATALOG_QUERIES_BATCH_SIZE):
             response = EnterpriseCatalogApiClient().get_distinct_catalog_queries(catalog_uuid_batch)
             query_ids = response['catalog_uuids_by_catalog_query_id']
             for key in query_ids.keys():
                 catalog_uuids_by_catalog_query_id[key] += query_ids[key]
-        distinct_catalog_query_ids = catalog_uuids_by_catalog_query_id.keys()
 
-        # Calculate the number of customer types using the distinct number of Netsuite
-        # product IDs found among customer subscriptions. If the number of distinct catalog
+        distinct_catalog_query_ids = catalog_uuids_by_catalog_query_id.keys()
+        # Calculate the number of customer types using the distinct number of
+        # subscription Products found among customer subscriptions.
+        # If the number of distinct catalog
         # query IDs doesn't match the number of customer types, log an error.
-        num_customer_types = customer_subs.values_list('product__netsuite_id', flat=True).distinct().count()
-        summary = '{} distinct Subscription Catalog Queries found, {} expected.'.format(
-            len(distinct_catalog_query_ids),
-            num_customer_types,
+        num_distinct_products = customer_subs.values_list('product__name', flat=True).distinct().count()
+        summary = (
+            f'{len(distinct_catalog_query_ids)} distinct Subscription Catalog Queries found, '
+            f'{num_distinct_products} expected based on the number of distinct subscription products.'
         )
 
-        if len(distinct_catalog_query_ids) != num_customer_types:
-            error_msg = 'ERROR: {}\nCatalogQuery to CustomerCatalog(s) mapping: {}'.format(
-                summary,
-                dict(catalog_uuids_by_catalog_query_id),
+        if len(distinct_catalog_query_ids) != num_distinct_products:
+            # We typically only see a handful of catalogs that relate
+            # to some unaccounted-for catalog query, so we'll just log those,
+            # instead of logging the potentially thousands of catalog uuids
+            # that relate to accounted-for catalog queries.
+            suspicious_catalog_query_ids = {
+                catalog_query_id: catalog_list
+                for catalog_query_id, catalog_list
+                in catalog_uuids_by_catalog_query_id.items()
+                if len(catalog_list) < options['catalog_id_reporting_threshold']
+            }
+            error_msg = (
+                f'ERROR: {summary}\n'
+                f'Suspicious CatalogQueries and their related catalog identifiers: {suspicious_catalog_query_ids}'
             )
             logger.error(error_msg)
             raise InvalidCatalogQueryMappingError

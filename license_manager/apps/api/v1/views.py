@@ -1300,7 +1300,6 @@ class LicenseSubsidyView(LicenseBaseView):
         if not self.requested_course_key:
             msg = 'You must supply the course_key query parameter'
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)
-
         customer_agreement = utils.get_customer_agreement_from_request_enterprise_uuid(request)
         user_activated_licenses = License.objects.filter(
             subscription_plan__in=customer_agreement.subscriptions.all(),
@@ -1308,11 +1307,13 @@ class LicenseSubsidyView(LicenseBaseView):
             status=constants.ACTIVATED,
         )
         # order licenses by their associated subscription plan expiration date
-        ordered_licenses_by_expiration = sorted(
-            user_activated_licenses,
-            key=lambda user_license: user_license.subscription_plan.expiration_date,
-            reverse=True,
-        )
+        ordered_licenses_by_expiration = []
+        if user_activated_licenses:
+            ordered_licenses_by_expiration = sorted(
+                user_activated_licenses,
+                key=lambda user_license: user_license.subscription_plan.expiration_date,
+                reverse=True,
+            )
 
         # iterate through the ordered licenses to return the license subsidy data for the user's license
         # which is "valid" for the specified content key and expires furthest in the future.
@@ -1342,7 +1343,6 @@ class LicenseSubsidyView(LicenseBaseView):
                 'subsidy_checksum': checksum_for_license,
             })
             return Response(ordered_data)
-
         # user does not have an activated license that is applicable to the specified content key.
         msg = (
             'This course was not found in the subscription plan catalogs associated with the '
