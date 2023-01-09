@@ -180,7 +180,7 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
                     plan_contains_content = subscription_plan_course_map.get(plan_key)
                 else:
                     plan_contains_content = subscription_plan.contains_content([course_key])
-                    subscription_plan_course_map[plan_key] = plan_contains_content                
+                    subscription_plan_course_map[plan_key] = plan_contains_content
                 logger.info('[check_missing_licenses] does plan (%s) contain content?: %s', str(subscription_plan.uuid), plan_contains_content)
                 if plan_contains_content:
                     this_enrollment = {
