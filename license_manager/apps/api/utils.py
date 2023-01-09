@@ -151,7 +151,7 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
     enterprise_slug = customer_agreement.enterprise_customer_slug
 
     subscription_plan_filter = [subscription_uuid] if subscription_uuid else customer_agreement.subscriptions.all()
-    
+
     logger.info('[check_missing_licenses] Starting to iterate over all `user_emails`...')
 
     for email in set(user_emails):
@@ -181,7 +181,11 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
                 else:
                     plan_contains_content = subscription_plan.contains_content([course_key])
                     subscription_plan_course_map[plan_key] = plan_contains_content
-                logger.info('[check_missing_licenses] does plan (%s) contain content?: %s', str(subscription_plan.uuid), plan_contains_content)
+                logger.info(
+                    '[check_missing_licenses] does plan (%s) contain content?: %s',
+                    str(subscription_plan.uuid),
+                    plan_contains_content,
+                )
                 if plan_contains_content:
                     this_enrollment = {
                         'email': email,
