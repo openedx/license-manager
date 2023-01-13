@@ -23,6 +23,13 @@ results_dir = tempfile.TemporaryDirectory()
 CELERY_RESULT_BACKEND = f'file://{results_dir.name}'
 # END CELERY
 
+# Increase throttle thresholds for tests
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
+    'anon': '2400/minute',
+    'user_burst': '120/second',
+    'user_sustained': '2400/minute',
+}
+
 # Make some loggers less noisy (useful during test failure)
 import logging
 

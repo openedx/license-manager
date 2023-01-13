@@ -138,6 +138,16 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'PAGE_SIZE': 100,
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'license_manager.apps.core.throttles.UserBurstRateThrottle',
+        'license_manager.apps.core.throttles.UserSustainedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '60/minute',
+        'user_burst': '6/second',
+        'user_sustained': '180/minute',
+    }
 }
 
 # Internationalization
