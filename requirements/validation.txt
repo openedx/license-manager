@@ -39,12 +39,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.26.41
+boto3==1.26.50
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.29.41
+botocore==1.29.50
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -67,7 +67,7 @@ cffi==1.15.1
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==2.1.1
+charset-normalizer==3.0.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -121,11 +121,11 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.0.1
+coverage[toml]==7.0.5
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==38.0.4
+cryptography==39.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -310,13 +310,13 @@ exceptiongroup==1.1.0
     #   pytest
 factory-boy==3.2.1
     # via -r requirements/test.txt
-faker==15.3.4
+faker==16.4.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
 freezegun==1.2.2
     # via -r requirements/test.txt
-future==0.18.2
+future==0.18.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -332,7 +332,7 @@ inflection==0.5.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   drf-yasg
-iniconfig==1.1.1
+iniconfig==2.0.0
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -368,7 +368,7 @@ kombu==5.2.4
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-lazy-object-proxy==1.8.0
+lazy-object-proxy==1.9.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -403,7 +403,7 @@ oauthlib==3.2.2
     #   -r requirements/test.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==22.0
+packaging==23.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -413,7 +413,7 @@ path==16.6.0
     # via edx-i18n-tools
 pathlib2==2.3.7.post1
     # via -r requirements/validation.in
-pbr==5.11.0
+pbr==5.11.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -456,7 +456,7 @@ pycryptodomex==3.16.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pyjwkest
-pydocstyle==6.1.1
+pydocstyle==6.2.3
     # via -r requirements/quality.txt
 pyjwkest==1.4.2
     # via
@@ -507,7 +507,7 @@ pynacl==1.5.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==7.2.0
+pytest==7.2.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -535,7 +535,7 @@ python3-openid==3.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-pytz==2022.7
+pytz==2022.7.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -555,7 +555,7 @@ redis==3.5.3
     #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-requests==2.28.1
+requests==2.28.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -596,7 +596,7 @@ semantic-version==2.10.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-simplejson==3.18.0
+simplejson==3.18.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -681,7 +681,7 @@ uritemplate==4.1.1
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-urllib3==1.26.13
+urllib3==1.26.14
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
