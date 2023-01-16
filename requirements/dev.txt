@@ -10,7 +10,7 @@ amqp==5.1.1
     #   kombu
 analytics-python==1.4.0
     # via -r requirements/validation.txt
-asgiref==3.6.0
+asgiref==3.5.2
     # via
     #   -r requirements/validation.txt
     #   django
@@ -20,7 +20,7 @@ astroid==2.11.7
     #   -r requirements/validation.txt
     #   pylint
     #   pylint-celery
-attrs==22.2.0
+attrs==22.1.0
     # via
     #   -r requirements/validation.txt
     #   pytest
@@ -32,11 +32,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.26.41
+boto3==1.26.33
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.29.41
+botocore==1.29.33
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -106,7 +106,7 @@ coreschema==0.0.4
     #   -r requirements/validation.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.0.1
+coverage[toml]==7.0.0
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -233,7 +233,7 @@ edx-django-utils==5.2.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.4.0
+edx-drf-extensions==8.3.1
     # via
     #   -r requirements/validation.txt
     #   edx-rbac
@@ -253,7 +253,7 @@ edx-rest-api-client==5.5.0
     # via -r requirements/validation.txt
 edx-toggles==5.0.0
     # via -r requirements/validation.txt
-exceptiongroup==1.1.0
+exceptiongroup==1.0.4
     # via
     #   -r requirements/validation.txt
     #   pytest
@@ -288,7 +288,7 @@ iniconfig==1.1.1
     # via
     #   -r requirements/validation.txt
     #   pytest
-isort==5.11.4
+isort==5.11.3
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -368,7 +368,7 @@ pep517==0.13.0
     #   build
 pip-tools==6.12.1
     # via -r requirements/pip-tools.txt
-platformdirs==2.6.2
+platformdirs==2.6.0
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -403,7 +403,7 @@ pycryptodomex==3.16.0
     # via
     #   -r requirements/validation.txt
     #   pyjwkest
-pydantic==1.10.4
+pydantic==1.10.2
     # via inflect
 pydocstyle==6.1.1
     # via -r requirements/validation.txt
