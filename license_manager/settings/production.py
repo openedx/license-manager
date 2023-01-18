@@ -14,7 +14,7 @@ LOGGING = get_logger_config()
 
 # Keep track of the names of settings that represent dicts. Instead of overriding the values in base.py,
 # the values read from disk should UPDATE the pre-configured dicts.
-DICT_UPDATE_KEYS = ('JWT_AUTH',)
+DICT_UPDATE_KEYS = ('JWT_AUTH', 'REST_FRAMEWORK')
 
 # This may be overridden by the YAML in license_manager_CFG,
 # but it should be here as a default.
