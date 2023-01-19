@@ -547,13 +547,13 @@ def _send_bulk_enrollment_results_email(
         )
         msg = (
             f'success _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
-            'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
+            f'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
         )
         logger.info(msg)
     except Exception as ex:
         msg = (
             f'failed _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
-            'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
+            f'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
         )
         logger.error(msg, exc_info=True)
         raise ex
