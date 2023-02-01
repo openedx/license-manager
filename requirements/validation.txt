@@ -39,12 +39,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.26.51
+boto3==1.26.61
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.29.51
+botocore==1.29.61
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -121,7 +121,7 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.0.5
+coverage[toml]==7.1.0
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -264,7 +264,7 @@ edx-braze-client==0.1.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-celeryutils==1.2.1
+edx-celeryutils==1.2.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -310,7 +310,7 @@ exceptiongroup==1.1.0
     #   pytest
 factory-boy==3.2.1
     # via -r requirements/test.txt
-faker==16.6.0
+faker==16.6.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -320,7 +320,6 @@ future==0.18.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-    #   edx-celeryutils
     #   pyjwkest
 idna==3.4
     # via
@@ -336,7 +335,7 @@ iniconfig==2.0.0
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==5.11.4
+isort==5.12.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -451,7 +450,7 @@ pycparser==2.21
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   cffi
-pycryptodomex==3.16.0
+pycryptodomex==3.17
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -525,7 +524,7 @@ python-dateutil==2.8.2
     #   edx-drf-extensions
     #   faker
     #   freezegun
-python-slugify==7.0.0
+python-slugify==8.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -705,7 +704,7 @@ wrapt==1.11.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   astroid
-zipp==3.11.0
+zipp==3.12.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

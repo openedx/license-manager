@@ -16,9 +16,9 @@ backoff==1.10.0
     #   analytics-python
 billiard==3.6.4.0
     # via celery
-boto3==1.26.51
+boto3==1.26.61
     # via django-ses
-botocore==1.29.51
+botocore==1.29.61
     # via
     #   boto3
     #   s3transfer
@@ -145,7 +145,7 @@ edx-auth-backends==4.1.0
     # via -r requirements/base.in
 edx-braze-client==0.1.5
     # via -r requirements/base.in
-edx-celeryutils==1.2.1
+edx-celeryutils==1.2.2
     # via -r requirements/base.in
 edx-django-utils==5.2.0
     # via
@@ -166,9 +166,7 @@ edx-rest-api-client==5.5.0
 edx-toggles==5.0.0
     # via -r requirements/base.in
 future==0.18.3
-    # via
-    #   edx-celeryutils
-    #   pyjwkest
+    # via pyjwkest
 idna==3.4
     # via requests
 inflection==0.5.1
@@ -211,7 +209,7 @@ psutil==5.9.4
     # via edx-django-utils
 pycparser==2.21
     # via cffi
-pycryptodomex==3.16.0
+pycryptodomex==3.17
     # via pyjwkest
 pyjwkest==1.4.2
     # via edx-drf-extensions
@@ -231,7 +229,7 @@ python-dateutil==2.8.2
     #   analytics-python
     #   botocore
     #   edx-drf-extensions
-python-slugify==7.0.0
+python-slugify==8.0.0
     # via code-annotations
 python3-openid==3.2.0
     # via social-auth-core
@@ -317,5 +315,5 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.6
     # via prompt-toolkit
-zipp==3.11.0
+zipp==3.12.0
     # via -r requirements/base.in
