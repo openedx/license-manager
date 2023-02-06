@@ -38,11 +38,11 @@ billiard==3.6.4.0
     #   celery
 bleach==6.0.0
     # via readme-renderer
-boto3==1.26.61
+boto3==1.26.64
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.29.61
+botocore==1.29.64
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -126,7 +126,7 @@ dill==0.3.6
     # via
     #   -r requirements/test.txt
     #   pylint
-django==3.2.16
+django==3.2.17
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
@@ -499,7 +499,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-simplejson==3.18.1
+simplejson==3.18.3
     # via -r requirements/test.txt
 six==1.16.0
     # via
@@ -610,7 +610,7 @@ wrapt==1.11.2
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
     #   astroid
-zipp==3.12.0
+zipp==3.12.1
     # via
     #   -r requirements/test.txt
     #   importlib-metadata

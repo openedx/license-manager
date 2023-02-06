@@ -39,12 +39,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.26.61
+boto3==1.26.64
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.29.61
+botocore==1.29.64
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -144,7 +144,7 @@ dill==0.3.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==3.2.16
+django==3.2.17
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -595,7 +595,7 @@ semantic-version==2.10.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-simplejson==3.18.1
+simplejson==3.18.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -704,7 +704,7 @@ wrapt==1.11.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   astroid
-zipp==3.12.0
+zipp==3.12.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

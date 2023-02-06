@@ -27,11 +27,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.26.61
+boto3==1.26.64
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.29.61
+botocore==1.29.64
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -105,7 +105,7 @@ defusedxml==0.7.1
     #   social-auth-core
 dill==0.3.6
     # via pylint
-django==3.2.16
+django==3.2.17
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -409,7 +409,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-simplejson==3.18.1
+simplejson==3.18.3
     # via -r requirements/base.txt
 six==1.16.0
     # via
@@ -488,7 +488,7 @@ wrapt==1.11.2
     # via
     #   -c requirements/constraints.txt
     #   astroid
-zipp==3.12.0
+zipp==3.12.1
     # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:
