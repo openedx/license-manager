@@ -22,11 +22,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.26.51
+boto3==1.26.61
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.29.51
+botocore==1.29.61
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -178,7 +178,7 @@ edx-auth-backends==4.1.0
     # via -r requirements/base.txt
 edx-braze-client==0.1.5
     # via -r requirements/base.txt
-edx-celeryutils==1.2.1
+edx-celeryutils==1.2.2
     # via -r requirements/base.txt
 edx-django-utils==5.2.0
     # via
@@ -203,11 +203,10 @@ edx-toggles==5.0.0
 future==0.18.3
     # via
     #   -r requirements/base.txt
-    #   edx-celeryutils
     #   pyjwkest
 gevent==22.10.2
     # via -r requirements/production.in
-greenlet==2.0.1
+greenlet==2.0.2
     # via gevent
 gunicorn==20.1.0
     # via -r requirements/production.in
@@ -284,7 +283,7 @@ pycparser==2.21
     # via
     #   -r requirements/base.txt
     #   cffi
-pycryptodomex==3.16.0
+pycryptodomex==3.17
     # via
     #   -r requirements/base.txt
     #   pyjwkest
@@ -316,7 +315,7 @@ python-dateutil==2.8.2
     #   edx-drf-extensions
 python-memcached==1.59
     # via -r requirements/production.in
-python-slugify==7.0.0
+python-slugify==8.0.0
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -439,7 +438,7 @@ wcwidth==0.2.6
     # via
     #   -r requirements/base.txt
     #   prompt-toolkit
-zipp==3.11.0
+zipp==3.12.0
     # via -r requirements/base.txt
 zope-event==4.6
     # via gevent
