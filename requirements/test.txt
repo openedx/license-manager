@@ -29,11 +29,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.26.64
+boto3==1.26.71
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.29.64
+botocore==1.29.71
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -100,7 +100,7 @@ coverage[toml]==7.1.0
     # via
     #   -r requirements/test.in
     #   pytest-cov
-cryptography==39.0.0
+cryptography==39.0.1
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -114,7 +114,7 @@ defusedxml==0.7.1
     #   social-auth-core
 dill==0.3.6
     # via pylint
-django==3.2.17
+django==3.2.18
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -191,7 +191,7 @@ drf-jwt==1.19.2
     #   edx-drf-extensions
 drf-nested-routers==0.93.4
     # via -r requirements/base.txt
-drf-yasg==1.21.4
+drf-yasg==1.21.5
     # via
     #   -r requirements/base.txt
     #   edx-api-doc-tools
@@ -231,7 +231,7 @@ exceptiongroup==1.1.0
     # via pytest
 factory-boy==3.2.1
     # via -r requirements/test.in
-faker==16.6.1
+faker==17.0.0
     # via factory-boy
 freezegun==1.2.2
     # via -r requirements/test.in
@@ -287,7 +287,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.1.1
     # via -r requirements/base.txt
-newrelic==8.5.0
+newrelic==8.6.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -305,7 +305,7 @@ pbr==5.11.1
     # via
     #   -r requirements/base.txt
     #   stevedore
-platformdirs==2.6.2
+platformdirs==3.0.0
     # via pylint
 pluggy==1.0.0
     # via pytest
@@ -469,7 +469,7 @@ sqlparse==0.4.3
     # via
     #   -r requirements/base.txt
     #   django
-stevedore==4.1.1
+stevedore==5.0.0
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -486,7 +486,7 @@ tomli==2.0.1
     #   pytest
 tomlkit==0.11.6
     # via pylint
-typing-extensions==4.4.0
+typing-extensions==4.5.0
     # via
     #   astroid
     #   pylint
@@ -518,7 +518,7 @@ wrapt==1.11.2
     # via
     #   -c requirements/constraints.txt
     #   astroid
-zipp==3.12.1
+zipp==3.13.0
     # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:
