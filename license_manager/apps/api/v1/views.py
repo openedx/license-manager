@@ -64,6 +64,8 @@ from license_manager.apps.subscriptions.utils import (
 
 logger = logging.getLogger(__name__)
 
+ASSIGNMENT_LOCK_TIMEOUT_SECONDS = 300
+
 
 class CustomerAgreementViewSet(
     PermissionRequiredForListingMixin,
@@ -721,6 +723,10 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         """
         Given a list of emails, assigns a license to those user emails and sends an activation email.
 
+        Assignment is intended to be a fully atomic and linearizable operation.  We utilize
+        a cache-based lock to ensure that only one assignment operation can be executed at a
+        time for the given subscription plan.
+
         Example request:
           POST /api/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
 
@@ -732,13 +738,31 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             ]
           }
         """
+        subscription_plan = self._get_subscription_plan()
+        try:
+            lock_acquired = utils.acquire_subscription_plan_lock(
+                subscription_plan,
+                django_cache_timeout=ASSIGNMENT_LOCK_TIMEOUT_SECONDS,
+            )
+            if not lock_acquired:
+                return Response(
+                    data='Assignment currently locked for this subscription plan.',
+                    status=status.HTTP_423_LOCKED,
+                )
+            return self._assign(request, subscription_plan)
+        finally:
+            if lock_acquired:
+                utils.release_subscription_plan_lock(subscription_plan)
+
+    def _assign(self, request, subscription_plan):
+        """
+        Helper that actually performs all the operations of bulk license assignment.
+        """
         # Validate the user_emails and text sent in the data
         self._validate_data(request.data)
 
         # Dedupe all lowercase emails before turning back into a list for indexing
         user_emails = list({email.lower() for email in request.data.get('user_emails', [])})
-
-        subscription_plan = self._get_subscription_plan()
 
         user_emails, already_associated_emails = self._trim_already_associated_emails(
             subscription_plan,
@@ -791,27 +815,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         }
 
         return Response(data=response_data, status=status.HTTP_200_OK)
-
-    def _trim_already_associated_emails(self, subscription_plan, user_emails):
-        """
-        Find any emails that have already been associated with a non-revoked license in the subscription
-        and remove from user_emails list.
-        """
-        trimmed_emails = user_emails.copy()
-
-        already_associated_licenses = subscription_plan.licenses.filter(
-            user_email__in=user_emails,
-            status__in=[constants.ASSIGNED, constants.ACTIVATED],
-        )
-        already_associated_emails = []
-        if already_associated_licenses:
-            already_associated_emails = list(
-                already_associated_licenses.values_list('user_email', flat=True)
-            )
-            for email in already_associated_emails:
-                trimmed_emails.remove(email.lower())
-
-        return trimmed_emails, already_associated_emails
 
     @action(detail=False, methods=['post'])
     def remind(self, request, subscription_uuid=None):
