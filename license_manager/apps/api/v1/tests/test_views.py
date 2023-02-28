@@ -28,6 +28,10 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from license_manager.apps.api.tests.factories import BulkEnrollmentJobFactory
+from license_manager.apps.api.utils import (
+    acquire_subscription_plan_lock,
+    release_subscription_plan_lock,
+)
 from license_manager.apps.api.v1.tests.constants import (
     ADMIN_ROLES,
     LEARNER_ROLES,
@@ -1506,6 +1510,36 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
+    @ddt.data(True, False)
+    def test_assign_is_locked(self, use_superuser, mock_send_assignment_email_task, mock_link_learners_task):
+        """
+        Verify the assign endpoint respects any existing locks for the requested plan.
+        """
+        self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
+        self._create_available_licenses()
+        user_emails = ['bb8@mit.edu', self.test_email]
+
+        # lock the subscription plan, as if another concurrent request
+        # is also trying to assign licenses.
+        try:
+            acquire_subscription_plan_lock(
+                self.subscription_plan,
+                django_cache_timeout=10,
+            )
+            response = self.api_client.post(
+                self.assign_url,
+                {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails},
+            )
+        finally:
+            release_subscription_plan_lock(self.subscription_plan)
+
+        assert response.status_code == status.HTTP_423_LOCKED
+        assert self.subscription_plan.licenses.filter(status=constants.ASSIGNED).count() == 0
+        self.assertFalse(mock_send_assignment_email_task.called)
+        self.assertFalse(mock_link_learners_task.called)
+
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
     @mock.patch('license_manager.apps.api.v1.views.License.bulk_update')
     def test_assign_is_atomic(self, mock_bulk_update, mock_send_assignment_email_task, mock_link_learners_task):
         """
@@ -2896,17 +2930,16 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         }
         url = self._get_url_with_params(subscription_uuid=self.active_subscription_for_customer.uuid, enroll_all=True)
         response = self.api_client.post(url, data)
-        mock_send_task.assert_called_once_with(
-            'license_manager.apps.api.tasks.enterprise_enrollment_license_subsidy_task',
-            (
-                str(job_uuid),
-                str(self.enterprise_customer_uuid),
-                [self.user.email, assigned_user.email],
-                [self.course_key],
-                True,
-                str(self.active_subscription_for_customer.uuid),
-            ),
-        )
+        assert mock_send_task.call_count == 1
+        actual_task_name, actual_task_args = mock_send_task.call_args_list[0][0]
+        assert actual_task_name == 'license_manager.apps.api.tasks.enterprise_enrollment_license_subsidy_task'
+        assert actual_task_args[0] == str(job_uuid)
+        assert actual_task_args[1] == str(self.enterprise_customer_uuid)
+        assert sorted(actual_task_args[2]) == sorted([self.user.email, assigned_user.email])
+        assert actual_task_args[3] == [self.course_key]
+        assert actual_task_args[4] is True
+        assert actual_task_args[5] == str(self.active_subscription_for_customer.uuid)
+
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json().get('job_id')
 

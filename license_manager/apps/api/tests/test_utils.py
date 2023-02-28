@@ -6,6 +6,7 @@ from unittest import mock
 from uuid import uuid4
 
 from django.test import TestCase
+from edx_django_utils.cache.utils import TieredCache
 
 from license_manager.apps.api import utils
 from license_manager.apps.subscriptions import constants
@@ -111,3 +112,49 @@ class FileUploadTests(TestCase):
         assert utils._get_short_file_name(file_name) == file_name
         assert utils._get_short_file_name(object_name) == file_name
         assert utils._get_short_file_name(full_path_file_name) == file_name
+
+
+class PlanLockTests(TestCase):
+    """
+    Tests for acquiring and releasing plan-level locks.
+    """
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer_uuid = uuid4()
+        self.enterprise_catalog_uuid = uuid4()
+        self.customer_agreement = CustomerAgreementFactory(
+            enterprise_customer_uuid=self.enterprise_customer_uuid,
+        )
+        self.plan = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            is_active=True,
+        )
+
+    def tearDown(self):
+        """
+        Ensures there are no unexpected locks sitting in the cache
+        between sequential test runs.
+        """
+        super().tearDown()
+        TieredCache.dangerous_clear_all_tiers()
+
+    def test_lock_available(self):
+        lock_acquired = utils.acquire_subscription_plan_lock(self.plan)
+        assert lock_acquired
+
+    def test_lock_unavailable(self):
+        first_lock_acquired = utils.acquire_subscription_plan_lock(self.plan)
+        assert first_lock_acquired
+        second_lock_acquired = utils.acquire_subscription_plan_lock(self.plan)
+        assert second_lock_acquired is False
+
+    def test_release_acquired_lock(self):
+        utils.acquire_subscription_plan_lock(self.plan)
+        released = utils.release_subscription_plan_lock(self.plan)
+        assert released
+
+    def test_release_unacquired_lock(self):
+        utils.acquire_subscription_plan_lock(self.plan, other_stuff='yes')
+        released = utils.release_subscription_plan_lock(self.plan)
+        assert released

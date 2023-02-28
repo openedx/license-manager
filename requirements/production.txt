@@ -14,6 +14,10 @@ asgiref==3.6.0
     # via
     #   -r requirements/base.txt
     #   django
+async-timeout==4.0.2
+    # via
+    #   -r requirements/base.txt
+    #   redis
 backoff==1.10.0
     # via
     #   -r requirements/base.txt
@@ -22,11 +26,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.26.64
+boto3==1.26.81
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.29.64
+botocore==1.29.81
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -83,7 +87,7 @@ coreschema==0.0.4
     #   -r requirements/base.txt
     #   coreapi
     #   drf-yasg
-cryptography==39.0.0
+cryptography==39.0.1
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -93,7 +97,7 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-django==3.2.17
+django==3.2.18
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -118,7 +122,7 @@ django==3.2.17
     #   jsonfield
 django-celery-results==2.4.0
     # via -r requirements/base.txt
-django-cors-headers==3.13.0
+django-cors-headers==3.14.0
     # via -r requirements/base.txt
 django-crum==0.7.9
     # via
@@ -168,7 +172,7 @@ drf-jwt==1.19.2
     #   edx-drf-extensions
 drf-nested-routers==0.93.4
     # via -r requirements/base.txt
-drf-yasg==1.21.4
+drf-yasg==1.21.5
     # via
     #   -r requirements/base.txt
     #   edx-api-doc-tools
@@ -250,7 +254,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.1.1
     # via -r requirements/base.txt
-newrelic==8.5.0
+newrelic==8.7.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -271,7 +275,7 @@ ply==3.11
     # via
     #   -r requirements/base.txt
     #   djangoql
-prompt-toolkit==3.0.36
+prompt-toolkit==3.0.38
     # via
     #   -r requirements/base.txt
     #   click-repl
@@ -315,7 +319,7 @@ python-dateutil==2.8.2
     #   edx-drf-extensions
 python-memcached==1.59
     # via -r requirements/production.in
-python-slugify==8.0.0
+python-slugify==8.0.1
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -336,10 +340,8 @@ pyyaml==6.0
     #   -r requirements/base.txt
     #   -r requirements/production.in
     #   code-annotations
-redis==3.5.3
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/base.txt
+redis==4.5.1
+    # via -r requirements/base.txt
 requests==2.28.2
     # via
     #   -r requirements/base.txt
@@ -404,7 +406,7 @@ sqlparse==0.4.3
     # via
     #   -r requirements/base.txt
     #   django
-stevedore==4.1.1
+stevedore==5.0.0
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -438,7 +440,7 @@ wcwidth==0.2.6
     # via
     #   -r requirements/base.txt
     #   prompt-toolkit
-zipp==3.12.1
+zipp==3.15.0
     # via -r requirements/base.txt
 zope-event==4.6
     # via gevent

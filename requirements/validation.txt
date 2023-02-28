@@ -25,6 +25,11 @@ astroid==2.11.7
     #   -r requirements/test.txt
     #   pylint
     #   pylint-celery
+async-timeout==4.0.2
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   redis
 attrs==22.2.0
     # via
     #   -r requirements/test.txt
@@ -39,12 +44,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.26.64
+boto3==1.26.81
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.29.64
+botocore==1.29.81
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -121,11 +126,11 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.1.0
+coverage[toml]==7.2.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==39.0.0
+cryptography==39.0.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -144,7 +149,7 @@ dill==0.3.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==3.2.17
+django==3.2.18
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -173,7 +178,7 @@ django-celery-results==2.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-cors-headers==3.13.0
+django-cors-headers==3.14.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -247,7 +252,7 @@ drf-nested-routers==0.93.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-drf-yasg==1.21.4
+drf-yasg==1.21.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -310,7 +315,7 @@ exceptiongroup==1.1.0
     #   pytest
 factory-boy==3.2.1
     # via -r requirements/test.txt
-faker==16.6.1
+faker==17.4.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -391,7 +396,7 @@ mysqlclient==2.1.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==8.5.0
+newrelic==8.7.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -417,7 +422,7 @@ pbr==5.11.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   stevedore
-platformdirs==2.6.2
+platformdirs==3.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -431,9 +436,9 @@ ply==3.11
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   djangoql
-polib==1.1.1
+polib==1.2.0
     # via edx-i18n-tools
-prompt-toolkit==3.0.36
+prompt-toolkit==3.0.38
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -524,7 +529,7 @@ python-dateutil==2.8.2
     #   edx-drf-extensions
     #   faker
     #   freezegun
-python-slugify==8.0.0
+python-slugify==8.0.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -549,9 +554,8 @@ pyyaml==6.0
     #   -r requirements/test.txt
     #   code-annotations
     #   edx-i18n-tools
-redis==3.5.3
+redis==4.5.1
     # via
-    #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
 requests==2.28.2
@@ -639,7 +643,7 @@ sqlparse==0.4.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django
-stevedore==4.1.1
+stevedore==5.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -663,7 +667,7 @@ tomlkit==0.11.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-typing-extensions==4.4.0
+typing-extensions==4.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -704,7 +708,7 @@ wrapt==1.11.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   astroid
-zipp==3.12.1
+zipp==3.15.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

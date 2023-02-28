@@ -7,6 +7,11 @@ import uuid
 import boto3
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from edx_django_utils.cache.utils import (
+    DEFAULT_TIMEOUT,
+    TieredCache,
+    get_cache_key,
+)
 from edx_rbac.utils import get_decoded_jwt
 from rest_framework.exceptions import ParseError, status
 
@@ -283,3 +288,26 @@ def create_presigned_url(bucket_name, object_name, expiration=300):
 
     # The response contains the presigned URL
     return response
+
+
+def acquire_subscription_plan_lock(subscription_plan, django_cache_timeout=DEFAULT_TIMEOUT, **cache_key_kwargs):
+    """
+    Acquires a lock for the provided subscription plan.  Returns True if the lock was
+    acquired, False otherwise.
+    """
+    cache_key = get_cache_key(resource='subscription_plan', plan_uuid=subscription_plan.uuid, **cache_key_kwargs)
+    cached_response = TieredCache.get_cached_response(cache_key)
+    if cached_response.is_found:
+        return False
+    TieredCache.set_all_tiers(cache_key, 'ACQUIRED', django_cache_timeout)
+    return True
+
+
+def release_subscription_plan_lock(subscription_plan, **cache_key_kwargs):
+    """
+    Releases a lock for the provided subscription plan.
+    Returns True unless an exception is raised.
+    """
+    cache_key = get_cache_key(resource='subscription_plan', plan_uuid=subscription_plan.uuid, **cache_key_kwargs)
+    TieredCache.delete_all_tiers(cache_key)
+    return True
