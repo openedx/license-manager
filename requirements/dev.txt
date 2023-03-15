@@ -36,11 +36,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.26.81
+boto3==1.26.91
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.29.81
+botocore==1.29.91
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -63,7 +63,7 @@ cffi==1.15.1
     #   -r requirements/validation.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.0.1
+charset-normalizer==3.1.0
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -114,7 +114,7 @@ coverage[toml]==7.2.1
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==39.0.1
+cryptography==39.0.2
     # via
     #   -r requirements/validation.txt
     #   pyjwt
@@ -140,6 +140,7 @@ django==3.2.18
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/validation.txt
+    #   django-celery-results
     #   django-cors-headers
     #   django-crum
     #   django-debug-toolbar
@@ -161,7 +162,7 @@ django==3.2.18
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
-django-celery-results==2.4.0
+django-celery-results==2.5.0
     # via -r requirements/validation.txt
 django-cors-headers==3.14.0
     # via -r requirements/validation.txt
@@ -227,7 +228,7 @@ edx-api-doc-tools==1.6.0
     # via -r requirements/validation.txt
 edx-auth-backends==4.1.0
     # via -r requirements/validation.txt
-edx-braze-client==0.1.5
+edx-braze-client==0.1.6
     # via -r requirements/validation.txt
 edx-celeryutils==1.2.2
     # via -r requirements/validation.txt
@@ -257,13 +258,13 @@ edx-rest-api-client==5.5.0
     # via -r requirements/validation.txt
 edx-toggles==5.0.0
     # via -r requirements/validation.txt
-exceptiongroup==1.1.0
+exceptiongroup==1.1.1
     # via
     #   -r requirements/validation.txt
     #   pytest
 factory-boy==3.2.1
     # via -r requirements/validation.txt
-faker==17.4.0
+faker==17.6.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -365,9 +366,9 @@ pbr==5.11.1
     # via
     #   -r requirements/validation.txt
     #   stevedore
-pip-tools==6.12.2
+pip-tools==6.12.3
     # via -r requirements/pip-tools.txt
-platformdirs==3.0.0
+platformdirs==3.1.1
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -402,7 +403,7 @@ pycryptodomex==3.17
     # via
     #   -r requirements/validation.txt
     #   pyjwkest
-pydantic==1.10.5
+pydantic==1.10.6
     # via inflect
 pydocstyle==6.3.0
     # via -r requirements/validation.txt
@@ -453,7 +454,7 @@ pyproject-hooks==1.0.0
     # via
     #   -r requirements/pip-tools.txt
     #   build
-pytest==7.2.1
+pytest==7.2.2
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -528,7 +529,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-simplejson==3.18.3
+simplejson==3.18.4
     # via -r requirements/validation.txt
 six==1.16.0
     # via
@@ -604,7 +605,7 @@ uritemplate==4.1.1
     #   -r requirements/validation.txt
     #   coreapi
     #   drf-yasg
-urllib3==1.26.14
+urllib3==1.26.15
     # via
     #   -r requirements/validation.txt
     #   botocore
@@ -619,7 +620,7 @@ wcwidth==0.2.6
     # via
     #   -r requirements/validation.txt
     #   prompt-toolkit
-wheel==0.38.4
+wheel==0.40.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
