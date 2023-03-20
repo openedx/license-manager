@@ -44,12 +44,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.26.81
+boto3==1.26.91
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.29.81
+botocore==1.29.91
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -72,7 +72,7 @@ cffi==1.15.1
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.0.1
+charset-normalizer==3.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -130,7 +130,7 @@ coverage[toml]==7.2.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==39.0.1
+cryptography==39.0.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -154,6 +154,7 @@ django==3.2.18
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
+    #   django-celery-results
     #   django-cors-headers
     #   django-crum
     #   django-durationwidget
@@ -174,7 +175,7 @@ django==3.2.18
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
-django-celery-results==2.4.0
+django-celery-results==2.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -265,7 +266,7 @@ edx-auth-backends==4.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-braze-client==0.1.5
+edx-braze-client==0.1.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -309,13 +310,13 @@ edx-toggles==5.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-exceptiongroup==1.1.0
+exceptiongroup==1.1.1
     # via
     #   -r requirements/test.txt
     #   pytest
 factory-boy==3.2.1
     # via -r requirements/test.txt
-faker==17.4.0
+faker==17.6.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -422,7 +423,7 @@ pbr==5.11.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   stevedore
-platformdirs==3.0.0
+platformdirs==3.1.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -511,7 +512,7 @@ pynacl==1.5.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==7.2.1
+pytest==7.2.2
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -599,7 +600,7 @@ semantic-version==2.10.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-simplejson==3.18.3
+simplejson==3.18.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -684,7 +685,7 @@ uritemplate==4.1.1
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-urllib3==1.26.14
+urllib3==1.26.15
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

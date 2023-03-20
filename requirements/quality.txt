@@ -31,11 +31,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.26.81
+boto3==1.26.91
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.29.81
+botocore==1.29.91
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -54,7 +54,7 @@ cffi==1.15.1
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.0.1
+charset-normalizer==3.1.0
     # via
     #   -r requirements/base.txt
     #   requests
@@ -97,7 +97,7 @@ coreschema==0.0.4
     #   -r requirements/base.txt
     #   coreapi
     #   drf-yasg
-cryptography==39.0.1
+cryptography==39.0.2
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -113,6 +113,7 @@ django==3.2.18
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
+    #   django-celery-results
     #   django-cors-headers
     #   django-crum
     #   django-durationwidget
@@ -132,7 +133,7 @@ django==3.2.18
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
-django-celery-results==2.4.0
+django-celery-results==2.5.0
     # via -r requirements/base.txt
 django-cors-headers==3.14.0
     # via -r requirements/base.txt
@@ -192,7 +193,7 @@ edx-api-doc-tools==1.6.0
     # via -r requirements/base.txt
 edx-auth-backends==4.1.0
     # via -r requirements/base.txt
-edx-braze-client==0.1.5
+edx-braze-client==0.1.6
     # via -r requirements/base.txt
 edx-celeryutils==1.2.2
     # via -r requirements/base.txt
@@ -289,7 +290,7 @@ pbr==5.11.1
     # via
     #   -r requirements/base.txt
     #   stevedore
-platformdirs==3.0.0
+platformdirs==3.1.1
     # via pylint
 ply==3.11
     # via
@@ -411,7 +412,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-simplejson==3.18.3
+simplejson==3.18.4
     # via -r requirements/base.txt
 six==1.16.0
     # via
@@ -471,7 +472,7 @@ uritemplate==4.1.1
     #   -r requirements/base.txt
     #   coreapi
     #   drf-yasg
-urllib3==1.26.14
+urllib3==1.26.15
     # via
     #   -r requirements/base.txt
     #   botocore
