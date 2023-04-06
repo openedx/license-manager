@@ -45,8 +45,10 @@ from license_manager.apps.api.tasks import (
 from license_manager.apps.subscriptions import constants, event_utils
 from license_manager.apps.subscriptions.api import revoke_license
 from license_manager.apps.subscriptions.exceptions import (
+    LicenseActivationMissingError,
     LicenseNotFoundError,
     LicenseRevocationError,
+    LicenseToActivateIsRevokedError,
 )
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
@@ -1387,48 +1389,39 @@ class LicenseActivationView(LicenseBaseView):
         """
         activation_key_uuid = utils.get_activation_key_from_request(request)
         try:
-            today = localized_utcnow()
-            kwargs = {
-                'activation_key': activation_key_uuid,
-                'user_email': self.user_email,
-                'subscription_plan__is_active': True,
-                'subscription_plan__start_date__lte': today,
-                'subscription_plan__expiration_date__gte': today,
-            }
-            user_license = License.objects.get(**kwargs)
-        except License.DoesNotExist:
-            msg = 'No current license exists for the email {} with activation key {}'.format(
-                self.user_email,
-                activation_key_uuid,
-            )
-            return Response(msg, status=status.HTTP_404_NOT_FOUND)
-
-        if user_license.status not in (constants.ASSIGNED, constants.ACTIVATED):
-            return Response(
-                f'Cannot activate a license with a status of {user_license.status}',
-                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            )
+            user_license = License.license_for_activation(self.user_email, activation_key_uuid)
+        except LicenseActivationMissingError as exc:
+            return Response(str(exc), status=status.HTTP_404_NOT_FOUND)
+        except LicenseToActivateIsRevokedError as exc:
+            return Response(str(exc), status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         if user_license.status == constants.ASSIGNED:
-            user_license.status = constants.ACTIVATED
-            user_license.activation_date = localized_utcnow()
-            user_license.lms_user_id = self.lms_user_id
-            user_license.save()
+            user_license.activate(self.lms_user_id)
+            self._track_and_notify(user_license)
 
-            event_properties = event_utils.get_license_tracking_properties(user_license)
-            event_utils.track_event(self.lms_user_id,
-                                    constants.SegmentEvents.LICENSE_ACTIVATED,
-                                    event_properties)
-            event_utils.identify_braze_alias(self.lms_user_id, self.user_email)
-
-            customer_agreement = user_license.subscription_plan.customer_agreement
-            if not customer_agreement.disable_onboarding_notifications:
-                send_post_activation_email_task.delay(
-                    user_license.subscription_plan.enterprise_customer_uuid,
-                    user_license.user_email,
-                )
-
+        # There's an implied logical branch where the license is already activated
+        # in which case we also return as if the activation action was successful.
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _track_and_notify(self, user_license):
+        """
+        Helper to send post-activation events and possible
+        invoke a post-activation notification task.
+        """
+        event_properties = event_utils.get_license_tracking_properties(user_license)
+        event_utils.track_event(
+            self.lms_user_id,
+            constants.SegmentEvents.LICENSE_ACTIVATED,
+            event_properties
+        )
+        event_utils.identify_braze_alias(self.lms_user_id, self.user_email)
+
+        customer_agreement = user_license.subscription_plan.customer_agreement
+        if not customer_agreement.disable_onboarding_notifications:
+            send_post_activation_email_task.delay(
+                user_license.subscription_plan.enterprise_customer_uuid,
+                user_license.user_email,
+            )
 
 
 class UserRetirementView(APIView):

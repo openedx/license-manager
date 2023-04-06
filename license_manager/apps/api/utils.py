@@ -17,14 +17,12 @@ from rest_framework.exceptions import ParseError, status
 
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import (
+    LicenseActivationError,
     LicenseNotFoundError,
     LicenseRevocationError,
 )
 from license_manager.apps.subscriptions.models import CustomerAgreement, License
-from license_manager.apps.subscriptions.utils import (
-    get_license_activation_link,
-    localized_utcnow,
-)
+from license_manager.apps.subscriptions.utils import get_license_activation_link
 
 
 logger = logging.getLogger(__name__)
@@ -113,18 +111,13 @@ def get_context_from_subscription_plan_by_activation_key(request):
 
     Returns: The ``enterprise_customer_uuid`` associated with the user's license.
     """
-    today = localized_utcnow()
     activation_key = get_activation_key_from_request(request)
-
     try:
-        user_license = License.objects.get(
-            activation_key=activation_key,
+        user_license = License.get_license_by_email_and_activation_key(
             user_email=get_email_from_request(request),
-            subscription_plan__is_active=True,
-            subscription_plan__start_date__lte=today,
-            subscription_plan__expiration_date__gte=today,
+            activation_key=activation_key,
         )
-    except License.DoesNotExist as exc:
+    except LicenseActivationError as exc:
         decoded_jwt = get_decoded_jwt(request)
         lms_user_id = get_key_from_jwt(decoded_jwt, 'user_id')
         logger.exception(
@@ -133,7 +126,6 @@ def get_context_from_subscription_plan_by_activation_key(request):
             lms_user_id
         )
         raise Http404('No License matches the given query.') from exc
-
     return user_license.subscription_plan.customer_agreement.enterprise_customer_uuid
 
 

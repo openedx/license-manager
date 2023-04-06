@@ -78,3 +78,31 @@ class UnprocessableSubscriptionPlanFreezeError(Exception):
     An exception indicating that a subscription plan cannot be
     frozen to delete unused licenses.
     """
+
+
+class LicenseActivationError(LicenseError):
+    """
+    An exception that occurs during license activation.
+    """
+    action = 'activation'
+
+
+class LicenseToActivateIsRevokedError(LicenseActivationError):
+    """
+    An exception that occurs when the license to activate is revoked.
+    """
+    action = 'activation'
+
+    def __init__(self, license_uuid):
+        """
+        Arguments:
+            license_uuid (uuid4): the unique identifier for a license
+        """
+        super().__init__(license_uuid, 'Cannot activate a revoked license.')
+
+
+class LicenseActivationMissingError(LicenseActivationError):
+    """
+    An exception that occurs when no license with a given activation_key is found.
+    """
+    action = 'activation'

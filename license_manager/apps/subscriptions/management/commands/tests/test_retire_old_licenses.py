@@ -149,7 +149,7 @@ class RetireOldLicensesCommandTests(TestCase):
                 expired_licenses.count(),
                 sorted([expired_license.uuid for expired_license in expired_licenses]),
             )
-            assert message in log.output[0]
+            assert message in ' '.join(log.output)
 
             # Verify all revoked licenses that were ready for retirement have been retired correctly
             for revoked_license in self.revoked_licenses_ready_for_retirement:
@@ -160,7 +160,7 @@ class RetireOldLicensesCommandTests(TestCase):
                 self.num_revoked_licenses_to_retire,
                 sorted([revoked_license.uuid for revoked_license in self.revoked_licenses_ready_for_retirement]),
             )
-            assert message in log.output[1]
+            assert message in ' '.join(log.output)
 
             # Verify all assigned licenses that were ready for retirement have been retired correctly
             for assigned_license in self.assigned_licenses_ready_for_retirement:
@@ -174,4 +174,4 @@ class RetireOldLicensesCommandTests(TestCase):
                 self.num_assigned_licenses_to_retire,
                 sorted([assigned_license.uuid for assigned_license in self.assigned_licenses_ready_for_retirement]),
             )
-            assert message in log.output[2]
+            assert message in ' '.join(log.output)
