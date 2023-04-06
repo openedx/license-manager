@@ -1,7 +1,8 @@
 """
 Models for the subscriptions app.
 """
-from datetime import timedelta
+from datetime import datetime, timedelta
+from logging import getLogger
 from math import ceil, inf
 from uuid import uuid4
 
@@ -50,6 +51,14 @@ from license_manager.apps.subscriptions.utils import (
     hours_until,
     localized_utcnow,
 )
+
+from .exceptions import (
+    LicenseActivationMissingError,
+    LicenseToActivateIsRevokedError,
+)
+
+
+logger = getLogger(__name__)
 
 
 class CustomerAgreement(TimeStampedModel):
@@ -1025,6 +1034,7 @@ class License(TimeStampedModel):
         Note that this does NOT save the license. If you want the changes to persist you need to either explicitly save
         the license after calling this, or use something like bulk_update which saves each object as part of its updates
         """
+        logger.info(f'Reseting license {self.uuid} to unassigned.')
         self.status = UNASSIGNED
         self.user_email = None
         self.lms_user_id = None
@@ -1045,6 +1055,15 @@ class License(TimeStampedModel):
         track_event(self.lms_user_id,
                     SegmentEvents.LICENSE_REVOKED,
                     event_properties)
+
+    def activate(self, lms_user_id):
+        """
+        Update this license to activated and set the lms_user_id.
+        """
+        self.status = ACTIVATED
+        self.activation_date = localized_utcnow()
+        self.lms_user_id = lms_user_id
+        self.save()
 
     @staticmethod
     def set_date_fields_to_now(licenses, date_field_names):
@@ -1164,6 +1183,100 @@ class License(TimeStampedModel):
             'subscription_plan',
             'subscription_plan__customer_agreement',
         )
+
+    @classmethod
+    def get_licenses_by_email(cls, user_email):
+        """
+        Helper to get all unrevoked licenses for a given user_email.
+        Note that these may span across multiple plans - the caller
+        may want to filter by subscription plan.
+        """
+        today = localized_utcnow()
+        kwargs = {
+            'user_email': user_email,
+            'subscription_plan__is_active': True,
+            'subscription_plan__start_date__lte': today,
+            'subscription_plan__expiration_date__gte': today,
+        }
+        return License.objects.filter(**kwargs)
+
+    @classmethod
+    def get_license_by_email_and_activation_key(cls, user_email, activation_key):
+        """
+        Helper to get a licenses in any current, active plan by activation_key and user_email.
+        """
+        user_license = cls.get_licenses_by_email(user_email).filter(
+            activation_key=activation_key,
+        ).first()
+
+        if not user_license:
+            msg = f'No current license exists for the email {user_email} with activation key {activation_key}'
+            raise LicenseActivationMissingError(
+                license_uuid=None,
+                failure_reason=msg,
+            )
+        return user_license
+
+    @classmethod
+    def license_for_activation(cls, user_email, activation_key):
+        """
+        Helper to get a license for activating, given an activation_key and user email.
+
+        If more than one assigned or activated license is found,
+        this method will clean up the duplicates by setting
+        the earlier (by assignment date) license record to unassigned.
+        """
+        license_with_activation_key = cls.get_license_by_email_and_activation_key(
+            user_email, activation_key
+        )
+        if license_with_activation_key.status == REVOKED:
+            raise LicenseToActivateIsRevokedError(license_with_activation_key.uuid)
+
+        licenses_for_user_in_plan = list(
+            cls.get_licenses_by_email(user_email).filter(
+                subscription_plan=license_with_activation_key.subscription_plan,
+            ).exclude(status=REVOKED)
+        )
+        if len(licenses_for_user_in_plan) > 1:
+            logger.info(f'Cleaning up duplicate licenses during activation: {licenses_for_user_in_plan}')
+            return cls._clean_up_duplicate_licenses(licenses_for_user_in_plan)
+        return licenses_for_user_in_plan[0]
+
+    @classmethod
+    def _clean_up_duplicate_licenses(cls, duplicate_licenses):
+        """
+        Helper to deal with cases where more than one activated or assigned license
+        exists for a given user_email in a plan.
+        If any of these are activated, sets the remainder to unassigned and returns the activated
+        license.
+        Otherwise, picks the most recently assigned license as the "good" one, sets the remainding
+        assigned licenses to unassigned, and returns the good one.
+        """
+        activated_license = next((
+            _license for _license in duplicate_licenses
+            if _license.status == ACTIVATED
+        ), None)
+
+        if activated_license:
+            for _license in duplicate_licenses:
+                if _license != activated_license:
+                    _license.reset_to_unassigned()
+                    _license.save()
+            return activated_license
+
+        # Now there should be only assigned licenses to deal with.
+        # Sort them by newest assigned_date, leave the newest one untouched,
+        # and unassign the remainder.
+        sorted_licenses = sorted(
+            duplicate_licenses,
+            key=lambda lic: lic.assigned_date or datetime.min,
+            reverse=True,
+        )
+        for duplicate in sorted_licenses[1:]:
+            duplicate.reset_to_unassigned()
+            duplicate.save()
+
+        return sorted_licenses[0]
 
 
 class SubscriptionsFeatureRole(UserRole):

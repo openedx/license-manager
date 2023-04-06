@@ -41,3 +41,8 @@ logging.getLogger('event_utils').setLevel(logging.ERROR)
 # Django Admin Settings
 VALIDATE_FORM_EXTERNAL_FIELDS = False
 DEBUG = False
+
+# Disable toolbar callback
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": False,
+}
