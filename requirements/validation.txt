@@ -30,10 +30,6 @@ async-timeout==4.0.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   redis
-attrs==22.2.0
-    # via
-    #   -r requirements/test.txt
-    #   pytest
 backoff==1.10.0
     # via
     #   -r requirements/quality.txt
@@ -44,12 +40,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.26.104
+boto3==1.26.114
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.29.104
+botocore==1.29.114
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -126,11 +122,11 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.2.2
+coverage[toml]==7.2.3
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==40.0.1
+cryptography==40.0.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -275,14 +271,14 @@ edx-celeryutils==1.2.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-django-utils==5.3.0
+edx-django-utils==5.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.4.1
+edx-drf-extensions==8.6.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -317,7 +313,7 @@ exceptiongroup==1.1.1
     #   pytest
 factory-boy==3.2.1
     # via -r requirements/test.txt
-faker==18.3.1
+faker==18.4.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -409,7 +405,7 @@ oauthlib==3.2.2
     #   -r requirements/test.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==23.0
+packaging==23.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -513,7 +509,7 @@ pynacl==1.5.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==7.2.2
+pytest==7.3.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -601,7 +597,7 @@ semantic-version==2.10.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-simplejson==3.18.4
+simplejson==3.19.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
