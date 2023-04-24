@@ -94,17 +94,26 @@ class SubscriptionPlanForm(forms.ModelForm):
                 )
             return False
 
+    def _log_validation_error(self, message):
+        """
+        Helper to help us log error messages about validation gone awry.
+        """
+        logger.error(f'Base valdiation failed for {self.instance}: {message}')
+
     def is_valid(self):
         # Perform original validation and return if false
         if not super().is_valid():
+            self._log_validation_error('base validation failed')
             return False
 
+        logger.info(f'More validation of {self.cleaned_data} for plan {self.instance}')
         # Ensure that we are getting an enterprise catalog uuid from the field itself or the linked customer agreement
         # when the subscription is first created.
         if 'customer_agreement' in self.changed_data:
             form_customer_agreement = self.cleaned_data.get('customer_agreement')
             form_enterprise_catalog_uuid = self.cleaned_data.get('enterprise_catalog_uuid')
             if not form_customer_agreement.default_enterprise_catalog_uuid and not form_enterprise_catalog_uuid:
+                self._log_validation_error('bad catalog uuid')
                 self.add_error(
                     'enterprise_catalog_uuid',
                     'The subscription must have an enterprise catalog uuid from itself or its customer agreement',
@@ -114,6 +123,7 @@ class SubscriptionPlanForm(forms.ModelForm):
         form_num_licenses = self.cleaned_data.get('num_licenses', 0)
         # Only internal use subscription plans to have more than the maximum number of licenses
         if form_num_licenses > MAX_NUM_LICENSES and not self.instance.for_internal_use_only:
+            self._log_validation_error('exceeded max licenses')
             self.add_error(
                 'num_licenses',
                 f'Non-test subscriptions may not have more than {MAX_NUM_LICENSES} licenses',
@@ -122,12 +132,14 @@ class SubscriptionPlanForm(forms.ModelForm):
 
         # Ensure the revoke max percentage is between 0 and 100
         if self.instance.is_revocation_cap_enabled and self.instance.revoke_max_percentage > 100:
+            self._log_validation_error('bad max revoke settings')
             self.add_error('revoke_max_percentage', 'Must be a valid percentage (0-100).')
             return False
 
         product = self.cleaned_data.get('product')
 
         if not product:
+            self._log_validation_error('no product specified')
             self.add_error(
                 'product',
                 'You must specify a product.',
@@ -135,6 +147,7 @@ class SubscriptionPlanForm(forms.ModelForm):
             return False
 
         if product.plan_type.sf_id_required and self.cleaned_data.get('salesforce_opportunity_id') is None:
+            self._log_validation_error('no SF ID')
             self.add_error(
                 'salesforce_opportunity_id',
                 'You must specify Salesforce ID for selected product.',
@@ -143,6 +156,7 @@ class SubscriptionPlanForm(forms.ModelForm):
 
         if settings.VALIDATE_FORM_EXTERNAL_FIELDS and self.instance.enterprise_catalog_uuid and \
                 not self._validate_enterprise_catalog_uuid():
+            self._log_validation_error('bad catalog uuid validation')
             return False
 
         return True
