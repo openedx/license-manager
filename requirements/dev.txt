@@ -24,10 +24,6 @@ async-timeout==4.0.2
     # via
     #   -r requirements/validation.txt
     #   redis
-attrs==22.2.0
-    # via
-    #   -r requirements/validation.txt
-    #   pytest
 backoff==1.10.0
     # via
     #   -r requirements/validation.txt
@@ -36,11 +32,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.26.104
+boto3==1.26.114
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.29.104
+botocore==1.29.114
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -110,11 +106,11 @@ coreschema==0.0.4
     #   -r requirements/validation.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.2.2
+coverage[toml]==7.2.3
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==40.0.1
+cryptography==40.0.2
     # via
     #   -r requirements/validation.txt
     #   pyjwt
@@ -173,7 +169,7 @@ django-crum==0.7.9
     #   edx-django-utils
     #   edx-rbac
     #   edx-toggles
-django-debug-toolbar==3.8.1
+django-debug-toolbar==4.0.0
     # via -r requirements/dev.in
 django-durationwidget==1.0.5
     # via -r requirements/validation.txt
@@ -233,13 +229,13 @@ edx-braze-client==0.1.6
     # via -r requirements/validation.txt
 edx-celeryutils==1.2.2
     # via -r requirements/validation.txt
-edx-django-utils==5.3.0
+edx-django-utils==5.4.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.4.1
+edx-drf-extensions==8.6.0
     # via
     #   -r requirements/validation.txt
     #   edx-rbac
@@ -265,7 +261,7 @@ exceptiongroup==1.1.1
     #   pytest
 factory-boy==3.2.1
     # via -r requirements/validation.txt
-faker==18.3.1
+faker==18.4.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -281,7 +277,7 @@ idna==3.4
     # via
     #   -r requirements/validation.txt
     #   requests
-inflect==6.0.2
+inflect==6.0.4
     # via
     #   -r requirements/dev.in
     #   jinja2-pluralize
@@ -350,7 +346,7 @@ oauthlib==3.2.2
     #   -r requirements/validation.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==23.0
+packaging==23.1
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/validation.txt
@@ -367,7 +363,7 @@ pbr==5.11.1
     # via
     #   -r requirements/validation.txt
     #   stevedore
-pip-tools==6.12.3
+pip-tools==6.13.0
     # via -r requirements/pip-tools.txt
 platformdirs==3.2.0
     # via
@@ -408,7 +404,7 @@ pydantic==1.10.7
     # via inflect
 pydocstyle==6.3.0
     # via -r requirements/validation.txt
-pygments==2.14.0
+pygments==2.15.0
     # via diff-cover
 pyjwkest==1.4.2
     # via
@@ -455,7 +451,7 @@ pyproject-hooks==1.0.0
     # via
     #   -r requirements/pip-tools.txt
     #   build
-pytest==7.2.2
+pytest==7.3.1
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -530,7 +526,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-simplejson==3.18.4
+simplejson==3.19.1
     # via -r requirements/validation.txt
 six==1.16.0
     # via
