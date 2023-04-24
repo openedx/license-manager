@@ -51,14 +51,6 @@ class SubscriptionPlanForm(forms.ModelForm):
         widget=forms.HiddenInput()
     )
 
-    # Using a HiddenInput widget here allows us to hide the property
-    # on the creation form while still displaying the property
-    # as read-only on the SubscriptionPlan update form.
-    should_auto_apply_licenses = forms.ChoiceField(
-        required=False,
-        widget=forms.HiddenInput()
-    )
-
     # Extra form field to set reason for changing a subscription plan, data saved in simple history record
     change_reason = forms.ChoiceField(
         choices=SubscriptionPlanChangeReasonChoices.CHOICES,
@@ -98,7 +90,7 @@ class SubscriptionPlanForm(forms.ModelForm):
         """
         Helper to help us log error messages about validation gone awry.
         """
-        logger.error(f'Base valdiation failed for {self.instance}: {message}')
+        logger.error(f'Form Validation failed for {self.instance}: {message}')
 
     def is_valid(self):
         # Perform original validation and return if false
