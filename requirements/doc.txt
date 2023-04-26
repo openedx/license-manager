@@ -4,6 +4,8 @@
 #
 #    make upgrade
 #
+accessible-pygments==0.0.4
+    # via pydata-sphinx-theme
 alabaster==0.7.13
     # via sphinx
 amqp==5.1.1
@@ -27,11 +29,15 @@ async-timeout==4.0.2
     #   -r requirements/test.txt
     #   redis
 babel==2.12.1
-    # via sphinx
+    # via
+    #   pydata-sphinx-theme
+    #   sphinx
 backoff==1.10.0
     # via
     #   -r requirements/test.txt
     #   analytics-python
+beautifulsoup4==4.12.2
+    # via pydata-sphinx-theme
 billiard==3.6.4.0
     # via
     #   -r requirements/test.txt
@@ -204,6 +210,7 @@ doc8==1.1.1
 docutils==0.19
     # via
     #   doc8
+    #   pydata-sphinx-theme
     #   readme-renderer
     #   restructuredtext-lint
     #   sphinx
@@ -247,8 +254,6 @@ edx-rbac==1.7.0
     # via -r requirements/test.txt
 edx-rest-api-client==5.5.0
     # via -r requirements/test.txt
-edx-sphinx-theme==3.1.0
-    # via -r requirements/doc.in
 edx-toggles==5.0.0
     # via -r requirements/test.txt
 exceptiongroup==1.1.1
@@ -341,6 +346,7 @@ packaging==23.1
     # via
     #   -r requirements/test.txt
     #   drf-yasg
+    #   pydata-sphinx-theme
     #   pytest
     #   sphinx
 pbr==5.11.1
@@ -375,9 +381,13 @@ pycryptodomex==3.17
     # via
     #   -r requirements/test.txt
     #   pyjwkest
+pydata-sphinx-theme==0.13.3
+    # via sphinx-book-theme
 pygments==2.15.0
     # via
+    #   accessible-pygments
     #   doc8
+    #   pydata-sphinx-theme
     #   readme-renderer
     #   sphinx
 pyjwkest==1.4.2
@@ -513,7 +523,6 @@ six==1.16.0
     #   edx-drf-extensions
     #   edx-lint
     #   edx-rbac
-    #   edx-sphinx-theme
     #   pyjwkest
     #   python-dateutil
 slumber==0.7.1
@@ -531,11 +540,16 @@ social-auth-core==4.4.1
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
+soupsieve==2.4.1
+    # via beautifulsoup4
 sphinx==5.3.0
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/doc.in
-    #   edx-sphinx-theme
+    #   pydata-sphinx-theme
+    #   sphinx-book-theme
+sphinx-book-theme==1.0.1
+    # via -r requirements/doc.in
 sphinxcontrib-applehelp==1.0.4
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
@@ -578,6 +592,7 @@ typing-extensions==4.5.0
     # via
     #   -r requirements/test.txt
     #   astroid
+    #   pydata-sphinx-theme
     #   pylint
 unicodecsv==0.14.1
     # via
