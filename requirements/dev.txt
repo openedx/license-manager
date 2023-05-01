@@ -32,11 +32,11 @@ billiard==3.6.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.26.114
+boto3==1.26.123
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.29.114
+botocore==1.29.123
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -106,7 +106,7 @@ coreschema==0.0.4
     #   -r requirements/validation.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.2.3
+coverage[toml]==7.2.5
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -179,14 +179,14 @@ django-extensions==3.2.1
     # via
     #   -r requirements/dev.in
     #   -r requirements/validation.txt
-django-filter==23.1
+django-filter==23.2
     # via -r requirements/validation.txt
 django-model-utils==4.3.1
     # via
     #   -r requirements/validation.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.3.0
+django-ses==3.4.1
     # via -r requirements/validation.txt
 django-simple-history==3.0.0
     # via
@@ -235,7 +235,7 @@ edx-django-utils==5.4.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.6.0
+edx-drf-extensions==8.7.0
     # via
     #   -r requirements/validation.txt
     #   edx-rbac
@@ -261,7 +261,7 @@ exceptiongroup==1.1.1
     #   pytest
 factory-boy==3.2.1
     # via -r requirements/validation.txt
-faker==18.4.0
+faker==18.6.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -365,7 +365,7 @@ pbr==5.11.1
     #   stevedore
 pip-tools==6.13.0
     # via -r requirements/pip-tools.txt
-platformdirs==3.2.0
+platformdirs==3.5.0
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -386,7 +386,7 @@ prompt-toolkit==3.0.38
     # via
     #   -r requirements/validation.txt
     #   click-repl
-psutil==5.9.4
+psutil==5.9.5
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -404,7 +404,7 @@ pydantic==1.10.7
     # via inflect
 pydocstyle==6.3.0
     # via -r requirements/validation.txt
-pygments==2.15.0
+pygments==2.15.1
     # via diff-cover
 pyjwkest==1.4.2
     # via
@@ -493,7 +493,7 @@ pyyaml==6.0
     #   edx-i18n-tools
 redis==4.5.4
     # via -r requirements/validation.txt
-requests==2.28.2
+requests==2.29.0
     # via
     #   -r requirements/validation.txt
     #   analytics-python
@@ -554,12 +554,12 @@ social-auth-app-django==5.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-auth-backends
-social-auth-core==4.4.1
+social-auth-core==4.4.2
     # via
     #   -r requirements/validation.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.4.3
+sqlparse==0.4.4
     # via
     #   -r requirements/validation.txt
     #   django
@@ -583,7 +583,7 @@ tomli==2.0.1
     #   pylint
     #   pyproject-hooks
     #   pytest
-tomlkit==0.11.7
+tomlkit==0.11.8
     # via
     #   -r requirements/validation.txt
     #   pylint
