@@ -35,3 +35,4 @@ redis
 rules
 simplejson
 zipp
+django-log-request-id

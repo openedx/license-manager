@@ -1,7 +1,6 @@
 import platform
 import sys
-from logging.handlers import SysLogHandler
-from os import environ, path
+from os import environ
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -14,22 +13,20 @@ def get_env_setting(setting):
         error_msg = "Set the [%s] env variable!" % setting
         raise ImproperlyConfigured(error_msg)
 
-def get_logger_config(log_dir='/var/tmp',
-                      logging_env="no_env",
-                      edx_filename="edx.log",
-                      dev_env=False,
+
+def get_logger_config(logging_env="no_env",
                       debug=False,
                       service_variant='license_manager'):
     """
     Return the appropriate logging config dictionary. You should assign the
     result of this to the LOGGING var in your settings.
     """
-
     hostname = platform.node().split(".")[0]
     syslog_format = (
         "[service_variant={service_variant}]"
         "[%(name)s][env:{logging_env}] %(levelname)s "
-        "[{hostname}  %(process)d] [%(filename)s:%(lineno)d] "
+        "[{hostname}  %(process)d] [user %(userid)s] [ip %(remoteip)s] "
+        "[request_id %(request_id)s] [%(filename)s:%(lineno)d] "
         "- %(message)s"
     ).format(
         service_variant=service_variant,
@@ -44,16 +41,32 @@ def get_logger_config(log_dir='/var/tmp',
         'formatters': {
             'standard': {
                 'format': '%(asctime)s %(levelname)s %(process)d '
-                          '[%(name)s] %(filename)s:%(lineno)d - %(message)s',
+                          '[%(name)s] [user %(userid)s] [ip %(remoteip)s] '
+                          '[request_id %(request_id)s] %(filename)s:%(lineno)d - %(message)s',
             },
             'syslog_format': {'format': syslog_format},
             'raw': {'format': '%(message)s'},
+        },
+        'filters': {
+            'require_debug_false': {
+                '()': 'django.utils.log.RequireDebugFalse',
+            },
+            'userid_context': {
+                '()': 'edx_django_utils.logging.UserIdFilter',
+            },
+            'remoteip_context': {
+                '()': 'edx_django_utils.logging.RemoteIpFilter',
+            },
+            'request_id': {
+                '()': 'log_request_id.filters.RequestIDFilter'
+            }
         },
         'handlers': {
             'console': {
                 'level': 'DEBUG' if debug else 'INFO',
                 'class': 'logging.StreamHandler',
                 'formatter': 'standard',
+                'filters': ['userid_context', 'remoteip_context', 'request_id'],
                 'stream': sys.stdout,
             },
         },

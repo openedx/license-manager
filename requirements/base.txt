@@ -18,9 +18,9 @@ backoff==1.10.0
     #   analytics-python
 billiard==3.6.4.0
     # via celery
-boto3==1.26.133
+boto3==1.26.134
     # via django-ses
-botocore==1.29.133
+botocore==1.29.134
     # via
     #   boto3
     #   s3transfer
@@ -77,6 +77,7 @@ django==3.2.19
     #   django-durationwidget
     #   django-extensions
     #   django-filter
+    #   django-log-request-id
     #   django-model-utils
     #   django-ses
     #   djangorestframework
@@ -106,6 +107,8 @@ django-durationwidget==1.0.5
 django-extensions==3.2.1
     # via -r requirements/base.in
 django-filter==23.2
+    # via -r requirements/base.in
+django-log-request-id==2.1.0
     # via -r requirements/base.in
 django-model-utils==4.3.1
     # via
@@ -165,7 +168,7 @@ edx-opaque-keys==2.3.0
     # via edx-drf-extensions
 edx-rbac==1.7.0
     # via -r requirements/base.in
-edx-rest-api-client==5.5.0
+edx-rest-api-client==5.5.1
     # via -r requirements/base.in
 edx-toggles==5.0.0
     # via -r requirements/base.in
@@ -293,7 +296,7 @@ social-auth-core==4.4.2
     #   social-auth-app-django
 sqlparse==0.4.4
     # via django
-stevedore==5.0.0
+stevedore==5.1.0
     # via
     #   code-annotations
     #   edx-django-utils

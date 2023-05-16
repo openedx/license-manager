@@ -40,12 +40,12 @@ billiard==3.6.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.26.133
+boto3==1.26.134
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.29.133
+botocore==1.29.134
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -156,6 +156,7 @@ django==3.2.19
     #   django-durationwidget
     #   django-extensions
     #   django-filter
+    #   django-log-request-id
     #   django-model-utils
     #   django-ses
     #   djangorestframework
@@ -198,6 +199,10 @@ django-extensions==3.2.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
 django-filter==23.2
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+django-log-request-id==2.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -299,7 +304,7 @@ edx-rbac==1.7.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-rest-api-client==5.5.0
+edx-rest-api-client==5.5.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -493,7 +498,7 @@ pylint-django==2.5.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-lint
-pylint-plugin-utils==0.7
+pylint-plugin-utils==0.8.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -641,7 +646,7 @@ sqlparse==0.4.4
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django
-stevedore==5.0.0
+stevedore==5.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
