@@ -311,6 +311,7 @@ class SubscriptionPlan(TimeStampedModel):
 
     .. no_pii: This model has no PII
     """
+
     title = models.CharField(
         max_length=128,
         blank=False,
@@ -381,7 +382,17 @@ class SubscriptionPlan(TimeStampedModel):
         blank=True,
         null=True,
         help_text=_(
-            "Locate the appropriate Salesforce Opportunity record and copy the Opportunity ID field (18 characters)."
+            "Deprecated -- 18 character value, derived from Salesforce Opportunity record."
+        )
+    )
+
+    salesforce_opportunity_line_item = models.CharField(
+        max_length=SALESFORCE_ID_LENGTH,
+        validators=[MinLengthValidator(SALESFORCE_ID_LENGTH)],
+        blank=True,
+        null=True,
+        help_text=_(
+            "18 character value -- Locate the appropriate Salesforce Opportunity Line Item record and copy it here."
         )
     )
 
@@ -758,6 +769,7 @@ class SubscriptionPlanRenewal(TimeStampedModel):
     salesforce_opportunity_id = models.CharField(
         max_length=SALESFORCE_ID_LENGTH,
         validators=[MinLengthValidator(SALESFORCE_ID_LENGTH)],
+        verbose_name=_("Salesforce Opportunity Line Item"),
         blank=False,
         null=False,
         help_text=_(

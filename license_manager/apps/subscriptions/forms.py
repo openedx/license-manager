@@ -138,10 +138,10 @@ class SubscriptionPlanForm(forms.ModelForm):
             )
             return False
 
-        if product.plan_type.sf_id_required and self.cleaned_data.get('salesforce_opportunity_id') is None:
+        if product.plan_type.sf_id_required and self.cleaned_data.get('salesforce_opportunity_line_item') is None:
             self._log_validation_error('no SF ID')
             self.add_error(
-                'salesforce_opportunity_id',
+                'salesforce_opportunity_line_item',
                 'You must specify Salesforce ID for selected product.',
             )
             return False

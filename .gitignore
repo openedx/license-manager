@@ -93,3 +93,5 @@ scripts/
 .vscode/
 
 .dev/
+
+.python/
