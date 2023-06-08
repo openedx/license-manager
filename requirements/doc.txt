@@ -14,7 +14,7 @@ amqp==5.1.1
     #   kombu
 analytics-python==1.4.post1
     # via -r requirements/test.txt
-asgiref==3.6.0
+asgiref==3.7.2
     # via
     #   -r requirements/test.txt
     #   django
@@ -36,24 +36,29 @@ backoff==1.10.0
     # via
     #   -r requirements/test.txt
     #   analytics-python
+backports-zoneinfo[tzdata]==0.2.1
+    # via
+    #   -r requirements/test.txt
+    #   celery
+    #   kombu
 beautifulsoup4==4.12.2
     # via pydata-sphinx-theme
-billiard==3.6.4.0
+billiard==4.1.0
     # via
     #   -r requirements/test.txt
     #   celery
 bleach==6.0.0
     # via readme-renderer
-boto3==1.26.133
+boto3==1.26.149
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.29.133
+botocore==1.29.149
     # via
     #   -r requirements/test.txt
     #   boto3
     #   s3transfer
-celery==5.2.7
+celery==5.3.0
     # via
     #   -r requirements/test.txt
     #   django-celery-results
@@ -112,11 +117,11 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.2.5
+coverage[toml]==7.2.7
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==40.0.2
+cryptography==41.0.1
     # via
     #   -r requirements/test.txt
     #   pyjwt
@@ -142,6 +147,7 @@ django==3.2.19
     #   django-durationwidget
     #   django-extensions
     #   django-filter
+    #   django-log-request-id
     #   django-model-utils
     #   django-ses
     #   djangorestframework
@@ -171,16 +177,18 @@ django-durationwidget==1.0.5
     # via -r requirements/test.txt
 django-dynamic-fixture==3.1.2
     # via -r requirements/test.txt
-django-extensions==3.2.1
+django-extensions==3.2.3
     # via -r requirements/test.txt
 django-filter==23.2
+    # via -r requirements/test.txt
+django-log-request-id==2.1.0
     # via -r requirements/test.txt
 django-model-utils==4.3.1
     # via
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.4.1
+django-ses==3.5.0
     # via -r requirements/test.txt
 django-simple-history==3.0.0
     # via
@@ -232,13 +240,13 @@ edx-braze-client==0.1.6
     # via -r requirements/test.txt
 edx-celeryutils==1.2.2
     # via -r requirements/test.txt
-edx-django-utils==5.4.0
+edx-django-utils==5.5.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.7.0
+edx-drf-extensions==8.8.0
     # via
     #   -r requirements/test.txt
     #   edx-rbac
@@ -252,7 +260,7 @@ edx-opaque-keys==2.3.0
     #   edx-drf-extensions
 edx-rbac==1.7.0
     # via -r requirements/test.txt
-edx-rest-api-client==5.5.0
+edx-rest-api-client==5.5.2
     # via -r requirements/test.txt
 edx-toggles==5.0.0
     # via -r requirements/test.txt
@@ -262,16 +270,12 @@ exceptiongroup==1.1.1
     #   pytest
 factory-boy==3.2.1
     # via -r requirements/test.txt
-faker==18.7.0
+faker==18.10.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
 freezegun==1.2.2
     # via -r requirements/test.txt
-future==0.18.3
-    # via
-    #   -r requirements/test.txt
-    #   pyjwkest
 idna==3.4
     # via
     #   -r requirements/test.txt
@@ -311,7 +315,7 @@ jsonfield==3.1.0
     # via
     #   -r requirements/test.txt
     #   edx-celeryutils
-kombu==5.2.4
+kombu==5.3.0
     # via
     #   -r requirements/test.txt
     #   celery
@@ -319,7 +323,7 @@ lazy-object-proxy==1.9.0
     # via
     #   -r requirements/test.txt
     #   astroid
-markupsafe==2.1.2
+markupsafe==2.1.3
     # via
     #   -r requirements/test.txt
     #   jinja2
@@ -377,10 +381,6 @@ pycparser==2.21
     # via
     #   -r requirements/test.txt
     #   cffi
-pycryptodomex==3.17
-    # via
-    #   -r requirements/test.txt
-    #   pyjwkest
 pydata-sphinx-theme==0.13.3
     # via sphinx-book-theme
 pygments==2.15.1
@@ -390,10 +390,6 @@ pygments==2.15.1
     #   pydata-sphinx-theme
     #   readme-renderer
     #   sphinx
-pyjwkest==1.4.2
-    # via
-    #   -r requirements/test.txt
-    #   edx-drf-extensions
 pyjwt[crypto]==2.7.0
     # via
     #   -r requirements/test.txt
@@ -418,7 +414,7 @@ pylint-django==2.5.3
     # via
     #   -r requirements/test.txt
     #   edx-lint
-pylint-plugin-utils==0.7
+pylint-plugin-utils==0.8.2
     # via
     #   -r requirements/test.txt
     #   pylint-celery
@@ -436,7 +432,7 @@ pytest==7.3.1
     #   -r requirements/test.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==4.0.0
+pytest-cov==4.1.0
     # via -r requirements/test.txt
 pytest-django==4.5.2
     # via -r requirements/test.txt
@@ -445,6 +441,7 @@ python-dateutil==2.8.2
     #   -r requirements/test.txt
     #   analytics-python
     #   botocore
+    #   celery
     #   edx-drf-extensions
     #   faker
     #   freezegun
@@ -460,7 +457,6 @@ pytz==2023.3
     # via
     #   -r requirements/test.txt
     #   babel
-    #   celery
     #   django
     #   django-ses
     #   djangorestframework
@@ -473,14 +469,13 @@ readme-renderer==37.3
     # via -r requirements/doc.in
 redis==4.5.5
     # via -r requirements/test.txt
-requests==2.30.0
+requests==2.31.0
     # via
     #   -r requirements/test.txt
     #   analytics-python
     #   coreapi
     #   edx-drf-extensions
     #   edx-rest-api-client
-    #   pyjwkest
     #   requests-oauthlib
     #   slumber
     #   social-auth-core
@@ -491,7 +486,7 @@ requests-oauthlib==1.3.1
     #   social-auth-core
 restructuredtext-lint==1.4.0
     # via doc8
-ruamel-yaml==0.17.26
+ruamel-yaml==0.17.31
     # via
     #   -r requirements/test.txt
     #   drf-yasg
@@ -523,7 +518,6 @@ six==1.16.0
     #   edx-drf-extensions
     #   edx-lint
     #   edx-rbac
-    #   pyjwkest
     #   python-dateutil
 slumber==0.7.1
     # via
@@ -566,7 +560,7 @@ sqlparse==0.4.4
     # via
     #   -r requirements/test.txt
     #   django
-stevedore==5.0.0
+stevedore==5.1.0
     # via
     #   -r requirements/test.txt
     #   code-annotations
@@ -588,12 +582,19 @@ tomlkit==0.11.8
     # via
     #   -r requirements/test.txt
     #   pylint
-typing-extensions==4.5.0
+typing-extensions==4.6.3
     # via
     #   -r requirements/test.txt
+    #   asgiref
     #   astroid
+    #   kombu
     #   pydata-sphinx-theme
     #   pylint
+tzdata==2023.3
+    # via
+    #   -r requirements/test.txt
+    #   backports-zoneinfo
+    #   celery
 unicodecsv==0.14.1
     # via
     #   -r requirements/test.txt
@@ -603,7 +604,7 @@ uritemplate==4.1.1
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-urllib3==1.26.15
+urllib3==1.26.16
     # via
     #   -r requirements/test.txt
     #   botocore

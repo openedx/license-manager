@@ -43,17 +43,23 @@ def get_logger_config(log_dir='/var/tmp',
         'disable_existing_loggers': False,
         'formatters': {
             'standard': {
-                'format': '%(asctime)s %(levelname)s %(process)d '
+                'format': '%(asctime)s %(levelname)s %(process)d [request_id %(request_id)s] '
                           '[%(name)s] %(filename)s:%(lineno)d - %(message)s',
             },
             'syslog_format': {'format': syslog_format},
             'raw': {'format': '%(message)s'},
+        },
+        'filters': {
+            'request_id': {
+                '()': 'log_request_id.filters.RequestIDFilter'
+            },
         },
         'handlers': {
             'console': {
                 'level': 'DEBUG' if debug else 'INFO',
                 'class': 'logging.StreamHandler',
                 'formatter': 'standard',
+                'filters': ['request_id'],
                 'stream': sys.stdout,
             },
         },
