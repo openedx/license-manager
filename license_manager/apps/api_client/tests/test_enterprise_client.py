@@ -46,7 +46,7 @@ class EnterpriseApiClientTests(TestCase):
         mock_oauth_client.return_value.post.assert_called_once_with(
             enterprise_client.pending_enterprise_learner_endpoint,
             json=[
-                {'enterprise_customer': self.uuid, 'user_email': user_email}
+                {'enterprise_customer': str(self.uuid), 'user_email': user_email}
                 for user_email in user_emails
             ],
         )
@@ -75,7 +75,7 @@ class EnterpriseApiClientTests(TestCase):
             mock_oauth_client.return_value.post.assert_called_once_with(
                 enterprise_client.pending_enterprise_learner_endpoint,
                 json=[
-                    {'enterprise_customer': self.uuid, 'user_email': user_email}
+                    {'enterprise_customer': str(self.uuid), 'user_email': user_email}
                     for user_email in user_emails
                 ],
             )
