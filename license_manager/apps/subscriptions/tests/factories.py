@@ -102,7 +102,7 @@ class SubscriptionPlanFactory(factory.django.DjangoModelFactory):
     expiration_processed = False
     customer_agreement = factory.SubFactory(CustomerAgreementFactory)
     enterprise_catalog_uuid = factory.LazyFunction(uuid4)
-    salesforce_opportunity_id = factory.LazyFunction(get_random_salesforce_id)
+    salesforce_opportunity_line_item = factory.LazyFunction(get_random_salesforce_id)
     product = factory.SubFactory(ProductFactory)
     can_freeze_unused_licenses = False
     should_auto_apply_licenses = False

@@ -153,13 +153,14 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         'expiration_processed',
         'customer_agreement',
         'last_freeze_timestamp',
+        'salesforce_opportunity_id',
     ]
     writable_fields = [
         'title',
         'start_date',
         'expiration_date',
         'enterprise_catalog_uuid',
-        'salesforce_opportunity_id',
+        'salesforce_opportunity_line_item',
         'product',
         'revoke_max_percentage',
         'is_revocation_cap_enabled',

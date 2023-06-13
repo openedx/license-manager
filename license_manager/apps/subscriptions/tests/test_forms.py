@@ -133,11 +133,11 @@ class TestSubscriptionPlanForm(TestCase):
         invalid_form = make_bound_subscription_form(has_product=False)
         assert invalid_form.is_valid() is False
 
-    def test_salesforce_opportunity_id(self):
+    def test_salesforce_opportunity_line_item(self):
         """
         Verify subscription plan form is invalid if salesforce_opportunity_id is None and the product requires it.
         """
-        invalid_form = make_bound_subscription_form(is_sf_id_required=True, salesforce_opportunity_id=None)
+        invalid_form = make_bound_subscription_form(is_sf_id_required=True, salesforce_opportunity_line_item=None)
         assert invalid_form.is_valid() is False
 
 
