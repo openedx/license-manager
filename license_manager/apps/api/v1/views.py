@@ -356,6 +356,8 @@ class LearnerLicensesViewSet(
       `start_date` and `expiration_date` (inclusive) if true.  Will not do any filtering
       based on the (start, expiration) date range if false.
 
+    - include_revoked (boolean): Defaults to false.  Will include revoked licenses.
+
     Example Request:
       GET /api/v1/learner-licenses?enterprise_customer_uuid=the-uuid&active_plans_only=true&current_plans_only=false
 
@@ -452,6 +454,7 @@ class LearnerLicensesViewSet(
 
         active_plans_only = self.request.query_params.get('active_plans_only', 'true').lower() == 'true'
         current_plans_only = self.request.query_params.get('current_plans_only', 'true').lower() == 'true'
+        include_revoked = self.request.query_params.get('include_revoked', 'false').lower() == 'true'
 
         licenses = License.for_user_and_customer(
             user_email=self.user_email,
@@ -459,9 +462,12 @@ class LearnerLicensesViewSet(
             enterprise_customer_uuid=self.enterprise_customer_uuid,
             active_plans_only=active_plans_only,
             current_plans_only=current_plans_only,
-        ).exclude(
-            status=constants.REVOKED,
-        ).order_by('status', '-subscription_plan__expiration_date')
+        )
+        if not include_revoked:
+            licenses = licenses.exclude(
+                status=constants.REVOKED,
+            )
+        licenses = licenses.order_by('status', '-subscription_plan__expiration_date')
 
         # Update user_email on licenses if the user has changed their email.
         # Ideally we would receive an event when a user changes their info from the lms and update
