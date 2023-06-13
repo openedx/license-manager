@@ -106,7 +106,7 @@ class EnterpriseApiClient(BaseOAuthClient):
         """
         data = [
             {
-                'enterprise_customer': enterprise_customer_uuid,
+                'enterprise_customer': str(enterprise_customer_uuid),
                 'user_email': user_email,
             }
             for user_email in user_emails
