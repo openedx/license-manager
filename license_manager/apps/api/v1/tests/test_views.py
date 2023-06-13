@@ -2429,7 +2429,13 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         super().setUpTestData()
         cls.base_url = reverse('api:v1:learner-licenses-list')
 
-    def _get_url_with_customer_uuid(self, enterprise_customer_uuid, active_plans_only=True, current_plans_only=True):
+    def _get_url_with_customer_uuid(
+        self,
+        enterprise_customer_uuid,
+        active_plans_only=True,
+        current_plans_only=True,
+        include_revoked=False
+    ):
         """
         Private helper method to make a get request to the base URL
         using the enterprise_customer_uuid query parameter.
@@ -2438,6 +2444,7 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         query_params['enterprise_customer_uuid'] = enterprise_customer_uuid
         query_params['active_plans_only'] = active_plans_only
         query_params['current_plans_only'] = current_plans_only
+        query_params['include_revoked'] = include_revoked
 
         url = self.base_url + '?' + query_params.urlencode()
         return self.api_client.get(url)
@@ -2700,6 +2707,43 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         )
         expected_license_uuids = [
             str(current_sub_license.uuid),
+        ]
+        actual_license_uuids = [
+            user_license['uuid'] for user_license in response.json()['results']  # pylint: disable=no-member
+        ]
+        self.assertEqual(actual_license_uuids, expected_license_uuids)
+
+    def test_endpoint_respects_include_revoked(self):
+        self._assign_learner_roles()
+
+        # The license in this subscription should be listed first in the
+        # response results, because its plan's expiration date is the furthest away.
+        current_sub = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            enterprise_catalog_uuid=self.enterprise_catalog_uuid,
+            start_date=self.now - datetime.timedelta(weeks=1),
+            expiration_date=self.now + datetime.timedelta(weeks=20),
+            is_active=True,
+        )
+        current_sub_license = self._create_license(
+            activation_date=self.now,
+            status=constants.ACTIVATED,
+            subscription_plan=current_sub,
+        )
+
+        revoked_sub_license = self._create_license(
+            activation_date=self.now,
+            subscription_plan=current_sub,
+            status=constants.REVOKED,
+        )
+
+        # We should get both current and revoked licenses if include_revoked is true.
+        response = self._get_url_with_customer_uuid(
+            self.enterprise_customer_uuid, current_plans_only=False, active_plans_only=False, include_revoked=True
+        )
+        expected_license_uuids = [
+            str(current_sub_license.uuid),
+            str(revoked_sub_license.uuid),
         ]
         actual_license_uuids = [
             user_license['uuid'] for user_license in response.json()['results']  # pylint: disable=no-member
