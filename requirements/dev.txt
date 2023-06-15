@@ -37,11 +37,11 @@ billiard==4.1.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.26.149
+boto3==1.26.153
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.29.149
+botocore==1.29.153
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -167,7 +167,7 @@ django==3.2.19
     #   social-auth-app-django
 django-celery-results==2.5.1
     # via -r requirements/validation.txt
-django-cors-headers==4.0.0
+django-cors-headers==4.1.0
     # via -r requirements/validation.txt
 django-crum==0.7.9
     # via
@@ -369,7 +369,7 @@ pbr==5.11.1
     #   stevedore
 pip-tools==6.13.0
     # via -r requirements/pip-tools.txt
-platformdirs==3.5.1
+platformdirs==3.5.3
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -447,7 +447,7 @@ pyproject-hooks==1.0.0
     # via
     #   -r requirements/pip-tools.txt
     #   build
-pytest==7.3.1
+pytest==7.3.2
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
