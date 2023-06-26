@@ -11,6 +11,7 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.utils import OperationalError
 from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
 from requests.exceptions import Timeout as RequestsTimeoutError
 
 import license_manager.apps.subscriptions.api as subscriptions_api
@@ -149,7 +150,7 @@ def send_assignment_email_task(custom_template_text, email_recipient_list, subsc
             raise exc
 
 
-@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def link_learners_to_enterprise_task(learner_emails, enterprise_customer_uuid):
     """
     Links learners to an enterprise asynchronously.
@@ -382,7 +383,7 @@ def execute_post_revocation_tasks(revoked_license, original_status):
     logger.info('License {} has been revoked'.format(revoked_license.uuid))
 
 
-@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def license_expiration_task(license_uuids, ignore_enrollments_modified_after=None):
     """
     Sends terminating the licensed course enrollments for the submitted license_uuids asynchronously
@@ -468,7 +469,7 @@ def _aliased_recipient_object_from_email(user_email):
     }
 
 
-@shared_task(base=LoggedTask)
+@shared_task(base=LoggedTaskWithRetry)
 def revoke_all_licenses_task(subscription_uuid):
     """
     Revokes all licenses associated with a subscription plan.
@@ -626,9 +627,17 @@ def enterprise_enrollment_license_subsidy_task(
                         'licenses_info': licensed_enrollment_info,
                         'notify': notify_learners
                     }
-                    enrollment_result = EnterpriseApiClient().bulk_enroll_enterprise_learners(
+                    enrollment_response = EnterpriseApiClient().bulk_enroll_enterprise_learners(
                         str(enterprise_customer_uuid), options
-                    ).json()
+                    )
+                    try:
+                        enrollment_result = enrollment_response.json()
+                    except RequestsJSONDecodeError:
+                        logger.error(
+                            f'Error in bulk license enrollment for {enterprise_customer_uuid}, '
+                            f'response payload = {enrollment_response.content}'
+                        )
+                        raise
 
                     for success in enrollment_result['successes']:
                         results.append([success.get('email'), success.get('course_run_key'), 'success', ''])
@@ -862,7 +871,7 @@ def send_utilization_threshold_reached_email_task(subscription_uuid):
             )
 
 
-@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT, bind=True)
+@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT, bind=True)
 def track_license_changes_task(self, license_uuids, event_name, properties=None):
     """
     Calls ``track_license_changes()`` on some chunks of licenses.
@@ -888,7 +897,7 @@ def track_license_changes_task(self, license_uuids, event_name, properties=None)
         ))
 
 
-@shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def update_user_email_for_licenses_task(lms_user_id, new_email):
     """
     Updates the user_email field on all licenses associated with the given lms_user_id.
