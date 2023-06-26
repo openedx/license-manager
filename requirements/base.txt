@@ -22,9 +22,9 @@ backports-zoneinfo[tzdata]==0.2.1
     #   kombu
 billiard==4.1.0
     # via celery
-boto3==1.26.149
+boto3==1.26.153
     # via django-ses
-botocore==1.29.149
+botocore==1.29.153
     # via
     #   boto3
     #   s3transfer
@@ -99,7 +99,7 @@ django==3.2.19
     #   social-auth-app-django
 django-celery-results==2.5.1
     # via -r requirements/base.in
-django-cors-headers==4.0.0
+django-cors-headers==4.1.0
     # via -r requirements/base.in
 django-crum==0.7.9
     # via
