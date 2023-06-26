@@ -11,6 +11,7 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.utils import OperationalError
 from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
 from requests.exceptions import Timeout as RequestsTimeoutError
 
 import license_manager.apps.subscriptions.api as subscriptions_api
@@ -626,9 +627,17 @@ def enterprise_enrollment_license_subsidy_task(
                         'licenses_info': licensed_enrollment_info,
                         'notify': notify_learners
                     }
-                    enrollment_result = EnterpriseApiClient().bulk_enroll_enterprise_learners(
+                    enrollment_response = EnterpriseApiClient().bulk_enroll_enterprise_learners(
                         str(enterprise_customer_uuid), options
-                    ).json()
+                    )
+                    try:
+                        enrollment_result = enrollment_response.json()
+                    except RequestsJSONDecodeError:
+                        logger.error(
+                            f'Error in bulk license enrollment for {enterprise_customer_uuid}, '
+                            f'response payload = {enrollment_response.content}'
+                        )
+                        raise
 
                     for success in enrollment_result['successes']:
                         results.append([success.get('email'), success.get('course_run_key'), 'success', ''])
