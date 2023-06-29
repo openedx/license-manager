@@ -182,6 +182,28 @@ class TestSubscriptionPlanRenewalForm(TestCase):
         )
         assert not form.is_valid()
 
+    def test_empty_salesforce_opportunity_line_id(self):
+        prior_subscription_plan = SubscriptionPlanFactory.create()
+        form = make_bound_subscription_plan_renewal_form(
+            prior_subscription_plan=prior_subscription_plan,
+            effective_date=localized_utcnow() + timedelta(1),
+            renewed_expiration_date=prior_subscription_plan.expiration_date + timedelta(366),
+            salesforce_opportunity_id=None
+        )
+        assert form.has_error('salesforce_opportunity_id')
+        assert form.errors['salesforce_opportunity_id'] == ['This field is required.']
+        assert not form.is_valid()
+
+    def test_incorrect_salesforce_opportunity_line_id_format(self):
+        prior_subscription_plan = SubscriptionPlanFactory.create()
+        form = make_bound_subscription_plan_renewal_form(
+            prior_subscription_plan=prior_subscription_plan,
+            effective_date=localized_utcnow() + timedelta(1),
+            renewed_expiration_date=prior_subscription_plan.expiration_date + timedelta(366),
+            salesforce_opportunity_id='00p000000000000000'
+        )
+        assert not form.is_valid()
+
 
 @ddt.ddt
 @mark.django_db

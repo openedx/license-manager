@@ -181,6 +181,14 @@ class SubscriptionPlanRenewalForm(forms.ModelForm):
         widget=forms.HiddenInput()
     )
 
+    salesforce_opportunity_id = forms.CharField(
+        help_text=(
+            "Locate the appropriate Salesforce Opportunity record and copy the Opportunity ID field "
+            "(18 characters and begin with '00k')."
+            " Note that this is not the same Salesforce Opportunity ID associated with the linked subscription."
+        )
+    )
+
     def is_valid(self):
         # Perform original validation and return if false
         if not super().is_valid():
