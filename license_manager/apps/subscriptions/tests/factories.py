@@ -29,10 +29,9 @@ FAKER = Faker()
 
 def get_random_salesforce_id():
     """
-    Returns a random alpha-numeric string of the correct length for a salesforce opportunity id.
+    Returns a random alpha-numeric string of the correct length that starts with 00k for a salesforce opportunity line item.
     """
-    return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
-                   for _ in range(SALESFORCE_ID_LENGTH))
+    return '00k' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=SALESFORCE_ID_LENGTH - 3))
 
 
 class CustomerAgreementFactory(factory.django.DjangoModelFactory):

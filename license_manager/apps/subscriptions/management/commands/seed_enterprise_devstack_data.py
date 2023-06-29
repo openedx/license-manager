@@ -108,7 +108,7 @@ class Command(BaseCommand):
             expiration_date=timestamp + timedelta(days=365),
             is_active=True,
             for_internal_use_only=True,
-            salesforce_opportunity_line_item=123456789123456789,
+            salesforce_opportunity_line_item='00k456789123456789',
             product=Product.objects.get(name="B2B Paid")
         )
         with transaction.atomic():

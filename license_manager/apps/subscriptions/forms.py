@@ -3,6 +3,7 @@ Forms to be used in the subscriptions django app.
 """
 
 import logging
+import re
 
 from django import forms
 from django.conf import settings
@@ -56,6 +57,14 @@ class SubscriptionPlanForm(forms.ModelForm):
         choices=SubscriptionPlanChangeReasonChoices.CHOICES,
         required=True,
         label="Reason for change",
+    )
+
+    # Override the salesforce_opportunity_line_item help text to be more specific to the subscription plan
+    salesforce_opportunity_line_item = forms.CharField(
+        help_text=(
+            """18 character value that starts with '00k' --
+            Locate the appropriate Salesforce Opportunity Line Item record and copy it here."""
+        )
     )
 
     def _validate_enterprise_catalog_uuid(self):
@@ -138,11 +147,13 @@ class SubscriptionPlanForm(forms.ModelForm):
             )
             return False
 
-        if product.plan_type.sf_id_required and self.cleaned_data.get('salesforce_opportunity_line_item') is None:
+        if product.plan_type.sf_id_required and \
+                self.cleaned_data.get('salesforce_opportunity_line_item') is None or \
+                not re.search(r'^00[kK]', self.cleaned_data.get('salesforce_opportunity_line_item')):
             self._log_validation_error('no SF ID')
             self.add_error(
                 'salesforce_opportunity_line_item',
-                'You must specify Salesforce ID for selected product.',
+                'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
             )
             return False
 
@@ -180,6 +191,7 @@ class SubscriptionPlanRenewalForm(forms.ModelForm):
         # subscription renewal expiration date
         form_effective_date = self.cleaned_data.get('effective_date')
         form_renewed_expiration_date = self.cleaned_data.get('renewed_expiration_date')
+        form_future_salesforce_opportunity_line_item = self.cleaned_data.get('salesforce_opportunity_id')
 
         if form_effective_date < localized_utcnow():
             self.add_error(
@@ -200,6 +212,14 @@ class SubscriptionPlanRenewalForm(forms.ModelForm):
             self.add_error(
                 'effective_date',
                 'A subscription renewal can not take effect before a subscription expires.',
+            )
+            return False
+
+        if form_future_salesforce_opportunity_line_item is None or \
+                not re.search(r'^00[kK]', form_future_salesforce_opportunity_line_item):
+            self.add_error(
+                'salesforce_opportunity_id',
+                'You must specify Salesforce ID for the renewed product. It must start with \'00k\'.',
             )
             return False
 
