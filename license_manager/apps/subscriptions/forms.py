@@ -3,7 +3,6 @@ Forms to be used in the subscriptions django app.
 """
 
 import logging
-import re
 
 from django import forms
 from django.conf import settings
@@ -27,7 +26,10 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
-from license_manager.apps.subscriptions.utils import localized_utcnow
+from license_manager.apps.subscriptions.utils import (
+    localized_utcnow,
+    verify_salesforce_opportunity_product_line_item,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -149,7 +151,7 @@ class SubscriptionPlanForm(forms.ModelForm):
 
         if product.plan_type.sf_id_required and \
                 self.cleaned_data.get('salesforce_opportunity_line_item') is None or \
-                not re.search(r'^00[kK]', self.cleaned_data.get('salesforce_opportunity_line_item')):
+                not verify_salesforce_opportunity_product_line_item(self.cleaned_data.get('salesforce_opportunity_line_item')):
             self._log_validation_error('no SF ID')
             self.add_error(
                 'salesforce_opportunity_line_item',
@@ -224,7 +226,7 @@ class SubscriptionPlanRenewalForm(forms.ModelForm):
             return False
 
         if form_future_salesforce_opportunity_line_item is None or \
-                not re.search(r'^00[kK]', form_future_salesforce_opportunity_line_item):
+                not verify_salesforce_opportunity_product_line_item(form_future_salesforce_opportunity_line_item):
             self.add_error(
                 'salesforce_opportunity_id',
                 'You must specify Salesforce ID for the renewed product. It must start with \'00k\'.',

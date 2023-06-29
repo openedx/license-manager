@@ -93,6 +93,7 @@ def make_bound_subscription_plan_renewal_form(
         'salesforce_opportunity_id': salesforce_opportunity_id,
         'license_types_to_copy': license_types_to_copy,
     }
+    print(form_data)
     return SubscriptionPlanRenewalForm(form_data)
 
 

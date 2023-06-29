@@ -133,15 +133,26 @@ class TestSubscriptionPlanForm(TestCase):
         invalid_form = make_bound_subscription_form(has_product=False)
         assert invalid_form.is_valid() is False
 
-    def test_salesforce_opportunity_line_item(self):
+    @ddt.data(
+        {'salesforce_id': '00k123456789ABCdef', 'expected_value': True},
+        {'salesforce_id': None, 'expected_value': False},
+        {'salesforce_id': '00p123456789123456', 'expected_value': False},
+        {'salesforce_id': '00K123456789ABCdef', 'expected_value': False},
+        {'salesforce_id': '00K123456789ABCde', 'expected_value': False},
+        {'salesforce_id': '00K123456789ABCdeff', 'expected_value': False},
+        {'salesforce_id': '00K00k456789ABCdef', 'expected_value': False},
+    )
+    @ddt.unpack
+    def test_salesforce_opportunity_line_item(self, salesforce_id, expected_value):
         """
         Verify subscription plan form is invalid if salesforce_opportunity_id is None and the product requires it.
         """
-        invalid_form = make_bound_subscription_form(is_sf_id_required=True, salesforce_opportunity_line_item=None)
-        assert invalid_form.is_valid() is False
+        invalid_form = make_bound_subscription_form(is_sf_id_required=True, salesforce_opportunity_line_item=salesforce_id)
+        assert invalid_form.is_valid() is expected_value
 
 
 @mark.django_db
+@ddt.ddt
 class TestSubscriptionPlanRenewalForm(TestCase):
     """
     Unit tests for the SubscriptionPlanRenewalForm
@@ -194,15 +205,23 @@ class TestSubscriptionPlanRenewalForm(TestCase):
         assert form.errors['salesforce_opportunity_id'] == ['This field is required.']
         assert not form.is_valid()
 
-    def test_incorrect_salesforce_opportunity_line_id_format(self):
+    @ddt.data(
+        {'salesforce_id': '00p123456789123456', 'expected_value': False},
+        {'salesforce_id': '00K123456789ABCdef', 'expected_value': False},
+        {'salesforce_id': '00K123456789ABCde', 'expected_value': False},
+        {'salesforce_id': '00K123456789ABCdeff', 'expected_value': False},
+        {'salesforce_id': '00K00k456789ABCdef', 'expected_value': False},
+    )
+    @ddt.unpack
+    def test_incorrect_salesforce_opportunity_line_id_format(self, salesforce_id, expected_value):
         prior_subscription_plan = SubscriptionPlanFactory.create()
         form = make_bound_subscription_plan_renewal_form(
             prior_subscription_plan=prior_subscription_plan,
             effective_date=localized_utcnow() + timedelta(1),
             renewed_expiration_date=prior_subscription_plan.expiration_date + timedelta(366),
-            salesforce_opportunity_id='00p000000000000000'
+            salesforce_opportunity_id=salesforce_id
         )
-        assert not form.is_valid()
+        assert form.is_valid() is expected_value
 
 
 @ddt.ddt
