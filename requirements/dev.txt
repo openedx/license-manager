@@ -10,6 +10,8 @@ amqp==5.1.1
     #   kombu
 analytics-python==1.4.post1
     # via -r requirements/validation.txt
+annotated-types==0.5.0
+    # via pydantic
 asgiref==3.7.2
     # via
     #   -r requirements/validation.txt
@@ -37,11 +39,11 @@ billiard==4.1.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.26.153
+boto3==1.26.165
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.29.153
+botocore==1.29.165
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -50,7 +52,7 @@ build==0.10.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-celery==5.3.0
+celery==5.3.1
     # via
     #   -r requirements/validation.txt
     #   django-celery-results
@@ -93,7 +95,7 @@ click-plugins==1.1.1
     # via
     #   -r requirements/validation.txt
     #   celery
-click-repl==0.2.0
+click-repl==0.3.0
     # via
     #   -r requirements/validation.txt
     #   celery
@@ -102,15 +104,6 @@ code-annotations==1.3.0
     #   -r requirements/validation.txt
     #   edx-lint
     #   edx-toggles
-coreapi==2.3.3
-    # via
-    #   -r requirements/validation.txt
-    #   drf-yasg
-coreschema==0.0.4
-    # via
-    #   -r requirements/validation.txt
-    #   coreapi
-    #   drf-yasg
 coverage[toml]==7.2.7
     # via
     #   -r requirements/validation.txt
@@ -225,7 +218,7 @@ drf-jwt==1.19.2
     #   edx-drf-extensions
 drf-nested-routers==0.93.4
     # via -r requirements/validation.txt
-drf-yasg==1.21.5
+drf-yasg==1.21.6
     # via
     #   -r requirements/validation.txt
     #   edx-api-doc-tools
@@ -269,7 +262,7 @@ exceptiongroup==1.1.1
     #   pytest
 factory-boy==3.2.1
     # via -r requirements/validation.txt
-faker==18.10.1
+faker==18.11.2
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -297,15 +290,10 @@ isort==5.12.0
     # via
     #   -r requirements/validation.txt
     #   pylint
-itypes==1.2.0
-    # via
-    #   -r requirements/validation.txt
-    #   coreapi
 jinja2==3.1.2
     # via
     #   -r requirements/validation.txt
     #   code-annotations
-    #   coreschema
     #   diff-cover
     #   jinja2-pluralize
 jinja2-pluralize==0.3.0
@@ -319,7 +307,7 @@ jsonfield==3.1.0
     # via
     #   -r requirements/validation.txt
     #   edx-celeryutils
-kombu==5.3.0
+kombu==5.3.1
     # via
     #   -r requirements/validation.txt
     #   celery
@@ -339,9 +327,9 @@ monotonic==1.6
     # via
     #   -r requirements/validation.txt
     #   analytics-python
-mysqlclient==2.1.1
+mysqlclient==2.2.0
     # via -r requirements/validation.txt
-newrelic==8.8.0
+newrelic==8.8.1
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -369,11 +357,11 @@ pbr==5.11.1
     #   stevedore
 pip-tools==6.13.0
     # via -r requirements/pip-tools.txt
-platformdirs==3.5.3
+platformdirs==3.8.0
     # via
     #   -r requirements/validation.txt
     #   pylint
-pluggy==1.0.0
+pluggy==1.2.0
     # via
     #   -r requirements/validation.txt
     #   diff-cover
@@ -400,8 +388,10 @@ pycparser==2.21
     # via
     #   -r requirements/validation.txt
     #   cffi
-pydantic==1.10.9
+pydantic==2.0
     # via inflect
+pydantic-core==2.0.1
+    # via pydantic
 pydocstyle==6.3.0
     # via -r requirements/validation.txt
 pygments==2.15.1
@@ -447,7 +437,7 @@ pyproject-hooks==1.0.0
     # via
     #   -r requirements/pip-tools.txt
     #   build
-pytest==7.3.2
+pytest==7.4.0
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -486,14 +476,14 @@ pyyaml==6.0
     # via
     #   -r requirements/validation.txt
     #   code-annotations
+    #   drf-yasg
     #   edx-i18n-tools
-redis==4.5.5
+redis==4.6.0
     # via -r requirements/validation.txt
 requests==2.31.0
     # via
     #   -r requirements/validation.txt
     #   analytics-python
-    #   coreapi
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   requests-oauthlib
@@ -503,14 +493,6 @@ requests-oauthlib==1.3.1
     # via
     #   -r requirements/validation.txt
     #   social-auth-core
-ruamel-yaml==0.17.31
-    # via
-    #   -r requirements/validation.txt
-    #   drf-yasg
-ruamel-yaml-clib==0.2.7
-    # via
-    #   -r requirements/validation.txt
-    #   ruamel-yaml
 rules==3.3
     # via -r requirements/validation.txt
 s3transfer==0.6.1
@@ -527,7 +509,6 @@ six==1.16.0
     # via
     #   -r requirements/validation.txt
     #   analytics-python
-    #   click-repl
     #   django-dynamic-fixture
     #   djangorestframework-csv
     #   edx-auth-backends
@@ -581,13 +562,15 @@ tomlkit==0.11.8
     # via
     #   -r requirements/validation.txt
     #   pylint
-typing-extensions==4.6.3
+typing-extensions==4.7.0
     # via
     #   -r requirements/validation.txt
+    #   annotated-types
     #   asgiref
     #   astroid
     #   kombu
     #   pydantic
+    #   pydantic-core
     #   pylint
 tzdata==2023.3
     # via
@@ -601,7 +584,6 @@ unicodecsv==0.14.1
 uritemplate==4.1.1
     # via
     #   -r requirements/validation.txt
-    #   coreapi
     #   drf-yasg
 urllib3==1.26.16
     # via
