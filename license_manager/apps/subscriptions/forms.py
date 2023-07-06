@@ -28,7 +28,7 @@ from license_manager.apps.subscriptions.models import (
 )
 from license_manager.apps.subscriptions.utils import (
     localized_utcnow,
-    verify_salesforce_opportunity_product_line_item,
+    verify_sf_opportunity_product_line_item,
 )
 
 
@@ -149,9 +149,12 @@ class SubscriptionPlanForm(forms.ModelForm):
             )
             return False
 
-        if product.plan_type.sf_id_required and \
-                self.cleaned_data.get('salesforce_opportunity_line_item') is None or \
-                not verify_salesforce_opportunity_product_line_item(self.cleaned_data.get('salesforce_opportunity_line_item')):
+        if (
+                product.plan_type.sf_id_required
+                and self.cleaned_data.get('salesforce_opportunity_line_item') is None
+                or not verify_sf_opportunity_product_line_item(self.cleaned_data.get(
+                'salesforce_opportunity_line_item'))
+        ):
             self._log_validation_error('no SF ID')
             self.add_error(
                 'salesforce_opportunity_line_item',
@@ -226,7 +229,7 @@ class SubscriptionPlanRenewalForm(forms.ModelForm):
             return False
 
         if form_future_salesforce_opportunity_line_item is None or \
-                not verify_salesforce_opportunity_product_line_item(form_future_salesforce_opportunity_line_item):
+                not verify_sf_opportunity_product_line_item(form_future_salesforce_opportunity_line_item):
             self.add_error(
                 'salesforce_opportunity_id',
                 'You must specify Salesforce ID for the renewed product. It must start with \'00k\'.',

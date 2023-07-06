@@ -128,7 +128,7 @@ def get_subsidy_checksum(lms_user_id, course_key, license_uuid):
     return b64encode(digest).decode()
 
 
-def verify_salesforce_opportunity_product_line_item(salesforce_opportunity_line_item):
+def verify_sf_opportunity_product_line_item(salesforce_opportunity_line_item):
     """
     Returns boolean value to confirm if the passed salesforce_opportunity_line_item format
     is correct
