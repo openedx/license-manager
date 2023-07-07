@@ -38,7 +38,8 @@ RUN apt-get update && apt-get -qy install --no-install-recommends \
  libssl-dev \
  build-essential \
  git \ 
- wget
+ wget \
+ unzip
 
 ENV VIRTUAL_ENV=/edx/app/license-manager/venvs/license-manager
 RUN python3.8 -m venv $VIRTUAL_ENV
