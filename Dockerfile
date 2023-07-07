@@ -15,6 +15,9 @@ MAINTAINER devops@edx.org
 
 # libssl-dev; # mysqlclient wont install without this.
 
+# pkg-config
+#     mysqlclient>=2.2.0 requires this (https://github.com/PyMySQL/mysqlclient/issues/620)
+
 # libmysqlclient-dev; to install header files needed to use native C implementation for
 # MySQL-python for performance gains.
 
@@ -23,12 +26,19 @@ MAINTAINER devops@edx.org
 # unzip to unzip a watchman binary archive
 
 # If you add a package here please include a comment above describing what it is used for
-RUN apt-get update && \
-apt-get install -y software-properties-common && \
-apt-add-repository -y ppa:deadsnakes/ppa && apt-get update && \
-apt-get upgrade -qy && apt-get install language-pack-en locales git \
-python3.8-dev python3.8-venv libmysqlclient-dev libssl-dev build-essential wget unzip -qy && \
-rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get -qy install --no-install-recommends \
+ language-pack-en \
+ locales \
+ python3.8 \
+ python3-pip \
+ python3.8-venv \
+ python3.8-dev \
+ pkg-config \
+ libmysqlclient-dev \
+ libssl-dev \
+ build-essential \
+ git \ 
+ wget
 
 ENV VIRTUAL_ENV=/edx/app/license-manager/venvs/license-manager
 RUN python3.8 -m venv $VIRTUAL_ENV
