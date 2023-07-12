@@ -1,6 +1,7 @@
 """ Utility functions for the subscriptions app. """
 import hashlib
 import hmac
+import re
 from base64 import b64encode
 from datetime import datetime
 
@@ -125,3 +126,11 @@ def get_subsidy_checksum(lms_user_id, course_key, license_uuid):
 
     digest = hmac.digest(key, message, digest_function)
     return b64encode(digest).decode()
+
+
+def verify_sf_opportunity_product_line_item(salesforce_opportunity_line_item):
+    """
+    Returns boolean value to confirm if the passed salesforce_opportunity_line_item format
+    is correct
+    """
+    return re.search(r'^00k', salesforce_opportunity_line_item)
