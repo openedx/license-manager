@@ -112,7 +112,7 @@ def renew_subscription(subscription_plan_renewal, is_auto_renewed=False):
     # because there shouldn't be
     if any(_license.status != UNASSIGNED for _license in licenses_for_renewal):
         raise RenewalProcessingError(
-            f"Renewal ID {subscription_plan_renewal.uuid} can't be processed; there are existing licenses "
+            f"Renewal ID {subscription_plan_renewal.id} can't be processed; there are existing licenses "
             "in the renewed plan that are activated/assigned/revoked."
         )
 
