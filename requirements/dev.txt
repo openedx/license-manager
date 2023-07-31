@@ -39,11 +39,11 @@ billiard==4.1.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.28.3
+boto3==1.28.15
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.31.3
+botocore==1.31.15
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -57,7 +57,7 @@ celery==5.3.1
     #   -r requirements/validation.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2023.5.7
+certifi==2023.7.22
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -70,7 +70,7 @@ charset-normalizer==3.2.0
     # via
     #   -r requirements/validation.txt
     #   requests
-click==8.1.5
+click==8.1.6
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/validation.txt
@@ -99,7 +99,7 @@ click-repl==0.3.0
     # via
     #   -r requirements/validation.txt
     #   celery
-code-annotations==1.3.0
+code-annotations==1.5.0
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -126,7 +126,7 @@ diff-cover==4.0.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/dev.in
-dill==0.3.6
+dill==0.3.7
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -144,6 +144,7 @@ django==3.2.20
     #   django-log-request-id
     #   django-model-utils
     #   django-ses
+    #   django-waffle
     #   djangorestframework
     #   drf-jwt
     #   drf-nested-routers
@@ -193,7 +194,7 @@ django-simple-history==3.0.0
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/validation.txt
-django-waffle==3.0.0
+django-waffle==4.0.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -218,19 +219,19 @@ drf-jwt==1.19.2
     #   edx-drf-extensions
 drf-nested-routers==0.93.4
     # via -r requirements/validation.txt
-drf-yasg==1.21.6
+drf-yasg==1.21.7
     # via
     #   -r requirements/validation.txt
     #   edx-api-doc-tools
-edx-api-doc-tools==1.6.0
+edx-api-doc-tools==1.7.0
     # via -r requirements/validation.txt
 edx-auth-backends==4.1.0
     # via -r requirements/validation.txt
 edx-braze-client==0.1.7
     # via -r requirements/validation.txt
-edx-celeryutils==1.2.2
+edx-celeryutils==1.2.3
     # via -r requirements/validation.txt
-edx-django-utils==5.5.0
+edx-django-utils==5.6.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
@@ -250,9 +251,9 @@ edx-opaque-keys==2.3.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-edx-rbac==1.7.0
+edx-rbac==1.8.0
     # via -r requirements/validation.txt
-edx-rest-api-client==5.5.2
+edx-rest-api-client==5.6.0
     # via -r requirements/validation.txt
 edx-toggles==5.0.0
     # via -r requirements/validation.txt
@@ -260,15 +261,15 @@ exceptiongroup==1.1.2
     # via
     #   -r requirements/validation.txt
     #   pytest
-factory-boy==3.2.1
+factory-boy==3.3.0
     # via -r requirements/validation.txt
-faker==19.1.0
+faker==19.2.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
 freezegun==1.2.2
     # via -r requirements/validation.txt
-gunicorn==20.1.0
+gunicorn==21.2.0
     # via -r requirements/dev.in
 idna==3.4
     # via
@@ -329,7 +330,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.0
     # via -r requirements/validation.txt
-newrelic==8.8.1
+newrelic==8.9.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -344,6 +345,7 @@ packaging==23.1
     #   -r requirements/validation.txt
     #   build
     #   drf-yasg
+    #   gunicorn
     #   pytest
 path==16.7.1
     # via
@@ -355,9 +357,9 @@ pbr==5.11.1
     # via
     #   -r requirements/validation.txt
     #   stevedore
-pip-tools==7.0.0
+pip-tools==7.1.0
     # via -r requirements/pip-tools.txt
-platformdirs==3.8.1
+platformdirs==3.10.0
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -382,21 +384,21 @@ psutil==5.9.5
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
-pycodestyle==2.10.0
+pycodestyle==2.11.0
     # via -r requirements/validation.txt
 pycparser==2.21
     # via
     #   -r requirements/validation.txt
     #   cffi
-pydantic==2.0.3
+pydantic==2.1.1
     # via inflect
-pydantic-core==2.3.0
+pydantic-core==2.4.0
     # via pydantic
 pydocstyle==6.3.0
     # via -r requirements/validation.txt
 pygments==2.15.1
     # via diff-cover
-pyjwt[crypto]==2.7.0
+pyjwt[crypto]==2.8.0
     # via
     #   -r requirements/validation.txt
     #   drf-jwt
@@ -472,7 +474,7 @@ pytz==2023.3
     #   drf-yasg
 pywatchman==1.4.1
     # via -r requirements/dev.in
-pyyaml==6.0
+pyyaml==6.0.1
     # via
     #   -r requirements/validation.txt
     #   code-annotations
@@ -559,7 +561,7 @@ tomli==2.0.1
     #   pylint
     #   pyproject-hooks
     #   pytest
-tomlkit==0.11.8
+tomlkit==0.12.1
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -603,7 +605,7 @@ wcwidth==0.2.6
     # via
     #   -r requirements/validation.txt
     #   prompt-toolkit
-wheel==0.40.0
+wheel==0.41.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
