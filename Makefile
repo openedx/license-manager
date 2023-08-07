@@ -182,6 +182,10 @@ dev.up: dev.up.redis  # Starts all of the services, will bring up the devstack-d
 dev.up.build:
 	docker-compose up -d --build
 
+dev.up.build-no-cache:
+	docker-compose build --no-cache
+	docker-compose up -d
+
 dev.up.redis:
 	docker-compose -f $(DEVSTACK_WORKSPACE)/devstack/docker-compose.yml up -d redis
 
