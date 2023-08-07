@@ -108,7 +108,7 @@ coverage[toml]==7.2.7
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==41.0.2
+cryptography==41.0.3
     # via
     #   -r requirements/validation.txt
     #   pyjwt
