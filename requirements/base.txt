@@ -10,7 +10,7 @@ analytics-python==1.4.post1
     # via -r requirements/base.in
 asgiref==3.7.2
     # via django
-async-timeout==4.0.2
+async-timeout==4.0.3
     # via redis
 backoff==1.10.0
     # via
@@ -22,9 +22,9 @@ backports-zoneinfo[tzdata]==0.2.1
     #   kombu
 billiard==4.1.0
     # via celery
-boto3==1.28.15
+boto3==1.28.26
     # via django-ses
-botocore==1.31.15
+botocore==1.31.26
     # via
     #   boto3
     #   s3transfer
@@ -147,29 +147,29 @@ drf-yasg==1.21.7
     # via edx-api-doc-tools
 edx-api-doc-tools==1.7.0
     # via -r requirements/base.in
-edx-auth-backends==4.1.0
+edx-auth-backends==4.2.0
     # via -r requirements/base.in
 edx-braze-client==0.1.7
     # via -r requirements/base.in
 edx-celeryutils==1.2.3
     # via -r requirements/base.in
-edx-django-utils==5.6.0
+edx-django-utils==5.7.0
     # via
     #   -r requirements/base.in
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.8.0
+edx-drf-extensions==8.9.0
     # via
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys==2.3.0
+edx-opaque-keys==2.4.0
     # via edx-drf-extensions
 edx-rbac==1.8.0
     # via -r requirements/base.in
 edx-rest-api-client==5.6.0
     # via -r requirements/base.in
-edx-toggles==5.0.0
+edx-toggles==5.1.0
     # via -r requirements/base.in
 idna==3.4
     # via requests
@@ -191,7 +191,7 @@ monotonic==1.6
     # via analytics-python
 mysqlclient==2.2.0
     # via -r requirements/base.in
-newrelic==8.9.0
+newrelic==8.10.0
     # via edx-django-utils
 oauthlib==3.2.2
     # via

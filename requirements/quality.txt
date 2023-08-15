@@ -19,7 +19,7 @@ astroid==2.11.7
     #   -c requirements/constraints.txt
     #   pylint
     #   pylint-celery
-async-timeout==4.0.2
+async-timeout==4.0.3
     # via
     #   -r requirements/base.txt
     #   redis
@@ -36,11 +36,11 @@ billiard==4.1.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.28.15
+boto3==1.28.26
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.31.15
+botocore==1.31.26
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -192,19 +192,19 @@ drf-yasg==1.21.7
     #   edx-api-doc-tools
 edx-api-doc-tools==1.7.0
     # via -r requirements/base.txt
-edx-auth-backends==4.1.0
+edx-auth-backends==4.2.0
     # via -r requirements/base.txt
 edx-braze-client==0.1.7
     # via -r requirements/base.txt
 edx-celeryutils==1.2.3
     # via -r requirements/base.txt
-edx-django-utils==5.6.0
+edx-django-utils==5.7.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.8.0
+edx-drf-extensions==8.9.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -212,7 +212,7 @@ edx-lint==5.2.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/quality.in
-edx-opaque-keys==2.3.0
+edx-opaque-keys==2.4.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -220,7 +220,7 @@ edx-rbac==1.8.0
     # via -r requirements/base.txt
 edx-rest-api-client==5.6.0
     # via -r requirements/base.txt
-edx-toggles==5.0.0
+edx-toggles==5.1.0
     # via -r requirements/base.txt
 idna==3.4
     # via
@@ -265,7 +265,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.0
     # via -r requirements/base.txt
-newrelic==8.9.0
+newrelic==8.10.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
