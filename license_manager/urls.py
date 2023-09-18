@@ -18,7 +18,7 @@ import os
 from auth_backends.urls import oauth2_urlpatterns
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, re_path
+from django.urls import include, path
 from drf_yasg.views import get_schema_view
 from edx_api_doc_tools import make_api_info
 from rest_framework import permissions
@@ -38,13 +38,13 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    re_path(r'', include(oauth2_urlpatterns)),
-    re_path(r'', include('csrf.urls')),  # Include csrf urls from edx-drf-extensions
-    re_path(r'^admin/', admin.site.urls),
-    re_path(r'^api/', include(api_urls)),
-    re_path(r'^api-docs/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    re_path(r'^auto_auth/$', core_views.AutoAuth.as_view(), name='auto_auth'),
-    re_path(r'^health/$', core_views.health, name='health'),
+    path('', include(oauth2_urlpatterns)),
+    path('', include('csrf.urls')),  # Include csrf urls from edx-drf-extensions
+    path('admin/', admin.site.urls),
+    path('api/', include(api_urls)),
+    path('api-docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('auto_auth/', core_views.AutoAuth.as_view(), name='auto_auth'),
+    path('health/', core_views.health, name='health'),
 ]
 
 
@@ -52,4 +52,4 @@ if settings.DEBUG and os.environ.get('ENABLE_DJANGO_TOOLBAR', False):  # pragma:
     # Disable pylint import error because we don't install django-debug-toolbar
     # for CI build
     import debug_toolbar  # pylint: disable=import-error,useless-suppression
-    urlpatterns.append(re_path(r'^__debug__/', include(debug_toolbar.urls)))
+    urlpatterns.append(path('__debug__/', include(debug_toolbar.urls)))
