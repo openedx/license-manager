@@ -47,11 +47,11 @@ billiard==4.1.0
     # via
     #   -r requirements/test.txt
     #   celery
-boto3==1.28.45
+boto3==1.28.48
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.31.45
+botocore==1.31.48
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -236,7 +236,7 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.9.2
+edx-drf-extensions==8.9.3
     # via
     #   -r requirements/test.txt
     #   edx-rbac
@@ -429,7 +429,6 @@ python-dateutil==2.8.2
     #   analytics-python
     #   botocore
     #   celery
-    #   edx-drf-extensions
     #   faker
     #   freezegun
 python-slugify==8.0.1
@@ -491,7 +490,6 @@ six==1.16.0
     #   analytics-python
     #   djangorestframework-csv
     #   edx-auth-backends
-    #   edx-drf-extensions
     #   edx-lint
     #   edx-rbac
     #   python-dateutil
