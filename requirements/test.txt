@@ -31,16 +31,17 @@ backports-zoneinfo[tzdata]==0.2.1
     # via
     #   -r requirements/base.txt
     #   celery
+    #   django
     #   kombu
 billiard==4.1.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.28.48
+boto3==1.28.51
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.31.48
+botocore==1.31.51
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -98,7 +99,7 @@ coverage[toml]==7.3.1
     # via
     #   -r requirements/test.in
     #   pytest-cov
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -112,9 +113,9 @@ defusedxml==0.7.1
     #   social-auth-core
 dill==0.3.7
     # via pylint
-django==3.2.21
+django==4.2.5
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   django-celery-results
     #   django-cors-headers
@@ -151,11 +152,11 @@ django-crum==0.7.9
     #   edx-toggles
 django-durationwidget==1.0.5
     # via -r requirements/base.txt
-django-dynamic-fixture==4.0.0
+django-dynamic-fixture==4.0.1
     # via -r requirements/test.in
 django-extensions==3.2.3
     # via -r requirements/base.txt
-django-filter==23.2
+django-filter==23.3
     # via -r requirements/base.txt
 django-log-request-id==2.1.0
     # via -r requirements/base.txt
@@ -213,7 +214,7 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.9.3
+edx-drf-extensions==8.10.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -378,7 +379,6 @@ python3-openid==3.2.0
 pytz==2023.3.post1
     # via
     #   -r requirements/base.txt
-    #   django
     #   django-ses
     #   djangorestframework
     #   drf-yasg
@@ -457,7 +457,7 @@ tomli==2.0.1
     #   pytest
 tomlkit==0.12.1
     # via pylint
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   -r requirements/base.txt
     #   asgiref
@@ -498,7 +498,7 @@ wrapt==1.11.2
     # via
     #   -c requirements/constraints.txt
     #   astroid
-zipp==3.16.2
+zipp==3.17.0
     # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:

@@ -40,6 +40,7 @@ backports-zoneinfo[tzdata]==0.2.1
     # via
     #   -r requirements/test.txt
     #   celery
+    #   django
     #   kombu
 beautifulsoup4==4.12.2
     # via pydata-sphinx-theme
@@ -47,11 +48,11 @@ billiard==4.1.0
     # via
     #   -r requirements/test.txt
     #   celery
-boto3==1.28.48
+boto3==1.28.51
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.31.48
+botocore==1.31.51
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -110,7 +111,7 @@ coverage[toml]==7.3.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   -r requirements/test.txt
     #   pyjwt
@@ -126,9 +127,9 @@ dill==0.3.7
     # via
     #   -r requirements/test.txt
     #   pylint
-django==3.2.21
+django==4.2.5
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/test.txt
     #   django-celery-results
     #   django-cors-headers
@@ -165,11 +166,11 @@ django-crum==0.7.9
     #   edx-toggles
 django-durationwidget==1.0.5
     # via -r requirements/test.txt
-django-dynamic-fixture==4.0.0
+django-dynamic-fixture==4.0.1
     # via -r requirements/test.txt
 django-extensions==3.2.3
     # via -r requirements/test.txt
-django-filter==23.2
+django-filter==23.3
     # via -r requirements/test.txt
 django-log-request-id==2.1.0
     # via -r requirements/test.txt
@@ -236,7 +237,7 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.9.3
+edx-drf-extensions==8.10.0
     # via
     #   -r requirements/test.txt
     #   edx-rbac
@@ -368,7 +369,7 @@ pycparser==2.21
     # via
     #   -r requirements/test.txt
     #   cffi
-pydata-sphinx-theme==0.13.3
+pydata-sphinx-theme==0.14.0
     # via sphinx-book-theme
 pygments==2.16.1
     # via
@@ -443,7 +444,6 @@ pytz==2023.3.post1
     # via
     #   -r requirements/test.txt
     #   babel
-    #   django
     #   django-ses
     #   djangorestframework
     #   drf-yasg
@@ -555,7 +555,7 @@ tomlkit==0.12.1
     # via
     #   -r requirements/test.txt
     #   pylint
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   -r requirements/test.txt
     #   asgiref
@@ -598,7 +598,7 @@ wrapt==1.11.2
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
     #   astroid
-zipp==3.16.2
+zipp==3.17.0
     # via
     #   -r requirements/test.txt
     #   importlib-metadata
