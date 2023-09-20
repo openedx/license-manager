@@ -81,15 +81,23 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
             'subscription_plan',
         )
 
+    @admin.display(
+        description='Subscription Plan'
+    )
     def get_subscription_plan_title(self, obj):
         return get_related_object_link(
             'admin:subscriptions_subscriptionplan_change',
             obj.subscription_plan.uuid,
             obj.subscription_plan.title,
         )
-    get_subscription_plan_title.short_description = 'Subscription Plan'
 
+    @admin.display(
+        description='License renewed to'
+    )
     def get_renewed_to(self, obj):
+        """
+        Returns License renewed to
+        """
         if not obj.renewed_to:
             return ''
         return get_related_object_link(
@@ -97,9 +105,14 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
             obj.renewed_to.uuid,
             obj.renewed_to.uuid,
         )
-    get_renewed_to.short_description = 'License renewed to'
 
+    @admin.display(
+        description='License renewed from'
+    )
     def get_renewed_from(self, obj):
+        """
+        Returns License renewed from
+        """
         if not obj.renewed_from:
             return ''
         return get_related_object_link(
@@ -107,7 +120,6 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
             obj.renewed_from.uuid,
             obj.renewed_from.uuid,
         )
-    get_renewed_from.short_description = 'License renewed from'
 
     def _parse_snapshot_timestamp(self):
         """
@@ -120,6 +132,9 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
         # pylint: disable=no-value-for-parameter
         return UTC.localize(snapshot_datetime)
 
+    @admin.action(
+        description='Revert licenses to snapshot'
+    )
     def revert_licenses_to_snapshot_time(self, request, queryset):
         """
         Sets a license back to whatever it was at some timestamp defined in config.
@@ -140,7 +155,6 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
                 )
         except Exception as exc:  # pylint: disable=broad-except
             messages.add_message(request, messages.ERROR, exc)
-    revert_licenses_to_snapshot_time.short_description = 'Revert licenses to snapshot'
 
 
 @admin.register(SubscriptionPlan)
@@ -253,6 +267,9 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
             return self.read_only_fields
         return ()
 
+    @admin.display(
+        description='Customer Agreement'
+    )
     def get_customer_agreement_link(self, obj):
         """
         Returns a link to the customer agreement for this plan.
@@ -264,7 +281,6 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
                 obj.customer_agreement.enterprise_customer_slug,
             )
         return ''
-    get_customer_agreement_link.short_description = 'Customer Agreement'
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """
@@ -274,6 +290,9 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
             kwargs['queryset'] = CustomerAgreement.objects.filter().order_by('enterprise_customer_slug')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    @admin.action(
+        description='Freeze selected Subscription Plans (deletes unused licenses)'
+    )
     def process_unused_licenses_post_freeze(self, request, queryset):
         """
         Used as an action; this function deletes unused licenses after a plan is frozen.
@@ -285,9 +304,6 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
                 messages.add_message(request, messages.SUCCESS, 'Successfully froze selected Subscription Plans.')
         except UnprocessableSubscriptionPlanFreezeError as exc:
             messages.add_message(request, messages.ERROR, exc)
-    process_unused_licenses_post_freeze.short_description = (
-        'Freeze selected Subscription Plans (deletes unused licenses)'
-    )
 
     def save_model(self, request, obj, form, change):
         # Record change reason for simple history
@@ -344,6 +360,9 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
     )
     actions = ['sync_agreement_with_enterprise_customer']
 
+    @admin.action(
+        description='Sync enterprise customer fields for selected records'
+    )
     def sync_agreement_with_enterprise_customer(self, request, queryset):
         """
         Django action handler to sync any updates made to the enterprise customer
@@ -363,8 +382,6 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
                 )
         except CustomerAgreementError as exc:
             messages.add_message(request, messages.ERROR, exc)
-
-    sync_agreement_with_enterprise_customer.short_description = 'Sync enterprise customer fields for selected records'
 
     def save_model(self, request, obj, form, change):
         """
@@ -399,6 +416,9 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
             'get_subscription_plan_links',
         )
 
+    @admin.display(
+        description='Subscription Plans'
+    )
     def get_subscription_plan_links(self, obj):
         """
         Gets links to all active subscription plans for this customer agreement.
@@ -414,7 +434,6 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
                     )
                 )
         return mark_safe(' '.join(links))
-    get_subscription_plan_links.short_description = 'Subscription Plans'
 
 
 @admin.register(SubscriptionPlanRenewal)
@@ -444,33 +463,59 @@ class SubscriptionPlanRenewalAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     )
     actions = ['process_renewal']
 
+    @admin.action(
+        description='Process selected renewal records'
+    )
     def process_renewal(self, request, queryset):
+        """
+        Process selected renewal records
+        """
         for renewal in queryset:
             renew_subscription(renewal)
-    process_renewal.short_description = 'Process selected renewal records'
 
+    @admin.display(
+        description='Subscription Title',
+        ordering='prior_subscription_plan__title',
+    )
     def get_prior_subscription_plan_title(self, obj):
+        """
+        Returns Subscription Title
+        """
         return obj.prior_subscription_plan.title
-    get_prior_subscription_plan_title.short_description = 'Subscription Title'
-    get_prior_subscription_plan_title.admin_order_field = 'prior_subscription_plan__title'
 
+    @admin.display(
+        description='Subscription UUID',
+        ordering='prior_subscription_plan__uuid',
+    )
     def get_prior_subscription_plan_uuid(self, obj):
+        """
+        Returns Subscription UUID
+        """
         return obj.prior_subscription_plan.uuid
-    get_prior_subscription_plan_uuid.short_description = 'Subscription UUID'
-    get_prior_subscription_plan_uuid.admin_order_field = 'prior_subscription_plan__uuid'
 
+    @admin.display(
+        description='Enterprise Customer UUID',
+        ordering='prior_subscription_plan__enterprise_customer_uuid',
+    )
     def get_prior_subscription_plan_enterprise_customer(self, obj):
+        """
+        Returns Enterprise Customer UUID
+        """
         return obj.prior_subscription_plan.enterprise_customer_uuid
-    get_prior_subscription_plan_enterprise_customer.short_description = 'Enterprise Customer UUID'
-    get_prior_subscription_plan_enterprise_customer.admin_order_field = \
-        'prior_subscription_plan__enterprise_customer_uuid'
 
+    @admin.display(
+        description='Enterprise Catalog UUID',
+        ordering='prior_subscription_plan__enterprise_catalog_uuid',
+    )
     def get_prior_subscription_plan_enterprise_catalog(self, obj):
+        """
+        Returns Enterprise Catalog UUID
+        """
         return obj.prior_subscription_plan.enterprise_catalog_uuid
-    get_prior_subscription_plan_enterprise_catalog.short_description = 'Enterprise Catalog UUID'
-    get_prior_subscription_plan_enterprise_catalog.admin_order_field = \
-        'prior_subscription_plan__enterprise_catalog_uuid'
 
+    @admin.display(
+        description='Renewed Subscription Plan'
+    )
     def get_renewed_plan_link(self, obj):
         """
         Returns a link to the renewed subscription plan.
@@ -482,7 +527,6 @@ class SubscriptionPlanRenewalAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
                 '{}: {}'.format(obj.renewed_subscription_plan.title, obj.renewed_subscription_plan.uuid),
             )
         return ''
-    get_renewed_plan_link.short_description = 'Renewed Subscription Plan'
 
     def has_change_permission(self, request, obj=None):
         """

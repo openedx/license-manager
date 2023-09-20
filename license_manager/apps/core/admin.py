@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from license_manager.apps.core.models import User
 
 
+@admin.register(User)
 class CustomUserAdmin(UserAdmin):
     """ Admin configuration for the custom User model. """
     list_display = ('username', 'email', 'full_name', 'first_name', 'last_name', 'is_staff')
@@ -17,6 +18,3 @@ class CustomUserAdmin(UserAdmin):
                                        'groups', 'user_permissions')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
-
-
-admin.site.register(User, CustomUserAdmin)
