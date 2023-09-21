@@ -4,6 +4,7 @@ from unittest import mock
 
 import ddt
 import freezegun
+import pytest
 from django.forms import ValidationError
 from django.test import TestCase
 from requests.exceptions import HTTPError
@@ -16,10 +17,15 @@ from license_manager.apps.subscriptions.constants import (
     SegmentEvents,
 )
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
-from license_manager.apps.subscriptions.models import License, Notification
+from license_manager.apps.subscriptions.models import (
+    License,
+    Notification,
+    SubscriptionLicenseSourceType,
+)
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
+    SubscriptionLicenseSourceFactory,
     SubscriptionPlanFactory,
     SubscriptionPlanRenewalFactory,
 )
@@ -386,3 +392,60 @@ class CustomerAgreementTests(TestCase):
         with freezegun.freeze_time(today):
             expected_days = (self.subscription_plan_b.expiration_date - today).days
             assert self.customer_agreement.net_days_until_expiration == expected_days
+
+
+@ddt.ddt
+class SubscriptionLicenseSourceModelTests(TestCase):
+    """
+    Tests for the `SubscriptionLicenseSource` model.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.user_email = 'bob@example.com'
+        self.enterprise_customer_uuid = uuid.uuid4()
+        self.customer_agreement = CustomerAgreementFactory.create(
+            enterprise_customer_uuid=self.enterprise_customer_uuid,
+        )
+
+        self.active_current_plan = SubscriptionPlanFactory.create(
+            customer_agreement=self.customer_agreement,
+            is_active=True,
+            start_date=localized_datetime(2021, 1, 1),
+            expiration_date=localized_datetime_from_datetime(datetime.now() + timedelta(days=365)),
+        )
+
+        self.active_current_license = LicenseFactory.create(
+            user_email=self.user_email,
+            subscription_plan=self.active_current_plan,
+        )
+
+    def test_license_source_creation(self):
+        """
+        Tests license souce model object creation.
+        """
+        license_source = SubscriptionLicenseSourceFactory(
+            license=self.active_current_license,
+            source_id='000000000000000000',
+            source_type=SubscriptionLicenseSourceType.get_source_type(SubscriptionLicenseSourceType.AMT)
+        )
+        str_repr = 'SubscriptionLicenseSource: LicenseID: {license_uuid}, SourceID: {source_id}, SourceType: AMT'
+        assert str(license_source) == str_repr.format(
+            license_uuid=self.active_current_license.uuid,
+            source_id='000000000000000000',
+        )
+
+    def test_license_source_creation_with_invalid_souce_id(self):
+        """
+        Verify that SubscriptionLicenseSource model raises exception if source id format is wrong.
+        """
+        with pytest.raises(ValidationError) as raised_exception:
+            SubscriptionLicenseSourceFactory(
+                license=self.active_current_license,
+                source_id='000000000',
+                source_type=SubscriptionLicenseSourceType.get_source_type(SubscriptionLicenseSourceType.AMT)
+            )
+
+        exception_message = ['Ensure this value has at least 18 characters (it has 9).']
+        assert raised_exception.value.args[0]['source_id'][0].messages == exception_message

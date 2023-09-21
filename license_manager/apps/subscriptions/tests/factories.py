@@ -16,6 +16,8 @@ from license_manager.apps.subscriptions.models import (
     License,
     PlanType,
     Product,
+    SubscriptionLicenseSource,
+    SubscriptionLicenseSourceType,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
@@ -160,3 +162,16 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = User
+
+
+class SubscriptionLicenseSourceFactory(factory.django.DjangoModelFactory):
+    """
+    Test factory for the `SubscriptionLicenseSource` model.
+    """
+
+    license = factory.SubFactory(LicenseFactory)
+    source_id = factory.LazyFunction(get_random_salesforce_id)
+    source_type = factory.Iterator(SubscriptionLicenseSourceType.objects.all())
+
+    class Meta:
+        model = SubscriptionLicenseSource
