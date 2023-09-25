@@ -53,6 +53,8 @@ from license_manager.apps.subscriptions.exceptions import (
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
+    SubscriptionLicenseSource,
+    SubscriptionLicenseSourceType,
     SubscriptionPlan,
     SubscriptionsRoleAssignment,
 )
@@ -726,10 +728,35 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         )
         return licenses
 
+    def _set_source_for_assigned_licenses(self, assigned_licenses, emails_and_sfids):
+        """
+        Set source for each assigned license.
+        """
+        license_source = SubscriptionLicenseSourceType.get_source_type(SubscriptionLicenseSourceType.AMT)
+        source_objects = []
+        for assigned_license in assigned_licenses:
+            sf_opportunity_id = emails_and_sfids.get(assigned_license.user_email)
+            if sf_opportunity_id:
+                source = SubscriptionLicenseSource(
+                    license=assigned_license,
+                    source_id=sf_opportunity_id,
+                    source_type=license_source
+                )
+                source_objects.append(source)
+
+        SubscriptionLicenseSource.objects.bulk_create(
+            source_objects,
+            batch_size=constants.LICENSE_SOURCE_BULK_OPERATION_BATCH_SIZE
+        )
+
     @action(detail=False, methods=['post'])
     def assign(self, request, subscription_uuid=None):  # pylint: disable=unused-argument
         """
         Given a list of emails, assigns a license to those user emails and sends an activation email.
+
+        Endpoint will also receive `user_sfids`, an optional list of salesforce ids. If present then
+        for each assigned license a source object will be created to later identify the source of a
+        license assignment.
 
         Assignment is intended to be a fully atomic and linearizable operation.  We utilize
         a cache-based lock to ensure that only one assignment operation can be executed at a
@@ -743,6 +770,10 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             'user_emails': [
               'alice@example.com',
               'bob@example.com'
+            ],
+            'user_sfids': [
+                '001OE000001f26OXZP',
+                '001OE000001a25WXYZ'
             ]
           }
         """
@@ -769,8 +800,19 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         # Validate the user_emails and text sent in the data
         self._validate_data(request.data)
 
-        # Dedupe all lowercase emails before turning back into a list for indexing
-        user_emails = list({email.lower() for email in request.data.get('user_emails', [])})
+        emails_and_sfids = []
+        # remove duplicate emails and convert to lowercase
+        if 'user_sfids' in request.data:
+            user_emails = map(str.lower, request.data.get('user_emails'))
+            user_sfids = request.data.get('user_sfids')
+            # remove whitespaces if there are any
+            user_sfids = [sfid and sfid.strip() for sfid in user_sfids]
+
+            emails_and_sfids = dict(zip(user_emails, user_sfids))
+            user_emails = list(emails_and_sfids.keys())
+        else:
+            # Dedupe all lowercase emails before turning back into a list for indexing
+            user_emails = list({email.lower() for email in request.data.get('user_emails', [])})
 
         user_emails, already_associated_emails = self._trim_already_associated_emails(
             subscription_plan,
@@ -795,6 +837,8 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                     assigned_licenses = self._assign_new_licenses(
                         subscription_plan, user_emails,
                     )
+                    if emails_and_sfids:
+                        self._set_source_for_assigned_licenses(assigned_licenses, emails_and_sfids)
             except DatabaseError:
                 error_message = 'Database error occurred while assigning licenses, no assignments were completed'
                 logger.exception(error_message)

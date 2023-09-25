@@ -47,7 +47,9 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
         'activation_key',
         'get_renewed_to',
         'get_renewed_from',
-        'auto_applied'
+        'auto_applied',
+        'source_id',
+        'source_type',
     ]
     exclude = ['history', 'renewed_to']
     list_display = (
@@ -79,7 +81,24 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
             'subscription_plan',
+            'source'
         )
+
+    @admin.display(description='Source ID')
+    def source_id(self, instance):
+        """Return source id of license if a source exists"""
+        try:
+            return instance.source.source_id
+        except License.source.RelatedObjectDoesNotExist:  # pylint: disable=no-member
+            return ''
+
+    @admin.display(description='Source Type')
+    def source_type(self, instance):
+        """Return source type of license if a source exists"""
+        try:
+            return instance.source.source_type.slug
+        except License.source.RelatedObjectDoesNotExist:  # pylint: disable=no-member
+            return ''
 
     @admin.display(
         description='Subscription Plan'

@@ -41,6 +41,7 @@ from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
     License,
+    SubscriptionLicenseSource,
     SubscriptionsFeatureRole,
     SubscriptionsRoleAssignment,
 )
@@ -1506,6 +1507,71 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
             actual_emails,
             self.subscription_plan.customer_agreement.enterprise_customer_uuid
         )
+
+    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
+    @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
+    @ddt.data(True, False)
+    def test_assign_with_salesforce_ids(self, use_superuser, *arge, **kwargs):  # pylint: disable=unused-argument
+        """
+        Verify the assign endpoint assigns licenses and correct lincese sources are created.
+        """
+        self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
+        self._create_available_licenses()
+        user_emails = ['bb8@mit.edu', self.test_email, 'ama@example.com', 'aaa@example.com']
+        user_sfids = ['0000qse56709sdfd08', '0000abc34MS67a8907', '', None]
+        response = self.api_client.post(
+            self.assign_url,
+            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails, 'user_sfids': user_sfids},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        self._assert_licenses_assigned(user_emails)
+
+        # verify that correct salesforce ids are assigned
+        emails_and_sfids = dict(zip(user_emails, user_sfids))
+        for email, salesforce_id in emails_and_sfids.items():
+            assigned_license = self.subscription_plan.licenses.get(user_email=email, status=constants.ASSIGNED)
+
+            if salesforce_id:
+                assert assigned_license.source.source_id == salesforce_id
+            else:
+                with self.assertRaises(ObjectDoesNotExist):
+                    SubscriptionLicenseSource.objects.get(license=assigned_license)
+
+    @ddt.data(True, False)
+    def test_assign_with_less_salesforce_ids(self, use_superuser):
+        """
+        Verify the assign endpoint raises correct error when user_sfids list has less items then user_emails.
+        """
+        self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
+        user_emails = ['bb8@mit.edu', 'aaa@mit.edu']
+        user_sfids = ['0010abc34MS67a8907']
+        response = self.api_client.post(
+            self.assign_url,
+            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails, 'user_sfids': user_sfids},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {
+            'non_field_errors': [
+                'Number of Salesforce IDs did not match number of provided user emails.'
+            ]
+        }
+        assert SubscriptionLicenseSource.objects.count() == 0
+
+    @ddt.data(True, False)
+    def test_assign_with_empty_salesforce_ids(self, use_superuser):
+        """
+        Verify the assign endpoint raises correct error when user_sfids is present but empty.
+        """
+        self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
+        user_emails = ['bb8@mit.edu']
+        user_sfids = []
+        response = self.api_client.post(
+            self.assign_url,
+            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails, 'user_sfids': user_sfids},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {'user_sfids': ['No Salesforce Ids provided.']}
+        assert SubscriptionLicenseSource.objects.count() == 0
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
