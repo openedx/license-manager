@@ -1291,6 +1291,74 @@ class License(TimeStampedModel):
         return sorted_licenses[0]
 
 
+class SubscriptionLicenseSourceType(TimeStampedModel):
+    """
+    Subscription License Source Type
+
+    .. no_pii: This model has no PII
+    """
+
+    AMT = 'AMT'
+
+    name = models.CharField(max_length=64)
+    slug = models.SlugField(max_length=30, unique=True)
+
+    @classmethod
+    def get_source_type(cls, source_slug):
+        """
+        Retrieve the source type based on the slug.
+        """
+        try:
+            return cls.objects.get(slug=source_slug)
+        except SubscriptionLicenseSourceType.DoesNotExist:
+            return None
+
+    def __str__(self):
+        """
+        String representation of source type.
+        """
+        return "SubscriptionLicenseSourceType: Name: {name}, Slug: {slug}".format(name=self.name, slug=self.slug)
+
+
+class SubscriptionLicenseSource(TimeStampedModel):
+    """
+    Subscription License Source
+
+    .. no_pii: This model has no PII
+    """
+
+    license = models.OneToOneField(
+        License,
+        related_name='source',
+        on_delete=models.CASCADE,
+    )
+    source_id = models.CharField(
+        max_length=SALESFORCE_ID_LENGTH,
+        validators=[MinLengthValidator(SALESFORCE_ID_LENGTH)],
+        help_text=_("18 character value -- Salesforce Opportunity ID")
+    )
+    source_type = models.ForeignKey(SubscriptionLicenseSourceType, on_delete=models.CASCADE)
+
+    history = HistoricalRecords()
+
+    def save(self, *args, **kwargs):
+        """
+        Override to ensure that model.clean is always called.
+        """
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        """
+        String representation of source.
+        """
+        return "SubscriptionLicenseSource: LicenseID: {license}, SourceID: {source}, SourceType: {source_type}".format(
+            license=self.license.uuid,
+            source=self.source_id,
+            source_type=self.source_type.slug,
+        )
+
+
 class SubscriptionsFeatureRole(UserRole):
     """
     User role definitions specific to subscriptions.

@@ -1,7 +1,12 @@
+from django.core.validators import MinLengthValidator
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from license_manager.apps.subscriptions.constants import ACTIVATED, ASSIGNED
+from license_manager.apps.subscriptions.constants import (
+    ACTIVATED,
+    ASSIGNED,
+    SALESFORCE_ID_LENGTH,
+)
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
@@ -361,8 +366,32 @@ class LicenseAdminAssignActionSerializer(CustomTextWithMultipleEmailsSerializer)
     """
 
     notify_users = serializers.BooleanField(required=False)
+    user_sfids = serializers.ListField(
+        child=serializers.CharField(
+            allow_blank=True,
+            allow_null=True,
+            write_only=True,
+            validators=[MinLengthValidator(SALESFORCE_ID_LENGTH)]
+        ),
+        allow_empty=False,
+        required=False,
+        error_messages={"empty": "No Salesforce Ids provided."}
+    )
 
     class Meta:
         fields = CustomTextWithMultipleEmailsSerializer.Meta.fields + [
             'notify_users',
         ]
+
+    def validate(self, attrs):
+        user_emails = attrs.get('user_emails')
+        user_sfids = attrs.get('user_sfids')
+
+        if user_sfids:
+            # if saleforce ids list is present then its length must be equal to number of user emails
+            if len(user_emails) != len(user_sfids):
+                raise serializers.ValidationError(
+                    'Number of Salesforce IDs did not match number of provided user emails.'
+                )
+
+        return super().validate(attrs)
