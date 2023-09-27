@@ -435,3 +435,6 @@ LICENSE_REVERT_SNAPSHOT_TIMESTAMP = '9999-12-31 23:59:59'
 
 # Django Admin Settings
 VALIDATE_FORM_EXTERNAL_FIELDS = True
+
+# disable indexing on history_date
+SIMPLE_HISTORY_DATE_INDEX = False
