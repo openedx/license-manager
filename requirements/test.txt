@@ -36,11 +36,11 @@ billiard==4.1.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.28.48
+boto3==1.28.57
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.31.48
+botocore==1.31.57
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -54,12 +54,12 @@ certifi==2023.7.22
     # via
     #   -r requirements/base.txt
     #   requests
-cffi==1.15.1
+cffi==1.16.0
     # via
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.2.0
+charset-normalizer==3.3.0
     # via
     #   -r requirements/base.txt
     #   requests
@@ -98,14 +98,14 @@ coverage[toml]==7.3.1
     # via
     #   -r requirements/test.in
     #   pytest-cov
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   -r requirements/base.txt
     #   pyjwt
     #   social-auth-core
 ddt==1.6.0
     # via -r requirements/test.in
-defusedxml==0.7.1
+defusedxml==0.8.0rc2
     # via
     #   -r requirements/base.txt
     #   python3-openid
@@ -151,11 +151,11 @@ django-crum==0.7.9
     #   edx-toggles
 django-durationwidget==1.0.5
     # via -r requirements/base.txt
-django-dynamic-fixture==4.0.0
+django-dynamic-fixture==4.0.1
     # via -r requirements/test.in
 django-extensions==3.2.3
     # via -r requirements/base.txt
-django-filter==23.2
+django-filter==23.3
     # via -r requirements/base.txt
 django-log-request-id==2.1.0
     # via -r requirements/base.txt
@@ -211,7 +211,7 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.9.3
+edx-drf-extensions==8.10.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -219,7 +219,7 @@ edx-lint==5.2.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-edx-opaque-keys==2.5.0
+edx-opaque-keys==2.5.1
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -233,7 +233,7 @@ exceptiongroup==1.1.3
     # via pytest
 factory-boy==3.3.0
     # via -r requirements/test.in
-faker==19.6.1
+faker==19.6.2
     # via factory-boy
 freezegun==1.2.2
     # via -r requirements/test.in
@@ -280,7 +280,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.0
     # via -r requirements/base.txt
-newrelic==9.0.0
+newrelic==9.1.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -385,7 +385,7 @@ pyyaml==6.0.1
     #   -r requirements/base.txt
     #   code-annotations
     #   drf-yasg
-redis==5.0.0
+redis==5.0.1
     # via -r requirements/base.txt
 requests==2.31.0
     # via
@@ -402,7 +402,7 @@ requests-oauthlib==1.3.1
     #   social-auth-core
 rules==3.3
     # via -r requirements/base.txt
-s3transfer==0.6.2
+s3transfer==0.7.0
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -455,7 +455,7 @@ tomli==2.0.1
     #   pytest
 tomlkit==0.12.1
     # via pylint
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   -r requirements/base.txt
     #   asgiref
@@ -488,7 +488,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.6
+wcwidth==0.2.8
     # via
     #   -r requirements/base.txt
     #   prompt-toolkit
@@ -496,7 +496,7 @@ wrapt==1.11.2
     # via
     #   -c requirements/constraints.txt
     #   astroid
-zipp==3.16.2
+zipp==3.17.0
     # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:

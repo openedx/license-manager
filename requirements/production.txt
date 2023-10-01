@@ -31,11 +31,11 @@ billiard==4.1.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.28.48
+boto3==1.28.57
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.31.48
+botocore==1.31.57
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -49,12 +49,12 @@ certifi==2023.7.22
     # via
     #   -r requirements/base.txt
     #   requests
-cffi==1.15.1
+cffi==1.16.0
     # via
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.2.0
+charset-normalizer==3.3.0
     # via
     #   -r requirements/base.txt
     #   requests
@@ -83,12 +83,12 @@ code-annotations==1.5.0
     # via
     #   -r requirements/base.txt
     #   edx-toggles
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   -r requirements/base.txt
     #   pyjwt
     #   social-auth-core
-defusedxml==0.7.1
+defusedxml==0.8.0rc2
     # via
     #   -r requirements/base.txt
     #   python3-openid
@@ -134,7 +134,7 @@ django-durationwidget==1.0.5
     # via -r requirements/base.txt
 django-extensions==3.2.3
     # via -r requirements/base.txt
-django-filter==23.2
+django-filter==23.3
     # via -r requirements/base.txt
 django-log-request-id==2.1.0
     # via -r requirements/base.txt
@@ -190,11 +190,11 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.9.3
+edx-drf-extensions==8.10.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
-edx-opaque-keys==2.5.0
+edx-opaque-keys==2.5.1
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -245,7 +245,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.0
     # via -r requirements/base.txt
-newrelic==9.0.0
+newrelic==9.1.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -326,7 +326,7 @@ pyyaml==6.0.1
     #   -r requirements/production.in
     #   code-annotations
     #   drf-yasg
-redis==5.0.0
+redis==5.0.1
     # via -r requirements/base.txt
 requests==2.31.0
     # via
@@ -343,7 +343,7 @@ requests-oauthlib==1.3.1
     #   social-auth-core
 rules==3.3
     # via -r requirements/base.txt
-s3transfer==0.6.2
+s3transfer==0.7.0
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -389,7 +389,7 @@ text-unidecode==1.3
     # via
     #   -r requirements/base.txt
     #   python-slugify
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   -r requirements/base.txt
     #   asgiref
@@ -419,11 +419,11 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.6
+wcwidth==0.2.8
     # via
     #   -r requirements/base.txt
     #   prompt-toolkit
-zipp==3.16.2
+zipp==3.17.0
     # via -r requirements/base.txt
 zope-event==5.0
     # via gevent
