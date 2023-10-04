@@ -37,11 +37,11 @@ billiard==4.1.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.28.51
+boto3==1.28.59
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.31.51
+botocore==1.31.59
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -55,12 +55,12 @@ certifi==2023.7.22
     # via
     #   -r requirements/base.txt
     #   requests
-cffi==1.15.1
+cffi==1.16.0
     # via
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.2.0
+charset-normalizer==3.3.0
     # via
     #   -r requirements/base.txt
     #   requests
@@ -99,7 +99,7 @@ cryptography==41.0.4
     #   -r requirements/base.txt
     #   pyjwt
     #   social-auth-core
-defusedxml==0.7.1
+defusedxml==0.8.0rc2
     # via
     #   -r requirements/base.txt
     #   python3-openid
@@ -211,7 +211,7 @@ edx-lint==5.2.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/quality.in
-edx-opaque-keys==2.5.0
+edx-opaque-keys==2.5.1
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -264,7 +264,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.0
     # via -r requirements/base.txt
-newrelic==9.0.0
+newrelic==9.1.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -273,7 +273,7 @@ oauthlib==3.2.2
     #   -r requirements/base.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==23.1
+packaging==23.2
     # via
     #   -r requirements/base.txt
     #   drf-yasg
@@ -281,7 +281,7 @@ pbr==5.11.1
     # via
     #   -r requirements/base.txt
     #   stevedore
-platformdirs==3.10.0
+platformdirs==3.11.0
     # via pylint
 ply==3.11
     # via
@@ -359,7 +359,7 @@ pyyaml==6.0.1
     #   -r requirements/base.txt
     #   code-annotations
     #   drf-yasg
-redis==5.0.0
+redis==5.0.1
     # via -r requirements/base.txt
 requests==2.31.0
     # via
@@ -376,7 +376,7 @@ requests-oauthlib==1.3.1
     #   social-auth-core
 rules==3.3
     # via -r requirements/base.txt
-s3transfer==0.6.2
+s3transfer==0.7.0
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -449,7 +449,7 @@ uritemplate==4.1.1
     # via
     #   -r requirements/base.txt
     #   drf-yasg
-urllib3==1.26.16
+urllib3==1.26.17
     # via
     #   -r requirements/base.txt
     #   botocore
@@ -460,7 +460,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.6
+wcwidth==0.2.8
     # via
     #   -r requirements/base.txt
     #   prompt-toolkit
