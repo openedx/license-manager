@@ -105,11 +105,19 @@ class EmailTaskTests(TestCase):
             'contact_email': self.contact_email,
         }
 
+        # Add an extra recipient with no associated license
+        # to hit debug-logging test coverage
         tasks.send_assignment_email_task(
             self.custom_template_text,
-            self.email_recipient_list,
+            self.email_recipient_list + ['no-license@foo.com'],
             self.subscription_plan.uuid,
         )
+
+        called_emails = [
+            _call.kwargs['recipients'][0]['attributes']['email']
+            for _call in mock_braze_client().send_campaign_message.call_args_list
+        ]
+        self.assertNotIn('no-license@foo.com', called_emails)
 
         for user_email in self.email_recipient_list:
             expected_license_key = str(self.subscription_plan.licenses.get(
@@ -179,11 +187,19 @@ class EmailTaskTests(TestCase):
             'contact_email': self.contact_email,
         }
         with freeze_time(localized_utcnow()):
+            # Add an extra recipient with no associated license
+            # to hit debug-logging test coverage
             tasks.send_reminder_email_task(
                 self.custom_template_text,
-                self.email_recipient_list,
+                self.email_recipient_list + ['no-license@foo.com'],
                 self.subscription_plan.uuid
             )
+
+            called_emails = [
+                _call.kwargs['recipients'][0]['attributes']['email']
+                for _call in mock_braze_client().send_campaign_message.call_args_list
+            ]
+            self.assertNotIn('no-license@foo.com', called_emails)
 
             for user_email in self.email_recipient_list:
                 expected_license_key = str(self.subscription_plan.licenses.get(

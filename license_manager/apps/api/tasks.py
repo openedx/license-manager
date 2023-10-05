@@ -50,6 +50,8 @@ logger = logging.getLogger(__name__)
 SOFT_TIME_LIMIT = 900
 MAX_TIME_LIMIT = 960
 
+LICENSE_DEBUG_PREFIX = '[LICENSE DEBUGGING]'
+
 
 class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
     """
@@ -117,10 +119,12 @@ def send_assignment_email_task(custom_template_text, email_recipient_list, subsc
     enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
     enterprise_contact_email = enterprise_customer.get('contact_email')
 
+    pending_license_by_email = {}
     # We need to send these emails individually, because each email's text must be
     # generated for every single user/activation_key
     for pending_license in pending_licenses:
         user_email = pending_license.user_email
+        pending_license_by_email[user_email] = pending_license
         license_activation_key = str(pending_license.activation_key)
         braze_campaign_id = settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN
         braze_trigger_properties = {
@@ -141,6 +145,10 @@ def send_assignment_email_task(custom_template_text, email_recipient_list, subsc
                 recipients=[recipient],
                 trigger_properties=braze_trigger_properties,
             )
+            logger.info(
+                f'{LICENSE_DEBUG_PREFIX} Sent license assignment email '
+                f'braze campaign {braze_campaign_id} to {recipient}'
+            )
         except BrazeClientError as exc:
             message = (
                 'License manager activation email sending received an '
@@ -148,6 +156,13 @@ def send_assignment_email_task(custom_template_text, email_recipient_list, subsc
             )
             logger.exception(message)
             raise exc
+
+    emails_with_no_assignments = [
+        _email for _email in email_recipient_list
+        if _email not in pending_license_by_email
+    ]
+    if emails_with_no_assignments:
+        logger.warning(f'{LICENSE_DEBUG_PREFIX} No assignment email sent for {emails_with_no_assignments}')
 
 
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -189,10 +204,12 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
     enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
     enterprise_contact_email = enterprise_customer.get('contact_email')
 
+    pending_license_by_email = {}
     # We need to send these emails individually, because each email's text must be
     # generated for every single user/activation_key
     for pending_license in pending_licenses:
         user_email = pending_license.user_email
+        pending_license_by_email[user_email] = pending_license
         license_activation_key = str(pending_license.activation_key)
         braze_campaign_id = settings.BRAZE_REMIND_EMAIL_CAMPAIGN
         braze_trigger_properties = {
@@ -217,7 +234,10 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
                 recipients=[recipient],
                 trigger_properties=braze_trigger_properties,
             )
-
+            logger.info(
+                f'{LICENSE_DEBUG_PREFIX} Sent license reminder email '
+                f'braze campaign {braze_campaign_id} to {recipient}'
+            )
         except BrazeClientError as exc:
             message = (
                 'Error hitting Braze API. '
@@ -227,6 +247,13 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
             raise exc
 
     License.set_date_fields_to_now(pending_licenses, ['last_remind_date'])
+
+    emails_with_no_assignments = [
+        _email for _email in email_recipient_list
+        if _email not in pending_license_by_email
+    ]
+    if emails_with_no_assignments:
+        logger.warning(f'{LICENSE_DEBUG_PREFIX} No reminder email sent for {emails_with_no_assignments}')
 
 
 @shared_task(base=LoggedTaskWithRetry)
