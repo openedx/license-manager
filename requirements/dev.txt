@@ -34,16 +34,17 @@ backports-zoneinfo[tzdata]==0.2.1
     # via
     #   -r requirements/validation.txt
     #   celery
+    #   django
     #   kombu
 billiard==4.1.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.28.48
+boto3==1.28.60
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.31.48
+botocore==1.31.60
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -61,12 +62,12 @@ certifi==2023.7.22
     # via
     #   -r requirements/validation.txt
     #   requests
-cffi==1.15.1
+cffi==1.16.0
     # via
     #   -r requirements/validation.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.2.0
+charset-normalizer==3.3.0
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -104,11 +105,11 @@ code-annotations==1.5.0
     #   -r requirements/validation.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.3.1
+coverage[toml]==7.3.2
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   -r requirements/validation.txt
     #   pyjwt
@@ -117,7 +118,7 @@ ddt==1.6.0
     # via
     #   -r requirements/dev.in
     #   -r requirements/validation.txt
-defusedxml==0.7.1
+defusedxml==0.8.0rc2
     # via
     #   -r requirements/validation.txt
     #   python3-openid
@@ -130,9 +131,9 @@ dill==0.3.7
     # via
     #   -r requirements/validation.txt
     #   pylint
-django==3.2.21
+django==4.2.6
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/validation.txt
     #   django-celery-results
     #   django-cors-headers
@@ -173,13 +174,13 @@ django-debug-toolbar==4.2.0
     # via -r requirements/dev.in
 django-durationwidget==1.0.5
     # via -r requirements/validation.txt
-django-dynamic-fixture==4.0.0
+django-dynamic-fixture==4.0.1
     # via -r requirements/validation.txt
 django-extensions==3.2.3
     # via
     #   -r requirements/dev.in
     #   -r requirements/validation.txt
-django-filter==23.2
+django-filter==23.3
     # via -r requirements/validation.txt
 django-log-request-id==2.1.0
     # via -r requirements/validation.txt
@@ -235,7 +236,7 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.9.3
+edx-drf-extensions==8.10.0
     # via
     #   -r requirements/validation.txt
     #   edx-rbac
@@ -245,7 +246,7 @@ edx-lint==5.2.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/validation.txt
-edx-opaque-keys==2.5.0
+edx-opaque-keys==2.5.1
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
@@ -261,7 +262,7 @@ exceptiongroup==1.1.3
     #   pytest
 factory-boy==3.3.0
     # via -r requirements/validation.txt
-faker==19.6.1
+faker==19.6.2
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -332,7 +333,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.0
     # via -r requirements/validation.txt
-newrelic==9.0.0
+newrelic==9.1.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -341,7 +342,7 @@ oauthlib==3.2.2
     #   -r requirements/validation.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==23.1
+packaging==23.2
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/validation.txt
@@ -361,7 +362,7 @@ pbr==5.11.1
     #   stevedore
 pip-tools==7.3.0
     # via -r requirements/pip-tools.txt
-platformdirs==3.10.0
+platformdirs==3.11.0
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -392,9 +393,9 @@ pycparser==2.21
     # via
     #   -r requirements/validation.txt
     #   cffi
-pydantic==2.3.0
+pydantic==2.4.2
     # via inflect
-pydantic-core==2.6.3
+pydantic-core==2.10.1
     # via pydantic
 pydocstyle==6.3.0
     # via -r requirements/validation.txt
@@ -469,7 +470,6 @@ python3-openid==3.2.0
 pytz==2023.3.post1
     # via
     #   -r requirements/validation.txt
-    #   django
     #   django-ses
     #   djangorestframework
     #   drf-yasg
@@ -481,7 +481,7 @@ pyyaml==6.0.1
     #   code-annotations
     #   drf-yasg
     #   edx-i18n-tools
-redis==5.0.0
+redis==5.0.1
     # via -r requirements/validation.txt
 requests==2.31.0
     # via
@@ -498,7 +498,7 @@ requests-oauthlib==1.3.1
     #   social-auth-core
 rules==3.3
     # via -r requirements/validation.txt
-s3transfer==0.6.2
+s3transfer==0.7.0
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -564,7 +564,7 @@ tomlkit==0.12.1
     # via
     #   -r requirements/validation.txt
     #   pylint
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   -r requirements/validation.txt
     #   annotated-types
@@ -590,7 +590,7 @@ uritemplate==4.1.1
     # via
     #   -r requirements/validation.txt
     #   drf-yasg
-urllib3==1.26.16
+urllib3==1.26.17
     # via
     #   -r requirements/validation.txt
     #   botocore
@@ -601,7 +601,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.6
+wcwidth==0.2.8
     # via
     #   -r requirements/validation.txt
     #   prompt-toolkit
@@ -614,7 +614,7 @@ wrapt==1.11.2
     #   -c requirements/constraints.txt
     #   -r requirements/validation.txt
     #   astroid
-zipp==3.16.2
+zipp==3.17.0
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/validation.txt

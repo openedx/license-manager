@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8"]
-        django-version: ["pinned", "4.2"]
+        django-version: ["pinned"]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
