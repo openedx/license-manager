@@ -264,7 +264,7 @@ edx-auth-backends==4.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-braze-client==0.1.7
+edx-braze-client==0.1.8
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

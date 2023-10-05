@@ -148,7 +148,7 @@ edx-api-doc-tools==1.7.0
     # via -r requirements/base.in
 edx-auth-backends==4.2.0
     # via -r requirements/base.in
-edx-braze-client==0.1.7
+edx-braze-client==0.1.8
     # via -r requirements/base.in
 edx-celeryutils==1.2.3
     # via -r requirements/base.in
