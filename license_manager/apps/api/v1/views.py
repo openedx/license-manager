@@ -721,11 +721,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             batch_size=10,
         )
 
-        license_uuid_strs = [str(_license.uuid) for _license in licenses]
-        track_license_changes_task.delay(
-            license_uuid_strs,
-            constants.SegmentEvents.LICENSE_ASSIGNED,
-        )
         return licenses
 
     def _set_source_for_assigned_licenses(self, assigned_licenses, emails_and_sfids):
@@ -844,13 +839,20 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                 logger.exception(error_message)
                 return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
             else:
-                notify_users = request.data.get('notify_users', True)
-                custom_template_text = utils.get_custom_text(request.data)
+                # Track license changes and do any other tasks that may want to
+                # read from the License DB table outside of the transaction.atomic() block,
+                # so that they can read the committed and updated versions
+                # of the now-assigned license records.
+                track_license_changes_task.delay(
+                    [str(_license.uuid) for _license in assigned_licenses],
+                    constants.SegmentEvents.LICENSE_ASSIGNED,
+                )
+
                 self._link_and_notify_assigned_emails(
-                    user_emails,
-                    subscription_plan,
-                    notify_users,
-                    custom_template_text
+                    user_emails=user_emails,
+                    subscription_plan=subscription_plan,
+                    notify_users=request.data.get('notify_users', True),
+                    custom_template_text=utils.get_custom_text(request.data),
                 )
         else:
             logger.info('All given emails are already associated with a license.')
