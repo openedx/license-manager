@@ -26,6 +26,9 @@ from license_manager.apps.subscriptions.constants import (
     UNASSIGNED,
     NotificationChoices,
 )
+from license_manager.apps.subscriptions.event_utils import (
+    get_license_tracking_properties,
+)
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
@@ -202,9 +205,10 @@ class EmailTaskTests(TestCase):
             self.assertNotIn('no-license@foo.com', called_emails)
 
             for user_email in self.email_recipient_list:
-                expected_license_key = str(self.subscription_plan.licenses.get(
+                expected_license = self.subscription_plan.licenses.get(
                     user_email=user_email
-                ).activation_key)
+                )
+                expected_license_key = str(expected_license.activation_key)
                 mock_enterprise_client().get_enterprise_customer_data.assert_any_call(
                     self.subscription_plan.enterprise_customer_uuid
                 )
@@ -229,6 +233,7 @@ class EmailTaskTests(TestCase):
                         'alias_name': user_email,
                     },
                 }
+                expected_recipient['attributes'].update(get_license_tracking_properties(expected_license))
                 mock_braze_client().send_campaign_message.assert_any_call(
                     settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN,
                     recipients=[expected_recipient],

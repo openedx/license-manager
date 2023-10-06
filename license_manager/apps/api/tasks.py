@@ -29,7 +29,10 @@ from license_manager.apps.subscriptions.constants import (
     REVOCABLE_LICENSE_STATUSES,
     NotificationChoices,
 )
-from license_manager.apps.subscriptions.event_utils import track_license_changes
+from license_manager.apps.subscriptions.event_utils import (
+    get_license_tracking_properties,
+    track_license_changes,
+)
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
@@ -222,6 +225,7 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
             'enterprise_contact_email': enterprise_contact_email,
         }
         recipient = _aliased_recipient_object_from_email(user_email)
+        recipient['attributes'].update(get_license_tracking_properties(pending_license))
 
         try:
             braze_client_instance = BrazeApiClient()
