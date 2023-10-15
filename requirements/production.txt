@@ -32,11 +32,11 @@ billiard==4.1.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.28.60
+boto3==1.28.63
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.31.60
+botocore==1.31.63
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -123,7 +123,7 @@ django==4.2.6
     #   social-auth-app-django
 django-celery-results==2.5.1
     # via -r requirements/base.txt
-django-cors-headers==4.2.0
+django-cors-headers==4.3.0
     # via -r requirements/base.txt
 django-crum==0.7.9
     # via
@@ -191,7 +191,7 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.10.0
+edx-drf-extensions==8.11.1
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -201,7 +201,7 @@ edx-opaque-keys==2.5.1
     #   edx-drf-extensions
 edx-rbac==1.8.0
     # via -r requirements/base.txt
-edx-rest-api-client==5.6.0
+edx-rest-api-client==5.6.1
     # via -r requirements/base.txt
 edx-toggles==5.1.0
     # via -r requirements/base.txt
@@ -351,7 +351,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-simplejson==3.19.1
+simplejson==3.19.2
     # via -r requirements/base.txt
 six==1.16.0
     # via
