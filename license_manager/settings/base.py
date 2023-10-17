@@ -279,7 +279,6 @@ JWT_AUTH = {
     'JWT_AUTH_COOKIE': 'edx-jwt-cookie',
     'JWT_AUTH_COOKIE_HEADER_PAYLOAD': 'edx-jwt-cookie-header-payload',
     'JWT_AUTH_COOKIE_SIGNATURE': 'edx-jwt-cookie-signature',
-    'JWT_AUTH_REFRESH_COOKIE': 'edx-jwt-refresh-cookie',
     'JWT_SECRET_KEY': 'SET-ME-PLEASE',
     # JWT_ISSUERS enables token decoding for multiple issuers (Note: This is not a native DRF-JWT field)
     # We use it to allow different values for the 'ISSUER' field, but keep the same SECRET_KEY and
