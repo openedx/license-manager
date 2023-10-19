@@ -19,6 +19,7 @@ from license_manager.apps.subscriptions.api import (
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.forms import (
     CustomerAgreementAdminForm,
+    LicenseTransferJobAdminForm,
     ProductForm,
     SubscriptionPlanForm,
     SubscriptionPlanRenewalForm,
@@ -26,6 +27,7 @@ from license_manager.apps.subscriptions.forms import (
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
+    LicenseTransferJob,
     Notification,
     PlanType,
     Product,
@@ -657,3 +659,66 @@ class NotificationAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(LicenseTransferJob)
+class LicenseTransferJobAdmin(admin.ModelAdmin):
+    form = LicenseTransferJobAdminForm
+
+    list_display = (
+        'id',
+        'customer_agreement',
+        'old_subscription_plan',
+        'new_subscription_plan',
+        'completed_at',
+        'is_dry_run',
+    )
+
+    list_filter = (
+        'is_dry_run',
+    )
+
+    search_fields = (
+        'customer_agreement__enterprise_customer_uuid__startswith',
+        'customer_agreement__enterprise_customer_slug__startswith',
+        'customer_agreement__enterprise_customer_name__startswith',
+        'old_subscription_plan',
+        'new_subscription_plan',
+    )
+
+    sortable_by = (
+        'id',
+        'completed_at',
+        'is_dry_run',
+        'customer_agreement',
+    )
+
+    actions = ['process_transfer_jobs']
+
+    def get_readonly_fields(self, request, obj=None):
+        """
+        Makes all fields except ``notes`` read-only
+        when ``completed_at`` is not null.
+        """
+        if obj and obj.completed_at:
+            return list(
+                # pylint: disable=no-member
+                set(self.form.base_fields) - {'notes'}
+            )
+        else:
+            return [
+                'completed_at',
+                'processed_results',
+            ]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'customer_agreement',
+            'old_subscription_plan',
+            'new_subscription_plan',
+        )
+
+    @admin.action(description="Process selected license transfer jobs")
+    def process_transfer_jobs(self, request, queryset):
+        for transfer_job in queryset:
+            transfer_job.process()

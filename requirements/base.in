@@ -1,3 +1,4 @@
+
 # Core requirements for using this application
 
 -c constraints.txt
@@ -6,6 +7,9 @@ analytics-python
 backoff
 celery
 Django
+# https://django-autocomplete-light.readthedocs.io/en/master/
+# Supports admin field choices that depend on other fields
+django-autocomplete-light
 django-celery-results
 django-cors-headers
 django-durationwidget

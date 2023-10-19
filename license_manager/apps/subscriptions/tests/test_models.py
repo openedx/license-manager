@@ -19,6 +19,7 @@ from license_manager.apps.subscriptions.constants import (
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.models import (
     License,
+    LicenseTransferJob,
     Notification,
     SubscriptionLicenseSourceType,
 )
@@ -449,3 +450,183 @@ class SubscriptionLicenseSourceModelTests(TestCase):
 
         exception_message = ['Ensure this value has at least 18 characters (it has 9).']
         assert raised_exception.value.args[0]['source_id'][0].messages == exception_message
+
+
+@ddt.ddt
+class LicenseTransferJobTests(TestCase):
+    """
+    Tests for the `LicenseTransferJob` model.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.enterprise_customer_uuid = uuid.uuid4()
+        cls.customer_agreement = CustomerAgreementFactory.create(
+            enterprise_customer_uuid=cls.enterprise_customer_uuid,
+        )
+
+        cls.old_plan = SubscriptionPlanFactory.create(
+            customer_agreement=cls.customer_agreement,
+            is_active=True,
+            start_date=localized_datetime(2021, 1, 1),
+            expiration_date=localized_datetime_from_datetime(datetime.now() + timedelta(days=365)),
+        )
+        cls.new_plan = SubscriptionPlanFactory.create(
+            customer_agreement=cls.customer_agreement,
+            is_active=True,
+            start_date=localized_datetime(2021, 1, 1),
+            expiration_date=localized_datetime_from_datetime(datetime.now() + timedelta(days=365)),
+        )
+
+    def tearDown(self):
+        super().tearDown()
+        License.objects.all().delete()
+
+    def _create_transfer_job(self, license_uuids_raw, **kwargs):
+        return LicenseTransferJob.objects.create(
+            customer_agreement=self.customer_agreement,
+            old_subscription_plan=self.old_plan,
+            new_subscription_plan=self.new_plan,
+            license_uuids_raw=license_uuids_raw,
+            **kwargs,
+        )
+
+    def test_get_licenses_to_transfer(self):
+        """
+        Tests that we only operate on activated or assigned licenses from the old plan
+        of a transfer job.
+        """
+        old_assigned_licenses = LicenseFactory.create_batch(
+            3, subscription_plan=self.old_plan, assigned_date=localized_utcnow(), status=ASSIGNED,
+        )
+        old_activated_licenses = LicenseFactory.create_batch(
+            3, subscription_plan=self.old_plan, assigned_date=localized_utcnow(), status=ACTIVATED,
+        )
+        # old unassigned licenses
+        LicenseFactory.create_batch(
+            3, subscription_plan=self.old_plan,
+        )
+        # new_licenses
+        LicenseFactory.create_batch(
+            3, subscription_plan=self.new_plan, assigned_date=localized_utcnow(), status=ACTIVATED,
+        )
+
+        job = self._create_transfer_job(
+            license_uuids_raw='\n'.join([str(_license.uuid) for _license in self.old_plan.licenses.all()]),
+        )
+
+        expected_licenses = {
+            _license.uuid: _license
+            for _license in old_assigned_licenses + old_activated_licenses
+        }
+        actual_licenses = {
+            _license.uuid: _license
+            for license_batch in job.get_licenses_to_transfer()
+            for _license in license_batch
+        }
+        self.assertEqual(expected_licenses, actual_licenses)
+
+    def test_transfer_dry_run_processing(self):
+        """
+        Tests that a dry-run process doesn't actually modify the
+        otherwise impacted licenses.
+        """
+        old_activated_licenses = LicenseFactory.create_batch(
+            3, subscription_plan=self.old_plan, assigned_date=localized_utcnow(), status=ACTIVATED,
+        )
+
+        job = self._create_transfer_job(
+            license_uuids_raw='\n'.join([str(_license.uuid) for _license in old_activated_licenses]),
+            is_dry_run=True,
+        )
+        job.process()
+
+        for _license in old_activated_licenses:
+            _license.refresh_from_db()
+            self.assertEqual(_license.subscription_plan, self.old_plan)
+
+        self.assertCountEqual(
+            job.processed_results[0]['modified_licenses'],
+            [str(_license.uuid) for _license in old_activated_licenses]
+        )
+        self.assertTrue(job.processed_results[0]['is_dry_run'])
+        self.assertAlmostEqual(
+            job.processed_results[0]['completed_at'],
+            localized_utcnow(),
+            delta=timedelta(seconds=2),
+        )
+        self.assertIsNone(job.completed_at)
+
+    def test_transfer_idempotent_processing(self):
+        """
+        Tests that the `process()` method is idempotent.
+        """
+        old_activated_licenses = LicenseFactory.create_batch(
+            3, subscription_plan=self.old_plan, assigned_date=localized_utcnow(), status=ACTIVATED,
+        )
+
+        job = self._create_transfer_job(
+            license_uuids_raw='\n'.join([str(_license.uuid) for _license in old_activated_licenses]),
+            is_dry_run=False,
+        )
+        job.process()
+
+        for _license in old_activated_licenses:
+            _license.refresh_from_db()
+            self.assertEqual(_license.subscription_plan, self.new_plan)
+
+        self.assertCountEqual(
+            job.processed_results[0]['modified_licenses'],
+            [str(_license.uuid) for _license in old_activated_licenses]
+        )
+        self.assertFalse(job.processed_results[0]['is_dry_run'])
+        original_completed_at = job.completed_at
+        self.assertAlmostEqual(
+            original_completed_at,
+            localized_utcnow(),
+            delta=timedelta(seconds=2),
+        )
+
+        # now process the same job again, nothing should change
+        job.process()
+        for _license in old_activated_licenses:
+            _license.refresh_from_db()
+            self.assertEqual(_license.subscription_plan, self.new_plan)
+        self.assertEqual(len(job.processed_results), 1)
+        self.assertEqual(job.completed_at, original_completed_at)
+
+    def test_transfer_reversable_processing(self):
+        """
+        Tests that we can transfer licenses one way, then create a second
+        job to transfer them in the reverse direction.
+        """
+        old_activated_licenses = LicenseFactory.create_batch(
+            3, subscription_plan=self.old_plan, assigned_date=localized_utcnow(), status=ACTIVATED,
+        )
+
+        raw_license_uuids = '\n'.join([str(_license.uuid) for _license in old_activated_licenses])
+        job = self._create_transfer_job(
+            license_uuids_raw=raw_license_uuids,
+            is_dry_run=False,
+        )
+        job.process()
+
+        for _license in old_activated_licenses:
+            _license.refresh_from_db()
+            self.assertEqual(_license.subscription_plan, self.new_plan)
+
+        reverse_job = LicenseTransferJob.objects.create(
+            customer_agreement=self.customer_agreement,
+            old_subscription_plan=self.new_plan,
+            new_subscription_plan=self.old_plan,
+            license_uuids_raw=raw_license_uuids,
+            is_dry_run=False,
+        )
+
+        reverse_job.process()
+
+        for _license in old_activated_licenses:
+            _license.refresh_from_db()
+            self.assertEqual(_license.subscription_plan, self.old_plan)

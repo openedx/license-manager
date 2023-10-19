@@ -39,6 +39,8 @@ subscriptions.HistoricalCustomerAgreement:
   ".. no_pii:": "This model has no PII"
 subscriptions.HistoricalLicense:
   ".. no_pii:": "This model has no PII"
+subscriptions.HistoricalLicenseTransferJob:
+  ".. no_pii:": "This model has no PII"
 subscriptions.HistoricalNotification:
   ".. no_pii:": "This model has no PII"
 subscriptions.HistoricalSubscriptionPlan:
