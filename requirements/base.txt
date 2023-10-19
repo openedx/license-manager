@@ -23,9 +23,9 @@ backports-zoneinfo[tzdata]==0.2.1
     #   kombu
 billiard==4.1.0
     # via celery
-boto3==1.28.60
+boto3==1.28.66
     # via django-ses
-botocore==1.31.60
+botocore==1.31.66
     # via
     #   boto3
     #   s3transfer
@@ -70,6 +70,7 @@ django==4.2.6
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/base.in
+    #   django-autocomplete-light
     #   django-celery-results
     #   django-cors-headers
     #   django-crum
@@ -93,9 +94,11 @@ django==4.2.6
     #   edx-toggles
     #   jsonfield
     #   social-auth-app-django
+django-autocomplete-light==3.9.7
+    # via -r requirements/base.in
 django-celery-results==2.5.1
     # via -r requirements/base.in
-django-cors-headers==4.2.0
+django-cors-headers==4.3.0
     # via -r requirements/base.in
 django-crum==0.7.9
     # via
@@ -158,7 +161,7 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.10.0
+edx-drf-extensions==8.12.0
     # via
     #   -r requirements/base.in
     #   edx-rbac
@@ -166,7 +169,7 @@ edx-opaque-keys==2.5.1
     # via edx-drf-extensions
 edx-rbac==1.8.0
     # via -r requirements/base.in
-edx-rest-api-client==5.6.0
+edx-rest-api-client==5.6.1
     # via -r requirements/base.in
 edx-toggles==5.1.0
     # via -r requirements/base.in
@@ -204,7 +207,7 @@ ply==3.11
     # via djangoql
 prompt-toolkit==3.0.39
     # via click-repl
-psutil==5.9.5
+psutil==5.9.6
     # via edx-django-utils
 pycparser==2.21
     # via cffi
@@ -214,6 +217,7 @@ pyjwt[crypto]==2.8.0
     #   edx-auth-backends
     #   edx-drf-extensions
     #   edx-rest-api-client
+    #   pyjwt
     #   social-auth-core
 pymongo==3.13.0
     # via edx-opaque-keys
@@ -256,18 +260,19 @@ s3transfer==0.7.0
     # via boto3
 semantic-version==2.10.0
     # via edx-drf-extensions
-simplejson==3.19.1
+simplejson==3.19.2
     # via -r requirements/base.in
 six==1.16.0
     # via
     #   analytics-python
+    #   django-autocomplete-light
     #   djangorestframework-csv
     #   edx-auth-backends
     #   edx-rbac
     #   python-dateutil
 slumber==0.7.1
     # via edx-rest-api-client
-social-auth-app-django==5.3.0
+social-auth-app-django==5.4.0
     # via edx-auth-backends
 social-auth-core==4.4.2
     # via
@@ -295,7 +300,7 @@ unicodecsv==0.14.1
     # via djangorestframework-csv
 uritemplate==4.1.1
     # via drf-yasg
-urllib3==1.26.17
+urllib3==1.26.18
     # via
     #   botocore
     #   requests

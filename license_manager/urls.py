@@ -25,6 +25,7 @@ from rest_framework import permissions
 
 from license_manager.apps.api import urls as api_urls
 from license_manager.apps.core import views as core_views
+from license_manager.apps.subscriptions import urls_admin as subs_url_admin
 
 
 admin.autodiscover()
@@ -41,6 +42,7 @@ urlpatterns = [
     path('', include(oauth2_urlpatterns)),
     path('', include('csrf.urls')),  # Include csrf urls from edx-drf-extensions
     path('admin/', admin.site.urls),
+    path('admin-custom/subscriptions/', include(subs_url_admin)),
     path('api/', include(api_urls)),
     path('api-docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('auto_auth/', core_views.AutoAuth.as_view(), name='auto_auth'),

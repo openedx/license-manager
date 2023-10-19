@@ -10,7 +10,7 @@ amqp==5.1.1
     #   kombu
 analytics-python==1.4.post1
     # via -r requirements/validation.txt
-annotated-types==0.5.0
+annotated-types==0.6.0
     # via pydantic
 asgiref==3.7.2
     # via
@@ -33,6 +33,7 @@ backoff==1.10.0
 backports-zoneinfo[tzdata]==0.2.1
     # via
     #   -r requirements/validation.txt
+    #   backports-zoneinfo
     #   celery
     #   django
     #   kombu
@@ -40,11 +41,11 @@ billiard==4.1.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.28.60
+boto3==1.28.66
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.31.60
+botocore==1.31.66
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -108,6 +109,7 @@ code-annotations==1.5.0
 coverage[toml]==7.3.2
     # via
     #   -r requirements/validation.txt
+    #   coverage
     #   pytest-cov
 cryptography==41.0.4
     # via
@@ -135,6 +137,7 @@ django==4.2.6
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/validation.txt
+    #   django-autocomplete-light
     #   django-celery-results
     #   django-cors-headers
     #   django-crum
@@ -160,9 +163,11 @@ django==4.2.6
     #   edx-toggles
     #   jsonfield
     #   social-auth-app-django
+django-autocomplete-light==3.9.7
+    # via -r requirements/validation.txt
 django-celery-results==2.5.1
     # via -r requirements/validation.txt
-django-cors-headers==4.2.0
+django-cors-headers==4.3.0
     # via -r requirements/validation.txt
 django-crum==0.7.9
     # via
@@ -236,11 +241,11 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.10.0
+edx-drf-extensions==8.12.0
     # via
     #   -r requirements/validation.txt
     #   edx-rbac
-edx-i18n-tools==1.2.0
+edx-i18n-tools==1.3.0
     # via -r requirements/validation.txt
 edx-lint==5.2.5
     # via
@@ -252,7 +257,7 @@ edx-opaque-keys==2.5.1
     #   edx-drf-extensions
 edx-rbac==1.8.0
     # via -r requirements/validation.txt
-edx-rest-api-client==5.6.0
+edx-rest-api-client==5.6.1
     # via -r requirements/validation.txt
 edx-toggles==5.1.0
     # via -r requirements/validation.txt
@@ -262,7 +267,7 @@ exceptiongroup==1.1.3
     #   pytest
 factory-boy==3.3.0
     # via -r requirements/validation.txt
-faker==19.6.2
+faker==19.11.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -319,6 +324,10 @@ lazy-object-proxy==1.9.0
     # via
     #   -r requirements/validation.txt
     #   astroid
+lxml==4.9.3
+    # via
+    #   -r requirements/validation.txt
+    #   edx-i18n-tools
 markupsafe==2.1.3
     # via
     #   -r requirements/validation.txt
@@ -383,11 +392,11 @@ prompt-toolkit==3.0.39
     # via
     #   -r requirements/validation.txt
     #   click-repl
-psutil==5.9.5
+psutil==5.9.6
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
-pycodestyle==2.11.0
+pycodestyle==2.11.1
     # via -r requirements/validation.txt
 pycparser==2.21
     # via
@@ -408,6 +417,7 @@ pyjwt[crypto]==2.8.0
     #   edx-auth-backends
     #   edx-drf-extensions
     #   edx-rest-api-client
+    #   pyjwt
     #   social-auth-core
 pylint==2.14.5
     # via
@@ -506,12 +516,13 @@ semantic-version==2.10.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-simplejson==3.19.1
+simplejson==3.19.2
     # via -r requirements/validation.txt
 six==1.16.0
     # via
     #   -r requirements/validation.txt
     #   analytics-python
+    #   django-autocomplete-light
     #   djangorestframework-csv
     #   edx-auth-backends
     #   edx-lint
@@ -526,7 +537,7 @@ snowballstemmer==2.2.0
     # via
     #   -r requirements/validation.txt
     #   pydocstyle
-social-auth-app-django==5.3.0
+social-auth-app-django==5.4.0
     # via
     #   -r requirements/validation.txt
     #   edx-auth-backends
@@ -590,7 +601,7 @@ uritemplate==4.1.1
     # via
     #   -r requirements/validation.txt
     #   drf-yasg
-urllib3==1.26.17
+urllib3==1.26.18
     # via
     #   -r requirements/validation.txt
     #   botocore

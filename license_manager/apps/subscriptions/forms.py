@@ -1,9 +1,9 @@
 """
 Forms to be used in the subscriptions django app.
 """
-
 import logging
 
+from dal import autocomplete
 from django import forms
 from django.conf import settings
 from django.utils.translation import gettext as _
@@ -22,6 +22,7 @@ from license_manager.apps.subscriptions.constants import (
 )
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
+    LicenseTransferJob,
     Product,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
@@ -401,3 +402,37 @@ class ProductForm(forms.ModelForm):
             return False
 
         return True
+
+
+class LicenseTransferJobAdminForm(forms.ModelForm):
+    class Meta:
+        model = LicenseTransferJob
+        fields = '__all__'
+        # Use django-autocomplete-light to filter the available
+        # subscription_plan choices to only those related to
+        # the selected customer agreement.  Works for both
+        # records that don't yet exist (on transfer job creation)
+        # and for modification of existing transfer job records.
+        # See urls_admin.py for the view that does this filtering,
+        # and see static/filtered_subscription_admin.js for
+        # the jQuery code that clears subscription plan selections
+        # when the selected customer agreement is changed.
+        widgets = {
+            'old_subscription_plan': autocomplete.ModelSelect2(
+                url='filtered_subscription_plan_admin',
+                # forward the customer_agreement field's value
+                # into our custom autocomplete field in urls_admin.py
+                forward=['customer_agreement'],
+            ),
+            'new_subscription_plan': autocomplete.ModelSelect2(
+                url='filtered_subscription_plan_admin',
+                # forward the customer_agreement field's value
+                # into our custom autocomplete field in urls_admin.py
+                forward=['customer_agreement'],
+            ),
+        }
+
+    class Media:
+        js = (
+            'filtered_subscription_admin.js',
+        )

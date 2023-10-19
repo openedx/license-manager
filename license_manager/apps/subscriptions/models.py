@@ -7,8 +7,9 @@ from math import ceil, inf
 from uuid import uuid4
 
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinLengthValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -56,6 +57,7 @@ from .exceptions import (
     LicenseActivationMissingError,
     LicenseToActivateIsRevokedError,
 )
+from .utils import chunks
 
 
 logger = getLogger(__name__)
@@ -169,8 +171,8 @@ class CustomerAgreement(TimeStampedModel):
         Return human-readable string representation.
         """
         return (
-            "<CustomerAgreement: '{slug}'>".format(
-                slug=self.enterprise_customer_slug,
+            "<CustomerAgreement: '{}'>".format(
+                self.enterprise_customer_slug or self.enterprise_customer_name
             )
         )
 
@@ -476,6 +478,16 @@ class SubscriptionPlan(TimeStampedModel):
         return self.customer_agreement.enterprise_customer_uuid
 
     @property
+    def enterprise_customer_slug(self):
+        """
+        A link to the customer slug of this plan's customer agreement
+
+        Returns:
+            str
+        """
+        return self.customer_agreement.enterprise_customer_slug
+
+    @property
     def unassigned_licenses(self):
         """
         Gets all of the unassigned licenses associated with the subscription.
@@ -734,12 +746,13 @@ class SubscriptionPlan(TimeStampedModel):
         Return human-readable string representation.
         """
         return (
-            "<SubscriptionPlan with Title '{title}' "
-            "for EnterpriseCustomer '{enterprise_customer_uuid}'"
+            "<SubscriptionPlan title='{title}' "
+            "for customer '{enterprise_customer_uuid}', slug={slug} "
             "{internal_use}>".format(
                 title=self.title,
                 enterprise_customer_uuid=self.enterprise_customer_uuid,
-                internal_use=' (for internal use only)' if self.for_internal_use_only else '',
+                slug=self.enterprise_customer_slug,
+                internal_use='(for internal use only)' if self.for_internal_use_only else '',
             )
         )
 
@@ -1289,6 +1302,170 @@ class License(TimeStampedModel):
             duplicate.save()
 
         return sorted_licenses[0]
+
+
+class LicenseTransferJob(TimeStampedModel):
+    """
+    A record to help run a job that "physically" transfers
+    a batch of licenses' SubscriptionPlan FKs from one plan
+    to another plan.
+
+    .. no_pii: This model has no PII
+    """
+    CHUNK_SIZE = 100
+
+    customer_agreement = models.ForeignKey(
+        CustomerAgreement,
+        related_name='license_transfer_jobs',
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False,
+    )
+    old_subscription_plan = models.ForeignKey(
+        SubscriptionPlan,
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False,
+        related_name='license_transfer_jobs_old',
+        help_text=_("SubscriptionPlan from which licenses will be transferred."),
+    )
+    new_subscription_plan = models.ForeignKey(
+        SubscriptionPlan,
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False,
+        related_name='license_transfer_jobs_new',
+        help_text=_("SubscriptionPlan to which licenses will be transferred."),
+    )
+    completed_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_("The time at which the job was successfully processed."),
+    )
+    notes = models.TextField(
+        null=True,
+        blank=True,
+        help_text=_("Optionally, say something about why the licenses are being transferred."),
+    )
+    is_dry_run = models.BooleanField(
+        default=False,
+        help_text=_(
+            "If true, will report which licenses will be transferred in processed_results, "
+            "without actually transferring them."
+        ),
+    )
+    delimiter = models.CharField(
+        max_length=8,
+        choices=(
+            ('newline', _('Newline character')),
+            ('comma', _('Comma character')),
+            ('pipe', _('Pipe character')),
+        ),
+        null=False,
+        default='newline',
+    )
+    license_uuids_raw = models.TextField(
+        null=False,
+        blank=False,
+        help_text=_("Delimitted (with newlines by default) list of license_uuids to transfer"),
+    )
+    processed_results = models.JSONField(
+        null=True,
+        blank=True,
+        encoder=DjangoJSONEncoder,
+        help_text=_("Raw results of what licenses were changed, either in dry-run form, or actual form."),
+    )
+
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("License Transfer Job")
+        verbose_name_plural = _("License Transfer Jobs")
+
+    def __str__(self):
+        return f'{self.id}'
+
+    @property
+    def delimiter_char(self):
+        return {
+            'newline': '\n',
+            'comma': ',',
+            'pipe': '|',
+        }.get(self.delimiter, '\n')
+
+    def clean(self):
+        """
+        Validates that old and new subscription plans share the same customer agreement.
+        """
+        super().clean()
+        if self.old_subscription_plan.customer_agreement != self.new_subscription_plan.customer_agreement:
+            raise ValidationError(
+                'LicenseTransferJob: Old and new subscription plans must have same customer_agreement.'
+            )
+
+    def get_customer_agreement(self):
+        try:
+            return self.customer_agreement
+        except CustomerAgreement.DoesNotExist:
+            return None
+
+    def get_license_uuids(self):
+        return [
+            raw_license_uuid.strip() for raw_license_uuid in
+            self.license_uuids_raw.split(self.delimiter_char)
+        ]
+
+    def get_licenses_to_transfer(self):
+        """
+        Yields successive chunked querysets of License records to transfer.
+        The licenses are from self.old_subscription_plan and will
+        only be in the (activated, assigned) statuses.
+        """
+        for license_uuid_chunk in chunks(self.get_license_uuids(), self.CHUNK_SIZE):
+            yield License.objects.filter(
+                subscription_plan=self.old_subscription_plan,
+                status__in=[ACTIVATED, ASSIGNED],
+                uuid__in=license_uuid_chunk,
+            )
+
+    def process(self):
+        """
+        Processes this job, moving activated and assigned licenses
+        from the job's old subscription plan to the new subscription plan.
+        Is ``self.is_dry_run``, the licenses are not actually moved, but we
+        report via ``self.processed_results`` which licenses would have
+        been moved during this processing.
+        """
+        if self.completed_at:
+            logger.info(f'{self} was already processed on {self.completed_at}')
+            return
+
+        processed_license_uuids = []
+        with transaction.atomic():
+            for license_queryset in self.get_licenses_to_transfer():
+                licenses = list(license_queryset)
+
+                if not self.is_dry_run:
+                    for _license in licenses:
+                        _license.subscription_plan = self.new_subscription_plan
+                    License.bulk_update(licenses, ['subscription_plan'])
+
+                processed_license_uuids.extend([str(_lic.uuid) for _lic in licenses])
+
+        time_completed_at = localized_utcnow()
+        if not self.is_dry_run:
+            self.completed_at = time_completed_at
+
+        if not self.processed_results:
+            self.processed_results = []
+        self.processed_results.append(
+            {
+                'is_dry_run': self.is_dry_run,
+                'modified_licenses': processed_license_uuids,
+                'completed_at': time_completed_at,
+            }
+        )
+        self.save()
 
 
 class SubscriptionLicenseSourceType(TimeStampedModel):
