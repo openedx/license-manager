@@ -678,6 +678,8 @@ class LicenseTransferJobAdmin(admin.ModelAdmin):
         'is_dry_run',
     )
 
+    autocomplete_fields = ['customer_agreement']
+
     search_fields = (
         'customer_agreement__enterprise_customer_uuid__startswith',
         'customer_agreement__enterprise_customer_slug__startswith',
