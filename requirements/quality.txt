@@ -38,11 +38,11 @@ billiard==4.1.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.28.66
+boto3==1.28.75
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.31.66
+botocore==1.31.75
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -61,7 +61,7 @@ cffi==1.16.0
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.3.0
+charset-normalizer==3.3.1
     # via
     #   -r requirements/base.txt
     #   requests
@@ -95,7 +95,7 @@ code-annotations==1.5.0
     #   -r requirements/base.txt
     #   edx-lint
     #   edx-toggles
-cryptography==41.0.4
+cryptography==41.0.5
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -181,7 +181,7 @@ djangorestframework==3.14.0
     #   drf-yasg
     #   edx-api-doc-tools
     #   edx-drf-extensions
-djangorestframework-csv==2.1.1
+djangorestframework-csv==3.0.1
     # via -r requirements/base.txt
 drf-jwt==1.19.2
     # via
@@ -207,7 +207,7 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.12.0
+edx-drf-extensions==8.13.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -268,7 +268,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.0
     # via -r requirements/base.txt
-newrelic==9.1.0
+newrelic==9.1.1
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -325,7 +325,7 @@ pylint==2.14.5
     #   pylint-plugin-utils
 pylint-celery==0.3
     # via edx-lint
-pylint-django==2.5.3
+pylint-django==2.5.5
     # via edx-lint
 pylint-plugin-utils==0.8.2
     # via
@@ -396,7 +396,6 @@ six==1.16.0
     #   -r requirements/base.txt
     #   analytics-python
     #   django-autocomplete-light
-    #   djangorestframework-csv
     #   edx-auth-backends
     #   edx-lint
     #   edx-rbac
@@ -411,7 +410,7 @@ social-auth-app-django==5.4.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.4.2
+social-auth-core==4.5.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
@@ -447,10 +446,6 @@ tzdata==2023.3
     #   -r requirements/base.txt
     #   backports-zoneinfo
     #   celery
-unicodecsv==0.14.1
-    # via
-    #   -r requirements/base.txt
-    #   djangorestframework-csv
 uritemplate==4.1.1
     # via
     #   -r requirements/base.txt
@@ -466,7 +461,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.8
+wcwidth==0.2.9
     # via
     #   -r requirements/base.txt
     #   prompt-toolkit

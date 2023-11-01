@@ -48,12 +48,12 @@ billiard==4.1.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.28.66
+boto3==1.28.75
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.31.66
+botocore==1.31.75
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -76,7 +76,7 @@ cffi==1.16.0
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.3.0
+charset-normalizer==3.3.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -124,7 +124,7 @@ coverage[toml]==7.3.2
     #   -r requirements/test.txt
     #   coverage
     #   pytest-cov
-cryptography==41.0.4
+cryptography==41.0.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -245,7 +245,7 @@ djangorestframework==3.14.0
     #   drf-yasg
     #   edx-api-doc-tools
     #   edx-drf-extensions
-djangorestframework-csv==2.1.1
+djangorestframework-csv==3.0.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -286,7 +286,7 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.12.0
+edx-drf-extensions==8.13.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -321,7 +321,7 @@ exceptiongroup==1.1.3
     #   pytest
 factory-boy==3.3.0
     # via -r requirements/test.txt
-faker==19.11.0
+faker==19.12.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -393,7 +393,7 @@ mysqlclient==2.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==9.1.0
+newrelic==9.1.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -478,7 +478,7 @@ pylint-celery==0.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-lint
-pylint-django==2.5.3
+pylint-django==2.5.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -499,14 +499,14 @@ pynacl==1.5.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==7.4.2
+pytest==7.4.3
     # via
     #   -r requirements/test.txt
     #   pytest-cov
     #   pytest-django
 pytest-cov==4.1.0
     # via -r requirements/test.txt
-pytest-django==4.5.2
+pytest-django==4.6.0
     # via -r requirements/test.txt
 python-dateutil==2.8.2
     # via
@@ -584,7 +584,6 @@ six==1.16.0
     #   -r requirements/test.txt
     #   analytics-python
     #   django-autocomplete-light
-    #   djangorestframework-csv
     #   edx-auth-backends
     #   edx-lint
     #   edx-rbac
@@ -604,7 +603,7 @@ social-auth-app-django==5.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.4.2
+social-auth-core==4.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -655,11 +654,6 @@ tzdata==2023.3
     #   -r requirements/test.txt
     #   backports-zoneinfo
     #   celery
-unicodecsv==0.14.1
-    # via
-    #   -r requirements/quality.txt
-    #   -r requirements/test.txt
-    #   djangorestframework-csv
 uritemplate==4.1.1
     # via
     #   -r requirements/quality.txt
@@ -678,7 +672,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.8
+wcwidth==0.2.9
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
