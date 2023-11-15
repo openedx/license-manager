@@ -4,12 +4,14 @@
 #
 #    make upgrade
 #
-amqp==5.1.1
+amqp==5.2.0
     # via kombu
 analytics-python==1.4.post1
     # via -r requirements/base.in
 asgiref==3.7.2
-    # via django
+    # via
+    #   django
+    #   django-cors-headers
 async-timeout==4.0.3
     # via redis
 backoff==1.10.0
@@ -21,15 +23,15 @@ backports-zoneinfo[tzdata]==0.2.1
     #   celery
     #   django
     #   kombu
-billiard==4.1.0
+billiard==4.2.0
     # via celery
-boto3==1.28.75
+boto3==1.29.0
     # via django-ses
-botocore==1.31.75
+botocore==1.32.0
     # via
     #   boto3
     #   s3transfer
-celery==5.3.4
+celery==5.3.5
     # via
     #   -r requirements/base.in
     #   django-celery-results
@@ -40,7 +42,7 @@ cffi==1.16.0
     # via
     #   cryptography
     #   pynacl
-charset-normalizer==3.3.1
+charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via
@@ -66,7 +68,7 @@ defusedxml==0.8.0rc2
     # via
     #   python3-openid
     #   social-auth-core
-django==4.2.6
+django==4.2.7
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/base.in
@@ -98,7 +100,7 @@ django-autocomplete-light==3.9.7
     # via -r requirements/base.in
 django-celery-results==2.5.1
     # via -r requirements/base.in
-django-cors-headers==4.3.0
+django-cors-headers==4.3.1
     # via -r requirements/base.in
 django-crum==0.7.9
     # via
@@ -155,7 +157,7 @@ edx-braze-client==0.1.8
     # via -r requirements/base.in
 edx-celeryutils==1.2.3
     # via -r requirements/base.in
-edx-django-utils==5.7.0
+edx-django-utils==5.8.0
     # via
     #   -r requirements/base.in
     #   edx-drf-extensions
@@ -185,7 +187,7 @@ jmespath==1.0.1
     #   botocore
 jsonfield==3.1.0
     # via edx-celeryutils
-kombu==5.3.2
+kombu==5.3.3
     # via celery
 markupsafe==2.1.3
     # via jinja2
@@ -193,7 +195,7 @@ monotonic==1.6
     # via analytics-python
 mysqlclient==2.2.0
     # via -r requirements/base.in
-newrelic==9.1.1
+newrelic==9.1.2
     # via edx-django-utils
 oauthlib==3.2.2
     # via
@@ -201,11 +203,11 @@ oauthlib==3.2.2
     #   social-auth-core
 packaging==23.2
     # via drf-yasg
-pbr==5.11.1
+pbr==6.0.0
     # via stevedore
 ply==3.11
     # via djangoql
-prompt-toolkit==3.0.39
+prompt-toolkit==3.0.41
     # via click-repl
 psutil==5.9.6
     # via edx-django-utils
@@ -301,12 +303,12 @@ urllib3==1.26.18
     # via
     #   botocore
     #   requests
-vine==5.0.0
+vine==5.1.0
     # via
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.9
+wcwidth==0.2.10
     # via prompt-toolkit
 zipp==3.17.0
     # via -r requirements/base.in
