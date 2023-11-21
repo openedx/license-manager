@@ -113,7 +113,7 @@ defusedxml==0.8.0rc2
     #   social-auth-core
 dill==0.3.7
     # via pylint
-django==4.2.6
+django==4.2.7
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/base.txt
