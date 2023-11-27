@@ -1,5 +1,6 @@
 import logging
 from collections import OrderedDict
+from contextlib import suppress
 from uuid import uuid4
 
 from celery import chain
@@ -654,7 +655,9 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                 already_associated_licenses.values_list('user_email', flat=True)
             )
             for email in already_associated_emails:
-                trimmed_emails.remove(email.lower())
+                # Ignore error if email was already removed from the list e.g. email has multiple licenses assigned
+                with suppress(ValueError):
+                    trimmed_emails.remove(email.lower())
 
         return trimmed_emails, already_associated_emails
 
