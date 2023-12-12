@@ -1,126 +1,108 @@
----
-apigateway_responses:
-  "200":
-    statusCode: "200"
-  "401":
-    statusCode: "401"
-  "403":
-    statusCode: "403"
-  "404":
-    statusCode: "404"
-  "429":
-    statusCode: "429"
-  "500":
-    statusCode: "500"
+# License Manager IDA: upstream API definitions, including vendor extensions.
+# Note, while this document is not strictly to Swagger spec, each HTTP method's
+# definition _must_ be to spec or the downstream ref will fail.
+#
+# Clients must include an Authorization header with OAuth2 access token in order to communicate:
+#   Authorization: JWT {access_token}
+#
+#
+# Available service endpoints -- note that alternate endpoints may be presented at the API Gateway tier
+# POST  /api/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
+
+apigateway_responses: &apigateway_responses
   default:
     statusCode: "400"
-responses:
-  "200":
-    description: OK
-  "400":
-    description: Bad Request
-  "401":
-    description: Unauthorized
-  "403":
-    description: Forbidden
-  "404":
-    description: Not Found
-  "429":
-    description: Too Many Requests
-  "500":
-    description: Internal Server Error
-subscription_plan_uuid:
-  name: subscription_plan_uuid
-  in: path
+  200:
+    statusCode: "200"
+  401:
+    statusCode: "401"
+  403:
+    statusCode: "403"
+  404:
+    statusCode: "404"
+  429:
+    statusCode: "429"
+  500:
+    statusCode: "500"
+
+responses: &responses
+  200:
+    description: "OK"
+  400:
+    description: "Bad Request"
+  401:
+    description: "Unauthorized"
+  403:
+    description: "Forbidden"
+  404:
+    description: "Not Found"
+  429:
+    description: "Too Many Requests"
+  500:
+    description: "Internal Server Error"
+
+subscription_plan_uuid: &subscription_plan_uuid
+  name: "subscription_plan_uuid"
+  in: "path"
   required: true
-  type: string
-auth_header:
-  name: Authorization
-  in: header
+  type: "string"
+
+auth_header: &auth_header
+  name: "Authorization"
+  in: "header"
   required: true
-  type: string
+  type: "string"
+
 endpoints:
   v1:
+
+    # /v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
     assignLicenses:
-      post:
-        description: Assigns a license to given user emails and sends an activation email.
-        operationId: assign_licenses
-        consumes:
-          - application/json
-        produces:
-          - application/json
-        parameters:
-          - name: Authorization
-            in: header
-            required: true
-            type: string
-          - name: subscription_plan_uuid
-            in: path
-            required: true
-            type: string
-          - name: body
-            in: body
-            description: List of emails to assign licenses.
-            required: true
-            schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  user_emails:
-                    description: List of emails to assign licenses.
-                    type: array
-                    required: true
-                  user_sfids:
-                    description: List of salesforce user ids to assign licenses.
-                    type: array
-                    required: true
-                  greeting:
-                    description: Email template closing e.g Hello.
-                    type: string
-                    required: true
-                  closing:
-                    description: Email template closing e.g Goodbye.
-                    type: string
-                    required: true
-                  notify_users:
-                    description: Send license assignment email or not.
-                    type: boolean
-                    required: true
-        responses:
-          "200":
-            description: OK
-          "400":
-            description: Bad Request
-          "401":
-            description: Unauthorized
-          "403":
-            description: Forbidden
-          "404":
-            description: Not Found
-          "429":
-            description: Too Many Requests
-          "500":
-            description: Internal Server Error
-        x-amazon-apigateway-integration:
-          responses:
-            "200":
-              statusCode: "200"
-            "401":
-              statusCode: "401"
-            "403":
-              statusCode: "403"
-            "404":
-              statusCode: "404"
-            "429":
-              statusCode: "429"
-            "500":
-              statusCode: "500"
-            default:
-              statusCode: "400"
-          httpMethod: POST
-          type: http
-          requestParameters:
-            integration.request.header.Authorization: method.request.header.Authorization
-            integration.request.path.subscription_plan_uuid: method.request.path.subscription_plan_uuid
-          uri: https://${stageVariables.license_manager_host}/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
+        post:
+          description: "Assigns a license to given user emails and sends an activation email."
+          operationId: "assign_licenses"
+          consumes:
+            - "application/json"
+          produces:
+            - "application/json"
+          parameters:
+            - *auth_header
+            - *subscription_plan_uuid
+            - name: "body"
+                in: "body"
+                description: "List of emails to assign licenses."
+                required: true
+                schema:
+                  type: "array"
+                  items:
+                    type: "object"
+                    properties:
+                      user_emails:
+                        description: "List of emails to assign licenses."
+                        type: "array"
+                        required: true
+                      user_sfids:
+                        description: "List of salesforce user ids to assign licenses."
+                        type: "array"
+                        required: true
+                      greeting:
+                        description: "Email template closing e.g Hello."
+                        type: "string"
+                        required: true
+                      closing:
+                        description: "Email template closing e.g Goodbye."
+                        type: "string"
+                        required: true
+                      notify_users:
+                        description: "Send license assignment email or not."
+                        type: "boolean"
+                        required: true
+          responses: *responses
+          x-amazon-apigateway-integration:
+            responses: *apigateway_responses
+            httpMethod: "POST"
+            type: "http"
+            requestParameters:
+              integration.request.header.Authorization: "method.request.header.Authorization"
+              integration.request.path.subscription_plan_uuid: "method.request.path.subscription_plan_uuid"
+            uri: "https://${stageVariables.license_manager_host}/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/"
