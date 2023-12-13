@@ -14,6 +14,34 @@ apigateway_responses:
     statusCode: "500"
   default:
     statusCode: "400"
+apigateway_responses_with_mapping_template_for_uuid:
+  "200":
+    statusCode: "200"
+    responseTemplates:
+      application/json: >
+        #set($inputRoot = $input.path('$')) #set($host =
+        $stageVariables.gateway_host) #set($uuid = $input.params('uuid'))
+
+        #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceUuidMatch = "{uuid}")
+
+        {
+          "count": $inputRoot.count,
+          "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $uuid)",
+          "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $uuid)",
+          "results": $inputRoot.results
+        }
+  "401":
+    statusCode: "401"
+  "403":
+    statusCode: "403"
+  "404":
+    statusCode: "404"
+  "429":
+    statusCode: "429"
+  "500":
+    statusCode: "500"
+  default:
+    statusCode: "400"
 responses:
   "200":
     description: OK
@@ -29,6 +57,9 @@ responses:
     description: Too Many Requests
   "500":
     description: Internal Server Error
+produces:
+  - application/json
+  - application/csv
 subscription_plan_uuid:
   name: subscription_plan_uuid
   in: path
@@ -39,6 +70,40 @@ auth_header:
   in: header
   required: true
   type: string
+x-amazon-apigateway-integration-assign-licenses:
+  responses:
+    "200":
+      statusCode: "200"
+      responseTemplates:
+        application/json: >
+          #set($inputRoot = $input.path('$')) #set($host =
+          $stageVariables.gateway_host) #set($uuid = $input.params('uuid'))
+
+          #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceUuidMatch = "{uuid}")
+
+          {
+            "count": $inputRoot.count,
+            "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $uuid)",
+            "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $uuid)",
+            "results": $inputRoot.results
+          }
+    "401":
+      statusCode: "401"
+    "403":
+      statusCode: "403"
+    "404":
+      statusCode: "404"
+    "429":
+      statusCode: "429"
+    "500":
+      statusCode: "500"
+    default:
+      statusCode: "400"
+  httpMethod: POST
+  type: http
+  requestParameters:
+    integration.request.header.Authorization: method.request.header.Authorization
+    integration.request.path.subscription_plan_uuid: method.request.path.subscription_plan_uuid
 endpoints:
   v1:
     assignLicenses:
@@ -49,6 +114,7 @@ endpoints:
           - application/json
         produces:
           - application/json
+          - application/csv
         parameters:
           - name: Authorization
             in: header
@@ -106,6 +172,20 @@ endpoints:
           responses:
             "200":
               statusCode: "200"
+              responseTemplates:
+                application/json: >
+                  #set($inputRoot = $input.path('$')) #set($host =
+                  $stageVariables.gateway_host) #set($uuid =
+                  $input.params('uuid'))
+
+                  #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceUuidMatch = "{uuid}")
+
+                  {
+                    "count": $inputRoot.count,
+                    "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $uuid)",
+                    "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $uuid)",
+                    "results": $inputRoot.results
+                  }
             "401":
               statusCode: "401"
             "403":

@@ -25,6 +25,41 @@ apigateway_responses: &apigateway_responses
   500:
     statusCode: "500"
 
+apigateway_responses_with_mapping_template_for_uuid: &apigateway_responses_with_mapping_template_for_uuid
+  default:
+    statusCode: "400"
+  200:
+    statusCode: "200"
+    responseTemplates:
+      # Response body mapping template, this template is used for updating
+      # "next" and "previous" urls (both host and url path) while preserving
+      # the protocol (http | https) and querystring parameters.
+      application/json: >
+        #set($inputRoot = $input.path('$'))
+        #set($host = $stageVariables.gateway_host)
+        #set($uuid = $input.params('uuid'))
+
+        #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)")
+        #set($updatedURL = "$1$host$context.resourcePath$2")
+        #set($resourceUuidMatch = "{uuid}")
+
+        {
+          "count": $inputRoot.count,
+          "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $uuid)",
+          "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $uuid)",
+          "results": $inputRoot.results
+        }
+  401:
+    statusCode: "401"
+  403:
+    statusCode: "403"
+  404:
+    statusCode: "404"
+  429:
+    statusCode: "429"
+  500:
+    statusCode: "500"
+
 responses: &responses
   200:
     description: "OK"
@@ -41,6 +76,10 @@ responses: &responses
   500:
     description: "Internal Server Error"
 
+produces: &produces
+  - "application/json"
+  - "application/csv"
+
 subscription_plan_uuid: &subscription_plan_uuid
   name: "subscription_plan_uuid"
   in: "path"
@@ -53,6 +92,15 @@ auth_header: &auth_header
   required: true
   type: "string"
 
+x-amazon-apigateway-integration-assign-licenses: &apigateway_integration_assign_licenses
+  responses: *apigateway_responses_with_mapping_template_for_uuid
+  httpMethod: "POST"
+  type: "http"
+  requestParameters:
+    integration.request.header.Authorization: "method.request.header.Authorization"
+    integration.request.path.subscription_plan_uuid: "method.request.path.subscription_plan_uuid"
+
+
 endpoints:
   v1:
 
@@ -63,46 +111,40 @@ endpoints:
           operationId: "assign_licenses"
           consumes:
             - "application/json"
-          produces:
-            - "application/json"
+          produces: *produces
           parameters:
             - *auth_header
             - *subscription_plan_uuid
             - name: "body"
-                in: "body"
-                description: "List of emails to assign licenses."
-                required: true
-                schema:
-                  type: "array"
-                  items:
-                    type: "object"
-                    properties:
-                      user_emails:
-                        description: "List of emails to assign licenses."
-                        type: "array"
-                        required: true
-                      user_sfids:
-                        description: "List of salesforce user ids to assign licenses."
-                        type: "array"
-                        required: true
-                      greeting:
-                        description: "Email template closing e.g Hello."
-                        type: "string"
-                        required: true
-                      closing:
-                        description: "Email template closing e.g Goodbye."
-                        type: "string"
-                        required: true
-                      notify_users:
-                        description: "Send license assignment email or not."
-                        type: "boolean"
-                        required: true
+              in: "body"
+              description: "List of emails to assign licenses."
+              required: true
+              schema:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    user_emails:
+                      description: "List of emails to assign licenses."
+                      type: "array"
+                      required: true
+                    user_sfids:
+                      description: "List of salesforce user ids to assign licenses."
+                      type: "array"
+                      required: true
+                    greeting:
+                      description: "Email template closing e.g Hello."
+                      type: "string"
+                      required: true
+                    closing:
+                      description: "Email template closing e.g Goodbye."
+                      type: "string"
+                      required: true
+                    notify_users:
+                      description: "Send license assignment email or not."
+                      type: "boolean"
+                      required: true
           responses: *responses
           x-amazon-apigateway-integration:
-            responses: *apigateway_responses
-            httpMethod: "POST"
-            type: "http"
-            requestParameters:
-              integration.request.header.Authorization: "method.request.header.Authorization"
-              integration.request.path.subscription_plan_uuid: "method.request.path.subscription_plan_uuid"
+            <<: *apigateway_integration_assign_licenses
             uri: "https://${stageVariables.license_manager_host}/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/"
