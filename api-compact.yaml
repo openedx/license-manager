@@ -92,15 +92,6 @@ auth_header: &auth_header
   required: true
   type: "string"
 
-x-amazon-apigateway-integration-assign-licenses: &apigateway_integration_assign_licenses
-  responses: *apigateway_responses_with_mapping_template_for_uuid
-  httpMethod: "POST"
-  type: "http"
-  requestParameters:
-    integration.request.header.Authorization: "method.request.header.Authorization"
-    integration.request.path.subscription_plan_uuid: "method.request.path.subscription_plan_uuid"
-
-
 endpoints:
   v1:
 
@@ -146,5 +137,10 @@ endpoints:
                       required: true
           responses: *responses
           x-amazon-apigateway-integration:
-            <<: *apigateway_integration_assign_licenses
+            responses: *apigateway_responses
+            httpMethod: "POST"
+            type: "http"
+            requestParameters:
+              integration.request.header.Authorization: "method.request.header.Authorization"
+              integration.request.path.subscription_plan_uuid: "method.request.path.subscription_plan_uuid"
             uri: "https://${stageVariables.license_manager_host}/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/"
