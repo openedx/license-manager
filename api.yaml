@@ -159,4 +159,4 @@ endpoints:
           requestParameters:
             integration.request.header.Authorization: method.request.header.Authorization
             integration.request.path.uuid: method.request.path.uuid
-          uri: https://${stageVariables.license_manager_host}/api/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
+          uri: https://${stageVariables.license_manager_host}/api/v1/subscriptions/{uuid}/licenses/assign/
