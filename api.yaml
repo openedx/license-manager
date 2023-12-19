@@ -63,8 +63,8 @@ responses:
 produces:
   - application/json
   - application/csv
-subscription_plan_uuid:
-  name: subscription_plan_uuid
+uuid:
+  name: uuid
   in: path
   required: true
   type: string
@@ -83,19 +83,18 @@ endpoints:
           - application/json
         produces:
           - application/json
-          - application/csv
         parameters:
           - name: Authorization
             in: header
             required: true
             type: string
-          - name: subscription_plan_uuid
+          - name: uuid
             in: path
             required: true
             type: string
           - name: body
             in: body
-            description: List of emails to assign licenses.
+            description: User emails, sfids, and email content.
             required: true
             schema:
               type: array
@@ -106,22 +105,24 @@ endpoints:
                     description: List of emails to assign licenses.
                     type: array
                     required: true
+                    items:
+                      type: string
+                      description: user email
                   user_sfids:
                     description: List of salesforce user ids to assign licenses.
                     type: array
-                    required: true
+                    items:
+                      type: string
+                      description: user's salesforce opportunity id
                   greeting:
                     description: Email template closing e.g Hello.
                     type: string
-                    required: true
                   closing:
                     description: Email template closing e.g Goodbye.
                     type: string
-                    required: true
                   notify_users:
                     description: Send license assignment email or not.
                     type: boolean
-                    required: true
         responses:
           "200":
             description: OK
@@ -157,5 +158,5 @@ endpoints:
           type: http
           requestParameters:
             integration.request.header.Authorization: method.request.header.Authorization
-            integration.request.path.subscription_plan_uuid: method.request.path.subscription_plan_uuid
-          uri: https://${stageVariables.license_manager_host}/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
+            integration.request.path.uuid: method.request.path.uuid
+          uri: https://${stageVariables.license_manager_host}/api/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/

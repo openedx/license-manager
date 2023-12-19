@@ -7,7 +7,7 @@
 #
 #
 # Available service endpoints -- note that alternate endpoints may be presented at the API Gateway tier
-# POST  /api/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
+# POST  /api/v1/subscriptions/{uuid}/licenses/assign/
 
 apigateway_responses: &apigateway_responses
   default:
@@ -80,8 +80,8 @@ produces: &produces
   - "application/json"
   - "application/csv"
 
-subscription_plan_uuid: &subscription_plan_uuid
-  name: "subscription_plan_uuid"
+uuid: &uuid
+  name: "uuid"
   in: "path"
   required: true
   type: "string"
@@ -94,53 +94,55 @@ auth_header: &auth_header
 
 endpoints:
   v1:
-
-    # /v1/subscriptions/{subscription_plan_uuid}/licenses/assign/
+    # api/v1/subscriptions/{uuid}/licenses/assign/
     assignLicenses:
-        post:
-          description: "Assigns a license to given user emails and sends an activation email."
-          operationId: "assign_licenses"
-          consumes:
-            - "application/json"
-          produces: *produces
-          parameters:
-            - *auth_header
-            - *subscription_plan_uuid
-            - name: "body"
-              in: "body"
-              description: "List of emails to assign licenses."
-              required: true
-              schema:
-                type: "array"
-                items:
-                  type: "object"
-                  properties:
-                    user_emails:
-                      description: "List of emails to assign licenses."
-                      type: "array"
-                      required: true
-                    user_sfids:
-                      description: "List of salesforce user ids to assign licenses."
-                      type: "array"
-                      required: true
-                    greeting:
-                      description: "Email template closing e.g Hello."
+      post:
+        description: "Assigns a license to given user emails and sends an activation email."
+        operationId: "assign_licenses"
+        consumes:
+          - "application/json"
+        produces:
+          - "application/json"
+        parameters:
+          - *auth_header
+          - *uuid
+          - name: "body"
+            in: "body"
+            description: "User emails, sfids, and email content."
+            required: true
+            schema:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  user_emails:
+                    description: "List of emails to assign licenses."
+                    type: "array"
+                    required: true
+                    items:
                       type: "string"
-                      required: true
-                    closing:
-                      description: "Email template closing e.g Goodbye."
+                      description: "user email"
+                  user_sfids:
+                    description: "List of salesforce user ids to assign licenses."
+                    type: "array"
+                    items:
                       type: "string"
-                      required: true
-                    notify_users:
-                      description: "Send license assignment email or not."
-                      type: "boolean"
-                      required: true
-          responses: *responses
-          x-amazon-apigateway-integration:
-            responses: *apigateway_responses
-            httpMethod: "POST"
-            type: "http"
-            requestParameters:
-              integration.request.header.Authorization: "method.request.header.Authorization"
-              integration.request.path.subscription_plan_uuid: "method.request.path.subscription_plan_uuid"
-            uri: "https://${stageVariables.license_manager_host}/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/"
+                      description: "user's salesforce opportunity id"
+                  greeting:
+                    description: "Email template closing e.g Hello."
+                    type: "string"
+                  closing:
+                    description: "Email template closing e.g Goodbye."
+                    type: "string"
+                  notify_users:
+                    description: "Send license assignment email or not."
+                    type: "boolean"
+        responses: *responses
+        x-amazon-apigateway-integration:
+          responses: *apigateway_responses
+          httpMethod: "POST"
+          type: "http"
+          requestParameters:
+            integration.request.header.Authorization: "method.request.header.Authorization"
+            integration.request.path.uuid: "method.request.path.uuid"
+          uri: "https://${stageVariables.license_manager_host}/api/v1/subscriptions/{subscription_plan_uuid}/licenses/assign/"
