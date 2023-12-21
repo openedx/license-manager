@@ -92,7 +92,7 @@ endpoints:
             in: path
             required: true
             type: string
-          - name: body
+          - name: data
             in: body
             description: User emails, sfids, and email content.
             required: true
