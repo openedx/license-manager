@@ -48,8 +48,7 @@ THIRD_PARTY_APPS = (
     'djangoql',
     'durationwidget',
     'rest_framework',
-    'drf_yasg',
-    'edx_api_doc_tools',
+    'drf_spectacular',
     'rules.apps.AutodiscoverRulesConfig',
     'simple_history',
     'simplejson',
@@ -146,7 +145,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
         'rest_framework.permissions.IsAdminUser',
     ],
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'PAGE_SIZE': 100,
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
     'DEFAULT_THROTTLE_CLASSES': [
@@ -445,3 +444,11 @@ VALIDATE_FORM_EXTERNAL_FIELDS = True
 
 # disable indexing on history_date
 SIMPLE_HISTORY_DATE_INDEX = False
+
+# DRF Spectacular settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'License Manager API',
+    'DESCRIPTION': 'API for querying and commanding about license manager records.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}

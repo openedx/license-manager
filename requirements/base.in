@@ -17,6 +17,7 @@ django-extensions
 django-filter
 django-model-utils
 djangoql
+drf-spectacular
 django-ses
 rules
 django-simple-history
@@ -24,7 +25,6 @@ django-waffle
 djangorestframework
 djangorestframework-csv
 drf-nested-routers
-edx-api-doc-tools
 edx-auth-backends
 edx-braze-client
 edx-celeryutils

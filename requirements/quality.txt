@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-amqp==5.1.1
+amqp==5.2.0
     # via
     #   -r requirements/base.txt
     #   kombu
@@ -14,15 +14,17 @@ asgiref==3.7.2
     # via
     #   -r requirements/base.txt
     #   django
+    #   django-cors-headers
 astroid==2.11.7
     # via
     #   -c requirements/constraints.txt
     #   pylint
     #   pylint-celery
-async-timeout==4.0.3
+attrs==23.1.0
     # via
     #   -r requirements/base.txt
-    #   redis
+    #   jsonschema
+    #   referencing
 backoff==1.10.0
     # via
     #   -r requirements/base.txt
@@ -34,25 +36,25 @@ backports-zoneinfo[tzdata]==0.2.1
     #   celery
     #   django
     #   kombu
-billiard==4.1.0
+billiard==4.2.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.28.75
+boto3==1.34.7
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.31.75
+botocore==1.34.7
     # via
     #   -r requirements/base.txt
     #   boto3
     #   s3transfer
-celery==5.3.4
+celery==5.3.6
     # via
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2023.7.22
+certifi==2023.11.17
     # via
     #   -r requirements/base.txt
     #   requests
@@ -61,7 +63,7 @@ cffi==1.16.0
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.3.1
+charset-normalizer==3.3.2
     # via
     #   -r requirements/base.txt
     #   requests
@@ -95,7 +97,7 @@ code-annotations==1.5.0
     #   -r requirements/base.txt
     #   edx-lint
     #   edx-toggles
-cryptography==41.0.5
+cryptography==41.0.7
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -107,7 +109,7 @@ defusedxml==0.8.0rc2
     #   social-auth-core
 dill==0.3.7
     # via pylint
-django==4.2.6
+django==4.2.8
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/base.txt
@@ -125,8 +127,7 @@ django==4.2.6
     #   djangorestframework
     #   drf-jwt
     #   drf-nested-routers
-    #   drf-yasg
-    #   edx-api-doc-tools
+    #   drf-spectacular
     #   edx-auth-backends
     #   edx-celeryutils
     #   edx-django-utils
@@ -139,7 +140,7 @@ django-autocomplete-light==3.9.7
     # via -r requirements/base.txt
 django-celery-results==2.5.1
     # via -r requirements/base.txt
-django-cors-headers==4.3.0
+django-cors-headers==4.3.1
     # via -r requirements/base.txt
 django-crum==0.7.9
     # via
@@ -151,7 +152,7 @@ django-durationwidget==1.0.5
     # via -r requirements/base.txt
 django-extensions==3.2.3
     # via -r requirements/base.txt
-django-filter==23.3
+django-filter==23.5
     # via -r requirements/base.txt
 django-log-request-id==2.1.0
     # via -r requirements/base.txt
@@ -160,17 +161,17 @@ django-model-utils==4.3.1
     #   -r requirements/base.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.5.0
+django-ses==3.5.2
     # via -r requirements/base.txt
 django-simple-history==3.4.0
     # via -r requirements/base.txt
-django-waffle==4.0.0
+django-waffle==4.1.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
-djangoql==0.17.1
+djangoql==0.18.0
     # via -r requirements/base.txt
 djangorestframework==3.14.0
     # via
@@ -178,22 +179,17 @@ djangorestframework==3.14.0
     #   djangorestframework-csv
     #   drf-jwt
     #   drf-nested-routers
-    #   drf-yasg
-    #   edx-api-doc-tools
+    #   drf-spectacular
     #   edx-drf-extensions
-djangorestframework-csv==3.0.1
+djangorestframework-csv==3.0.2
     # via -r requirements/base.txt
 drf-jwt==1.19.2
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-drf-nested-routers==0.93.4
+drf-nested-routers==0.93.5
     # via -r requirements/base.txt
-drf-yasg==1.21.7
-    # via
-    #   -r requirements/base.txt
-    #   edx-api-doc-tools
-edx-api-doc-tools==1.7.0
+drf-spectacular==0.27.0
     # via -r requirements/base.txt
 edx-auth-backends==4.2.0
     # via -r requirements/base.txt
@@ -201,13 +197,13 @@ edx-braze-client==0.1.8
     # via -r requirements/base.txt
 edx-celeryutils==1.2.3
     # via -r requirements/base.txt
-edx-django-utils==5.7.0
+edx-django-utils==5.9.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.13.0
+edx-drf-extensions==9.0.1
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -225,15 +221,20 @@ edx-rest-api-client==5.6.1
     # via -r requirements/base.txt
 edx-toggles==5.1.0
     # via -r requirements/base.txt
-idna==3.4
+idna==3.6
     # via
     #   -r requirements/base.txt
     #   requests
+importlib-resources==6.1.1
+    # via
+    #   -r requirements/base.txt
+    #   jsonschema
+    #   jsonschema-specifications
 inflection==0.5.1
     # via
     #   -r requirements/base.txt
-    #   drf-yasg
-isort==5.12.0
+    #   drf-spectacular
+isort==5.13.2
     # via
     #   -r requirements/quality.in
     #   pylint
@@ -250,11 +251,19 @@ jsonfield==3.1.0
     # via
     #   -r requirements/base.txt
     #   edx-celeryutils
-kombu==5.3.2
+jsonschema==4.20.0
+    # via
+    #   -r requirements/base.txt
+    #   drf-spectacular
+jsonschema-specifications==2023.12.1
+    # via
+    #   -r requirements/base.txt
+    #   jsonschema
+kombu==5.3.4
     # via
     #   -r requirements/base.txt
     #   celery
-lazy-object-proxy==1.9.0
+lazy-object-proxy==1.10.0
     # via astroid
 markupsafe==2.1.3
     # via
@@ -266,9 +275,9 @@ monotonic==1.6
     # via
     #   -r requirements/base.txt
     #   analytics-python
-mysqlclient==2.2.0
+mysqlclient==2.2.1
     # via -r requirements/base.txt
-newrelic==9.1.1
+newrelic==9.3.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -277,25 +286,25 @@ oauthlib==3.2.2
     #   -r requirements/base.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==23.2
-    # via
-    #   -r requirements/base.txt
-    #   drf-yasg
-pbr==5.11.1
+pbr==6.0.0
     # via
     #   -r requirements/base.txt
     #   stevedore
-platformdirs==3.11.0
+pkgutil-resolve-name==1.3.10
+    # via
+    #   -r requirements/base.txt
+    #   jsonschema
+platformdirs==4.1.0
     # via pylint
 ply==3.11
     # via
     #   -r requirements/base.txt
     #   djangoql
-prompt-toolkit==3.0.39
+prompt-toolkit==3.0.43
     # via
     #   -r requirements/base.txt
     #   click-repl
-psutil==5.9.6
+psutil==5.9.7
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -358,14 +367,18 @@ pytz==2023.3.post1
     #   -r requirements/base.txt
     #   django-ses
     #   djangorestframework
-    #   drf-yasg
 pyyaml==6.0.1
     # via
     #   -r requirements/base.txt
     #   code-annotations
-    #   drf-yasg
+    #   drf-spectacular
 redis==5.0.1
     # via -r requirements/base.txt
+referencing==0.32.0
+    # via
+    #   -r requirements/base.txt
+    #   jsonschema
+    #   jsonschema-specifications
 requests==2.31.0
     # via
     #   -r requirements/base.txt
@@ -379,9 +392,14 @@ requests-oauthlib==1.3.1
     # via
     #   -r requirements/base.txt
     #   social-auth-core
+rpds-py==0.15.2
+    # via
+    #   -r requirements/base.txt
+    #   jsonschema
+    #   referencing
 rules==3.3
     # via -r requirements/base.txt
-s3transfer==0.7.0
+s3transfer==0.10.0
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -410,7 +428,7 @@ social-auth-app-django==5.4.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.5.0
+social-auth-core==4.5.1
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
@@ -431,13 +449,14 @@ text-unidecode==1.3
     #   python-slugify
 tomli==2.0.1
     # via pylint
-tomlkit==0.12.1
+tomlkit==0.12.3
     # via pylint
-typing-extensions==4.8.0
+typing-extensions==4.9.0
     # via
     #   -r requirements/base.txt
     #   asgiref
     #   astroid
+    #   drf-spectacular
     #   edx-opaque-keys
     #   kombu
     #   pylint
@@ -449,19 +468,19 @@ tzdata==2023.3
 uritemplate==4.1.1
     # via
     #   -r requirements/base.txt
-    #   drf-yasg
+    #   drf-spectacular
 urllib3==1.26.18
     # via
     #   -r requirements/base.txt
     #   botocore
     #   requests
-vine==5.0.0
+vine==5.1.0
     # via
     #   -r requirements/base.txt
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.9
+wcwidth==0.2.12
     # via
     #   -r requirements/base.txt
     #   prompt-toolkit
@@ -470,7 +489,9 @@ wrapt==1.11.2
     #   -c requirements/constraints.txt
     #   astroid
 zipp==3.17.0
-    # via -r requirements/base.txt
+    # via
+    #   -r requirements/base.txt
+    #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
