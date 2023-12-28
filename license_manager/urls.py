@@ -19,9 +19,11 @@ from auth_backends.urls import oauth2_urlpatterns
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from drf_yasg.views import get_schema_view
-from edx_api_doc_tools import make_api_info
-from rest_framework import permissions
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 
 from license_manager.apps.api import urls as api_urls
 from license_manager.apps.core import views as core_views
@@ -30,12 +32,15 @@ from license_manager.apps.subscriptions import urls_admin as subs_url_admin
 
 admin.autodiscover()
 
+spectacular_view = SpectacularAPIView(
+    api_version='v1',
+    title='license manager spectacular view',
+)
+spec_swagger_view = SpectacularSwaggerView()
 
-api_info = make_api_info(title="License Manager API", version="v1")
-schema_view = get_schema_view(
-    api_info,
-    public=False,
-    permission_classes=(permissions.AllowAny,),
+spec_redoc_view = SpectacularRedocView(
+    title='Redoc view for the license manager API.',
+    url_name='schema',
 )
 
 urlpatterns = [
@@ -44,9 +49,13 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('admin-custom/subscriptions/', include(subs_url_admin)),
     path('api/', include(api_urls)),
-    path('api-docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('auto_auth/', core_views.AutoAuth.as_view(), name='auto_auth'),
     path('health/', core_views.health, name='health'),
+    # All the API docs
+    path('api-docs/', spec_swagger_view.as_view(), name='api-docs'),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/schema/redoc/', spec_redoc_view.as_view(url_name='schema'), name='redoc'),
+    path('api/schema/swagger-ui/', spec_swagger_view.as_view(url_name='schema'), name='swaggger-ui'),
 ]
 
 
