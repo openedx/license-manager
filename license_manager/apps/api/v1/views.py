@@ -17,6 +17,7 @@ from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
 from rest_framework import filters, permissions, status, viewsets
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError
 from rest_framework.mixins import ListModelMixin
@@ -266,7 +267,7 @@ class CustomerAgreementViewSet(
 
 class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
     """ Viewset for read operations on LearnerSubscriptionPlans."""
-    authentication_classes = [JwtAuthentication]
+    authentication_classes = [JwtAuthentication, SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     lookup_field = 'uuid'
