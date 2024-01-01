@@ -8,6 +8,8 @@
 #
 # Available service endpoints -- note that alternate endpoints may be presented at the API Gateway tier
 # POST  /api/v1/subscriptions/{uuid}/licenses/assign/
+# POST  /api/v1/subscriptions/{uuid}/licenses/bulk-revoke/
+# POST  /api/v1/bulk-license-enrollment
 
 apigateway_responses: &apigateway_responses
   default:
@@ -80,6 +82,25 @@ produces: &produces
   - "application/json"
   - "application/csv"
 
+enterprise_customer_uuid_qs_param: &enterprise_customer_uuid_qs_param
+  in: "query"
+  name: "enterprise_customer_uuid"
+  required: true
+  type: "string"
+
+enroll_all_qs_param: &enroll_all_qs_param
+  in: "query"
+  name: "enroll_all"
+  required: false
+  type: "string"
+
+subscription_uuid_qs_param: &subscription_uuid_qs_param
+  in: "query"
+  name: "subscription_uuid"
+  required: false
+  type: "string"
+
+
 uuid: &uuid
   name: "uuid"
   in: "path"
@@ -146,3 +167,104 @@ endpoints:
             integration.request.header.Authorization: "method.request.header.Authorization"
             integration.request.path.uuid: "method.request.path.uuid"
           uri: "https://${stageVariables.license_manager_host}/api/v1/subscriptions/{uuid}/licenses/assign/"
+    # /api/v1/subscriptions/{uuid}/licenses/bulk-revoke/
+    revokeLicenses:
+      post:
+        description: "Revokes one or more licenses in a subscription plan"
+        operationId: "revoke_licenses"
+        consumes:
+          - "application/json"
+        produces:
+          - "application/json"
+        parameters:
+          - *auth_header
+          - *uuid
+          - name: "data"
+            in: "body"
+            description: "User emails OR search filters for emails and status"
+            required: true
+            schema:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  user_emails:
+                    description: "List of emails with which licenses are associated"
+                    type: "array"
+                    items:
+                      type: "string"
+                      description: "user email"
+                  filters:
+                    description: "List of emails with which licenses are associated"
+                    type: "array"
+                    items:
+                      type: "object"
+                      description: "filter"
+                      properties:
+                        user_email:
+                          description: "User email filter"
+                          type: "string"
+                        status_in:
+                          description: "Array of valid license statuses"
+                          type: "array"
+                          items:
+                            type: "string"
+                            description: "status of the license"
+        responses: *responses
+        x-amazon-apigateway-integration:
+          responses: *apigateway_responses
+          httpMethod: "POST"
+          type: "http"
+          requestParameters:
+            integration.request.header.Authorization: "method.request.header.Authorization"
+            integration.request.path.uuid: "method.request.path.uuid"
+          uri: "https://${stageVariables.license_manager_host}/api/v1/subscriptions/{uuid}/licenses/bulk-revoke/"
+    # /api/v1/bulk-license-enrollment
+    bulkLicenseEnrollment:
+      post:
+        description: "Enrolls a list of learners in a given list of courses after verifying license subsidies."
+        operationId: "bulk_license_enrollment"
+        consumes:
+          - "application/json"
+        produces:
+          - "application/json"
+        parameters:
+          - *auth_header
+          - *enterprise_customer_uuid_qs_param
+          - *enroll_all_qs_param
+          - *subscription_uuid_qs_param
+          - name: "data"
+            in: "body"
+            description: "User emails and course run keys along with a notify learners flag"
+            required: true
+            schema:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  emails:
+                    description: "list of learner emails"
+                    type: "array"
+                    items:
+                      type: "string"
+                      description: "user email"
+                  course_run_keys:
+                    description: "list of courses to enroll learners into"
+                    type: "array"
+                    items:
+                      type: "string"
+                      description: "course run key"
+                  notify:
+                    description: "Whether to notify learner of their enrollment"
+                    type: "boolean"
+        responses: *responses
+        x-amazon-apigateway-integration:
+          responses: *apigateway_responses
+          httpMethod: "POST"
+          type: "http"
+          requestParameters:
+            integration.request.header.Authorization: "method.request.header.Authorization"
+            integration.request.querystring.enterprise_customer_uuid: "method.request.querystring.enterprise_customer_uuid"
+            integration.request.querystring.enroll_all: "method.request.querystring.enroll_all"
+            integration.request.querystring.subscription_uuid: "method.request.querystring.subscription_uuid"
+          uri: "https://${stageVariables.license_manager_host}/api/v1/bulk-license-enrollment"
