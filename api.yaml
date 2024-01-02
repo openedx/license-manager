@@ -17,6 +17,21 @@ apigateway_responses:
     statusCode: "500"
   default:
     statusCode: "400"
+bulk_revoke_apigateway_responses:
+  "204":
+    statusCode: "204"
+  "401":
+    statusCode: "401"
+  "403":
+    statusCode: "403"
+  "404":
+    statusCode: "404"
+  "429":
+    statusCode: "429"
+  "500":
+    statusCode: "500"
+  default:
+    statusCode: "400"
 apigateway_responses_with_mapping_template_for_uuid:
   "200":
     statusCode: "200"
@@ -48,6 +63,21 @@ apigateway_responses_with_mapping_template_for_uuid:
 responses:
   "200":
     description: OK
+  "400":
+    description: Bad Request
+  "401":
+    description: Unauthorized
+  "403":
+    description: Forbidden
+  "404":
+    description: Not Found
+  "429":
+    description: Too Many Requests
+  "500":
+    description: Internal Server Error
+bulk_revoke_responses:
+  "204":
+    description: No Content - All revocations were successful
   "400":
     description: Bad Request
   "401":
@@ -208,11 +238,11 @@ endpoints:
                       type: string
                       description: user email
                   filters:
-                    description: List of emails with which licenses are associated
+                    description: Filters for lookup and filtering of licenses to revoke.
                     type: array
                     items:
                       type: object
-                      description: filter
+                      description: Values provided to perform filtering against.
                       properties:
                         user_email:
                           description: User email filter
@@ -224,8 +254,8 @@ endpoints:
                             type: string
                             description: status of the license
         responses:
-          "200":
-            description: OK
+          "204":
+            description: No Content - All revocations were successful
           "400":
             description: Bad Request
           "401":
@@ -240,8 +270,8 @@ endpoints:
             description: Internal Server Error
         x-amazon-apigateway-integration:
           responses:
-            "200":
-              statusCode: "200"
+            "204":
+              statusCode: "204"
             "401":
               statusCode: "401"
             "403":
