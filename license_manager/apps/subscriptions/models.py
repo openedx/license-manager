@@ -1081,6 +1081,15 @@ class License(TimeStampedModel):
                     SegmentEvents.LICENSE_REVOKED,
                     event_properties)
 
+    def delete_source(self):
+        """
+        Deletes any related ``SubscriptionLicenseSource`` record.
+        """
+        try:
+            self.source.delete()  # pylint: disable=no-member
+        except SubscriptionLicenseSource.DoesNotExist:
+            logger.warning('Could not find related license source to delete for license %s', self.uuid)
+
     def activate(self, lms_user_id):
         """
         Update this license to activated and set the lms_user_id.

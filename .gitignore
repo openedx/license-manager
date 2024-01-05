@@ -61,6 +61,7 @@ license_manager/conf/locale/messages.mo
 
 # emacs
 *~
+.projectile
 
 # QA
 coverage.xml

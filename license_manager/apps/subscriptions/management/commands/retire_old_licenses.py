@@ -27,8 +27,6 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        ready_for_retirement_date = localized_utcnow() - timedelta(DAYS_TO_RETIRE)
-
         expired_licenses_for_retirement = License.get_licenses_exceeding_purge_duration(
             'subscription_plan__expiration_date',
         )
@@ -50,6 +48,8 @@ class Command(BaseCommand):
 
             # Clear historical pii after removing pii from the license itself
             expired_license.clear_historical_pii()
+            expired_license.delete_source()
+
         expired_license_uuids = sorted([expired_license.uuid for expired_license in expired_licenses_for_retirement])
         message = 'Retired {} expired licenses with uuids: {}'.format(len(expired_license_uuids), expired_license_uuids)
         logger.info(message)
@@ -65,6 +65,8 @@ class Command(BaseCommand):
             revoked_license.save()
             # Clear historical pii after removing pii from the license itself
             revoked_license.clear_historical_pii()
+            revoked_license.delete_source()
+
         revoked_license_uuids = sorted([revoked_license.uuid for revoked_license in revoked_licenses_for_retirement])
         message = 'Retired {} revoked licenses with uuids: {}'.format(len(revoked_license_uuids), revoked_license_uuids)
         logger.info(message)
@@ -82,6 +84,8 @@ class Command(BaseCommand):
             assigned_license.save()
             # Clear historical pii after removing pii from the license itself
             assigned_license.clear_historical_pii()
+            assigned_license.delete_source()
+
         assigned_license_uuids = sorted(
             [assigned_license.uuid for assigned_license in assigned_licenses_for_retirement],
         )

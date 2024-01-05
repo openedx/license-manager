@@ -48,6 +48,7 @@ from license_manager.apps.subscriptions.models import (
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
+    SubscriptionLicenseSourceFactory,
     SubscriptionPlanFactory,
     SubscriptionPlanRenewalFactory,
     UserFactory,
@@ -3341,11 +3342,13 @@ class UserRetirementViewTests(TestCase):
         """
         Helper to create a license of the given status associated with the user being retired.
         """
-        return LicenseFactory.create(
+        _license = LicenseFactory.create(
             status=status,
             lms_user_id=cls.lms_user_id,
             user_email=cls.user_email,
         )
+        SubscriptionLicenseSourceFactory.create(license=_license)
+        return _license
 
     def _post_request(self, lms_user_id, original_username):
         """
@@ -3423,6 +3426,9 @@ class UserRetirementViewTests(TestCase):
         """
         All licenses associated with the user being retired should have pii scrubbed, and the user should be deleted.
         """
+        for _license in (self.revoked_license, self.assigned_license, self.activated_license):
+            assert _license.source
+
         # Verify the request succeeds with the correct status and logs the appropriate messages
         with self.assertLogs(level='INFO') as log:
             response = self._post_request(self.lms_user_id, self.original_username)
@@ -3463,6 +3469,11 @@ class UserRetirementViewTests(TestCase):
         User = get_user_model()
         with self.assertRaises(ObjectDoesNotExist):
             User.objects.get(username=self.original_username)
+
+        # Verify license source records are deleted
+        for _license in (self.revoked_license, self.assigned_license, self.activated_license):
+            with self.assertRaises(SubscriptionLicenseSource.DoesNotExist):
+                _license.source  # pylint: disable=pointless-statement
 
 
 class StaffLicenseLookupViewTests(LicenseViewTestMixin, TestCase):

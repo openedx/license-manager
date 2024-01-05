@@ -1531,6 +1531,7 @@ class UserRetirementView(APIView):
             associated_license.save()
             # Clear historical pii after removing pii from the license itself
             associated_license.clear_historical_pii()
+            associated_license.delete_source()
         associated_licenses_uuids = [license.uuid for license in associated_licenses]
         message = 'Retired {} licenses with uuids: {} for user with lms_user_id {}'.format(
             len(associated_licenses_uuids),

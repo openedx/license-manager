@@ -13,9 +13,13 @@ from license_manager.apps.subscriptions.constants import (
     REVOKED,
     UNASSIGNED,
 )
-from license_manager.apps.subscriptions.models import License
+from license_manager.apps.subscriptions.models import (
+    License,
+    SubscriptionLicenseSource,
+)
 from license_manager.apps.subscriptions.tests.factories import (
     LicenseFactory,
+    SubscriptionLicenseSourceFactory,
     SubscriptionPlanFactory,
 )
 from license_manager.apps.subscriptions.tests.utils import (
@@ -88,6 +92,7 @@ class RetireOldLicensesCommandTests(TestCase):
             revoked_license.lms_user_id = faker.random_int()
             revoked_license.user_email = faker.email()
             revoked_license.save()
+            SubscriptionLicenseSourceFactory.create(license=revoked_license)
 
         cls.num_assigned_licenses_to_retire = 7
         cls.assigned_licenses_ready_for_retirement = LicenseFactory.create_batch(
@@ -100,6 +105,7 @@ class RetireOldLicensesCommandTests(TestCase):
             assigned_license.lms_user_id = faker.random_int()
             assigned_license.user_email = faker.email()
             assigned_license.save()
+            SubscriptionLicenseSourceFactory.create(license=assigned_license)
 
         # Create licenses of different statuses that should be retired from association with an old expired subscription
         LicenseFactory.create(
@@ -145,6 +151,7 @@ class RetireOldLicensesCommandTests(TestCase):
                 assert_pii_cleared(expired_license)
                 assert expired_license.status == REVOKED
                 assert_historical_pii_cleared(expired_license)
+
             message = 'Retired {} expired licenses with uuids: {}'.format(
                 expired_licenses.count(),
                 sorted([expired_license.uuid for expired_license in expired_licenses]),
@@ -156,6 +163,9 @@ class RetireOldLicensesCommandTests(TestCase):
                 revoked_license.refresh_from_db()
                 assert_pii_cleared(revoked_license)
                 assert_historical_pii_cleared(revoked_license)
+                with self.assertRaises(SubscriptionLicenseSource.DoesNotExist):
+                    revoked_license.source
+
             message = 'Retired {} revoked licenses with uuids: {}'.format(
                 self.num_revoked_licenses_to_retire,
                 sorted([revoked_license.uuid for revoked_license in self.revoked_licenses_ready_for_retirement]),
@@ -170,6 +180,7 @@ class RetireOldLicensesCommandTests(TestCase):
                 assert_historical_pii_cleared(assigned_license)
                 assert assigned_license.activation_key is None
                 assert assigned_license.status == UNASSIGNED
+
             message = 'Retired {} assigned licenses that exceeded their inactivation duration with uuids: {}'.format(
                 self.num_assigned_licenses_to_retire,
                 sorted([assigned_license.uuid for assigned_license in self.assigned_licenses_ready_for_retirement]),
