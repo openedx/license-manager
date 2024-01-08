@@ -1373,9 +1373,13 @@ class LicenseTransferJob(TimeStampedModel):
         null=False,
         default='newline',
     )
+    transfer_all = models.BooleanField(
+        default=False,
+        help_text=_("Set to true to transfer ALL licenses from old to new plan, regardless of status."),
+    )
     license_uuids_raw = models.TextField(
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
         help_text=_("Delimitted (with newlines by default) list of license_uuids to transfer"),
     )
     processed_results = models.JSONField(
@@ -1411,6 +1415,10 @@ class LicenseTransferJob(TimeStampedModel):
             raise ValidationError(
                 'LicenseTransferJob: Old and new subscription plans must have same customer_agreement.'
             )
+        if not self.transfer_all and not self.license_uuids_raw:
+            raise ValidationError(
+                'LicenseTransferJob: Must specify either transfer_all or license_uuids_raw.'
+            )
 
     def get_customer_agreement(self):
         try:
@@ -1428,14 +1436,18 @@ class LicenseTransferJob(TimeStampedModel):
         """
         Yields successive chunked querysets of License records to transfer.
         The licenses are from self.old_subscription_plan and will
-        only be in the (activated, assigned) statuses.
+        only be in the (activated, assigned) statuses, unless ``transfer_all``
+        is True, in which case **all** licenses will be included.
         """
-        for license_uuid_chunk in chunks(self.get_license_uuids(), self.CHUNK_SIZE):
-            yield License.objects.filter(
-                subscription_plan=self.old_subscription_plan,
-                status__in=[ACTIVATED, ASSIGNED],
-                uuid__in=license_uuid_chunk,
-            )
+        if self.transfer_all:
+            yield License.objects.filter(subscription_plan=self.old_subscription_plan)
+        else:
+            for license_uuid_chunk in chunks(self.get_license_uuids(), self.CHUNK_SIZE):
+                yield License.objects.filter(
+                    subscription_plan=self.old_subscription_plan,
+                    status__in=[ACTIVATED, ASSIGNED],
+                    uuid__in=license_uuid_chunk,
+                )
 
     def process(self):
         """
