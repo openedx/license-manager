@@ -407,7 +407,18 @@ class ProductForm(forms.ModelForm):
 class LicenseTransferJobAdminForm(forms.ModelForm):
     class Meta:
         model = LicenseTransferJob
-        fields = '__all__'
+        fields = [
+            'customer_agreement',
+            'old_subscription_plan',
+            'new_subscription_plan',
+            'notes',
+            'is_dry_run',
+            'transfer_all',
+            'delimiter',
+            'license_uuids_raw',
+            'completed_at',
+            'processed_results',
+        ]
         # Use django-autocomplete-light to filter the available
         # subscription_plan choices to only those related to
         # the selected customer agreement.  Works for both

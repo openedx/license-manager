@@ -484,19 +484,18 @@ class LicenseTransferJobTests(TestCase):
         super().tearDown()
         License.objects.all().delete()
 
-    def _create_transfer_job(self, license_uuids_raw, **kwargs):
+    def _create_transfer_job(self, **kwargs):
         return LicenseTransferJob.objects.create(
             customer_agreement=self.customer_agreement,
             old_subscription_plan=self.old_plan,
             new_subscription_plan=self.new_plan,
-            license_uuids_raw=license_uuids_raw,
             **kwargs,
         )
 
     def test_get_licenses_to_transfer(self):
         """
         Tests that we only operate on activated or assigned licenses from the old plan
-        of a transfer job.
+        of a transfer job when `transfer_all` is not selected.
         """
         old_assigned_licenses = LicenseFactory.create_batch(
             3, subscription_plan=self.old_plan, assigned_date=localized_utcnow(), status=ASSIGNED,
@@ -527,6 +526,46 @@ class LicenseTransferJobTests(TestCase):
             for _license in license_batch
         }
         self.assertEqual(expected_licenses, actual_licenses)
+
+    def test_transfer_all(self):
+        """
+        Tests that we transfer all licenses when `transfer_all` is selected.
+        """
+        old_assigned_licenses = LicenseFactory.create_batch(
+            3, subscription_plan=self.old_plan, assigned_date=localized_utcnow(), status=ASSIGNED,
+        )
+        old_activated_licenses = LicenseFactory.create_batch(
+            3, subscription_plan=self.old_plan, assigned_date=localized_utcnow(), status=ACTIVATED,
+        )
+        # old unassigned licenses
+        old_unassigned_licenses = LicenseFactory.create_batch(
+            3, subscription_plan=self.old_plan,
+        )
+        # new_licenses
+        LicenseFactory.create_batch(
+            3, subscription_plan=self.new_plan, assigned_date=localized_utcnow(), status=ACTIVATED,
+        )
+
+        job = self._create_transfer_job(transfer_all=True)
+
+        expected_licenses = {
+            _license.uuid: _license
+            for _license in old_assigned_licenses + old_activated_licenses + old_unassigned_licenses
+        }
+        actual_licenses = {
+            _license.uuid: _license
+            for license_batch in job.get_licenses_to_transfer()
+            for _license in license_batch
+        }
+        self.assertEqual(expected_licenses, actual_licenses)
+
+        job.process()
+
+        self.assertEqual(self.old_plan.licenses.all().count(), 0)
+        self.assertEqual(self.new_plan.licenses.all().count(), 12)
+        for _license in expected_licenses.values():
+            _license.refresh_from_db()
+            self.assertEqual(_license.subscription_plan, self.new_plan)
 
     def test_transfer_dry_run_processing(self):
         """
