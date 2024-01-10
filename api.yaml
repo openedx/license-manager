@@ -222,7 +222,7 @@ endpoints:
             in: path
             required: true
             type: string
-          - name: data
+          - name: input
             in: body
             description: User emails OR search filters for emails and status
             required: true
@@ -316,7 +316,7 @@ endpoints:
             name: subscription_uuid
             required: false
             type: string
-          - name: data
+          - name: payload
             in: body
             description: User emails and course run keys along with a notify learners flag
             required: true
