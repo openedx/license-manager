@@ -16,6 +16,8 @@ apigateway_responses: &apigateway_responses
     statusCode: "400"
   200:
     statusCode: "200"
+  201:
+    statusCode: "201"
   401:
     statusCode: "401"
   403:
@@ -82,6 +84,8 @@ apigateway_responses_with_mapping_template_for_uuid: &apigateway_responses_with_
 responses: &responses
   200:
     description: "OK"
+  201:
+    description: "Created"
   400:
     description: "Bad Request"
   401:
@@ -278,18 +282,21 @@ endpoints:
                   emails:
                     description: "list of learner emails"
                     type: "array"
+                    required: true
                     items:
                       type: "string"
                       description: "user email"
                   course_run_keys:
                     description: "list of courses to enroll learners into"
                     type: "array"
+                    required: true
                     items:
                       type: "string"
                       description: "course run key"
                   notify:
                     description: "Whether to notify learner of their enrollment"
                     type: "boolean"
+                    required: true
         responses: *responses
         x-amazon-apigateway-integration:
           responses: *apigateway_responses
