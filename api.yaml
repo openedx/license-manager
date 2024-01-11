@@ -222,7 +222,7 @@ endpoints:
             in: path
             required: true
             type: string
-          - name: input
+          - name: Requestbody
             in: body
             description: User emails OR search filters for emails and status
             required: true

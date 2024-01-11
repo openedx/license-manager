@@ -212,7 +212,7 @@ endpoints:
         parameters:
           - *auth_header
           - *uuid
-          - name: "input"
+          - name: "Requestbody"
             in: "body"
             description: "User emails OR search filters for emails and status"
             required: true
