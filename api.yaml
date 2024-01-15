@@ -246,6 +246,7 @@ endpoints:
                       type: string
                       description: user email
                   filters:
+                    name: "Revokefilters"
                     description: Filters for lookup and filtering of licenses to revoke.
                     type: array
                     items:
