@@ -230,7 +230,7 @@ endpoints:
             in: path
             required: true
             type: string
-          - name: Requestbody
+          - name: Requestpayload
             in: body
             description: User emails OR search filters for emails and status
             required: true
