@@ -231,23 +231,6 @@ endpoints:
                     items:
                       type: "string"
                       description: "user email"
-                  filters:
-                    name: "Revokefilters"
-                    description: "Filters for lookup and filtering of licenses to revoke."
-                    type: "array"
-                    items:
-                      type: "object"
-                      description: "Values provided to perform filtering against."
-                      properties:
-                        user_email:
-                          description: "User email filter"
-                          type: "string"
-                        status_in:
-                          description: "Array of valid license statuses"
-                          type: "array"
-                          items:
-                            type: "string"
-                            description: "status of the license"
         responses: *bulk_revoke_responses
         x-amazon-apigateway-integration:
           responses: *bulk_revoke_apigateway_responses
