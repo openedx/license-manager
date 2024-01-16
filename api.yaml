@@ -230,21 +230,14 @@ endpoints:
             in: path
             required: true
             type: string
-          - name: Requestpayload
+          - name: RequestPayload
             in: body
             description: User emails OR search filters for emails and status
             required: true
             schema:
               type: array
               items:
-                type: object
-                properties:
-                  user_emails:
-                    description: List of emails with which licenses are associated
-                    type: array
-                    items:
-                      type: string
-                      description: user email
+                $ref: "#/definitions/RequestPayload"
         responses:
           "204":
             description: No Content - All revocations were successful
@@ -378,3 +371,31 @@ endpoints:
             integration.request.querystring.enroll_all: method.request.querystring.enroll_all
             integration.request.querystring.subscription_uuid: method.request.querystring.subscription_uuid
           uri: https://${stageVariables.license_manager_host}/api/v1/bulk-license-enrollment
+definitions:
+  BulkRevokeFilters:
+    type: object
+    properties:
+      user_email:
+        type: string
+        description: User email filter
+      status_in:
+        type: array
+        description: Array of valid license statuses
+        items:
+          type: string
+          description: status of the license
+    description: Values provided to perform filtering against.
+  RequestPayload:
+    type: object
+    properties:
+      user_emails:
+        type: array
+        description: List of emails with which licenses are associated
+        items:
+          type: string
+          description: user email
+      filters:
+        type: array
+        description: Filters for lookup and filtering of licenses to revoke.
+        items:
+          $ref: "#/definitions/BulkRevokeFilters"
