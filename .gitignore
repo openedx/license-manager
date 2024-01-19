@@ -92,8 +92,6 @@ private.py
 
 docs/_build/
 
-scripts/
-
 .vscode/
 
 .dev/
