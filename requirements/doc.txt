@@ -49,17 +49,17 @@ backports-zoneinfo[tzdata]==0.2.1
     #   celery
     #   django
     #   kombu
-beautifulsoup4==4.12.2
+beautifulsoup4==4.12.3
     # via pydata-sphinx-theme
 billiard==4.2.0
     # via
     #   -r requirements/test.txt
     #   celery
-boto3==1.34.19
+boto3==1.34.21
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.34.19
+botocore==1.34.21
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -234,7 +234,7 @@ edx-braze-client==0.1.8
     # via -r requirements/test.txt
 edx-celeryutils==1.2.3
     # via -r requirements/test.txt
-edx-django-utils==5.9.0
+edx-django-utils==5.10.1
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -309,7 +309,7 @@ jsonfield==3.1.0
     # via
     #   -r requirements/test.txt
     #   edx-celeryutils
-jsonschema==4.20.0
+jsonschema==4.21.0
     # via
     #   -r requirements/test.txt
     #   drf-spectacular
