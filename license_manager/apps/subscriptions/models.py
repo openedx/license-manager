@@ -434,6 +434,17 @@ class SubscriptionPlan(TimeStampedModel):
         )
     )
 
+    desired_num_licenses = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Desired Number of Licenses",
+        help_text=(
+            "Total number of licenses that should exist for this SubscriptionPlan. "
+            "The total license count (provisioned asynchronously) will reach the desired amount eventually. "
+            "Empty (NULL) means no attempts will be made to asynchronously provision licenses."
+        ),
+    )
+
     @property
     def days_until_expiration(self):
         """
