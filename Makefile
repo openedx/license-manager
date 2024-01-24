@@ -200,6 +200,9 @@ mysql-client-shell: # Will drop you directly into a mysql client shell.
 app-restart-devserver: ## Kill the license-manager development server. Watcher should restart it.
 	docker-compose exec app bash -c 'kill $$(ps aux | egrep "manage.py ?\w* runserver" | egrep -v "while|grep" | awk "{print \$$2}")'
 
+worker-restart-celery: ## Kill the existing celery process and restart them
+	docker-compose exec worker bash -c 'ps aux | egrep "celery" | egrep -v "grep" | awk "{print \$$2}" | xargs kill -HUP'
+
 dev.stats: ## Get per-container CPU and memory utilization data.
 	docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 

@@ -89,16 +89,21 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, EventTestCaseBas
         self._create_available_licenses()
         user_emails = [self.test_email, self.test_email]
 
-        with mock.patch('license_manager.apps.subscriptions.event_utils.track_event') as mock_assign_track_event:
+        with mock.patch(
+            'license_manager.apps.subscriptions.event_utils._track_batch_events_via_braze_alias'
+        ) as mock_batch_braze_track:
             response = self.api_client.post(
                 self.assign_url,
                 {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails},
             )
-            # We should only have fired an event for 1 assignment:
-            assert mock_assign_track_event.call_count == 1
-            for call in mock_assign_track_event.call_args_list:
-                assert call[0][1] == constants.SegmentEvents.LICENSE_ASSIGNED
+
             assert response.status_code == status.HTTP_200_OK
+
+            # We should only have fired an event for 1 assignment:
+            assert mock_batch_braze_track.call_count == 1
+            actual_event_name, actual_properties_by_email = mock_batch_braze_track.call_args_list[0][0]
+            self.assertEqual(actual_event_name, constants.SegmentEvents.LICENSE_ASSIGNED)
+            self.assertEqual(list(actual_properties_by_email.keys()), [self.test_email])
             self._assert_licenses_assigned([self.test_email])
 
     @ddt.data(True, False)
@@ -114,16 +119,19 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, EventTestCaseBas
             for call in mock_create_track_event.call_args_list:
                 assert call[0][1] == constants.SegmentEvents.LICENSE_CREATED
 
-        with mock.patch('license_manager.apps.subscriptions.event_utils.track_event') as mock_assign_track_event:
+        with mock.patch(
+            'license_manager.apps.subscriptions.event_utils._track_batch_events_via_braze_alias'
+        ) as mock_batch_braze_track:
             user_emails = ['bb8@mit.edu', self.test_email]
             response = self.api_client.post(
                 self.assign_url,
                 {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails},
             )
             assert response.status_code == status.HTTP_200_OK
-            assert mock_assign_track_event.call_count == 2
-            for call in mock_assign_track_event.call_args_list:
-                assert call[0][1] == constants.SegmentEvents.LICENSE_ASSIGNED
+            assert mock_batch_braze_track.call_count == 1
+            actual_event_name, actual_properties_by_email = mock_batch_braze_track.call_args_list[0][0]
+            self.assertEqual(actual_event_name, constants.SegmentEvents.LICENSE_ASSIGNED)
+            self.assertCountEqual(list(actual_properties_by_email.keys()), user_emails)
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')

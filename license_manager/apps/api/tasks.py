@@ -903,7 +903,7 @@ def send_utilization_threshold_reached_email_task(subscription_uuid):
 
 
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT, bind=True)
-def track_license_changes_task(self, license_uuids, event_name, properties=None):
+def track_license_changes_task(self, license_uuids, event_name, properties=None, is_batch_assignment=False):
     """
     Calls ``track_license_changes()`` on some chunks of licenses.
 
@@ -921,7 +921,7 @@ def track_license_changes_task(self, license_uuids, event_name, properties=None)
     for uuid_str_chunk in chunks(license_uuids, 10):
         license_uuid_chunk = [uuid.UUID(uuid_str) for uuid_str in uuid_str_chunk]
         licenses = License.objects.filter(uuid__in=license_uuid_chunk)
-        track_license_changes(licenses, event_name, properties)
+        track_license_changes(licenses, event_name, properties, is_batch_assignment)
         logger.info('Task {} tracked license changes for license uuids {}'.format(
             self.request.id,
             license_uuid_chunk,

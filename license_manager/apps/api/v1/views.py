@@ -688,12 +688,13 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                     pending_learner_batch,
                     subscription_plan.enterprise_customer_uuid,
                 ),
-                create_braze_aliases_task.si(
-                    pending_learner_batch
-                )
             )
 
             if notify_users and not disable_onboarding_notifications:
+                # Braze aliases must be created before we attempt to send assignment emails.
+                tasks.link(
+                    create_braze_aliases_task.si(pending_learner_batch),
+                )
                 tasks.link(
                     send_assignment_email_task.si(
                         custom_template_text,
@@ -851,6 +852,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                 track_license_changes_task.delay(
                     [str(_license.uuid) for _license in assigned_licenses],
                     constants.SegmentEvents.LICENSE_ASSIGNED,
+                    is_batch_assignment=True,
                 )
 
                 self._link_and_notify_assigned_emails(

@@ -13,7 +13,7 @@ from license_manager.apps.subscriptions.constants import (
 )
 from license_manager.apps.subscriptions.event_utils import (
     _iso_8601_format_string,
-    _track_event_via_braze_alias,
+    _track_batch_events_via_braze_alias,
     get_license_tracking_properties,
     track_license_changes,
 )
@@ -113,6 +113,6 @@ def test_track_event_via_braze_alias(mock_braze_client):
         "properties": test_event_properties,
         "_update_existing_only": False,
     }
-    _track_event_via_braze_alias(test_email, test_event_name, test_event_properties)
-    mock_braze_client().create_braze_alias.assert_any_call([test_email], ENTERPRISE_BRAZE_ALIAS_LABEL)
-    mock_braze_client().track_user.assert_any_call(attributes=[expected_attributes], events=[expected_event])
+    _track_batch_events_via_braze_alias(test_event_name, {test_email: test_event_properties})
+    mock_braze_client.return_value.create_braze_alias.assert_any_call([test_email], ENTERPRISE_BRAZE_ALIAS_LABEL)
+    mock_braze_client.return_value.track_user.assert_any_call(attributes=[expected_attributes], events=[expected_event])
