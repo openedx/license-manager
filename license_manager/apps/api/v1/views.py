@@ -514,7 +514,7 @@ class BaseLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMod
 
     would return the license associated with the requesting user in plan 504b1735-9d3a-4000-848d-6ae7a56e6350.
     """
-    authentication_classes = [JwtAuthentication]
+    authentication_classes = [JwtAuthentication, SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -1151,7 +1151,7 @@ class LicenseBaseView(UserDetailsFromJwtMixin, APIView):
     that deal with licenses.
     """
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [JwtAuthentication]
+    authentication_classes = [JwtAuthentication, SessionAuthentication]
 
 
 class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
