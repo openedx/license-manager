@@ -2,6 +2,7 @@
 Utility methods for sending events to Braze or Segment.
 """
 import logging
+import uuid
 
 import analytics
 import requests
@@ -29,64 +30,100 @@ def _iso_8601_format_string(datetime):
     return datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
-def _track_event_via_braze_alias(email, event_name, properties):
-    """ Private helper to allow tracking for a user without an LMS User Id.
-        Should be called from inside the track_event module only for exception handling.
+def _get_braze_alias(email):
+    return {
+        "alias_name": email,
+        "alias_label": ENTERPRISE_BRAZE_ALIAS_LABEL,
+    }
+
+
+def _get_braze_event(braze_alias, event_name, properties):
+    return {
+        "user_alias": braze_alias,
+        "name": event_name,
+        "time": _iso_8601_format_string(localized_utcnow()),
+        "properties": properties,
+        "_update_existing_only": False,
+    }
+
+
+def _get_braze_attributes(email, braze_alias):
+    # we want an email & is_enterprise_learner attribute
+    # we want _update_existing_only=False so we create a new profile if needed
+    return {
+        "user_alias": braze_alias,
+        "email": email,
+        "is_enterprise_learner": True,
+        "_update_existing_only": False,
+    }
+
+
+def _profile_attributes_from_properties(properties):
     """
+    Gather event properties that should eventually be copied
+    into the braze user profile (associated with an alias).
+    """
+    event_properites_to_copy_to_profile = [
+        'enterprise_customer_uuid',
+        'enterprise_customer_slug',
+        'enterprise_customer_name',
+        'license_uuid',
+        'license_activation_key',
+    ]
+
+    profile_attributes = {}
+
+    for event_property in event_properites_to_copy_to_profile:
+        event_value = properties.get(event_property)
+        if event_value is not None:
+            profile_attributes[event_property] = event_value
+
+    return profile_attributes
+
+
+def _track_batch_events_via_braze_alias(event_name, properties_by_email):
+    """
+    Allows batch tracking of users without an lms user id.
+    """
+    braze_alias_emails = []
+    braze_attributes = []
+    braze_events = []
+
+    # synthetic batch id to help us correlate log messages
+    batch_id = uuid.uuid4()
+
+    for email, properties in properties_by_email.items():
+        # Create an alias and stash the email in a list we'll send as a batch to braze via `create_braze_alias()`
+        braze_alias_emails.append(email)
+        user_alias = _get_braze_alias(email)
+
+        # Create an attribute record and stash in a list we'll send to braze via `track_user()`.
+        attribute_record = _get_braze_attributes(email, user_alias)
+        attribute_record.update(_profile_attributes_from_properties(properties))
+        braze_attributes.append(attribute_record)
+
+        # Create an event record and stash in a list we'll send to braze via `track_user()`.
+        event_record = _get_braze_event(user_alias, event_name, properties)
+        braze_events.append(event_record)
+
+        msg = 'Added braze alias/attribute/event to batch %s for pending learner with license %s, enterprise %s.'
+        logger.info(msg, batch_id, properties['license_uuid'], properties['enterprise_customer_slug'])
+
+    # Now send the data to braze
+    braze_client_instance = BrazeApiClient()
     try:
-        braze_client_instance = BrazeApiClient()
+        braze_client_instance.create_braze_alias(braze_alias_emails, ENTERPRISE_BRAZE_ALIAS_LABEL)
+        logger.info('Sent batch of braze aliases with batch id %s', batch_id)
+    except BrazeClientError as exc:
+        logger.exception()
+        raise exc
 
-        # first create an alias for this email address with the ent label
-        braze_client_instance.create_braze_alias(
-            [email],
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
+    try:
+        braze_client_instance.track_user(
+            attributes=braze_attributes,
+            events=braze_events,
         )
-        logger.info('Added alias for pending learner to Braze for license {}, enterprise {}.'
-                    .format(properties['license_uuid'],
-                            properties['enterprise_customer_slug']))
-
-        user_alias = {
-            "alias_name": email,
-            "alias_label": ENTERPRISE_BRAZE_ALIAS_LABEL,
-        }
-
-        # we want an email & is_enterprise_learner attribute
-        # we want _update_existing_only=False so we create a new profile if needed
-        attributes = {
-            "user_alias": user_alias,
-            "email": email,
-            "is_enterprise_learner": True,
-            "_update_existing_only": False,
-        }
-
-        events = {
-            "user_alias": user_alias,
-            "name": event_name,
-            "time": _iso_8601_format_string(localized_utcnow()),
-            "properties": properties,
-            "_update_existing_only": False,
-        }
-
-        # event-level properties are not always available for personalization in braze
-        # we'll copy these specific event properties into the profile attributes if we see them
-        event_properites_to_copy_to_profile = [
-            'enterprise_customer_uuid',
-            'enterprise_customer_slug',
-            'enterprise_customer_name',
-            'license_uuid',
-            'license_activation_key',
-        ]
-
-        for event_property in event_properites_to_copy_to_profile:
-            if properties.get(event_property) is not None:
-                attributes[event_property] = properties.get(event_property)
-
-        braze_client_instance.track_user(attributes=[attributes], events=[events])
-        logger.info('Sent "{}" event to Braze for license {}, enterprise {}.'
-                    .format(event_name,
-                            properties['license_uuid'],
-                            properties['enterprise_customer_slug']))
-
+        logger.info('Sent batch of braze attribute/events to track_user endpoint with batch id %s', batch_id)
     except BrazeClientError as exc:
         logger.exception()
         raise exc
@@ -164,8 +201,9 @@ def track_event(lms_user_id, event_name, properties):
                 logger.warning(
                     "Event {} for License Manager tracked without LMS User Id: {}".format(event_name, properties)
                 )
-                if properties['assigned_email']:
-                    _track_event_via_braze_alias(properties['assigned_email'], event_name, properties)
+                assigned_email = properties['assigned_email']
+                if assigned_email:
+                    _track_batch_events_via_braze_alias(event_name, {assigned_email: properties})
             else:
                 analytics.track(user_id=lms_user_id, event=event_name, properties=properties)
         except Exception as exc:  # pylint: disable=broad-except
@@ -218,7 +256,7 @@ def get_license_tracking_properties(license_obj):
     return license_data
 
 
-def track_license_changes(licenses, event_name, properties=None):
+def track_license_changes(licenses, event_name, properties=None, is_batch_assignment=False):
     """
     Send tracking events for changes to a list of licenses, useful when bulk changes are made.
     Prefetches related objects for licenses to prevent additional queries
@@ -231,18 +269,24 @@ def track_license_changes(licenses, event_name, properties=None):
                             overrides fields from get_license_tracking_properties
     Returns:
         None
+
+    if ``is_batch_assignment``, call `track_users` in braze with a list of users to alias and track, skip
+    over the normal `track_event()` call.
     """
     properties = properties or {}
     # prefetch related objects used in get_license_tracking_properties
     prefetch_related_objects(licenses, '_renewed_from', 'subscription_plan', 'subscription_plan__customer_agreement')
 
-    for lcs in licenses:
-        event_properties = {**get_license_tracking_properties(lcs), **properties}
-        track_event(
-            lcs.lms_user_id,  # None for unassigned licenses, track_event will handle users with unregistered emails
-            event_name,
-            event_properties,
-        )
+    if is_batch_assignment:
+        properties_by_email = {
+            lcs.user_email: {**get_license_tracking_properties(lcs), **properties}
+            for lcs in licenses
+        }
+        _track_batch_events_via_braze_alias(event_name, properties_by_email)
+    else:
+        for lcs in licenses:
+            event_properties = {**get_license_tracking_properties(lcs), **properties}
+            track_event(lcs.lms_user_id, event_name, event_properties)
 
 
 def get_enterprise_tracking_properties(customer_agreement):

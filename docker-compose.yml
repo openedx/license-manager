@@ -74,6 +74,7 @@ services:
     tty: true
     volumes:
       - .:/edx/app/license_manager/license_manager
+      - ../src:/edx/src:cached
 
 networks:
   devstack_default:
