@@ -11,6 +11,7 @@ from django.db import DatabaseError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema
 from edx_rbac.decorators import permission_required
 from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
@@ -1261,6 +1262,12 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
     @permission_required(
         constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
         fn=lambda request: utils.get_context_for_customer_agreement_from_request(request),  # pylint: disable=unnecessary-lambda
+    )
+    @extend_schema(
+        parameters=[
+            serializers.EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer,
+        ],
+        request=serializers.EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer,
     )
     def post(self, request):
         """
