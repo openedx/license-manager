@@ -99,3 +99,6 @@ scripts/
 .dev/
 
 .python/
+
+# pyenv
+.python-version
