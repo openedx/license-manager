@@ -395,3 +395,64 @@ class LicenseAdminAssignActionSerializer(CustomTextWithMultipleEmailsSerializer)
                 )
 
         return super().validate(attrs)
+
+
+class EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer(serializers.Serializer):  # pylint: disable=abstract-method
+    """
+    Serializer for the enterprise enrollment with license subsidy query params
+    """
+
+    enterprise_customer_uuid = serializers.UUIDField(
+        required=True,
+        help_text='The UUID of the associated enterprise customer',
+    )
+    enroll_all = serializers.BooleanField(
+        required=False,
+        help_text='A boolean indicating whether to enroll all learners or not',
+    )
+    subscription_uuid = serializers.UUIDField(
+        required=False,
+        help_text='The UUID of the subscription',
+    )
+
+    class Meta:
+        fields = [
+            'enterprise_customer_uuid',
+            'enroll_all',
+            'subscription_uuid',
+        ]
+
+
+class EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer(serializers.Serializer):  # pylint: disable=abstract-method
+    """
+    Serializer for the enterprise enrollment with license subsidy request
+    """
+
+    emails = serializers.ListField(
+        child=serializers.EmailField(
+            allow_blank=False,
+        ),
+        allow_empty=False,
+        required=True,
+        help_text='an array of learners\' emails',
+    )
+    course_run_keys = serializers.ListField(
+        child=serializers.CharField(
+            allow_blank=False,
+            write_only=True,
+        ),
+        allow_empty=False,
+        required=True,
+        help_text='an array of course run keys',
+    )
+    notify = serializers.BooleanField(
+        required=True,
+        help_text='a boolean indicating whether to notify learners or not',
+    )
+
+    class Meta:
+        fields = [
+            'emails',
+            'course_run_keys',
+            'notify',
+        ]
