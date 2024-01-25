@@ -66,6 +66,23 @@ def chunks(a_list, chunk_size):
         yield a_list[i:i + chunk_size]
 
 
+def batch_counts(total_count, batch_size=1):
+    """
+    Break up a total count into equal-sized batch counts.
+
+    Arguments:
+        total_count (int): The total count to batch.
+        batch_size (int): The size of each batch. Defaults to 1.
+    Returns:
+        generator: returns the count for each batch.
+    """
+    num_full_batches, last_batch_count = divmod(total_count, batch_size)
+    for _ in range(num_full_batches):
+        yield batch_size
+    if last_batch_count > 0:
+        yield last_batch_count
+
+
 def get_learner_portal_url(enterprise_slug):
     """
     Returns the link to the learner portal, given an enterprise slug.
