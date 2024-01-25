@@ -197,7 +197,7 @@ drf-spectacular==0.27.0
     # via -r requirements/base.txt
 edx-auth-backends==4.2.0
     # via -r requirements/base.txt
-edx-braze-client==0.1.8
+edx-braze-client==0.2.0
     # via -r requirements/base.txt
 edx-celeryutils==1.2.3
     # via -r requirements/base.txt
