@@ -402,9 +402,18 @@ class EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer(serializers.Se
     Serializer for the enterprise enrollment with license subsidy query params
     """
 
-    enterprise_customer_uuid = serializers.UUIDField(required=True)
-    enroll_all = serializers.BooleanField(required=False)
-    subscription_uuid = serializers.UUIDField(required=False)
+    enterprise_customer_uuid = serializers.UUIDField(
+        required=True,
+        help_text='The UUID of the associated enterprise customer',
+    )
+    enroll_all = serializers.BooleanField(
+        required=False,
+        help_text='A boolean indicating whether to enroll all learners or not',
+    )
+    subscription_uuid = serializers.UUIDField(
+        required=False,
+        help_text='The UUID of the subscription',
+    )
 
     class Meta:
         fields = [
@@ -425,6 +434,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer(serializers.Serial
         ),
         allow_empty=False,
         required=True,
+        help_text='an array of learners\' emails',
     )
     course_run_keys = serializers.ListField(
         child=serializers.CharField(
@@ -433,8 +443,12 @@ class EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer(serializers.Serial
         ),
         allow_empty=False,
         required=True,
+        help_text='an array of course run keys',
     )
-    notify = serializers.BooleanField(required=True)
+    notify = serializers.BooleanField(
+        required=True,
+        help_text='a boolean indicating whether to notify learners or not',
+    )
 
     class Meta:
         fields = [
