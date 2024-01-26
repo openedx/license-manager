@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 TASK_RETRY_SECONDS = 60
 PROVISION_LICENSES_BATCH_SIZE = 300
 
+PROVISION_LICENSES_TIME_LIMIT_SECONDS = 60 * 30
+
 
 class RequiredTaskUnreadyError(Exception):
     """
@@ -75,7 +77,13 @@ class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
     retry_jitter = True
 
 
-@shared_task(base=LoggedTaskWithRetry, bind=True, default_retry_delay=TASK_RETRY_SECONDS)
+@shared_task(
+    base=LoggedTaskWithRetry,
+    bind=True,
+    default_retry_delay=TASK_RETRY_SECONDS,
+    soft_time_limit=PROVISION_LICENSES_TIME_LIMIT_SECONDS,
+    time_limit=PROVISION_LICENSES_TIME_LIMIT_SECONDS,
+)
 @subscription_plan_semaphore()
 def provision_licenses_task(self, subscription_plan_uuid=None):  # pylint: disable=unused-argument
     """
