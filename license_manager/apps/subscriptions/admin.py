@@ -193,6 +193,7 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         'customer_agreement',
         'last_freeze_timestamp',
         'salesforce_opportunity_id',
+        'desired_num_licenses'
     ]
     writable_fields = [
         'title',
@@ -338,8 +339,10 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         customer_agreement_catalog = obj.customer_agreement.default_enterprise_catalog_uuid
         obj.enterprise_catalog_uuid = (obj.enterprise_catalog_uuid or customer_agreement_catalog)
 
-        # Set desired_num_licenses which will lead to the eventual creation of those licenses.
-        obj.desired_num_licenses = form.cleaned_data.get('num_licenses', 0)
+        # If we're creating the model instance, determine the desired number of licenses
+        # from the form and store that in the model. This will lead to the eventual creation of those licenses.
+        if not change:
+            obj.desired_num_licenses = form.cleaned_data.get('num_licenses', 0)
 
         super().save_model(request, obj, form, change)
 
