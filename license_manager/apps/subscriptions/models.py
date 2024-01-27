@@ -902,6 +902,11 @@ class License(TimeStampedModel):
     .. pii_types: id,email_address
     .. pii_retirement: local_api
     """
+    class Meta:
+        indexes = [
+            models.Index(fields=["subscription_plan", "status"], name="subscription_plan_status_idx"),
+        ]
+
     uuid = models.UUIDField(
         primary_key=True,
         default=uuid4,

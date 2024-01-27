@@ -88,11 +88,10 @@ class ExpireSubscriptionsCommandTests(TestCase):
 
         call_command(self.command_name)
 
-        expired_license_uuids = self._get_allocated_license_uuids(expired_subscription)
-        mock_license_expiration_task.assert_called_with(
-            expired_license_uuids,
-            ignore_enrollments_modified_after=None
-        )
+        expected_expired_license_uuids = self._get_allocated_license_uuids(expired_subscription)
+        actual_expired_license_uuids = mock_license_expiration_task.call_args.args[0]
+        assert set(actual_expired_license_uuids) == set(expected_expired_license_uuids)
+        assert mock_license_expiration_task.call_args.kwargs['ignore_enrollments_modified_after'] is None
         expired_subscription.refresh_from_db()
         self.assertTrue(expired_subscription.expiration_processed)
 
@@ -114,12 +113,12 @@ class ExpireSubscriptionsCommandTests(TestCase):
             expiration_date=self.today - timedelta(days=30)
         )
 
-        expired_license_uuids = self._get_allocated_license_uuids(expired_subscription)
         call_command(self.command_name)
-        mock_license_expiration_task.assert_called_with(
-            expired_license_uuids,
-            ignore_enrollments_modified_after=None
-        )
+
+        expected_expired_license_uuids = self._get_allocated_license_uuids(expired_subscription)
+        actual_expired_license_uuids = mock_license_expiration_task.call_args.args[0]
+        assert set(actual_expired_license_uuids) == set(expected_expired_license_uuids)
+        assert mock_license_expiration_task.call_args.kwargs['ignore_enrollments_modified_after'] is None
         expired_subscription.refresh_from_db()
         self.assertTrue(expired_subscription.expiration_processed)
 
@@ -154,16 +153,20 @@ class ExpireSubscriptionsCommandTests(TestCase):
             "--expired-before=2016-1-01T00:00:00"
         )
 
-        expired_license_uuids_1 = self._get_allocated_license_uuids(expired_subscription_1)
-        expired_license_uuids_2 = self._get_allocated_license_uuids(expired_subscription_2)
-        mock_license_expiration_task.assert_any_call(
-            expired_license_uuids_1,
-            ignore_enrollments_modified_after='2014-01-01T00:00:00+00:00'
-        )
-        mock_license_expiration_task.assert_any_call(
-            expired_license_uuids_2,
-            ignore_enrollments_modified_after='2016-01-01T00:00:00+00:00'
-        )
+        expected_expired_license_uuids_1 = self._get_allocated_license_uuids(expired_subscription_1)
+        expected_expired_license_uuids_2 = self._get_allocated_license_uuids(expired_subscription_2)
+
+        call_args_1 = mock_license_expiration_task.call_args_list[0]
+        call_args_2 = mock_license_expiration_task.call_args_list[1]
+
+        actual_expired_license_uuids_1 = call_args_1.args[0]
+        actual_expired_license_uuids_2 = call_args_2.args[0]
+        assert set(actual_expired_license_uuids_1) == set(expected_expired_license_uuids_1)
+        assert set(actual_expired_license_uuids_2) == set(expected_expired_license_uuids_2)
+
+        assert call_args_1.kwargs['ignore_enrollments_modified_after'] == '2014-01-01T00:00:00+00:00'
+        assert call_args_2.kwargs['ignore_enrollments_modified_after'] == '2016-01-01T00:00:00+00:00'
+
         assert mock_license_expiration_task.call_count == 2
 
         expired_subscription_1.refresh_from_db()
@@ -200,16 +203,20 @@ class ExpireSubscriptionsCommandTests(TestCase):
             "--force"
         )
 
-        expired_license_uuids_1 = self._get_allocated_license_uuids(expired_subscription_1)
-        expired_license_uuids_2 = self._get_allocated_license_uuids(expired_subscription_2)
-        mock_license_expiration_task.assert_any_call(
-            expired_license_uuids_1,
-            ignore_enrollments_modified_after='2014-01-01T00:00:00+00:00'
-        )
-        mock_license_expiration_task.assert_any_call(
-            expired_license_uuids_2,
-            ignore_enrollments_modified_after='2016-01-01T00:00:00+00:00'
-        )
+        expected_expired_license_uuids_1 = self._get_allocated_license_uuids(expired_subscription_1)
+        expected_expired_license_uuids_2 = self._get_allocated_license_uuids(expired_subscription_2)
+
+        call_args_1 = mock_license_expiration_task.call_args_list[0]
+        call_args_2 = mock_license_expiration_task.call_args_list[1]
+
+        actual_expired_license_uuids_1 = call_args_1.args[0]
+        actual_expired_license_uuids_2 = call_args_2.args[0]
+        assert set(actual_expired_license_uuids_1) == set(expected_expired_license_uuids_1)
+        assert set(actual_expired_license_uuids_2) == set(expected_expired_license_uuids_2)
+
+        assert call_args_1.kwargs['ignore_enrollments_modified_after'] == '2014-01-01T00:00:00+00:00'
+        assert call_args_2.kwargs['ignore_enrollments_modified_after'] == '2016-01-01T00:00:00+00:00'
+
         assert mock_license_expiration_task.call_count == 2
 
         expired_subscription_1.refresh_from_db()
@@ -247,7 +254,7 @@ class ExpireSubscriptionsCommandTests(TestCase):
         )
 
         args_1 = mock_license_expiration_task.call_args_list[0][0][0]
-        assert args_1 == self._get_allocated_license_uuids(expired_subscription_1)
+        assert set(args_1) == set(self._get_allocated_license_uuids(expired_subscription_1))
         assert mock_license_expiration_task.call_args_list[0][1][
             'ignore_enrollments_modified_after'
         ] == '2014-01-01T00:00:00+00:00'
@@ -362,7 +369,7 @@ class ExpireSubscriptionsCommandTests(TestCase):
         args_1 = mock_license_expiration_task.call_args_list[0][0][0]
         args_2 = mock_license_expiration_task.call_args_list[1][0][0]
         args_3 = mock_license_expiration_task.call_args_list[2][0][0]
-        assert args_1 == self._get_allocated_license_uuids(expired_subscription_plan_3)
-        assert args_2 == self._get_allocated_license_uuids(expired_subscription_plan_1)
-        assert args_3 == self._get_allocated_license_uuids(expired_subscription_plan_2)
+        assert set(args_1) == set(self._get_allocated_license_uuids(expired_subscription_plan_3))
+        assert set(args_2) == set(self._get_allocated_license_uuids(expired_subscription_plan_1))
+        assert set(args_3) == set(self._get_allocated_license_uuids(expired_subscription_plan_2))
         assert mock_license_expiration_task.call_count == 3
