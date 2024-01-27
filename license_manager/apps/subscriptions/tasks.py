@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 TASK_RETRY_SECONDS = 60
 PROVISION_LICENSES_BATCH_SIZE = 300
 
-PROVISION_LICENSES_TIME_LIMIT_SECONDS = 60 * 30
+# 200 minutes will get you about 2 million licenses, give or take.
+PROVISION_LICENSES_TIME_LIMIT_SECONDS = 60 * 200
 
 
 class RequiredTaskUnreadyError(Exception):
