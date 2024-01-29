@@ -27,6 +27,7 @@ from license_manager.apps.subscriptions.constants import (
     NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD,
     PENDING_ACCOUNT_CREATION_BATCH_SIZE,
     REVOCABLE_LICENSE_STATUSES,
+    TRACK_LICENSE_CHANGES_BATCH_SIZE,
     NotificationChoices,
 )
 from license_manager.apps.subscriptions.event_utils import (
@@ -918,7 +919,10 @@ def track_license_changes_task(self, license_uuids, event_name, properties=None,
     """
     properties = properties or {}
     # We chunk these up as to not fetch too many license records from the DB in a single query.
-    for uuid_str_chunk in chunks(license_uuids, 10):
+    # We're also limited in `track_license_changes` by the number of records
+    # this braze endpoint allows us to request at a time:
+    # https://www.braze.com/docs/api/endpoints/export/user_data/post_users_identifier/
+    for uuid_str_chunk in chunks(license_uuids, TRACK_LICENSE_CHANGES_BATCH_SIZE):
         license_uuid_chunk = [uuid.UUID(uuid_str) for uuid_str in uuid_str_chunk]
         licenses = License.objects.filter(uuid__in=license_uuid_chunk)
         track_license_changes(licenses, event_name, properties, is_batch_assignment)
