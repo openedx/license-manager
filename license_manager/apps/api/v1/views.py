@@ -11,6 +11,7 @@ from django.db import DatabaseError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema
 from edx_rbac.decorators import permission_required
 from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
@@ -687,12 +688,13 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                     pending_learner_batch,
                     subscription_plan.enterprise_customer_uuid,
                 ),
-                create_braze_aliases_task.si(
-                    pending_learner_batch
-                )
             )
 
             if notify_users and not disable_onboarding_notifications:
+                # Braze aliases must be created before we attempt to send assignment emails.
+                tasks.link(
+                    create_braze_aliases_task.si(pending_learner_batch),
+                )
                 tasks.link(
                     send_assignment_email_task.si(
                         custom_template_text,
@@ -850,6 +852,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                 track_license_changes_task.delay(
                     [str(_license.uuid) for _license in assigned_licenses],
                     constants.SegmentEvents.LICENSE_ASSIGNED,
+                    is_batch_assignment=True,
                 )
 
                 self._link_and_notify_assigned_emails(
@@ -1261,6 +1264,12 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
     @permission_required(
         constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
         fn=lambda request: utils.get_context_for_customer_agreement_from_request(request),  # pylint: disable=unnecessary-lambda
+    )
+    @extend_schema(
+        parameters=[
+            serializers.EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer,
+        ],
+        request=serializers.EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer,
     )
     def post(self, request):
         """

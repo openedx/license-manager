@@ -85,6 +85,9 @@ private.py
 # Editor Temp Files
 *.swp
 
+# pyenv
+.python-version
+
 *.trace
 
 docs/_build/
@@ -96,3 +99,6 @@ scripts/
 .dev/
 
 .python/
+
+# pyenv
+.python-version

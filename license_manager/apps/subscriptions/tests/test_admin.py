@@ -9,6 +9,7 @@ from license_manager.apps.subscriptions.admin import (
     CustomerAgreementAdmin,
     SubscriptionPlanAdmin,
 )
+from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     SubscriptionPlan,
@@ -40,6 +41,38 @@ def test_licenses_subscription_creation():
     change = False
     subscription_admin.save_model(request, obj, form, change)
     assert obj.licenses.count() == num_licenses
+
+
+@pytest.mark.django_db
+def test_licenses_subscription_modification():
+    """
+    Verify that creating a SubscriptionPlan creates its associated Licenses after it is created.
+    """
+    # Setup an existing plan
+    customer_agreement = CustomerAgreementFactory()
+    subscription_plan = SubscriptionPlanFactory.create(
+        customer_agreement=customer_agreement,
+        desired_num_licenses=10,
+    )
+    assert subscription_plan.licenses.count() == 0  # Verify no Licenses have been created yet
+
+    # setup the admin form
+    subscription_admin = SubscriptionPlanAdmin(SubscriptionPlan, AdminSite())
+    request = RequestFactory()
+    request.user = UserFactory()
+
+    # doesn't really matter what we put for num_licenses in here, save_model
+    # will read the desired number of license from the existing object on save.
+    form = make_bound_subscription_form(num_licenses=1)
+    form.save()
+
+    # save the form as a modify instead of create
+    subscription_admin.save_model(request, subscription_plan, form, True)
+
+    # The save_model() method should determine that licenses need to be created,
+    # and then create them (synchronously in this case, since its a small number of licenses).
+    subscription_plan.refresh_from_db()
+    assert subscription_plan.licenses.count() == 10
 
 
 @pytest.mark.django_db
