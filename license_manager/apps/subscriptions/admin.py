@@ -185,16 +185,23 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
 @admin.register(SubscriptionPlan)
 class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
     form = SubscriptionPlanForm
-    # This is not to be confused with readonly_fields of the BaseModelAdmin class
+
+    # Do not include these fields on the create page.
+    fields_skip_create = [
+        'desired_num_licenses',
+    ]
+    # This is not to be confused with readonly_fields of the BaseModelAdmin class.
+    # This is only used for field display sorting purposes (they should appear lower on the page).
     read_only_fields = [
         'num_revocations_remaining',
         'num_licenses',
+        'desired_num_licenses',
         'expiration_processed',
         'customer_agreement',
         'last_freeze_timestamp',
         'salesforce_opportunity_id',
-        'desired_num_licenses'
     ]
+    # Writable fields appear higher on the page.
     writable_fields = [
         'title',
         'start_date',
@@ -210,12 +217,12 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         'can_freeze_unused_licenses',
         'should_auto_apply_licenses',
     ]
-
-    # There are some fields we want to come first/last in the form for cognitive ease.
+    # There are some fields we want to force first/last in the form for cognitive ease.
     fields_displayed_first = [
         'title',
         'is_active',
         'num_licenses',
+        'desired_num_licenses',
         'for_internal_use_only',
     ]
     fields_displayed_last = [
@@ -225,27 +232,28 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         'change_reason',
     ]
 
-    # pylint: disable=dangerous-default-value,no-self-argument
-    def get_remaining_fields(
-        writable_fields=writable_fields,
-        read_only_fields=read_only_fields,
-        fields_displayed_first=fields_displayed_first,
-        fields_displayed_last=fields_displayed_last,
-    ):
-        # pylint: disable=line-too-long
+    def get_fields(self, request, obj=None):
         """
-        Scoping is weird for class-scoped variables -
-        hence this function to determine the "remaining_fields".
-        See https://stackoverflow.com/questions/13905741/accessing-class-variables-from-a-list-comprehension-in-the-class-definition
-        Note that dict is guaranteed to preserve insertion order as of Python 3.7
-        https://docs.python.org/3.6/whatsnew/3.6.html#new-dict-implementation
+        Construct a list of fields, ordered based on first/last/read_only/writable hints above, and filtered depending
+        on create vs. edit.
         """
-        return [
-            field for field in dict.fromkeys(writable_fields + read_only_fields)
-            if field not in fields_displayed_first + fields_displayed_last
+        # Construct the "middle" list of fields, favoring writable fields first.
+        fields_displayed_middle = [
+            # Note that dict is guaranteed to preserve insertion order as of Python 3.7
+            # https://docs.python.org/3.6/whatsnew/3.6.html#new-dict-implementation
+            field for field in dict.fromkeys(self.writable_fields + self.read_only_fields)
+            if field not in self.fields_displayed_first + self.fields_displayed_last
         ]
 
-    fields = fields_displayed_first + get_remaining_fields() + fields_displayed_last
+        # Construct preliminary list of all fields to show.
+        fields = self.fields_displayed_first + fields_displayed_middle + self.fields_displayed_last
+
+        # For the create page (where obj does not exist), remove any fields not wanted.
+        if obj is None:
+            for skip_field in self.fields_skip_create:
+                fields.remove(skip_field)
+
+        return fields
 
     list_display = (
         'title',

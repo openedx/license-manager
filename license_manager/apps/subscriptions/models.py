@@ -437,6 +437,7 @@ class SubscriptionPlan(TimeStampedModel):
     desired_num_licenses = models.PositiveIntegerField(
         blank=True,
         null=True,
+        editable=False,
         verbose_name="Desired Number of Licenses",
         help_text=(
             "Total number of licenses that should exist for this SubscriptionPlan. "
