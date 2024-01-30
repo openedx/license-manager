@@ -5,6 +5,7 @@ from rest_framework.fields import SerializerMethodField
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
+    REVOKED,
     SALESFORCE_ID_LENGTH,
 )
 from license_manager.apps.subscriptions.models import (
@@ -73,7 +74,13 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
         more details.
         """
         count_by_status = obj.license_count_by_status()
-        count_by_status['total'] = obj.num_licenses
+
+        total_count = 0
+        for status, count_for_status in count_by_status.items():
+            if status != REVOKED:
+                total_count += count_for_status
+
+        count_by_status['total'] = total_count
         count_by_status['allocated'] = count_by_status[ASSIGNED] + count_by_status[ACTIVATED]
         return count_by_status
 
