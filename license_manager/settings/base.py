@@ -366,6 +366,13 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     'fanout_patterns': True,
     'fanout_prefix': True,
 }
+
+# Route licensed bulk enrollment tasks to a dedicated queue
+CELERY_TASK_ROUTES = {
+    'license_manager.apps.api.tasks.enterprise_enrollment_license_subsidy_task': {
+        'queue': 'license_manager.bulk_enrollment',
+    },
+}
 """############################# END CELERY CONFIG ##################################"""
 
 # Email configuration settings
