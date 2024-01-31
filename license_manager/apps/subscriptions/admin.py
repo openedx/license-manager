@@ -354,13 +354,16 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
 
         super().save_model(request, obj, form, change)
 
-        num_new_licenses = obj.desired_num_licenses - obj.num_licenses
-        if num_new_licenses <= PROVISION_LICENSES_BATCH_SIZE:
-            # We can handle just one batch synchronously.
-            SubscriptionPlan.increase_num_licenses(obj, num_new_licenses)
-        else:
-            # Multiple batches of licenses will need to be created, so provision them asynchronously.
-            provision_licenses_task.delay(subscription_plan_uuid=obj.uuid)
+        # Finally, provision any additional licenses if necessary.
+        if obj.desired_num_licenses:
+            license_count_gap = obj.desired_num_licenses - obj.num_licenses
+            if license_count_gap > 0:
+                if license_count_gap <= PROVISION_LICENSES_BATCH_SIZE:
+                    # We can handle just one batch synchronously.
+                    SubscriptionPlan.increase_num_licenses(obj, license_count_gap)
+                else:
+                    # Multiple batches of licenses will need to be created, so provision them asynchronously.
+                    provision_licenses_task.delay(subscription_plan_uuid=obj.uuid)
 
 
 @admin.register(CustomerAgreement)
