@@ -22,7 +22,6 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError
 from rest_framework.mixins import ListModelMixin
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_csv.renderers import CSVRenderer
@@ -68,10 +67,14 @@ from license_manager.apps.subscriptions.utils import (
     localized_utcnow,
 )
 
+from ..pagination import EstimatedCountLicensePagination, LicensePagination
+
 
 logger = logging.getLogger(__name__)
 
 ASSIGNMENT_LOCK_TIMEOUT_SECONDS = 300
+
+ESTIMATED_COUNT_PAGINATOR_THRESHOLD = 10000
 
 
 class CustomerAgreementViewSet(
@@ -485,26 +488,6 @@ class LearnerLicensesViewSet(
         return licenses
 
 
-class PageNumberPaginationWithCount(PageNumberPagination):
-    """
-    A PageNumber paginator that adds the total number of pages to the paginated response.
-    """
-
-    def get_paginated_response(self, data):
-        """ Adds a ``num_pages`` field into the paginated response. """
-        response = super().get_paginated_response(data)
-        response.data['num_pages'] = self.page.paginator.num_pages
-        return response
-
-
-class LicensePagination(PageNumberPaginationWithCount):
-    """
-    A PageNumber paginator that allows the client to specify the page size, up to some maximum.
-    """
-    page_size_query_param = 'page_size'
-    max_page_size = 500
-
-
 class BaseLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
     """
     Base Viewset for read operations on individual licenses in a given subscription plan.
@@ -608,6 +591,40 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
 
     pagination_class = LicensePagination
+
+    @property
+    def paginator(self):
+        # pylint: disable=line-too-long
+        """
+        If the caller has requested all usable licenses, we want to fall
+        back to grabbing the paginator's count from ``SubscriptionPlan.desired_num_licenses``
+        for large plans, as determining the count dynamically is an expensive query.
+
+        This is the only way to dynamically select a pagination class in DRF.
+        https://github.com/encode/django-rest-framework/issues/6397
+
+        Underlying implementation of the paginator() property:
+        https://github.com/encode/django-rest-framework/blob/7749e4e3bed56e0f3e7775b0b1158d300964f6c0/rest_framework/generics.py#L156
+        """
+        if hasattr(self, '_paginator'):
+            return self._paginator
+
+        # If we don't have a subscription plan, or the requested
+        # status values aren't for all usable licenses, fall back to
+        # the normal LicensePagination class
+        self._paginator = super().paginator  # pylint: disable=attribute-defined-outside-init
+
+        usable_license_states = {constants.UNASSIGNED, constants.ASSIGNED, constants.ACTIVATED}
+        if value := self.request.query_params.get('status'):
+            status_values = value.strip().split(',')
+            if set(status_values) == usable_license_states:
+                if subscription_plan := self._get_subscription_plan():
+                    estimated_count = subscription_plan.desired_num_licenses
+                    if estimated_count is not None and estimated_count > ESTIMATED_COUNT_PAGINATOR_THRESHOLD:
+                        # pylint: disable=attribute-defined-outside-init
+                        self._paginator = EstimatedCountLicensePagination(estimated_count=estimated_count)
+
+        return self._paginator
 
     @property
     def active_only(self):
