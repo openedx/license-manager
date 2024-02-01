@@ -44,11 +44,11 @@ billiard==4.2.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.34.21
+boto3==1.34.32
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.34.21
+botocore==1.34.32
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -96,12 +96,12 @@ click-repl==0.3.0
     # via
     #   -r requirements/base.txt
     #   celery
-code-annotations==1.5.0
+code-annotations==1.6.0
     # via
     #   -r requirements/base.txt
     #   edx-lint
     #   edx-toggles
-cryptography==41.0.7
+cryptography==42.0.2
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -111,7 +111,7 @@ defusedxml==0.8.0rc2
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-dill==0.3.7
+dill==0.3.8
     # via pylint
 django==4.2.9
     # via
@@ -193,7 +193,7 @@ drf-jwt==1.19.2
     #   edx-drf-extensions
 drf-nested-routers==0.93.5
     # via -r requirements/base.txt
-drf-spectacular==0.27.0
+drf-spectacular==0.27.1
     # via -r requirements/base.txt
 edx-auth-backends==4.2.0
     # via -r requirements/base.txt
@@ -207,7 +207,7 @@ edx-django-utils==5.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==9.1.2
+edx-drf-extensions==10.1.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -223,7 +223,7 @@ edx-rbac==1.8.0
     # via -r requirements/base.txt
 edx-rest-api-client==5.6.1
     # via -r requirements/base.txt
-edx-toggles==5.1.0
+edx-toggles==5.1.1
     # via -r requirements/base.txt
 idna==3.6
     # via
@@ -255,7 +255,7 @@ jsonfield==3.1.0
     # via
     #   -r requirements/base.txt
     #   edx-celeryutils
-jsonschema==4.21.0
+jsonschema==4.21.1
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
@@ -269,7 +269,7 @@ kombu==5.3.5
     #   celery
 lazy-object-proxy==1.10.0
     # via astroid
-markupsafe==2.1.3
+markupsafe==2.1.4
     # via
     #   -r requirements/base.txt
     #   jinja2
@@ -281,7 +281,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.1
     # via -r requirements/base.txt
-newrelic==9.5.0
+newrelic==9.6.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -298,7 +298,7 @@ pkgutil-resolve-name==1.3.10
     # via
     #   -r requirements/base.txt
     #   jsonschema
-platformdirs==4.1.0
+platformdirs==4.2.0
     # via pylint
 ply==3.11
     # via
@@ -308,7 +308,7 @@ prompt-toolkit==3.0.43
     # via
     #   -r requirements/base.txt
     #   click-repl
-psutil==5.9.7
+psutil==5.9.8
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -358,7 +358,7 @@ python-dateutil==2.8.2
     #   analytics-python
     #   botocore
     #   celery
-python-slugify==8.0.1
+python-slugify==8.0.3
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -366,7 +366,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-pytz==2023.3.post1
+pytz==2023.4
     # via
     #   -r requirements/base.txt
     #   django-ses
@@ -378,7 +378,7 @@ pyyaml==6.0.1
     #   drf-spectacular
 redis==5.0.1
     # via -r requirements/base.txt
-referencing==0.32.1
+referencing==0.33.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -432,7 +432,7 @@ social-auth-app-django==5.4.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.5.1
+social-auth-core==4.5.2
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
