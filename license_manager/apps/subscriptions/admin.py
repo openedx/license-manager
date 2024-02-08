@@ -286,6 +286,9 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         'start_date',
         'expiration_date',
     )
+
+    autocomplete_fields = ['customer_agreement']
+
     actions = ['process_unused_licenses_post_freeze']
 
     def get_queryset(self, request):
