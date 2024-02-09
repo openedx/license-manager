@@ -7,6 +7,7 @@ from math import ceil, inf
 from uuid import uuid4
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinLengthValidator
 from django.db import models, transaction
@@ -61,6 +62,10 @@ from .utils import chunks
 
 
 logger = getLogger(__name__)
+
+CONTAINS_CONTENT_CACHE_TIMEOUT = 60 * 60
+
+_CACHE_MISS = object()
 
 
 class CustomerAgreement(TimeStampedModel):
@@ -736,12 +741,21 @@ class SubscriptionPlan(TimeStampedModel):
         Returns:
             bool: Whether the given content_ids are part of the subscription.
         """
+        cache_key = self.get_contains_content_cache_key(content_ids)
+        cached_value = cache.get(cache_key, _CACHE_MISS)
+        if cached_value is not _CACHE_MISS:
+            return cached_value
+
         enterprise_catalog_client = EnterpriseCatalogApiClient()
         content_in_catalog = enterprise_catalog_client.contains_content_items(
             self.enterprise_catalog_uuid,
             content_ids,
         )
+        cache.set(cache_key, content_in_catalog, timeout=CONTAINS_CONTENT_CACHE_TIMEOUT)
         return content_in_catalog
+
+    def get_contains_content_cache_key(self, content_ids):
+        return f'plan_contains_content:{self.uuid}:{content_ids}'
 
     history = HistoricalRecords()
 
