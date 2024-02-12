@@ -303,3 +303,14 @@ def release_subscription_plan_lock(subscription_plan, **cache_key_kwargs):
     cache_key = get_cache_key(resource='subscription_plan', plan_uuid=subscription_plan.uuid, **cache_key_kwargs)
     TieredCache.delete_all_tiers(cache_key)
     return True
+
+
+def make_swagger_var_param_optional(result, generator, request, public):
+    for path, methods in result["paths"].items():
+        for method, info in methods.items():
+            parameters = info.get("parameters")
+            if parameters is not None:
+                for param in parameters:
+                    if param.get("name") == "var":
+                        param["allowEmptyValue"] = True
+    return result
