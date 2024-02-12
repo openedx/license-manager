@@ -36,6 +36,9 @@ from license_manager.apps.api.v1.tests.constants import (
     LEARNER_ROLES,
     SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
 )
+from license_manager.apps.api.v1.views import (
+    ESTIMATED_COUNT_PAGINATOR_THRESHOLD,
+)
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
@@ -785,6 +788,32 @@ def test_license_list_staff_user_200_custom_page_size(api_client, staff_user):
     # We test for content in the test above, we're just worried about the number of pages here
     assert len(results_by_uuid) == 1
     assert response.data['count'] == 4
+    assert response.data['next'] is not None
+
+
+@pytest.mark.django_db
+def test_license_list_staff_user_200_estimated_license_count(api_client, staff_user):
+    subscription, _, _, _, _ = _subscription_and_licenses()
+    _assign_role_via_jwt_or_db(
+        api_client,
+        staff_user,
+        subscription.enterprise_customer_uuid,
+        True,
+    )
+    subscription.desired_num_licenses = ESTIMATED_COUNT_PAGINATOR_THRESHOLD + 1
+    subscription.save()
+
+    response = _licenses_list_request(
+        api_client, subscription.uuid, page_size=1,
+        status=','.join([constants.UNASSIGNED, constants.ASSIGNED, constants.ACTIVATED]),
+    )
+
+    assert status.HTTP_200_OK == response.status_code
+    results_by_uuid = {item['uuid']: item for item in response.data['results']}
+    # We test for content in the test above,
+    # we're only worried about the response count matching `desired_num_licenses` here.
+    assert len(results_by_uuid) == 1
+    assert response.data['count'] == ESTIMATED_COUNT_PAGINATOR_THRESHOLD + 1
     assert response.data['next'] is not None
 
 
