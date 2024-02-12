@@ -3198,17 +3198,23 @@ class LicenseSubsidyViewTests(LicenseViewTestMixin, TestCase):
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
-    def test_get_subsidy_no_jwt(self, mock_get_decoded_jwt):
+    @mock.patch('license_manager.apps.api.mixins.LMSApiClient')
+    def test_get_subsidy_no_jwt(self, MockLMSApiClient, mock_get_decoded_jwt):
         """
-        Verify the view returns a 400 if the user_id could not be found in the JWT.
+        Verify the view makes an API call to fetch lmsUserId if user_id could not be found in the JWT.
         """
         self._assign_learner_roles()
         mock_get_decoded_jwt.return_value = {}
         url = self._get_url_with_params()
-        response = self.api_client.get(url)
 
-        assert status.HTTP_400_BAD_REQUEST == response.status_code
-        assert '`user_id` is required and could not be found in your jwt' in str(response.content)
+        # Mock the behavior of LMSApiClient to return a sample user ID
+        mock_lms_client = MockLMSApiClient.return_value
+        mock_lms_client.fetch_lms_user_id.return_value = 443
+        response = self.api_client.get(url)
+        assert status.HTTP_404_NOT_FOUND == response.status_code
+
+        # Assert that the LMSApiClient.fetch_lms_user_id method was called once with the correct argument
+        mock_lms_client.fetch_lms_user_id.assert_called_once_with(self.user.email)
 
     def test_get_subsidy_no_subscription_for_enterprise_customer(self):
         """

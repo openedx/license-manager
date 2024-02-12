@@ -1,9 +1,11 @@
 import logging
 
-from django.conf import settings
 import requests
+from django.conf import settings
 
 from license_manager.apps.api_client.base_oauth import BaseOAuthClient
+
+
 logger = logging.getLogger(__name__)
 
 

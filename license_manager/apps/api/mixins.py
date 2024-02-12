@@ -1,8 +1,9 @@
 from functools import cached_property
-from rest_framework.exceptions import ParseError, status
-from license_manager.apps.api_client.lms import LMSApiClient
+
+from rest_framework.exceptions import ParseError
 
 from license_manager.apps.api import utils
+from license_manager.apps.api_client.lms import LMSApiClient
 
 
 class UserDetailsFromJwtMixin:
@@ -22,6 +23,9 @@ class UserDetailsFromJwtMixin:
 
     @cached_property
     def lms_user_id(self):
+        """
+        Retrieve the LMS user ID.
+        """
         try:
             return utils.get_key_from_jwt(self.decoded_jwt, 'user_id')
         except ParseError:

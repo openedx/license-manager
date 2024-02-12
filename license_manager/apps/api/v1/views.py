@@ -1,7 +1,6 @@
 import logging
 from collections import OrderedDict
 from contextlib import suppress
-from functools import cached_property
 from uuid import uuid4
 
 from celery import chain
@@ -46,7 +45,6 @@ from license_manager.apps.api.tasks import (
     track_license_changes_task,
     update_user_email_for_licenses_task,
 )
-from license_manager.apps.api_client.lms import LMSApiClient
 from license_manager.apps.subscriptions import constants, event_utils
 from license_manager.apps.subscriptions.api import revoke_license
 from license_manager.apps.subscriptions.exceptions import (
@@ -1187,18 +1185,6 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
             if not isinstance(param_value, required_type):
                 self.validation_errors.append(param_name)
         return param_value
-
-    """"
-    Another approach would be to override this property at child class level.
-    @cached_property
-    def lms_user_id(self):
-        try:
-            return utils.get_key_from_jwt(self.decoded_jwt, 'user_id')
-        except ParseError:
-            lms_client = LMSApiClient()
-            user_id = lms_client.fetch_lms_user_id(self.request.user.email)
-            return user_id
-    """
 
     @property
     def requested_notify_learners(self):
