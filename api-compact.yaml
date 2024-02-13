@@ -285,6 +285,30 @@ endpoints:
             integration.request.querystring.enroll_all: "method.request.querystring.enroll_all"
             integration.request.querystring.subscription_uuid: "method.request.querystring.subscription_uuid"
           uri: "https://${stageVariables.license_manager_host}/api/v1/bulk-license-enrollment"
+    subscriptionsList:
+      get:
+        operationId: api_v1_subscriptions_list
+        description: Returns a list of subscription plans for a customer
+        consumes:
+          - "application/json"
+        produces:
+          - "application/json"
+        parameters:
+          - *auth_header
+          - name: "page"
+            in: "query"
+            required: false
+            type: "integer"
+        responses: *responses
+        x-amazon-apigateway-integration:
+          responses: *apigateway_responses
+          httpMethod: "GET"
+          type: "http"
+          requestParameters:
+            integration.request.header.Authorization: "method.request.header.Authorization"
+            integration.request.querystring.page: "method.request.querystring.page"
+          uri: "https://${stageVariables.license_manager_host}/api/v1/subscriptions/"
+
 definitions:
   BulkRevokeFilters:
     type: "object"
