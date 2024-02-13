@@ -11,6 +11,7 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.utils import OperationalError
 from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests.exceptions import HTTPError
 from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
 from requests.exceptions import Timeout as RequestsTimeoutError
 
@@ -70,6 +71,7 @@ class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
         IntegrityError,
         OperationalError,
         BrazeClientError,
+        HTTPError,
     )
     retry_kwargs = {'max_retries': 3}
     # Use exponential backoff for retrying tasks
