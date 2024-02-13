@@ -132,7 +132,6 @@ def get_plan_uuids_by_name(plans_by_name_file):
             university_name = row['university_name']
             subscription_plan_uuid = row['subscription_plan_uuid']
 
-            pprint(plans_by_name)
             if university_name in plans_by_name:
                 raise Exception('Duplicate university name in mapping')
             if subscription_plan_uuid in plans_by_name.values():
