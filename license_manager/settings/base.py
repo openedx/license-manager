@@ -458,4 +458,7 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API for querying and commanding about license manager records.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'POSTPROCESSING_HOOKS': [
+        'license_manager.apps.api.utils.make_swagger_var_param_optional',
+    ],
 }
