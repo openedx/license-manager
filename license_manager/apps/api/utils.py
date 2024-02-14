@@ -3,6 +3,7 @@ import logging
 import os
 import urllib
 import uuid
+from collections import defaultdict
 
 import boto3
 from django.http import Http404
@@ -151,12 +152,22 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
 
     logger.info('[check_missing_licenses] Starting to iterate over all `user_emails`...')
 
+    # Map licenses by email across all user_emails in a single DB query.
+    # Also, join the plans into the queryset, so that we don't do
+    # one query per license down in the loops below.
+    license_queryset = License.objects.filter(
+        subscription_plan__in=subscription_plan_filter,
+        user_email__in=user_emails,
+    ).select_related(
+        'subscription_plan',
+    )
+    licenses_by_email = defaultdict(list)
+    for license_record in license_queryset:
+        licenses_by_email[license_record.user_email].append(license_record)
+
     for email in set(user_emails):
         logger.info(f'[check_missing_licenses] handling user email {email}')
-        filtered_licenses = License.objects.filter(
-            subscription_plan__in=subscription_plan_filter,
-            user_email=email,
-        )
+        filtered_licenses = licenses_by_email.get(email, [])
 
         logger.info('[check_missing_licenses] user licenses for email %s: %s', email, filtered_licenses)
 
@@ -173,11 +184,17 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
                 logger.info('[check_missing_licenses] handling user license %s', str(user_license.uuid))
                 subscription_plan = user_license.subscription_plan
                 plan_key = f'{subscription_plan.uuid}_{course_key}'
+
+                # TODO AED 2024-02-09: I think this chunk of code is defective.
+                # It's only mapping plan ids to booleans, but what we really want
+                # to know is, for each plan *and course*, if the plan's associated catalog
+                # contains the course.
                 if plan_key in subscription_plan_course_map:
                     plan_contains_content = subscription_plan_course_map.get(plan_key)
                 else:
                     plan_contains_content = subscription_plan.contains_content([course_key])
                     subscription_plan_course_map[plan_key] = plan_contains_content
+
                 logger.info(
                     '[check_missing_licenses] does plan (%s) contain content?: %s',
                     str(subscription_plan.uuid),
@@ -189,7 +206,7 @@ def check_missing_licenses(customer_agreement, user_emails, course_run_keys, sub
                         'course_run_key': course_key,
                         'license_uuid': str(user_license.uuid)
                     }
-                    # assigned, not yet activated, incliude activation URL
+                    # assigned, not yet activated, include activation URL
                     if user_license.status == constants.ASSIGNED:
                         this_enrollment['activation_link'] = get_license_activation_link(
                             enterprise_slug,

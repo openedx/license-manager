@@ -5,6 +5,7 @@ from unittest import mock
 import ddt
 import freezegun
 import pytest
+from django.core.cache import cache
 from django.forms import ValidationError
 from django.test import TestCase
 from requests.exceptions import HTTPError
@@ -55,7 +56,15 @@ class SubscriptionsModelTests(TestCase):
         # Mock the value from the enterprise catalog client
         mock_enterprise_catalog_client().contains_content_items.return_value = contains_content
         content_ids = ['test-key', 'another-key']
+
+        cache.delete(self.subscription_plan.get_contains_content_cache_key(content_ids))
+
         assert self.subscription_plan.contains_content(content_ids) == contains_content
+
+        # call it again to utilize the cache
+        assert self.subscription_plan.contains_content(content_ids) == contains_content
+
+        # ...but assert we only used the catalog client once
         mock_enterprise_catalog_client().contains_content_items.assert_called_with(
             self.subscription_plan.enterprise_catalog_uuid,
             content_ids,
