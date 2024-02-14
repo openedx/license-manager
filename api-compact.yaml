@@ -157,6 +157,12 @@ enterprise_customer_uuid_qs_param: &enterprise_customer_uuid_qs_param
   required: true
   type: "string"
 
+enterprise_customer_uuid_qs_param_optional: &enterprise_customer_uuid_qs_param_optional
+  in: "query"
+  name: "enterprise_customer_uuid"
+  required: false
+  type: "string"
+
 enroll_all_qs_param: &enroll_all_qs_param
   in: "query"
   name: "enroll_all"
@@ -328,7 +334,7 @@ endpoints:
           - "application/json"
         parameters:
           - *auth_header
-          - *enterprise_customer_uuid_qs_param
+          - *enterprise_customer_uuid_qs_param_optional
           - name: "page"
             in: "query"
             required: false

@@ -132,6 +132,11 @@ enterprise_customer_uuid_qs_param:
   name: enterprise_customer_uuid
   required: true
   type: string
+enterprise_customer_uuid_qs_param_optional:
+  in: query
+  name: enterprise_customer_uuid
+  required: false
+  type: string
 enroll_all_qs_param:
   in: query
   name: enroll_all
@@ -416,7 +421,7 @@ endpoints:
             type: string
           - in: query
             name: enterprise_customer_uuid
-            required: true
+            required: false
             type: string
           - name: page
             in: query
