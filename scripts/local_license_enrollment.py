@@ -25,12 +25,12 @@ python local_license_enrollment.py \
 
 Options:
 * ``--input-file`` is your input file - it should be a CSV containing at least the following header columns:
-email_address, course_run. Required.
+email, course_run. Required.
 
 * ``--enterprise-uuid`` The UUID of the enterprise to which all enrollments are associated.
 
 * ``--output-file`` is where results of the call to the bulk-license-enrollment view are stored.  It'll be a headerless
-CSV with three columns: ``chunk_id``, ``job_id``, ``email_address``.
+CSV with three columns: ``chunk_id``, ``job_id``, ``email``.
 
 * ``--chunk-size`` Number of emails contained in each chunk. Default and max is 1000.
 
@@ -106,7 +106,7 @@ def _get_jwt(fetch_jwt=False, environment='local'):
 
 def get_already_processed_emails(results_file):
     """
-    Reads a headerless CSV with rows representing `chunk_id,task_id,email_address` and returns a dictionary mapping
+    Reads a headerless CSV with rows representing `chunk_id,task_id,email` and returns a dictionary mapping
     already processed emails to their chunk_id.
     """
     already_processed_emails = {}
@@ -136,7 +136,7 @@ def get_email_chunks(input_file_path, chunk_size=DEFAULT_CHUNK_SIZE):
     with open(input_file_path, 'r') as f_in:
         reader = csv.DictReader(f_in, delimiter=',')
         for row in reader:
-            email = row['email_address']
+            email = row['email']
             course_run_key = row['course_run_key']
             current_chunks_by_course_run[course_run_key].append(email)
             # Must pre-evaluate the chunks dict (using list()) or else python will complain with: "RuntimeError:
@@ -251,7 +251,7 @@ def do_enrollment_for_chunk(
     Given a "chunk" list emails for which enrollments should be requested, checks if the given
     email has already been processed.  If not, adds it to a list for this
     chunk to be requested, then requests bulk license enrollment in the given enterprise.
-    On successful request, appends results including chunk_id, job_id, and email_address to results_file.
+    On successful request, appends results including chunk_id, job_id, and email to results_file.
     """
     already_processed = {}
     if results_file:
@@ -281,7 +281,7 @@ def do_enrollment_for_chunk(
 @click.command()
 @click.option(
     '--input-file',
-    help='Path of local CSV file containing at least the following header columns: email_address, course_run.',
+    help='Path of local CSV file containing at least the following header columns: email, course_run.',
 )
 @click.option(
     '--enterprise-uuid',

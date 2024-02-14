@@ -158,3 +158,78 @@ class PlanLockTests(TestCase):
         utils.acquire_subscription_plan_lock(self.plan, other_stuff='yes')
         released = utils.release_subscription_plan_lock(self.plan)
         assert released
+
+
+class TestUtils(TestCase):
+    """
+    Tests for license-manager utils
+    """
+
+    def test_make_swagger_var_param_optional(self):
+        # Sample data structure
+        result_case1 = {
+            "paths": {
+                "/example/path/{var}/": {
+                    "get": {
+                        "parameters": [
+                            {
+                                "name": "var",
+                                "in": "path",
+                                "type": "string",
+                                "required": True,
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+        # Verify that the modification is as expected
+        expected_result_case1 = {
+            "paths": {
+                "/example/path/{var}/": {
+                    "get": {
+                        "parameters": [
+                            {
+                                "name": "var",
+                                "in": "path",
+                                "type": "string",
+                                "required": True,
+                                "allowEmptyValue": True,  # This field should be added
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+        updated_result_case1 = utils.make_swagger_var_param_optional(result_case1)
+        self.assertEqual(updated_result_case1, expected_result_case1)
+
+        # Case 2: Var param exists and allowEmptyValue is already present
+
+        updated_result_case2 = utils.make_swagger_var_param_optional(
+            expected_result_case1
+        )
+        self.assertEqual(updated_result_case2, expected_result_case1)
+
+        # Case 3: Var param does not exist
+        result_case3 = {
+            "paths": {
+                "/example/path/{param}/": {
+                    "get": {
+                        "parameters": [
+                            {
+                                "name": "param",
+                                "in": "path",
+                                "type": "string",
+                                "required": True,
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+        updated_result_case3 = utils.make_swagger_var_param_optional(result_case3)
+        self.assertEqual(updated_result_case3, result_case3)  # No change expected
