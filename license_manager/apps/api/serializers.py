@@ -148,6 +148,7 @@ class LicenseSerializer(serializers.ModelSerializer):
     """
 
     subscription_plan_uuid = serializers.UUIDField(source='subscription_plan_id')
+    customer_agreement = CustomerAgreementSerializer(source='subscription_plan.customer_agreement')
 
     class Meta:
         model = License
@@ -160,6 +161,7 @@ class LicenseSerializer(serializers.ModelSerializer):
             'subscription_plan_uuid',
             'revoked_date',
             'activation_key',
+            'customer_agreement'
         ]
 
 

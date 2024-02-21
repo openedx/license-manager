@@ -401,6 +401,7 @@ class LearnerLicensesViewSet(
             }
           ]
         }
+        customer_agreement: <CustomerAgreementSerializer>
         user_email: "edx@example.com"
         uuid: "4e03efb7-b4ea-4a52-9cfc-11519920a40a"
       ]
