@@ -148,6 +148,7 @@ class LicenseSerializer(serializers.ModelSerializer):
     """
 
     subscription_plan_uuid = serializers.UUIDField(source='subscription_plan_id')
+    customer_agreement = serializers.SerializerMethodField()
 
     class Meta:
         model = License
@@ -160,7 +161,12 @@ class LicenseSerializer(serializers.ModelSerializer):
             'subscription_plan_uuid',
             'revoked_date',
             'activation_key',
+            'customer_agreement'
         ]
+
+    def get_customer_agreement(self, obj):
+        customer_agreement = obj.subscription_plan.customer_agreement
+        return CustomerAgreementSerializer(customer_agreement).data
 
 
 class StaffLicenseSerializer(serializers.ModelSerializer):
