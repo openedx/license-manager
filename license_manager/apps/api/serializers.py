@@ -101,24 +101,6 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
         }
 
 
-class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
-    """
-    Minimal serializer for the `CustomerAgreement` model that does not
-    include information about related subscription plan records.
-    """
-
-    class Meta:
-        model = CustomerAgreement
-        fields = [
-            'uuid',
-            'enterprise_customer_uuid',
-            'enterprise_customer_slug',
-            'default_enterprise_catalog_uuid',
-            'disable_expiration_notifications',
-            'net_days_until_expiration',
-        ]
-
-
 class CustomerAgreementSerializer(serializers.ModelSerializer):
     """
     Serializer for the `CustomerAgreement` model.
@@ -166,7 +148,7 @@ class LicenseSerializer(serializers.ModelSerializer):
     """
 
     subscription_plan_uuid = serializers.UUIDField(source='subscription_plan_id')
-    customer_agreement = MinimalCustomerAgreementSerializer(source='subscription_plan.customer_agreement')
+    customer_agreement = CustomerAgreementSerializer(source='subscription_plan.customer_agreement')
 
     class Meta:
         model = License

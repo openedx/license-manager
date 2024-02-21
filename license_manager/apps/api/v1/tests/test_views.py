@@ -26,9 +26,7 @@ from edx_rest_framework_extensions.auth.jwt.tests.utils import (
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from license_manager.apps.api.serializers import (
-    MinimalCustomerAgreementSerializer,
-)
+from license_manager.apps.api.serializers import CustomerAgreementSerializer
 from license_manager.apps.api.tests.factories import BulkEnrollmentJobFactory
 from license_manager.apps.api.utils import (
     acquire_subscription_plan_lock,
@@ -348,7 +346,7 @@ def _assert_license_response_correct(response, subscription_license):
     assert response['activation_key'] == str(subscription_license.activation_key)
     assert response['activation_date'] == _iso_8601_format(subscription_license.activation_date)
     assert response['last_remind_date'] == _iso_8601_format(subscription_license.last_remind_date)
-    assert response['customer_agreement'] == MinimalCustomerAgreementSerializer(
+    assert response['customer_agreement'] == CustomerAgreementSerializer(
         subscription_license.subscription_plan.customer_agreement
     ).data
 
