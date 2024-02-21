@@ -141,7 +141,7 @@ class CustomerAgreement(TimeStampedModel):
 
     history = HistoricalRecords()
 
-    @property
+    @cached_property
     def net_days_until_expiration(self):
         """
         Returns the max number of days until expiration

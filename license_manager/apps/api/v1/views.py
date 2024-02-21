@@ -554,6 +554,9 @@ class BaseLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMod
         return License.objects.filter(
             subscription_plan=self._get_subscription_plan(),
             user_email=self.request.user.email,
+        ).select_related(
+            'subscription_plan',
+            'subscription_plan__customer_agreement',
         ).exclude(
             status=constants.REVOKED
         ).order_by('status', '-subscription_plan__expiration_date')
@@ -562,14 +565,22 @@ class BaseLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMod
         """
         Helper that returns the subscription plan specified by `subscription_uuid` in the request.
         """
+        # pylint: disable=attribute-defined-outside-init,access-member-before-definition
+        if hasattr(self, '_cached_subscription_plan'):
+            return self._cached_subscription_plan
+
         subscription_uuid = self.kwargs.get('subscription_uuid')
         if not subscription_uuid:
             return None
 
+        value = None
         try:
-            return SubscriptionPlan.objects.get(uuid=subscription_uuid)
+            value = SubscriptionPlan.objects.get(uuid=subscription_uuid)
         except SubscriptionPlan.DoesNotExist:
-            return None
+            pass
+
+        self._cached_subscription_plan = value
+        return value
 
 
 class LicenseAdminViewSet(BaseLicenseViewSet):
@@ -640,6 +651,11 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         """
         queryset = License.objects.filter(
             subscription_plan=self._get_subscription_plan()
+        ).select_related(
+            'subscription_plan',
+            'subscription_plan__customer_agreement',
+        ).prefetch_related(
+            'subscription_plan__renewal',
         ).order_by(
             'status', 'user_email'
         )

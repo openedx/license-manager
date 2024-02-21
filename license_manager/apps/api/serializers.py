@@ -106,6 +106,7 @@ class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
     Minimal serializer for the `CustomerAgreement` model that does not
     include information about related subscription plan records.
     """
+    net_days_until_expiration = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomerAgreement
@@ -117,6 +118,19 @@ class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
             'disable_expiration_notifications',
             'net_days_until_expiration',
         ]
+
+    def get_net_days_until_expiration(self, obj):
+        """
+        Cache the net_days_until_expiration of the agreement
+        to serializer for the lifetime of this serializer instance.
+        """
+        # pylint: disable=attribute-defined-outside-init,access-member-before-definition
+        if hasattr(self, '_cached_net_days_until_expiration'):
+            return self._cached_net_days_until_expiration
+
+        value = obj.net_days_until_expiration
+        self._cached_net_days_until_expiration = value
+        return value
 
 
 class CustomerAgreementSerializer(serializers.ModelSerializer):
