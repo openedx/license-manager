@@ -34,13 +34,10 @@ class SubscriptionPlanRenewalSerializer(serializers.ModelSerializer):
         ]
 
 
-class SubscriptionPlanSerializer(serializers.ModelSerializer):
+class MinimalSubscriptionPlanSerializer(serializers.ModelSerializer):
     """
-    Serializer for the `SubscriptionPlan` model.
+    Minimal serializer for the `SubscriptionPlan` model.
     """
-    licenses = serializers.SerializerMethodField()
-    revocations = serializers.SerializerMethodField()
-    prior_renewals = SubscriptionPlanRenewalSerializer(many=True)
 
     class Meta:
         model = SubscriptionPlan
@@ -53,13 +50,27 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'enterprise_catalog_uuid',
             'is_active',
             'is_revocation_cap_enabled',
-            'licenses',
-            'revocations',
             'days_until_expiration',
             'days_until_expiration_including_renewals',
-            'prior_renewals',
             'is_locked_for_renewal_processing',
             'should_auto_apply_licenses'
+        ]
+
+
+class SubscriptionPlanSerializer(MinimalSubscriptionPlanSerializer):
+    """
+    Enhanced serializer for the `SubscriptionPlan` model.
+    """
+    licenses = serializers.SerializerMethodField()
+    revocations = serializers.SerializerMethodField()
+    prior_renewals = SubscriptionPlanRenewalSerializer(many=True)
+
+    class Meta:
+        model = SubscriptionPlan
+        fields = MinimalSubscriptionPlanSerializer.Meta.fields + [
+            'licenses',
+            'revocations',
+            'prior_renewals',
         ]
 
     def get_licenses(self, obj):
@@ -101,12 +112,11 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
         }
 
 
-class CustomerAgreementSerializer(serializers.ModelSerializer):
+class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
     """
-    Serializer for the `CustomerAgreement` model.
+    Minimal serializer for the `CustomerAgreement` model. Does not
+    include a nested representation of related subscription plans.
     """
-    subscriptions = SerializerMethodField()
-    subscription_for_auto_applied_licenses = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomerAgreement
@@ -115,9 +125,22 @@ class CustomerAgreementSerializer(serializers.ModelSerializer):
             'enterprise_customer_uuid',
             'enterprise_customer_slug',
             'default_enterprise_catalog_uuid',
-            'subscriptions',
             'disable_expiration_notifications',
             'net_days_until_expiration',
+        ]
+
+
+class CustomerAgreementSerializer(MinimalCustomerAgreementSerializer):
+    """
+    Expanded serializer for the `CustomerAgreement` model.
+    """
+    subscriptions = SerializerMethodField()
+    subscription_for_auto_applied_licenses = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomerAgreement
+        fields = MinimalCustomerAgreementSerializer.Meta.fields + [
+            'subscriptions',
             'subscription_for_auto_applied_licenses'
         ]
 
@@ -160,6 +183,23 @@ class LicenseSerializer(serializers.ModelSerializer):
             'subscription_plan_uuid',
             'revoked_date',
             'activation_key',
+        ]
+
+
+class LearnerLicenseSerializer(LicenseSerializer):
+    """
+    Serializes licenses for consumption by the "owning" users.
+    Includes nested serialization of the related customer agreement,
+    and by extension, the subscription plans related to that customer agreement.
+    """
+    customer_agreement = MinimalCustomerAgreementSerializer(source='subscription_plan.customer_agreement')
+    subscription_plan = MinimalSubscriptionPlanSerializer()
+
+    class Meta:
+        model = License
+        fields = LicenseSerializer.Meta.fields + [
+            'customer_agreement',
+            'subscription_plan',
         ]
 
 

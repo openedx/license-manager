@@ -148,7 +148,7 @@ class CustomerAgreement(TimeStampedModel):
         of _any_ plan in this agreement.
         """
         net_days = 0
-        for plan in self.subscriptions.all():
+        for plan in self.subscriptions.all().prefetch_related('renewal'):
             net_days = max(net_days, plan.days_until_expiration_including_renewals)
         return net_days
 

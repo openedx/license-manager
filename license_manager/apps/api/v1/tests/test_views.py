@@ -2696,6 +2696,13 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
             # Ensure UUIDs are in expected order
             assert str(expected.uuid) == actual['uuid']
 
+            # Assert that nested subscription plan and customer agreement are
+            # serialized in the response for each license.
+            plan = expected.subscription_plan
+            agreement = plan.customer_agreement
+            assert actual['customer_agreement']['uuid'] == str(agreement.uuid)
+            assert actual['subscription_plan']['uuid'] == str(plan.uuid)
+
     def test_endpoint_respects_active_only_query_parameter(self):
         self._assign_learner_roles()
 
