@@ -63,7 +63,21 @@ ENABLE_AUTO_AUTH = True
 
 LOGGING = get_logger_config(debug=DEBUG, dev_env=True)
 
+LOG_SQL = False
+
 #####################################################################
 # Lastly, see if the developer has any local overrides.
 if os.path.isfile(join(dirname(abspath(__file__)), 'private.py')):
     from .private import *  # pylint: disable=import-error
+
+    # LOG_SQL may be set to True in private.py, which will
+    # enable logging of SQL statements via the django.db.backends module.
+    if LOG_SQL:
+        LOGGING['loggers']['django.db.backends'] = {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            # We have a root 'django' logger enabled
+            # that we don't want to propagage too, so that
+            # this doesn't print multiple times.
+            'propagate': False,
+        }
