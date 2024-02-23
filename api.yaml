@@ -22,6 +22,8 @@ apigateway_responses:
 apigateway_get_responses:
   "200":
     statusCode: "200"
+  "301":
+    statusCode: "301"
   "401":
     statusCode: "401"
   "403":
@@ -97,6 +99,8 @@ responses:
 get_responses:
   "200":
     description: OK
+  "301":
+    description: Moved Permanently
   "400":
     description: Bad Request
   "401":
@@ -430,6 +434,8 @@ endpoints:
         responses:
           "200":
             description: OK
+          "301":
+            description: Moved Permanently
           "400":
             description: Bad Request
           "401":
@@ -446,6 +452,8 @@ endpoints:
           responses:
             "200":
               statusCode: "200"
+            "301":
+              statusCode: "301"
             "401":
               statusCode: "401"
             "403":
@@ -464,7 +472,7 @@ endpoints:
             integration.request.header.Authorization: method.request.header.Authorization
             integration.request.querystring.enterprise_customer_uuid: method.request.querystring.enterprise_customer_uuid
             integration.request.querystring.page: method.request.querystring.page
-          uri: https://${stageVariables.license_manager_host}/api/v1/subscriptions
+          uri: https://${stageVariables.license_manager_host}/api/v1/subscriptions/
 definitions:
   BulkRevokeFilters:
     type: object
