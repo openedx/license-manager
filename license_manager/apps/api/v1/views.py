@@ -418,7 +418,7 @@ class LearnerLicensesViewSet(
     permission_classes = [permissions.IsAuthenticated]
     permission_required = constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION
     search_fields = ['user_email']
-    serializer_class = serializers.LicenseSerializer
+    serializer_class = serializers.LearnerLicenseSerializer
 
     # The fields that control permissions for 'list' actions.
     # Roles are granted on specific enterprise identifiers, so we have to join
@@ -560,15 +560,24 @@ class BaseLicenseViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyMod
     def _get_subscription_plan(self):
         """
         Helper that returns the subscription plan specified by `subscription_uuid` in the request.
+        The result is memoized on the viewset instance.
         """
+        # pylint: disable=access-member-before-definition,attribute-defined-outside-init
+        if hasattr(self, '_memoized_subscription_plan'):
+            return self._memoized_subscription_plan
+
         subscription_uuid = self.kwargs.get('subscription_uuid')
         if not subscription_uuid:
             return None
 
+        plan = None
         try:
-            return SubscriptionPlan.objects.get(uuid=subscription_uuid)
+            plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
         except SubscriptionPlan.DoesNotExist:
-            return None
+            pass
+
+        self._memoized_subscription_plan = plan
+        return plan
 
 
 class LicenseAdminViewSet(BaseLicenseViewSet):
@@ -639,6 +648,8 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         """
         queryset = License.objects.filter(
             subscription_plan=self._get_subscription_plan()
+        ).select_related(
+            'subscription_plan',
         ).order_by(
             'status', 'user_email'
         )
