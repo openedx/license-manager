@@ -206,11 +206,13 @@ worker-restart-celery: ## Kill the existing celery process and restart them
 dev.stats: ## Get per-container CPU and memory utilization data.
 	docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 
-dev.backup: dev.up
-	docker run --rm --volumes-from license-manager.mysql -v $$(pwd)/.dev/backups:/backup debian:jessie tar zcvf /backup/mysql57.tar.gz /var/lib/mysql
+dev.backup:
+	docker-compose up -d mysql
+	docker run --rm --volumes-from license-manager.mysql -v $$(pwd)/.dev/backups:/backup debian:jessie tar zcvf /backup/mysql.tar.gz /var/lib/mysql
 
-dev.restore: dev.up
-	docker run --rm --volumes-from license-manager.mysql -v $$(pwd)/.dev/backups:/backup debian:jessie tar zxvf /backup/mysql57.tar.gz
+dev.restore:
+	docker-compose up -d mysql
+	docker run --rm --volumes-from license-manager.mysql -v $$(pwd)/.dev/backups:/backup debian:jessie tar zxvf /backup/mysql.tar.gz
 
 docker_build:
 	docker build . -f Dockerfile --target app -t openedx/license-manager
