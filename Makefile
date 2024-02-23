@@ -96,6 +96,8 @@ migrate: ## apply database migrations
 app-migrate: ## apply database migrations without having to type `make app-shell` first
 	docker exec -u 0 -it license-manager.app python manage.py migrate
 
+dev.migrate: app-migrate
+
 html_coverage: ## generate and view HTML coverage report
 	coverage html && open htmlcov/index.html
 
@@ -206,11 +208,20 @@ worker-restart-celery: ## Kill the existing celery process and restart them
 dev.stats: ## Get per-container CPU and memory utilization data.
 	docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 
-dev.backup: dev.up
-	docker run --rm --volumes-from license-manager.mysql -v $$(pwd)/.dev/backups:/backup debian:jessie tar zcvf /backup/mysql57.tar.gz /var/lib/mysql
+dev.backup:
+	docker-compose stop app worker bulk_enrollment_worker
+	docker-compose up -d mysql
+	sleep 10 # let mysql process get fully warmed up
+	docker compose exec mysql mysqldump --all-databases > .dev/license_manager_all.sql
 
-dev.restore: dev.up
-	docker run --rm --volumes-from license-manager.mysql -v $$(pwd)/.dev/backups:/backup debian:jessie tar zxvf /backup/mysql57.tar.gz
+dev.restore:
+	docker-compose stop app worker bulk_enrollment_worker
+	docker-compose up -d mysql
+	sleep 10 # let mysql process get fully warmed up
+	docker compose exec -T mysql mysql < .dev/license_manager_all.sql
+
+dev.static:
+	docker-compose exec -u 0 app python3 manage.py collectstatic --noinput
 
 docker_build:
 	docker build . -f Dockerfile --target app -t openedx/license-manager
