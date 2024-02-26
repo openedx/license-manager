@@ -3,7 +3,13 @@ Defines custom paginators used by subscription viewsets.
 """
 from django.core.paginator import Paginator as DjangoPaginator
 from django.utils.functional import cached_property
+from edx_rest_framework_extensions.paginators import DefaultPagination
 from rest_framework.pagination import PageNumberPagination
+
+from license_manager.apps.api.serializers import (
+    MinimalCustomerAgreementSerializer,
+)
+from license_manager.apps.subscriptions.models import CustomerAgreement
 
 
 class PageNumberPaginationWithCount(PageNumberPagination):
@@ -31,6 +37,7 @@ class EstimatedCountDjangoPaginator(DjangoPaginator):
     A lazy paginator that determines it's count from
     the upstream `estimated_count`
     """
+
     def __init__(self, *args, estimated_count=None, **kwargs):
         self.estimated_count = estimated_count
         super().__init__(*args, **kwargs)
@@ -49,6 +56,7 @@ class EstimatedCountLicensePagination(LicensePagination):
     which means the downstream django paginator does *not*
     perform an additional query to get the count of the queryset.
     """
+
     def __init__(self, *args, estimated_count=None, **kwargs):
         """
         Optionally stores an `estimated_count` to pass along
@@ -70,3 +78,34 @@ class EstimatedCountLicensePagination(LicensePagination):
                 queryset, page_size, estimated_count=self.estimated_count,
             )
         return DjangoPaginator(queryset, page_size)
+
+
+class LearnerLicensesPaginationCustomerAgreement(DefaultPagination):
+    """
+    TODO:
+    """
+
+    def get_paginated_response(self, data):
+        """
+        Modifies the default paginated response to include ``customer_agreement`` dict.
+
+        Arguments:
+            self: PaginationWithFeatureFlags instance.
+            data (dict): Results for current page.
+
+        Returns:
+            (Response): DRF response object containing ``enterprise_features`` dict.
+        """
+        paginated_response = super().get_paginated_response(data)
+        enterprise_customer_uuid = self.request.query_params.get('enterprise_customer_uuid')
+        try:
+            customer_agreement = CustomerAgreement.objects.get(enterprise_customer_uuid=enterprise_customer_uuid)
+            paginated_response.data.update({
+                'customer_agreement': MinimalCustomerAgreementSerializer(customer_agreement).data
+            })
+        except CustomerAgreement.DoesNotExist:
+            paginated_response.data.update({
+                'customer_agreement': None
+            })
+
+        return paginated_response

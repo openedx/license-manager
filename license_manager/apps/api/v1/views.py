@@ -67,7 +67,11 @@ from license_manager.apps.subscriptions.utils import (
     localized_utcnow,
 )
 
-from ..pagination import EstimatedCountLicensePagination, LicensePagination
+from ..pagination import (
+    EstimatedCountLicensePagination,
+    LearnerLicensesPaginationCustomerAgreement,
+    LicensePagination,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -426,6 +430,8 @@ class LearnerLicensesViewSet(
     list_lookup_field = 'subscription_plan__customer_agreement__enterprise_customer_uuid'
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
+    pagination_class = LearnerLicensesPaginationCustomerAgreement
+
 
     @property
     def enterprise_customer_uuid(self):
