@@ -432,7 +432,6 @@ class LearnerLicensesViewSet(
     role_assignment_class = SubscriptionsRoleAssignment
     pagination_class = LearnerLicensesPaginationCustomerAgreement
 
-
     @property
     def enterprise_customer_uuid(self):
         return self.request.query_params.get('enterprise_customer_uuid')

@@ -82,19 +82,22 @@ class EstimatedCountLicensePagination(LicensePagination):
 
 class LearnerLicensesPaginationCustomerAgreement(DefaultPagination):
     """
-    TODO:
+    Adds the customer agreement object to the learner-licenses endpoint.
+    The learner licenses endpoint currently contains the subscription_licenses, with its
+    corresponding subscription_plan. In order to reduce the number of calls to the client,
+    we incorporate the customer_agreement accessible within a single call.
     """
 
     def get_paginated_response(self, data):
         """
-        Modifies the default paginated response to include ``customer_agreement`` dict.
+        Modifies the DefaultPagination response to include ``customer_agreement`` dict.
 
         Arguments:
-            self: PaginationWithFeatureFlags instance.
+            self: LearnerLicensesPaginationCustomerAgreement instance.
             data (dict): Results for current page.
 
         Returns:
-            (Response): DRF response object containing ``enterprise_features`` dict.
+            (Response): DRF response object containing ``customer_agreement`` dict.
         """
         paginated_response = super().get_paginated_response(data)
         enterprise_customer_uuid = self.request.query_params.get('enterprise_customer_uuid')

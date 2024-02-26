@@ -2627,6 +2627,22 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'missing enterprise_customer_uuid query param' in str(response.content)
 
+    def test_endpoint_results_contains_customer_agreement(self):
+        """
+        Tests if the learner-licenses endpoint contains the customer agreement object
+        on the paginator.
+
+        Checks if the serialized customer agreement from the response matches the mocked
+        customer agreement.
+        """
+        self._assign_learner_roles()
+
+        response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid)
+
+        assert response.status_code == status.HTTP_200_OK
+        customer_agreement_response = response.json().get('customer_agreement')
+        assert customer_agreement_response['uuid'] == str(self.customer_agreement.uuid)
+
     def test_endpoint_results_correctly_ordered(self):
         """
         Test the ordering of responses from the endpoint matches the following:
