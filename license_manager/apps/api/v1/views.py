@@ -20,7 +20,7 @@ from edx_rest_framework_extensions.auth.jwt.authentication import (
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
-from rest_framework.exceptions import ParseError
+from rest_framework.exceptions import ParseError, ValidationError
 from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -329,6 +329,10 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
 
     @property
+    def requested_current_plan(self):
+        return self.request.query_params.get('current') == 'true'
+
+    @property
     def base_queryset(self):
         """
         Required by the `PermissionRequiredForListingMixin`.
@@ -341,6 +345,16 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
                 customer_agreement__enterprise_customer_uuid=self.requested_enterprise_uuid,
                 is_active=True,
             )
+
+        if self.requested_current_plan:
+            if self.requested_enterprise_uuid is not None:
+                # Use the class method to get the most recent plan
+                current_plan = SubscriptionPlan.get_current_plan(self.requested_enterprise_uuid)
+                queryset = SubscriptionPlan.objects.filter(pk=current_plan.pk) if current_plan \
+                    else SubscriptionPlan.objects.none()
+            else:
+                raise ValidationError('current plan cannot be used without enterprise_uuid')
+
         return queryset.order_by('-start_date')
 
 

@@ -431,6 +431,10 @@ endpoints:
             in: query
             required: false
             type: integer
+          - name: current
+            in: query
+            required: false
+            type: string
         responses:
           "200":
             description: OK
@@ -472,6 +476,7 @@ endpoints:
             integration.request.header.Authorization: method.request.header.Authorization
             integration.request.querystring.enterprise_customer_uuid: method.request.querystring.enterprise_customer_uuid
             integration.request.querystring.page: method.request.querystring.page
+            integration.request.querystring.current: method.request.querystring.current
           uri: https://${stageVariables.license_manager_host}/api/v1/subscriptions/
 definitions:
   BulkRevokeFilters:
