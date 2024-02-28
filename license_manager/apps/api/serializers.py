@@ -118,6 +118,8 @@ class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
     include a nested representation of related subscription plans.
     """
 
+    subscription_for_auto_applied_licenses = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomerAgreement
         fields = [
@@ -127,7 +129,12 @@ class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
             'default_enterprise_catalog_uuid',
             'disable_expiration_notifications',
             'net_days_until_expiration',
+            'subscription_for_auto_applied_licenses',
         ]
+
+    def get_subscription_for_auto_applied_licenses(self, obj):
+        subscription_plan = obj.auto_applicable_subscription
+        return subscription_plan.uuid if subscription_plan else None
 
 
 class CustomerAgreementSerializer(MinimalCustomerAgreementSerializer):
@@ -135,13 +142,11 @@ class CustomerAgreementSerializer(MinimalCustomerAgreementSerializer):
     Expanded serializer for the `CustomerAgreement` model.
     """
     subscriptions = SerializerMethodField()
-    subscription_for_auto_applied_licenses = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomerAgreement
         fields = MinimalCustomerAgreementSerializer.Meta.fields + [
             'subscriptions',
-            'subscription_for_auto_applied_licenses'
         ]
 
     @property
@@ -159,10 +164,6 @@ class CustomerAgreementSerializer(MinimalCustomerAgreementSerializer):
 
         serializer = SubscriptionPlanSerializer(plans, many=True)
         return serializer.data
-
-    def get_subscription_for_auto_applied_licenses(self, obj):
-        subscription_plan = obj.auto_applicable_subscription
-        return subscription_plan.uuid if subscription_plan else None
 
 
 class LicenseSerializer(serializers.ModelSerializer):
