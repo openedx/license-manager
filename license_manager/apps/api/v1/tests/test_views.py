@@ -183,17 +183,24 @@ def _customer_agreement_list_request(api_client, user, enterprise_customer_uuid)
     return api_client.get(url)
 
 
-def _subscriptions_list_request(api_client, user, enterprise_customer_uuid=None):
+def _subscriptions_list_request(api_client, user, enterprise_customer_uuid=None, current_plan=None):
     """
     Helper method that requests a list of subscriptions entities for a given enterprise_customer_uuid.
     """
     if user:
         api_client.force_authenticate(user=user)
 
+    query_string = ''
     url = reverse('api:v1:subscriptions-list')
     if enterprise_customer_uuid is not None:
-        url += f'?enterprise_customer_uuid={enterprise_customer_uuid}'
+        query_string += f'?enterprise_customer_uuid={enterprise_customer_uuid}'
 
+    # Add current=true query parameter if current_plan is provided
+    if current_plan is not None:
+        query_string += '&' if '?' in query_string else '?'
+        query_string += 'current=true'
+
+    url += query_string
     return api_client.get(url)
 
 
@@ -579,6 +586,57 @@ def test_subscription_plan_list_staff_user_200(api_client, staff_user, boolean_t
         third_subscription,
         expected_days_until_renewal_expiration=SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
     )
+
+
+@pytest.mark.django_db
+def test_subscription_plan_list_staff_user_200_with_current_param(api_client, staff_user, boolean_toggle):
+    """
+    Verify that the subscription list view for staff users gives the correct response with current query_param
+    when the staff user is granted implicit permission to access the enterprise customer.
+
+    Additionally checks that the staff user only sees the latest subscription plan associated with the enterprise
+    customer as specified by the query parameter.
+    """
+    enterprise_customer_uuid = uuid4()
+    _, second_subscription, __ = _create_subscription_plans(enterprise_customer_uuid)
+    _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, boolean_toggle)
+
+    response = _subscriptions_list_request(api_client,
+                                           staff_user,
+                                           enterprise_customer_uuid=enterprise_customer_uuid,
+                                           current_plan=True
+                                           )
+
+    assert status.HTTP_200_OK == response.status_code
+    results_by_uuid = {item['uuid']: item for item in response.data['results']}
+    assert len(results_by_uuid) == 1
+    assert response.data['results'][0]['uuid'] == str(second_subscription.uuid)
+    _assert_subscription_response_correct(
+        results_by_uuid[str(second_subscription.uuid)],
+        second_subscription
+    )
+
+
+@pytest.mark.django_db
+def test_subscription_plan_list_staff_user_400_with_current_param_and_without_enterprise_param(
+    api_client,
+    staff_user,
+    boolean_toggle
+):
+    """
+    Verify that the subscription list view for staff users gives the 400 response with current query_param if
+    enterprise_uuid is not available.
+    """
+    enterprise_customer_uuid = uuid4()
+    _create_subscription_plans(enterprise_customer_uuid)
+    _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, boolean_toggle)
+
+    response = _subscriptions_list_request(api_client,
+                                           staff_user,
+                                           current_plan=True
+                                           )
+
+    assert status.HTTP_400_BAD_REQUEST == response.status_code
 
 
 @pytest.mark.django_db

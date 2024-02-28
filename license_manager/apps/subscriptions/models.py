@@ -451,6 +451,18 @@ class SubscriptionPlan(TimeStampedModel):
         ),
     )
 
+    @classmethod
+    def get_current_plan(cls, enterprise_uuid):
+        """
+        Class method to retrieve the most recently created plan with an active start date.
+        """
+        return cls.objects.filter(
+            is_active=True,
+            customer_agreement__enterprise_customer_uuid=enterprise_uuid,
+            start_date__lte=localized_utcnow(),
+            expiration_date__gte=localized_utcnow()
+        ).order_by('-created').first()
+
     @property
     def days_until_expiration(self):
         """
