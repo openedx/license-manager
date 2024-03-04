@@ -156,7 +156,10 @@ class CustomerAgreementViewSet(
         """
         now = localized_utcnow()
 
-        auto_applied_license = subscription_plan.unassigned_licenses.first()
+        auto_applied_license = subscription_plan.unassigned_licenses.select_related(
+            'subscription_plan',
+            'subscription_plan__customer_agreement',
+        ).first()
         if not auto_applied_license:
             return None
 
