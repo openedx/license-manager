@@ -1411,8 +1411,19 @@ class CustomerAgreementViewSetTests(LicenseViewSetActionMixin, TestCase):
         self._setup_request_jwt(user=self.super_user)
         response = self.api_client.post(self.auto_apply_url)
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()['user_email'] == self.super_user.email
-        assert response.json()['status'] == 'activated'
+
+        response_json = response.json()
+        response_subscription_plan = response_json['subscription_plan']
+        response_customer_agreement = response_json['customer_agreement']
+        assert response_json['user_email'] == self.super_user.email
+        assert response_json['status'] == 'activated'
+        assert response_json['subscription_plan']['uuid'] == str(plan.uuid)
+        assert response_subscription_plan['title'] == plan.title
+        assert response_subscription_plan['enterprise_catalog_uuid'] == str(plan.enterprise_catalog_uuid)
+        assert response_subscription_plan['is_active'] == plan.is_active
+        assert response_customer_agreement['uuid'] == str(self.customer_agreement.uuid)
+        expected_customer_agreement_customer_uuid = str(self.customer_agreement.enterprise_customer_uuid)
+        assert response_customer_agreement['enterprise_customer_uuid'] == expected_customer_agreement_customer_uuid
 
         # Check if 1 License has become auto_applied
         assert plan.licenses.filter(auto_applied=True).count() == 1
