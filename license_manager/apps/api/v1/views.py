@@ -156,7 +156,10 @@ class CustomerAgreementViewSet(
         """
         now = localized_utcnow()
 
-        auto_applied_license = subscription_plan.unassigned_licenses.first()
+        auto_applied_license = subscription_plan.unassigned_licenses.select_related(
+            'subscription_plan',
+            'subscription_plan__customer_agreement',
+        ).first()
         if not auto_applied_license:
             return None
 
@@ -219,7 +222,7 @@ class CustomerAgreementViewSet(
             )
 
         # Serialize the License we created to be returned in response
-        serializer = serializers.LicenseSerializer(license_obj)
+        serializer = serializers.LearnerLicenseSerializer(license_obj)
         response_data = serializer.data
         return Response(data=response_data, status=status.HTTP_200_OK)
 
@@ -248,7 +251,7 @@ class CustomerAgreementViewSet(
             logger.info(info_message)
 
             license_obj = active_or_assigned_licenses[0]
-            serializer = serializers.LicenseSerializer(license_obj)
+            serializer = serializers.LearnerLicenseSerializer(license_obj)
             response_data = serializer.data
             return Response(data=response_data, status=status.HTTP_200_OK)
 
