@@ -4,6 +4,7 @@ should be created here. As the API evolves, models may become more
 specific to a particular version of the API. In this case, the models
 in question should be moved to versioned sub-package.
 """
+import datetime
 import logging
 from uuid import uuid4
 
@@ -112,7 +113,7 @@ class BulkEnrollmentJob(TimeStampedModel):
         if hasattr(settings, "BULK_ENROLL_JOB_AWS_BUCKET") and settings.BULK_ENROLL_JOB_AWS_BUCKET:
             self.results_s3_object_name = (
                 f'{self.enterprise_customer_uuid}/{self.uuid}/Bulk-Enrollment-Results-'
-                '{datetime.datetime.utcnow().isoformat()}.csv'
+                f'{datetime.datetime.utcnow().isoformat()}.csv'
             )
             results_object_uri = upload_file_to_s3(
                 file_name,
