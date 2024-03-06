@@ -350,13 +350,17 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
             )
 
         if self.requested_current_plan:
-            if self.requested_enterprise_uuid is not None:
-                # Use the class method to get the most recent plan
-                current_plan = SubscriptionPlan.get_current_plan(self.requested_enterprise_uuid)
-                queryset = SubscriptionPlan.objects.filter(pk=current_plan.pk) if current_plan \
-                    else SubscriptionPlan.objects.none()
-            else:
-                raise ValidationError('current plan cannot be used without enterprise_uuid')
+            current_plan_error = 'Current plan cannot be used without enterprise_uuid'
+            try:
+                if self.requested_enterprise_uuid is not None:
+                    # Use the class method to get the most recent plan
+                    current_plan = SubscriptionPlan.get_current_plan(self.requested_enterprise_uuid)
+                    queryset = SubscriptionPlan.objects.filter(pk=current_plan.pk) if current_plan \
+                        else SubscriptionPlan.objects.none()
+                else:
+                    raise ValidationError(current_plan_error)
+            except ValidationError as exc:
+                raise ParseError(current_plan_error) from exc
 
         return queryset.order_by('-start_date')
 
