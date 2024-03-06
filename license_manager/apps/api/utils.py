@@ -292,7 +292,7 @@ def create_presigned_url(bucket_name, object_name, expiration=300):
             'Key': object_name,
             # RFC-2616 requires that the filename point to a "quoted-string" symbol, hence the double quotes surrounding
             # the filename below.  https://www.w3.org/Protocols/rfc2616/rfc2616-sec19.html
-            "ResponseContentDisposition": f'attachment; filename="{_get_short_file_name(object_name)}"',
+            "ResponseContentDisposition": f'attachment;filename="{_get_short_file_name(object_name)}"',
         },
         ExpiresIn=expiration
     )
