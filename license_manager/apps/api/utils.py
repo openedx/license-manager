@@ -6,6 +6,7 @@ import uuid
 from collections import defaultdict
 
 import boto3
+from botocore.client import Config
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from edx_django_utils.cache.utils import (
@@ -283,7 +284,14 @@ def create_presigned_url(bucket_name, object_name, expiration=300):
     """
 
     # Generate a presigned URL for the S3 object
-    s3_client = boto3.client('s3')
+    s3_client = boto3.client(
+        's3',
+        # Did you read the S3 docs and think s3v4 was the default and has been for several years? Surprise, you've been
+        # Punk'd! Botocore overrides the server-side default, and uses s3v2 as the client default:
+        # https://github.com/boto/boto3/issues/2417
+        # We do actually need the more modern signature version so that we can pass special params.
+        config=Config(signature_version='s3v4'),
+    )
 
     response = s3_client.generate_presigned_url(
         'get_object',
