@@ -40,7 +40,9 @@ downstream of successful assignment.
 import csv
 import json
 import os
+import re
 import time
+from email.utils import parseaddr
 from pprint import pprint
 
 import click
@@ -146,6 +148,11 @@ def get_plan_uuids_by_name(plans_by_name_file):
     return plans_by_name
 
 
+def is_valid_email(email):
+    _, address = parseaddr(email)
+    return bool(address)
+
+
 def get_email_chunks(input_file_path, plans_by_name, chunk_size=DEFAULT_CHUNK_SIZE):
     """
     Yield chunks of (chunk_id, subscription_plan, email) from the given input file.  
@@ -159,7 +166,10 @@ def get_email_chunks(input_file_path, plans_by_name, chunk_size=DEFAULT_CHUNK_SI
     current_chunk = []
     chunk_id = 0
     current_subscription_plan_uuid = None
-    with open(input_file_path, 'r') as f_in:
+    # CSVs can contain non-ascii characters, latin-1
+    # is the encoding that currently works with our production input.
+    # could eventually be parameterized as input to this command.
+    with open(input_file_path, 'r', encoding='latin-1') as f_in:
         reader = csv.DictReader(f_in, fieldnames=INPUT_FIELDNAMES, delimiter=',')
 
         # read and skip the header
@@ -167,6 +177,10 @@ def get_email_chunks(input_file_path, plans_by_name, chunk_size=DEFAULT_CHUNK_SI
 
         for row in reader:
             email = row['email']
+            if not is_valid_email(email):
+                print("Invalid email:", email)
+                continue
+
             university_name = row['university_name']
             subscription_plan_uuid = plans_by_name[university_name]
 
@@ -198,7 +212,7 @@ def get_email_chunks(input_file_path, plans_by_name, chunk_size=DEFAULT_CHUNK_SI
 
 def _post_assignments(subscription_plan_uuid, emails_for_chunk, environment='local', fetch_jwt=False):
     """
-    Maket the POST request to assign licenses.
+    Make the POST request to assign licenses.
     """
     url_pattern = ENVIRONMENTS[environment]
     url = url_pattern.format(subscription_plan_uuid=subscription_plan_uuid)
