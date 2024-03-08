@@ -19,7 +19,6 @@ python local_license_enrollment.py \
   --enterprise-uuid=<uuid> \
   --output-file=local-enrollment-output.csv \
   --environment=local \
-  --sleep-interval=5 \
   --fetch-jwt
 ```
 
@@ -30,18 +29,18 @@ email, course_run. Required.
 * ``--enterprise-uuid`` The UUID of the enterprise to which all enrollments are associated.
 
 * ``--output-file`` is where results of the call to the bulk-license-enrollment view are stored.  It'll be a headerless
-CSV with three columns: ``chunk_id``, ``job_id``, ``email``.
+CSV with three columns: ``chunk_id``, ``job_id``, ``email``, ``job_results_url``.
 
 * ``--chunk-size`` Number of emails contained in each chunk. Default and max is 1000.
 
 * ``--environment`` Which environment to execute against. Choices are 'local', 'stage', or 'prod'.
 
-* ``--sleep-interval`` is how long to wait between chunk deliveries, in seconds.  Each chunk of this script causes one
-asynchronous bulk enrollment task to be queued, so this interval is the primary way of controlling concurrency.  If
-``--sleep-interval`` is too high, operational risk is low but enrollment of all learners may take too long.  If
-``--sleep-interval`` is too low, a couple of risks arise: 1) we risk overwhelming the license_manager.bulk_enrollment
-dedicated celery queue, and 2) completion rate may be slower than task creation, increasing risk of accumulating more
-failed tasks before manually terminating the script.
+* ``--sleep-interval`` is how long to wait between chunk deliveries, in seconds (default = 120).  Each chunk of this
+script causes one asynchronous bulk enrollment task to be queued, so this interval is the primary way of controlling
+concurrency.  If ``--sleep-interval`` is too high, operational risk is low but enrollment of all learners may take too
+long.  If ``--sleep-interval`` is too low, a couple of risks arise: 1) we risk overwhelming the
+license_manager.bulk_enrollment dedicated celery queue, and 2) completion rate may be slower than task creation,
+increasing risk of accumulating more failed tasks before manually terminating the script.
 """
 from collections import defaultdict
 import csv
@@ -50,6 +49,7 @@ import time
 
 import click
 import requests
+from requests.models import PreparedRequest
 
 
 # 1000 is currently the maximum number of emails allowed by the bulk-license-enrollment API endpoint. (I didn't actually
@@ -112,7 +112,7 @@ def get_already_processed_emails(results_file):
     already_processed_emails = {}
     with open(results_file, 'r') as f_in:
         reader = csv.reader(f_in, delimiter=',')
-        for (chunk_id, _, email_address) in reader:
+        for (chunk_id, _, email_address, _) in reader:
             already_processed_emails[email_address] = chunk_id
     return already_processed_emails
 
@@ -220,18 +220,32 @@ def request_enrollments(
 
     response_data = response.json()
 
+    # Use the requests library to generate a URL to fetch job results, but not actually call it.
+    req = PreparedRequest()
+    req.prepare_url(
+        url,
+        {
+            'enterprise_customer_uuid': enterprise_uuid,
+            'bulk_enrollment_job_uuid': response_data['job_id'],
+        },
+    )
+    job_results_url = req.url
+
     results_for_chunk = []
     for email in emails_for_chunk:
         results_for_chunk.append([
             str(chunk_id),
             str(response_data['job_id']),
             email,
+            job_results_url,
         ])
 
-    print('Generated BulkEnrollmentJob UUID:', response_data['job_id'])
     print(
-        f'Successfully sent bulk enrollment request for chunk_id {chunk_id} and course_run_key {course_run_key} with '
-        f'{len(emails_for_chunk)} emails'
+        f'Successfully sent bulk enrollment request containing {len(emails_for_chunk)} emails. '
+        f'chunk_id = {chunk_id}, '
+        f'course_run_key = {course_run_key}, '
+        f'BulkEnrollmentJob UUID = {response_data["job_id"]}, '
+        f'job results URL = {job_results_url}'
     )
 
     return results_for_chunk
@@ -275,7 +289,14 @@ def do_enrollment_for_chunk(
             print(f'Sleeping for {sleep_interval} seconds.')
             time.sleep(sleep_interval)
     else:
-        print('No enrollments need to be created for chunk_id', chunk_id, 'with size', len(email_chunk))
+        print(
+            'No enrollments need to be created for chunk_id',
+            chunk_id,
+            'with size',
+            len(email_chunk),
+            'and course_run_key',
+            course_run_key,
+        )
 
 
 @click.command()
