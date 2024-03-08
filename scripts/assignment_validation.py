@@ -14,18 +14,18 @@ python assignment_validation.py print_plan_counts --input-file=your-input-file.c
 """
 import csv
 from collections import defaultdict, Counter
+from email.utils import parseaddr
 
 import click
 
-INPUT_FIELDNAMES = ['email', 'university_name']
+INPUT_FIELDNAMES = ['university_name', 'email']
 
 
 def _iterate_csv(input_file):
-    with open(input_file, 'r') as f_in:
+    with open(input_file, 'r', encoding='latin-1') as f_in:
         reader = csv.DictReader(f_in, fieldnames=INPUT_FIELDNAMES, delimiter=',')
         # read and skip the header
         next(reader, None)
-        breakpoint()
         for row in reader:
             yield row
 
@@ -42,7 +42,7 @@ def print_duplicates(input_file):
 
     for email, uni_list in unis_by_email.items():
         if len(uni_list) > 1:
-            print(email, uni_list)
+            print(email or 'THE EMPTY STRING', 'is contained in', len(uni_list), 'different rows')
 
 
 @click.command()
@@ -59,6 +59,28 @@ def print_plan_counts(input_file):
         print(plan, count)
 
 
+def is_valid_email(email):
+    _, address = parseaddr(email)
+    if not address:
+        return False
+    return True
+
+
+@click.command()
+@click.option(
+    '--input-file',
+    help='Path of local file containing email addresses to assign.',
+)
+def validate_emails(input_file):
+    invalid_emails = Counter()
+    for row in _iterate_csv(input_file):
+        if not is_valid_email(row['email']):
+            invalid_emails[row['email']] += 1
+
+    print(f'There were {sum(invalid_emails.values())} invalid emails')
+    print(invalid_emails)
+
+
 @click.group()
 def run():
     pass
@@ -66,6 +88,7 @@ def run():
 
 run.add_command(print_duplicates)
 run.add_command(print_plan_counts)
+run.add_command(validate_emails)
 
 
 if __name__ == '__main__':
