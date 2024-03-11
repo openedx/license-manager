@@ -40,13 +40,13 @@ downstream of successful assignment.
 import csv
 import json
 import os
-import re
 import time
-from email.utils import parseaddr
 from pprint import pprint
 
 import click
 import requests
+
+from utils import is_valid_email
 
 
 DEFAULT_CHUNK_SIZE = 100
@@ -66,7 +66,7 @@ ACCESS_TOKEN_URL_BY_ENVIRONMENT = {
 }
 
 OUTPUT_FIELDNAMES = ['chunk_id', 'subscription_plan_uuid', 'email', 'license_uuid']
-INPUT_FIELDNAMES = ['email', 'university_name']
+INPUT_FIELDNAMES = ['university_name', 'email']
 PLANS_BY_NAME_FIELDNAMES = ['university_name', 'subscription_plan_uuid']
 
 
@@ -80,7 +80,6 @@ def _get_jwt(fetch_jwt=False, environment='local'):
             'client_secret': client_secret,
             'grant_type': 'client_credentials',
             'token_type': 'jwt',
-            'scope': 'user_id email profile read write',
         }
         # we want to sent with a Content-Type of 'application/x-www-form-urlencoded'
         # so send in the `data` param instead of `json`.
@@ -101,7 +100,7 @@ def get_already_processed_emails(results_file):
     and returns a dictionary mapping already processed emails to their chunk_id.
     """
     already_processed_emails = {}
-    with open(results_file, 'a+') as f_in:
+    with open(results_file, 'a+', encoding='latin-1') as f_in:
         f_in.seek(0)
         reader = csv.DictReader(f_in, fieldnames=OUTPUT_FIELDNAMES, delimiter=',')
 
@@ -123,7 +122,7 @@ def get_already_processed_emails(results_file):
 
 def get_plan_uuids_by_name(plans_by_name_file):
     plans_by_name = {}
-    with open(plans_by_name_file, 'a+') as f_in:
+    with open(plans_by_name_file, 'a+', encoding='latin-1') as f_in:
         f_in.seek(0)
         reader = csv.DictReader(f_in, fieldnames=PLANS_BY_NAME_FIELDNAMES, delimiter=',')
 
@@ -146,11 +145,6 @@ def get_plan_uuids_by_name(plans_by_name_file):
     pprint(plans_by_name)
 
     return plans_by_name
-
-
-def is_valid_email(email):
-    _, address = parseaddr(email)
-    return bool(address)
 
 
 def get_email_chunks(input_file_path, plans_by_name, chunk_size=DEFAULT_CHUNK_SIZE):
@@ -182,7 +176,9 @@ def get_email_chunks(input_file_path, plans_by_name, chunk_size=DEFAULT_CHUNK_SI
                 continue
 
             university_name = row['university_name']
-            subscription_plan_uuid = plans_by_name[university_name]
+            subscription_plan_uuid = plans_by_name.get(university_name)
+            if not subscription_plan_uuid:
+                print(f'No plan matches the given name: {university_name}')
 
             # This should only happen on the very first row we process
             if not current_subscription_plan_uuid:
@@ -210,7 +206,9 @@ def get_email_chunks(input_file_path, plans_by_name, chunk_size=DEFAULT_CHUNK_SI
         yield chunk_id, current_subscription_plan_uuid, current_chunk
 
 
-def _post_assignments(subscription_plan_uuid, emails_for_chunk, environment='local', fetch_jwt=False):
+def _post_assignments(
+    subscription_plan_uuid, emails_for_chunk, environment='local', fetch_jwt=False, notify_users=False,
+):
     """
     Make the POST request to assign licenses.
     """
@@ -219,7 +217,7 @@ def _post_assignments(subscription_plan_uuid, emails_for_chunk, environment='loc
 
     payload = {
         'user_emails': emails_for_chunk,
-        'notify_users': False,
+        'notify_users': notify_users,
     }
     headers = {
         "Authorization": "JWT {}".format(_get_jwt(fetch_jwt, environment=environment)),
@@ -273,7 +271,7 @@ def request_assignments(subscription_plan_uuid, chunk_id, emails_for_chunk, envi
 
 def do_assignment_for_chunk(
     subscription_plan_uuid, chunk_id, email_chunk,
-    already_processed, results_file, environment='local', fetch_jwt=False, sleep_interval=DEFAULT_SLEEP_INTERVAL
+    already_processed, results_file, environment='local', fetch_jwt=False, sleep_interval=DEFAULT_SLEEP_INTERVAL,
 ):
     """
     Given a "chunk" list emails for which assignments should be requested, checks if the given
@@ -341,8 +339,13 @@ def do_assignment_for_chunk(
     help='Whether to fetch JWT based on stored client id and secret.',
     is_flag=True,
 )
+@click.option(
+    '--dry-run',
+    help='Just prints what emails would be assigned to plan if true.',
+    is_flag=True,
+)
 
-def run(input_file, plans_by_name_file, output_file, chunk_size, environment, sleep_interval, fetch_jwt):
+def run(input_file, plans_by_name_file, output_file, chunk_size, environment, sleep_interval, fetch_jwt, dry_run):
     """
     Entry-point for this script.
     """
@@ -353,10 +356,13 @@ def run(input_file, plans_by_name_file, output_file, chunk_size, environment, sl
     plan_uuids_by_name = get_plan_uuids_by_name(plans_by_name_file)
 
     for chunk_id, subscription_plan_uuid, email_chunk in get_email_chunks(input_file, plan_uuids_by_name, chunk_size):
-        do_assignment_for_chunk(
-            subscription_plan_uuid, chunk_id, email_chunk,
-            already_processed, output_file, environment, fetch_jwt, sleep_interval,
-        )
+        if dry_run:
+            print(f'DRY RUN: chunk_id={chunk_id} would assign to plan {subscription_plan_uuid} emails: {email_chunk}')
+        else:
+            do_assignment_for_chunk(
+                subscription_plan_uuid, chunk_id, email_chunk,
+                already_processed, output_file, environment, fetch_jwt, sleep_interval,
+            )
 
 if __name__ == '__main__':
     run()
