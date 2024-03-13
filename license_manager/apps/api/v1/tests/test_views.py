@@ -1986,15 +1986,30 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         pending_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
         self.subscription_plan.licenses.set(unassigned_licenses + pending_licenses)
 
-        response = self.api_client.post(self.remind_all_url, {'greeting': self.greeting, 'closing': self.closing})
+        with mock.patch('license_manager.apps.subscriptions.constants.LICENSE_BULK_OPERATION_BATCH_SIZE', new=2):
+            response = self.api_client.post(self.remind_all_url, {'greeting': self.greeting, 'closing': self.closing})
+
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # Verify emails sent to only the pending licenses
-        mock_send_reminder_emails_task.assert_called_with(
-            {'greeting': self.greeting, 'closing': self.closing},
-            sorted([license.user_email for license in pending_licenses]),
-            str(self.subscription_plan.uuid),
-        )
+        mock_send_reminder_emails_task.assert_has_calls([
+            mock.call(
+                {'greeting': self.greeting, 'closing': self.closing},
+                mock.ANY,
+                str(self.subscription_plan.uuid),
+            ),
+            mock.call(
+                {'greeting': self.greeting, 'closing': self.closing},
+                mock.ANY,
+                str(self.subscription_plan.uuid),
+            ),
+        ])
+        pending_emails = [license.user_email for license in pending_licenses]
+        actually_called_emails = []
+        for call in mock_send_reminder_emails_task.call_args_list:
+            actually_called_emails.extend(call.args[1])
+
+        assert set(pending_emails) == set(actually_called_emails)
 
     @ddt.data(True, False)
     def test_license_overview(self, ignore_null_emails):
