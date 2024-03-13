@@ -997,17 +997,22 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         self._validate_data(request.data)
 
         subscription_plan = self._get_subscription_plan()
-        pending_licenses = subscription_plan.licenses.filter(status=constants.ASSIGNED)
-        if not pending_licenses:
+        assigned_license_emails = list(
+            subscription_plan.licenses.filter(
+                status=constants.ASSIGNED,
+            ).values_list('user_email', flat=True)
+        )
+        if not assigned_license_emails:
             return Response('Could not find any licenses pending activation', status=status.HTTP_404_NOT_FOUND)
 
-        pending_user_emails = [license.user_email for license in pending_licenses]
-        # Send activation reminder email to all pending users
-        send_reminder_email_task.delay(
-            utils.get_custom_text(request.data),
-            sorted(pending_user_emails),
-            subscription_uuid,
-        )
+        # Send reminder emails in batches.
+        chunked_lists = chunks(assigned_license_emails, constants.LICENSE_BULK_OPERATION_BATCH_SIZE)
+        for assigned_license_email_chunk in chunked_lists:
+            send_reminder_email_task.delay(
+                utils.get_custom_text(request.data),
+                sorted(assigned_license_email_chunk),
+                subscription_uuid,
+            )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
