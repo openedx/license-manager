@@ -442,6 +442,8 @@ BRAZE_API_URL = ''
 BRAZE_API_KEY = os.environ.get('BRAZE_API_KEY', '')
 BRAZE_APP_ID = os.environ.get('BRAZE_APP_ID', '')
 
+MAX_REMINDER_EMAIL_DELAY = 16
+
 # Set a datetime that a django action can reset license state to
 # Use year-month-day hour:minute:second format
 LICENSE_REVERT_SNAPSHOT_TIMESTAMP = '9999-12-31 23:59:59'

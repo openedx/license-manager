@@ -1,4 +1,5 @@
 import logging
+import random
 from collections import OrderedDict
 from contextlib import suppress
 from uuid import uuid4
@@ -1008,11 +1009,14 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         # Send reminder emails in batches.
         chunked_lists = chunks(assigned_license_emails, constants.LICENSE_BULK_OPERATION_BATCH_SIZE)
         for assigned_license_email_chunk in chunked_lists:
-            send_reminder_email_task.delay(
+            task_args = (
                 utils.get_custom_text(request.data),
                 sorted(assigned_license_email_chunk),
                 subscription_uuid,
             )
+            # Dusenbery 2024-03-14: jitter the execution to help avoid race conditions with the Braze API.
+            execution_delay = random.randint(1, settings.MAX_REMINDER_EMAIL_DELAY)
+            send_reminder_email_task.apply_async(args=task_args, countdown=execution_delay)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

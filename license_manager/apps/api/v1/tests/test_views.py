@@ -1963,7 +1963,7 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         revoked_emails = mock_send_reminder_emails_task.call_args[0][1]
         assert sorted(revoked_emails) == expected_reminded_emails
 
-    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.apply_async')
     def test_remind_all_no_pending_licenses(self, mock_send_reminder_emails_task):
         """
         Verify that the remind all endpoint returns a 404 if there are no pending licenses.
@@ -1975,7 +1975,7 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         assert response.status_code == status.HTTP_404_NOT_FOUND
         mock_send_reminder_emails_task.assert_not_called()
 
-    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
+    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.apply_async')
     def test_remind_all(self, mock_send_reminder_emails_task):
         """
         Verify that the remind all endpoint sends an email to each user with a pending license.
@@ -1993,16 +1993,16 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
 
         # Verify emails sent to only the pending licenses
         mock_send_reminder_emails_task.assert_has_calls([
-            mock.call(
+            mock.call(args=(
                 {'greeting': self.greeting, 'closing': self.closing},
                 mock.ANY,
                 str(self.subscription_plan.uuid),
-            ),
-            mock.call(
+            ), countdown=mock.ANY),
+            mock.call(args=(
                 {'greeting': self.greeting, 'closing': self.closing},
                 mock.ANY,
                 str(self.subscription_plan.uuid),
-            ),
+            ), countdown=mock.ANY),
         ])
         pending_emails = [license.user_email for license in pending_licenses]
         actually_called_emails = []
