@@ -211,14 +211,14 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
     enterprise_contact_email = enterprise_customer.get('contact_email')
 
     pending_license_by_email = {}
-    # We need to send these emails individually, because each email's text must be
-    # generated for every single user/activation_key
+    emails_for_aliasing = []
+    recipients = []
     for pending_license in pending_licenses:
         user_email = pending_license.user_email
+        emails_for_aliasing.append(user_email)
         pending_license_by_email[user_email] = pending_license
         license_activation_key = str(pending_license.activation_key)
-        braze_campaign_id = settings.BRAZE_REMIND_EMAIL_CAMPAIGN
-        braze_trigger_properties = {
+        trigger_properties = {
             'TEMPLATE_GREETING': custom_template_text['greeting'],
             'TEMPLATE_CLOSING': custom_template_text['closing'],
             'license_activation_key': license_activation_key,
@@ -229,29 +229,31 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
         }
         recipient = _aliased_recipient_object_from_email(user_email)
         recipient['attributes'].update(get_license_tracking_properties(pending_license))
+        recipient['trigger_properties'] = trigger_properties
+        recipients.append(recipient)
 
-        try:
-            braze_client_instance = BrazeApiClient()
-            braze_client_instance.create_braze_alias(
-                [user_email],
-                ENTERPRISE_BRAZE_ALIAS_LABEL,
-            )
-            braze_client_instance.send_campaign_message(
-                braze_campaign_id,
-                recipients=[recipient],
-                trigger_properties=braze_trigger_properties,
-            )
-            logger.info(
-                f'{LICENSE_DEBUG_PREFIX} Sent license reminder email '
-                f'braze campaign {braze_campaign_id} to {recipient}'
-            )
-        except BrazeClientError as exc:
-            message = (
-                'Error hitting Braze API. '
-                f'reminder email to {user_email} for license failed.'
-            )
-            logger.exception(message)
-            raise exc
+    # Batch at the Braze API layer
+    try:
+        braze_client_instance = BrazeApiClient()
+        braze_client_instance.create_braze_alias(
+            emails_for_aliasing,
+            ENTERPRISE_BRAZE_ALIAS_LABEL,
+        )
+        braze_client_instance.send_campaign_message(
+            settings.BRAZE_REMIND_EMAIL_CAMPAIGN,
+            recipients=recipients,
+        )
+        logger.info(
+            f'{LICENSE_DEBUG_PREFIX} Sent license reminder emails '
+            f'braze campaign {settings.BRAZE_REMIND_EMAIL_CAMPAIGN} to {email_recipient_list}'
+        )
+    except BrazeClientError as exc:
+        message = (
+            'Error hitting Braze API. '
+            f'reminder email to {settings.BRAZE_REMIND_EMAIL_CAMPAIGN} for license failed.'
+        )
+        logger.exception(message)
+        raise exc
 
     License.set_date_fields_to_now(pending_licenses, ['last_remind_date'])
 

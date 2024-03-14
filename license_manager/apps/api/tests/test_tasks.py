@@ -204,6 +204,8 @@ class EmailTaskTests(TestCase):
             ]
             self.assertNotIn('no-license@foo.com', called_emails)
 
+            expected_recipients = []
+            expected_alias_emails = []
             for user_email in self.email_recipient_list:
                 expected_license = self.subscription_plan.licenses.get(
                     user_email=user_email
@@ -212,10 +214,7 @@ class EmailTaskTests(TestCase):
                 mock_enterprise_client().get_enterprise_customer_data.assert_any_call(
                     self.subscription_plan.enterprise_customer_uuid
                 )
-                mock_braze_client().create_braze_alias.assert_any_call(
-                    [user_email],
-                    ENTERPRISE_BRAZE_ALIAS_LABEL,
-                )
+                expected_alias_emails.append(user_email)
 
                 expected_trigger_properties = {
                     'TEMPLATE_GREETING': 'Hello',
@@ -234,11 +233,21 @@ class EmailTaskTests(TestCase):
                     },
                 }
                 expected_recipient['attributes'].update(get_license_tracking_properties(expected_license))
-                mock_braze_client().send_campaign_message.assert_any_call(
-                    settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN,
-                    recipients=[expected_recipient],
-                    trigger_properties=expected_trigger_properties,
-                )
+                expected_recipient['trigger_properties'] = expected_trigger_properties
+                expected_recipients.append(expected_recipient)
+
+            # assert all emails sent for aliasing in a single call
+            actual_alias_call_emails = mock_braze_client.return_value.create_braze_alias.call_args_list[0][0][0]
+            assert sorted(expected_alias_emails) == sorted(actual_alias_call_emails)
+
+            # assert all recipients sent a campaign message in a single call
+            mock_send_message = mock_braze_client.return_value.send_campaign_message
+            actual_recipients_list = mock_send_message.call_args_list[0][1]['recipients']
+
+            def sort_key(x):
+                return x['attributes']['email']
+
+            assert sorted(expected_recipients, key=sort_key) == sorted(actual_recipients_list, key=sort_key)
 
             # Verify the 'last_remind_date' of all licenses have been updated
             assert_date_fields_correct(

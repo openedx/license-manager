@@ -1986,7 +1986,7 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         pending_licenses = LicenseFactory.create_batch(3, status=constants.ASSIGNED)
         self.subscription_plan.licenses.set(unassigned_licenses + pending_licenses)
 
-        with mock.patch('license_manager.apps.subscriptions.constants.LICENSE_BULK_OPERATION_BATCH_SIZE', new=2):
+        with mock.patch('license_manager.apps.subscriptions.constants.REMINDER_EMAIL_BATCH_SIZE', new=2):
             response = self.api_client.post(self.remind_all_url, {'greeting': self.greeting, 'closing': self.closing})
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
