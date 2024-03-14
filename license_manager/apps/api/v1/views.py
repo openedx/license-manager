@@ -1006,7 +1006,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             return Response('Could not find any licenses pending activation', status=status.HTTP_404_NOT_FOUND)
 
         # Send reminder emails in batches.
-        chunked_lists = chunks(assigned_license_emails, constants.LICENSE_BULK_OPERATION_BATCH_SIZE)
+        chunked_lists = chunks(assigned_license_emails, constants.REMINDER_EMAIL_BATCH_SIZE)
         for assigned_license_email_chunk in chunked_lists:
             send_reminder_email_task.delay(
                 utils.get_custom_text(request.data),
