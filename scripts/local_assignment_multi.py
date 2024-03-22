@@ -243,12 +243,13 @@ def request_assignments(subscription_plan_uuid, chunk_id, emails_for_chunk, envi
         response.raise_for_status()
     except requests.exceptions.HTTPError:
         # if it's a 401, try refetching the JWT and re-try the request
+        print(response.content)
         if response.status_code == 401:
             print('EXPIRED JWT, REFETCHING...')
             response = _post_assignments(subscription_plan_uuid, emails_for_chunk, environment, fetch_jwt)
             response.raise_for_status()
         else:
-            raise
+            print('Continuing past this exception.')
 
     response_data = response.json()
 
@@ -288,9 +289,14 @@ def do_assignment_for_chunk(
 
     results_for_chunk = []
     if payload_for_chunk:
-        results_for_chunk = request_assignments(
-            subscription_plan_uuid, chunk_id, payload_for_chunk, environment, fetch_jwt,
-        )
+        try:
+            results_for_chunk = request_assignments(
+                subscription_plan_uuid, chunk_id, payload_for_chunk, environment, fetch_jwt,
+            )
+        except Exception as exc:
+            print(exc)
+            print('continuing on...')
+            return
         with open(results_file, 'a+') as f_out:
             writer = csv.writer(f_out, delimiter=',')
             writer.writerows(results_for_chunk)
