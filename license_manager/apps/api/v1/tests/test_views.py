@@ -2733,7 +2733,6 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         assert customer_agreement_response['disable_expiration_notifications'] == expected_disable_expire_notifications
         assert customer_agreement_response['subscription_for_auto_applied_licenses'] is None
 
-        print('customer_agreement_response?!?!', customer_agreement_response)
         expected_available_catalog_uuids = [
             str(self.customer_agreement.subscriptions.first().enterprise_catalog_uuid)
         ]
