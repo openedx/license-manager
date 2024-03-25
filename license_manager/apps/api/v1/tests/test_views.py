@@ -2724,8 +2724,20 @@ class LearnerLicensesViewsetTests(LicenseViewTestMixin, TestCase):
         response = self._get_url_with_customer_uuid(self.enterprise_customer_uuid)
 
         assert response.status_code == status.HTTP_200_OK
+
         customer_agreement_response = response.json().get('customer_agreement')
+        expected_days_until_expiration = self.customer_agreement.net_days_until_expiration
+        expected_disable_expire_notifications = self.customer_agreement.disable_expiration_notifications
         assert customer_agreement_response['uuid'] == str(self.customer_agreement.uuid)
+        assert customer_agreement_response['net_days_until_expiration'] == expected_days_until_expiration
+        assert customer_agreement_response['disable_expiration_notifications'] == expected_disable_expire_notifications
+        assert customer_agreement_response['subscription_for_auto_applied_licenses'] is None
+
+        print('customer_agreement_response?!?!', customer_agreement_response)
+        expected_available_catalog_uuids = [
+            str(self.customer_agreement.subscriptions.first().enterprise_catalog_uuid)
+        ]
+        assert customer_agreement_response['available_subscription_catalogs'] == expected_available_catalog_uuids
 
     def test_endpoint_results_correctly_ordered(self):
         """
