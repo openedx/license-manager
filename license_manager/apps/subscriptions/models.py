@@ -153,6 +153,23 @@ class CustomerAgreement(TimeStampedModel):
         return net_days
 
     @property
+    def available_subscription_catalogs(self):
+        """
+        Returns all the enterprise catalogs associated with the subscription plans
+        in this customer agreement.
+        """
+        default_catalog_uuid = self.default_enterprise_catalog_uuid
+        available_catalog_uuids = set()
+        for plan in self.subscriptions.filter(is_active=True).prefetch_related('renewal'):
+            if plan.days_until_expiration_including_renewals > 0:
+                available_catalog_uuids.add(
+                    str(plan.enterprise_catalog_uuid)
+                    if plan.enterprise_catalog_uuid
+                    else str(default_catalog_uuid)
+                )
+        return list(available_catalog_uuids)
+
+    @property
     def auto_applicable_subscription(self):
         """
         Get which subscription on CustomerAgreement is auto-applicable.

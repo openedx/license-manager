@@ -130,6 +130,7 @@ class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
             'disable_expiration_notifications',
             'net_days_until_expiration',
             'subscription_for_auto_applied_licenses',
+            'available_subscription_catalogs',
         ]
 
     def get_subscription_for_auto_applied_licenses(self, obj):
