@@ -127,7 +127,7 @@ dill==0.3.7
     # via
     #   -r requirements/test.txt
     #   pylint
-django==4.2.10
+django==4.2.11
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
