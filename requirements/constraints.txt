@@ -28,3 +28,8 @@ astroid<2.12
 # This can be removed once all IDAs have been upgraded to Django 4.2 
 # and the global constraint has been updated from Django<4.0 to Django<4.3
 Django<4.3
+
+# DRF 3.15.0 is providing some backwards-compatibility issues for us
+# around default model fields vs. the serializer field defs,
+# and the discontinued use of OrderedDict in serializers.
+djangorestframework<3.15
