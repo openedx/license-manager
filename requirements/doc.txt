@@ -43,8 +43,9 @@ backoff==1.10.0
     # via
     #   -r requirements/test.txt
     #   analytics-python
-backports-zoneinfo[tzdata]==0.2.1
+backports-zoneinfo[tzdata]==0.2.1 ; python_version < "3.9"
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/test.txt
     #   celery
     #   django
@@ -56,11 +57,11 @@ billiard==4.2.0
     # via
     #   -r requirements/test.txt
     #   celery
-boto3==1.34.74
+boto3==1.34.75
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.34.74
+botocore==1.34.75
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -185,7 +186,7 @@ django-filter==24.2
     # via -r requirements/test.txt
 django-log-request-id==2.1.0
     # via -r requirements/test.txt
-django-model-utils==4.4.0
+django-model-utils==4.5.0
     # via
     #   -r requirements/test.txt
     #   edx-celeryutils
@@ -227,13 +228,13 @@ drf-jwt==1.19.2
     #   edx-drf-extensions
 drf-nested-routers==0.93.5
     # via -r requirements/test.txt
-drf-spectacular==0.27.1
+drf-spectacular==0.27.2
     # via -r requirements/test.txt
-edx-auth-backends==4.2.0
+edx-auth-backends==4.3.0
     # via -r requirements/test.txt
 edx-braze-client==0.2.2
     # via -r requirements/test.txt
-edx-celeryutils==1.2.5
+edx-celeryutils==1.3.0
     # via -r requirements/test.txt
 edx-django-utils==5.12.0
     # via
