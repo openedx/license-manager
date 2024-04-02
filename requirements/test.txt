@@ -10,11 +10,12 @@ amqp==5.2.0
     #   kombu
 analytics-python==1.4.post1
     # via -r requirements/base.txt
-asgiref==3.7.2
+asgiref==3.8.1
     # via
     #   -r requirements/base.txt
     #   django
     #   django-cors-headers
+    #   django-simple-history
 astroid==2.11.7
     # via
     #   -c requirements/constraints.txt
@@ -33,22 +34,23 @@ backoff==1.10.0
     # via
     #   -r requirements/base.txt
     #   analytics-python
-backports-zoneinfo[tzdata]==0.2.1
+backports-zoneinfo[tzdata]==0.2.1 ; python_version < "3.9"
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/base.txt
-    #   backports-zoneinfo
     #   celery
     #   django
+    #   djangorestframework
     #   kombu
 billiard==4.2.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.34.32
+boto3==1.34.75
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.34.32
+botocore==1.34.75
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -58,7 +60,7 @@ celery==5.3.6
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2023.11.17
+certifi==2024.2.2
     # via
     #   -r requirements/base.txt
     #   requests
@@ -82,7 +84,7 @@ click==8.1.7
     #   code-annotations
     #   edx-django-utils
     #   edx-lint
-click-didyoumean==0.3.0
+click-didyoumean==0.3.1
     # via
     #   -r requirements/base.txt
     #   celery
@@ -96,22 +98,22 @@ click-repl==0.3.0
     # via
     #   -r requirements/base.txt
     #   celery
-code-annotations==1.6.0
+code-annotations==1.7.0
     # via
     #   -r requirements/base.txt
     #   -r requirements/test.in
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.4.1
+coverage[toml]==7.4.4
     # via
     #   -r requirements/test.in
     #   pytest-cov
-cryptography==42.0.2
+cryptography==42.0.5
     # via
     #   -r requirements/base.txt
     #   pyjwt
     #   social-auth-core
-ddt==1.7.1
+ddt==1.7.2
     # via -r requirements/test.in
 defusedxml==0.8.0rc2
     # via
@@ -120,8 +122,9 @@ defusedxml==0.8.0rc2
     #   social-auth-core
 dill==0.3.8
     # via pylint
-django==4.2.9
+django==4.2.11
     # via
+    #   -c requirements/common_constraints.txt
     #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   django-autocomplete-light
@@ -147,7 +150,7 @@ django==4.2.9
     #   edx-toggles
     #   jsonfield
     #   social-auth-app-django
-django-autocomplete-light==3.9.7
+django-autocomplete-light==3.11.0
     # via -r requirements/base.txt
 django-celery-results==2.5.1
     # via -r requirements/base.txt
@@ -165,18 +168,18 @@ django-dynamic-fixture==4.0.1
     # via -r requirements/test.in
 django-extensions==3.2.3
     # via -r requirements/base.txt
-django-filter==23.5
+django-filter==24.2
     # via -r requirements/base.txt
 django-log-request-id==2.1.0
     # via -r requirements/base.txt
-django-model-utils==4.3.1
+django-model-utils==4.5.0
     # via
     #   -r requirements/base.txt
     #   edx-celeryutils
     #   edx-rbac
 django-ses==3.5.2
     # via -r requirements/base.txt
-django-simple-history==3.4.0
+django-simple-history==3.5.0
     # via -r requirements/base.txt
 django-waffle==4.1.0
     # via
@@ -186,7 +189,7 @@ django-waffle==4.1.0
     #   edx-toggles
 djangoql==0.18.1
     # via -r requirements/base.txt
-djangorestframework==3.14.0
+djangorestframework==3.15.1
     # via
     #   -r requirements/base.txt
     #   djangorestframework-csv
@@ -202,21 +205,21 @@ drf-jwt==1.19.2
     #   edx-drf-extensions
 drf-nested-routers==0.93.5
     # via -r requirements/base.txt
-drf-spectacular==0.27.1
+drf-spectacular==0.27.2
     # via -r requirements/base.txt
-edx-auth-backends==4.2.0
+edx-auth-backends==4.3.0
     # via -r requirements/base.txt
 edx-braze-client==0.2.2
     # via -r requirements/base.txt
-edx-celeryutils==1.2.3
+edx-celeryutils==1.3.0
     # via -r requirements/base.txt
-edx-django-utils==5.10.1
+edx-django-utils==5.12.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==10.1.0
+edx-drf-extensions==10.3.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -238,7 +241,7 @@ exceptiongroup==1.2.0
     # via pytest
 factory-boy==3.3.0
     # via -r requirements/test.in
-faker==22.6.0
+faker==24.4.0
     # via factory-boy
 freezegun==1.4.0
     # via -r requirements/test.in
@@ -246,7 +249,7 @@ idna==3.6
     # via
     #   -r requirements/base.txt
     #   requests
-importlib-resources==6.1.1
+importlib-resources==6.4.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -280,13 +283,13 @@ jsonschema-specifications==2023.12.1
     # via
     #   -r requirements/base.txt
     #   jsonschema
-kombu==5.3.5
+kombu==5.3.6
     # via
     #   -r requirements/base.txt
     #   celery
 lazy-object-proxy==1.10.0
     # via astroid
-markupsafe==2.1.4
+markupsafe==2.1.5
     # via
     #   -r requirements/base.txt
     #   jinja2
@@ -296,9 +299,9 @@ monotonic==1.6
     # via
     #   -r requirements/base.txt
     #   analytics-python
-mysqlclient==2.2.1
+mysqlclient==2.2.4
     # via -r requirements/base.txt
-newrelic==9.6.0
+newrelic==9.8.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -307,7 +310,7 @@ oauthlib==3.2.2
     #   -r requirements/base.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==23.2
+packaging==24.0
     # via pytest
 pbr==6.0.0
     # via
@@ -333,7 +336,7 @@ psutil==5.9.8
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-pycparser==2.21
+pycparser==2.22
     # via
     #   -r requirements/base.txt
     #   cffi
@@ -344,7 +347,6 @@ pyjwt[crypto]==2.8.0
     #   edx-auth-backends
     #   edx-drf-extensions
     #   edx-rest-api-client
-    #   pyjwt
     #   social-auth-core
 pylint==2.14.5
     # via
@@ -369,15 +371,15 @@ pynacl==1.5.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-pytest==8.0.0
+pytest==8.1.1
     # via
     #   pytest-cov
     #   pytest-django
-pytest-cov==4.1.0
+pytest-cov==5.0.0
     # via -r requirements/test.in
 pytest-django==4.8.0
     # via -r requirements/test.in
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   -r requirements/base.txt
     #   analytics-python
@@ -385,7 +387,7 @@ python-dateutil==2.8.2
     #   celery
     #   faker
     #   freezegun
-python-slugify==8.0.3
+python-slugify==8.0.4
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -393,19 +395,18 @@ python3-openid==3.2.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-pytz==2023.4
+pytz==2024.1
     # via
     #   -r requirements/base.txt
     #   django-ses
-    #   djangorestframework
 pyyaml==6.0.1
     # via
     #   -r requirements/base.txt
     #   code-annotations
     #   drf-spectacular
-redis==5.0.1
+redis==5.0.3
     # via -r requirements/base.txt
-referencing==0.33.0
+referencing==0.34.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -419,18 +420,18 @@ requests==2.31.0
     #   requests-oauthlib
     #   slumber
     #   social-auth-core
-requests-oauthlib==1.3.1
+requests-oauthlib==2.0.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-rpds-py==0.17.1
+rpds-py==0.18.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
     #   referencing
 rules==3.3
     # via -r requirements/base.txt
-s3transfer==0.10.0
+s3transfer==0.10.1
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -444,7 +445,6 @@ six==1.16.0
     # via
     #   -r requirements/base.txt
     #   analytics-python
-    #   django-autocomplete-light
     #   edx-auth-backends
     #   edx-lint
     #   edx-rbac
@@ -457,7 +457,7 @@ social-auth-app-django==5.4.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.5.2
+social-auth-core==4.5.3
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
@@ -466,7 +466,7 @@ sqlparse==0.4.4
     # via
     #   -r requirements/base.txt
     #   django
-stevedore==5.1.0
+stevedore==5.2.0
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -481,9 +481,9 @@ tomli==2.0.1
     #   coverage
     #   pylint
     #   pytest
-tomlkit==0.12.3
+tomlkit==0.12.4
     # via pylint
-typing-extensions==4.9.0
+typing-extensions==4.10.0
     # via
     #   -r requirements/base.txt
     #   asgiref
@@ -493,7 +493,7 @@ typing-extensions==4.9.0
     #   faker
     #   kombu
     #   pylint
-tzdata==2023.4
+tzdata==2024.1
     # via
     #   -r requirements/base.txt
     #   backports-zoneinfo
@@ -521,7 +521,7 @@ wrapt==1.11.2
     # via
     #   -c requirements/constraints.txt
     #   astroid
-zipp==3.17.0
+zipp==3.18.1
     # via
     #   -r requirements/base.txt
     #   importlib-resources
