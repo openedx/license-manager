@@ -6,7 +6,7 @@ as input, then chunks those up in calls to the ``assign`` view.
 To use:
 ```
 # os environ names are meaningful and should correspond to the requested environment
-# this allows us to fetch a JWT before each request, so you don't have to 
+# this allows us to fetch a JWT before each request, so you don't have to
 # worry about your JWT expiring in the middle of the script execution.
 export CLIENT_SECRET_LOCAL=[your-client-secret]
 export CLIENT_ID_LOCAL=[your-client-id]
@@ -23,7 +23,7 @@ python local_assignment.py \
 ```
 
 Options:
-* ``input-file`` is your input file - it should contain columns ``email`` and ``subcription_plan_uuid``. 
+* ``input-file`` is your input file - it should contain columns ``email`` and ``subcription_plan_uuid``.
 This script does not attempt to do any validation. Required.
 
 * ``output-file`` is where results of the call to the assignment view are stored.
@@ -84,6 +84,7 @@ def _get_jwt(fetch_jwt=False, environment='local'):
         }
         # we want to sent with a Content-Type of 'application/x-www-form-urlencoded'
         # so send in the `data` param instead of `json`.
+        # pylint: disable=missing-timeout
         response = requests.post(
             ACCESS_TOKEN_URL_BY_ENVIRONMENT.get(environment),
             data=request_payload,
@@ -155,7 +156,7 @@ def is_valid_email(email):
 
 def get_email_chunks(input_file_path, plans_by_name, chunk_size=DEFAULT_CHUNK_SIZE):
     """
-    Yield chunks of (chunk_id, subscription_plan, email) from the given input file.  
+    Yield chunks of (chunk_id, subscription_plan, email) from the given input file.
     Given the same input file and chunk_size,
     this will always yield rows with the same chunk id for each provided email.
 
@@ -225,6 +226,7 @@ def _post_assignments(subscription_plan_uuid, emails_for_chunk, environment='loc
         "Authorization": "JWT {}".format(_get_jwt(fetch_jwt, environment=environment)),
     }
 
+    # pylint: disable=missing-timeout
     return requests.post(url, json=payload, headers=headers)
 
 

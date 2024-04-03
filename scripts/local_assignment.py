@@ -6,7 +6,7 @@ as input, then chunks those up in calls to the ``assign`` view.
 To use:
 ```
 # os environ names are meaningful and should correspond to the requested environment
-# this allows us to fetch a JWT before each request, so you don't have to 
+# this allows us to fetch a JWT before each request, so you don't have to
 # worry about your JWT expiring in the middle of the script execution.
 export CLIENT_SECRET_LOCAL=[your-client-secret]
 export CLIENT_ID_LOCAL=[your-client-id]
@@ -24,8 +24,8 @@ python local_assignment.py \
 ```
 
 Options:
-* ``input-file`` is your input file - it should be a single-column csv 
-(or just a list delimited by newlines, really) of valid email addresses.  This 
+* ``input-file`` is your input file - it should be a single-column csv
+(or just a list delimited by newlines, really) of valid email addresses.  This
 script does not attempt to do any validation. Required.
 
 * ``subscription-plan-uuid`` is the uuid of the plan to assign license to. Required.
@@ -79,6 +79,7 @@ def _get_jwt(fetch_jwt=False, environment='local'):
         }
         # we want to sent with a Content-Type of 'application/x-www-form-urlencoded'
         # so send in the `data` param instead of `json`.
+        # pylint: disable=missing-timeout
         response = requests.post(
             ACCESS_TOKEN_URL_BY_ENVIRONMENT.get(environment),
             data=request_payload,
@@ -142,6 +143,7 @@ def request_assignments(subscription_plan_uuid, chunk_id, emails_for_chunk, envi
         "Authorization": "JWT {}".format(_get_jwt(fetch_jwt, environment=environment)),
     }
 
+    # pylint: disable=missing-timeout
     response = requests.post(url, json=payload, headers=headers)
 
     response.raise_for_status()

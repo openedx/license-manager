@@ -148,6 +148,7 @@ def identify_braze_alias(lms_user_id, email_address):
             'Authorization': 'Bearer {}'.format(settings.BRAZE_API_KEY),
             'Accept-Encoding': 'identity'
         }
+        # pylint: disable=missing-timeout
         response = requests.post(
             url=f'{settings.BRAZE_URL}/users/identify',
             headers=headers,

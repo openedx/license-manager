@@ -93,6 +93,7 @@ def _get_jwt(fetch_jwt=False, environment='local'):
         }
         # we want to sent with a Content-Type of 'application/x-www-form-urlencoded'
         # so send in the `data` param instead of `json`.
+        # pylint: disable=missing-timeout
         response = requests.post(
             ACCESS_TOKEN_URL_BY_ENVIRONMENT.get(environment),
             data=request_payload,
@@ -185,6 +186,7 @@ def request_enrollments(
     print(f'POST query parameters: {params}')
     print(f'POST payload: {payload}')
 
+    # pylint: disable=missing-timeout
     response = requests.post(
         url,
         headers=headers,
@@ -210,6 +212,7 @@ def request_enrollments(
                 'course_run_keys': [course_run_key],
                 'notify': False,
             }
+            # pylint: disable=missing-timeout
             response = requests.post(
                 url,
                 headers=headers,
