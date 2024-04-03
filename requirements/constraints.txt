@@ -21,7 +21,8 @@ wrapt==1.14.*
 
 # edx-lint>=5.3.0 and/or pylint>=2.15 throws a bunch of unknown option value errors
 edx-lint<5.3
-pylint<2.15
+pylint<2.15;python_version<"3.9"
+pylint>2.15;python_version>"3.9"
 astroid<2.12
 
 # Stay on LTS release
