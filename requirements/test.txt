@@ -348,7 +348,7 @@ pyjwt[crypto]==2.8.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==2.14.5
+pylint==2.14.5 ; python_version < "3.9"
     # via
     #   -c requirements/constraints.txt
     #   edx-lint
