@@ -41,11 +41,11 @@ billiard==4.2.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.34.75
+boto3==1.34.76
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.34.75
+botocore==1.34.76
     # via
     #   -r requirements/base.txt
     #   boto3

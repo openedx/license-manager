@@ -57,12 +57,12 @@ billiard==4.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.34.75
+boto3==1.34.76
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.34.75
+botocore==1.34.76
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -390,7 +390,7 @@ lazy-object-proxy==1.10.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   astroid
-lxml==5.2.0
+lxml==5.2.1
     # via edx-i18n-tools
 markupsafe==2.1.5
     # via
@@ -707,7 +707,7 @@ wcwidth==0.2.13
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   prompt-toolkit
-wrapt==1.11.2
+wrapt==1.14.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/quality.txt

@@ -47,11 +47,11 @@ billiard==4.2.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.34.75
+boto3==1.34.76
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.34.75
+botocore==1.34.76
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -339,7 +339,7 @@ lazy-object-proxy==1.10.0
     # via
     #   -r requirements/validation.txt
     #   astroid
-lxml==5.2.0
+lxml==5.2.1
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
@@ -639,7 +639,7 @@ wheel==0.43.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-wrapt==1.11.2
+wrapt==1.14.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/validation.txt
