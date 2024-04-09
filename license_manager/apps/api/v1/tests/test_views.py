@@ -1915,18 +1915,32 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         """
         self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
         pending_license = LicenseFactory.create(user_email=self.test_email, status=constants.ASSIGNED)
-        self.subscription_plan.licenses.set([pending_license])
+        pending_license_b = LicenseFactory.create(user_email='other@example.com', status=constants.ASSIGNED)
+        self.subscription_plan.licenses.set([pending_license, pending_license_b])
 
-        response = self.api_client.post(
-            self.remind_url,
-            {'user_emails': [self.test_email], 'greeting': self.greeting, 'closing': self.closing},
-        )
+        with mock.patch('license_manager.apps.subscriptions.constants.REMINDER_EMAIL_BATCH_SIZE', new=1):
+            response = self.api_client.post(
+                self.remind_url,
+                {
+                    'user_emails': [self.test_email, 'other@example.com'],
+                    'greeting': self.greeting,
+                    'closing': self.closing,
+                },
+            )
+
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        mock_send_reminder_emails_task.assert_called_with(
-            {'greeting': self.greeting, 'closing': self.closing},
-            [self.test_email],
-            str(self.subscription_plan.uuid),
-        )
+        mock_send_reminder_emails_task.assert_has_calls([
+            mock.call(
+                {'greeting': self.greeting, 'closing': self.closing},
+                [self.test_email],
+                str(self.subscription_plan.uuid),
+            ),
+            mock.call(
+                {'greeting': self.greeting, 'closing': self.closing},
+                ['other@example.com'],
+                str(self.subscription_plan.uuid),
+            ),
+        ])
 
     @ddt.data(
         ([{'name': 'user_email', 'filter_value': 'al'}], ['alice@example.com']),
@@ -1960,8 +1974,11 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(self.remind_url, request_payload)
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
-        revoked_emails = mock_send_reminder_emails_task.call_args[0][1]
-        assert sorted(revoked_emails) == expected_reminded_emails
+        if expected_reminded_emails:
+            reminded_emails = mock_send_reminder_emails_task.call_args_list[0][0][1]
+            assert sorted(reminded_emails) == expected_reminded_emails
+        else:
+            self.assertFalse(mock_send_reminder_emails_task.called)
 
     @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
     def test_remind_all_no_pending_licenses(self, mock_send_reminder_emails_task):
