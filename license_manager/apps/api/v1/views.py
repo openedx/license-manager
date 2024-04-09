@@ -977,12 +977,14 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                     )
                     return Response(error_message, status=status.HTTP_404_NOT_FOUND)
 
-        # Send activation reminder email
-        send_reminder_email_task.delay(
-            utils.get_custom_text(request.data),
-            user_emails,
-            subscription_uuid,
-        )
+        # Send reminder emails in batches
+        chunked_lists = chunks(user_emails, constants.REMINDER_EMAIL_BATCH_SIZE)
+        for assigned_license_email_chunk in chunked_lists:
+            send_reminder_email_task.delay(
+                utils.get_custom_text(request.data),
+                sorted(assigned_license_email_chunk),
+                subscription_uuid,
+            )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
