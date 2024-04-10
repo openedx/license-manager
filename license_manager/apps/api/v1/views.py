@@ -962,11 +962,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         if should_validate_emails:
             # Make sure there is a license that is still pending activation associated with the given emails
-            licenses = License.objects.filter(
-                subscription_plan=subscription_plan,
-                user_email__in=user_emails,
-                status=constants.ASSIGNED,
-            )
+            licenses = subscription_plan.assigned_licenses.filter(user_email__in=user_emails)
             license_by_email = {lcs.user_email: lcs for lcs in licenses}
             for email in user_emails:
                 pending_license = license_by_email.get(email)
