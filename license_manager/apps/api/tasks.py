@@ -27,6 +27,7 @@ from license_manager.apps.subscriptions.constants import (
     LICENSE_UTILIZATION_THRESHOLDS,
     NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD,
     PENDING_ACCOUNT_CREATION_BATCH_SIZE,
+    REMINDER_EMAIL_BATCH_SIZE,
     REVOCABLE_LICENSE_STATUSES,
     TRACK_LICENSE_CHANGES_BATCH_SIZE,
     NotificationChoices,
@@ -200,9 +201,18 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
         email_recipient_list (list of str): List of recipients to send the emails to.
         subscription_uuid (str): UUID (string representation) of the subscription that the recipients are associated
             with or will be associated with.
+    Raises:
+      An exception if the number of assigned licenses to send reminders for exceeds the max
+      allowed request size of the Braze campaign endpoint.
     """
     subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
-    pending_licenses = subscription_plan.licenses.filter(user_email__in=email_recipient_list).order_by('uuid')
+    pending_licenses = subscription_plan.assigned_licenses.filter(
+        user_email__in=email_recipient_list,
+    ).order_by('uuid')
+
+    if len(pending_licenses) > REMINDER_EMAIL_BATCH_SIZE:
+        raise Exception(f'Found more than {REMINDER_EMAIL_BATCH_SIZE} assigned licenses, no reminders sent')
+
     enterprise_api_client = EnterpriseApiClient()
     enterprise_customer = enterprise_api_client.get_enterprise_customer_data(subscription_plan.enterprise_customer_uuid)
     enterprise_slug = enterprise_customer.get('slug')
