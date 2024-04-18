@@ -23,8 +23,9 @@ backoff==1.10.0
     # via
     #   -r requirements/base.in
     #   analytics-python
-backports-zoneinfo[tzdata]==0.2.1
+backports-zoneinfo[tzdata]==0.2.1 ; python_version < "3.9"
     # via
+    #   -c requirements/constraints.txt
     #   celery
     #   django
     #   djangorestframework
