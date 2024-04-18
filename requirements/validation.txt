@@ -20,7 +20,7 @@ asgiref==3.8.1
     #   django
     #   django-cors-headers
     #   django-simple-history
-astroid==2.11.7
+astroid==1.3.8
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
@@ -57,18 +57,18 @@ billiard==4.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.34.84
+boto3==1.34.86
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.34.84
+botocore==1.34.86
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   boto3
     #   s3transfer
-celery==5.3.6
+celery==5.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -146,11 +146,6 @@ defusedxml==0.8.0rc2
     #   -r requirements/test.txt
     #   python3-openid
     #   social-auth-core
-dill==0.3.8
-    # via
-    #   -r requirements/quality.txt
-    #   -r requirements/test.txt
-    #   pylint
 django==4.2.11
     # via
     #   -c requirements/common_constraints.txt
@@ -323,7 +318,7 @@ exceptiongroup==1.2.0
     #   pytest
 factory-boy==3.3.0
     # via -r requirements/test.txt
-faker==24.9.0
+faker==24.11.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -334,6 +329,12 @@ idna==3.7
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
+importlib-metadata==6.11.0
+    # via
+    #   -c requirements/common_constraints.txt
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   logilab-common
 importlib-resources==6.4.0
     # via
     #   -r requirements/quality.txt
@@ -385,7 +386,7 @@ kombu==5.3.7
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-lazy-object-proxy==1.10.0
+logilab-common==2.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -407,6 +408,11 @@ monotonic==1.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   analytics-python
+mypy-extensions==1.0.0
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   logilab-common
 mysqlclient==2.2.4
     # via
     #   -r requirements/quality.txt
@@ -440,11 +446,6 @@ pkgutil-resolve-name==1.3.10
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   jsonschema
-platformdirs==4.2.0
-    # via
-    #   -r requirements/quality.txt
-    #   -r requirements/test.txt
-    #   pylint
 pluggy==1.4.0
     # via
     #   -r requirements/test.txt
@@ -484,7 +485,7 @@ pyjwt[crypto]==2.8.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==2.14.5
+pylint==1.8.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
@@ -498,7 +499,7 @@ pylint-celery==0.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-lint
-pylint-django==2.5.5
+pylint-django==0.8.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -613,10 +614,12 @@ six==1.16.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   analytics-python
+    #   astroid
     #   edx-auth-backends
     #   edx-lint
     #   edx-rbac
     #   pathlib2
+    #   pylint
     #   python-dateutil
 slumber==0.7.1
     # via
@@ -657,27 +660,19 @@ text-unidecode==1.3
     #   python-slugify
 tomli==2.0.1
     # via
-    #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   coverage
-    #   pylint
     #   pytest
-tomlkit==0.12.4
-    # via
-    #   -r requirements/quality.txt
-    #   -r requirements/test.txt
-    #   pylint
 typing-extensions==4.11.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   asgiref
-    #   astroid
     #   drf-spectacular
     #   edx-opaque-keys
     #   faker
     #   kombu
-    #   pylint
+    #   logilab-common
 tzdata==2024.1
     # via
     #   -r requirements/quality.txt
@@ -707,16 +702,11 @@ wcwidth==0.2.13
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   prompt-toolkit
-wrapt==1.11.2
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/quality.txt
-    #   -r requirements/test.txt
-    #   astroid
 zipp==3.18.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
+    #   importlib-metadata
     #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
