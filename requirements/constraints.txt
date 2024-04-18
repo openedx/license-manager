@@ -17,14 +17,17 @@
 diff-cover==4.0.0
 
 # Constraint from astroid 2.3.3
-wrapt==1.11.*
+wrapt==1.11.14
 
 # edx-lint>=5.3.0 and/or pylint>=2.15 throws a bunch of unknown option value errors
 edx-lint<5.3
 pylint<2.15
 astroid<2.12
 
-# Stay on LTS release 
-# This can be removed once all IDAs have been upgraded to Django 4.2 
+# Stay on LTS release
+# This can be removed once all IDAs have been upgraded to Django 4.2
 # and the global constraint has been updated from Django<4.0 to Django<4.3
 Django<4.3
+
+# For python greater than or equal to 3.9 backports.zoneinfo is causing failures
+backports.zoneinfo;python_version<"3.9"
