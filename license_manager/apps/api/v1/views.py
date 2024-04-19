@@ -11,7 +11,7 @@ from django.db import DatabaseError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from edx_rbac.decorators import permission_required
 from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
@@ -326,6 +326,13 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
         ).order_by('-start_date')
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary='List all SubscriptionPlans',
+        description='List all SubscriptionPlans for a given enterprise_customer_uuid',
+        parameters=[serializers.SubscriptionPlanQueryParamsSerializer],
+    ),
+)
 class SubscriptionViewSet(LearnerSubscriptionViewSet):
     """ Viewset for Admin only read operations on SubscriptionPlans."""
     permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION

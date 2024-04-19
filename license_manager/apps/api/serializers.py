@@ -505,3 +505,19 @@ class EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer(serializers.Serial
             'course_run_keys',
             'notify',
         ]
+
+
+class SubscriptionPlanQueryParamsSerializer(serializers.Serializer):  # pylint: disable=abstract-method
+    """
+    Serializer for the subscription plan query params
+    """
+
+    enterprise_customer_uuid = serializers.UUIDField(
+        required=False,
+        help_text='The UUID of the associated enterprise customer',
+    )
+
+    class Meta:
+        fields = [
+            'enterprise_customer_uuid',
+        ]
