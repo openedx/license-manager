@@ -20,5 +20,6 @@ disable+ =
     missing-class-docstring,
     missing-timeout,
     unsupported-binary-operation,
+    no-member,
     useless-option-value,
     unknown-option-value,
