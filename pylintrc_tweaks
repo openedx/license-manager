@@ -18,5 +18,7 @@ disable+ =
     consider-using-f-string,
     missing-module-docstring,
     missing-class-docstring,
+    missing-timeout,
+    unsupported-binary-operation,
     useless-option-value,
     unknown-option-value,
