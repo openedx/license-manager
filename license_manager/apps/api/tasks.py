@@ -15,6 +15,7 @@ from requests.exceptions import HTTPError
 from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
 from requests.exceptions import Timeout as RequestsTimeoutError
 
+from license_manager.apps.api.email import EmailClient
 import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api import utils
 from license_manager.apps.api.models import BulkEnrollmentJob
@@ -108,6 +109,38 @@ def create_braze_aliases_task(user_emails):
     except BrazeClientError as exc:
         logger.exception(exc)
         raise exc
+
+
+@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
+def send_assignment_email_task(custom_template_text, email_recipient_list, subscription_uuid):
+    """
+    Sends license assignment email(s) asynchronously.
+
+    Arguments:
+        custom_template_text (dict): Dictionary containing `greeting` and `closing` keys to be used for customizing
+            the email template.
+        email_recipient_list (list of str): List of recipients to send the emails to.
+        subscription_uuid (str): UUID (string representation) of the subscription that the recipients are associated
+            with or will be associated with.
+    """
+    subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
+    pending_licenses = subscription_plan.licenses.filter(user_email__in=email_recipient_list).order_by('uuid')
+    enterprise_api_client = EnterpriseApiClient()
+    enterprise_customer = enterprise_api_client.get_enterprise_customer_data(subscription_plan.enterprise_customer_uuid)
+
+    email_client = EmailClient()
+    pending_license_by_email = email_client.send_assignment_email(
+        pending_licenses,
+        enterprise_customer,
+        custom_template_text
+    )
+
+    emails_with_no_assignments = [
+        _email for _email in email_recipient_list
+        if _email not in pending_license_by_email
+    ]
+    if emails_with_no_assignments:
+        logger.warning(f'{LICENSE_DEBUG_PREFIX} No assignment email sent for {emails_with_no_assignments}')
 
 
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
