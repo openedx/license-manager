@@ -96,10 +96,10 @@ class EmailTaskTests(TestCase):
             )
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
-    def test_activation_task(self, mock_braze_client, mock_enterprise_client):
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', autospec=True, return_value=mock.MagicMock())
+    def test_assignment_email_task(self, mock_braze_client, mock_enterprise_client):
         """
-        Assert activation_task calls Braze API with the correct arguments.
+        Assert the `send_assignment_email_task()` calls Braze API with the correct arguments.
         """
         mock_enterprise_client().get_enterprise_customer_data.return_value = {
             'slug': self.enterprise_slug,
@@ -122,18 +122,22 @@ class EmailTaskTests(TestCase):
         ]
         self.assertNotIn('no-license@foo.com', called_emails)
 
-        for user_email in self.email_recipient_list:
-            expected_license_key = str(self.subscription_plan.licenses.get(
-                user_email=user_email
-            ).activation_key)
+        mock_enterprise_client().get_enterprise_customer_data.assert_called_once_with(
+            self.subscription_plan.enterprise_customer_uuid
+        )
 
-            mock_enterprise_client().get_enterprise_customer_data.assert_any_call(
-                self.subscription_plan.enterprise_customer_uuid
+        expected_alias_emails = []
+        expected_recipients = []
+
+        for user_email in self.email_recipient_list:
+            expected_license = self.subscription_plan.licenses.get(
+                user_email=user_email
             )
+            expected_alias_emails.append(user_email)
             expected_trigger_properties = {
                 'TEMPLATE_GREETING': 'Hello',
                 'TEMPLATE_CLOSING': 'Goodbye',
-                'license_activation_key': expected_license_key,
+                'license_activation_key': str(expected_license.activation_key),
                 'enterprise_customer_slug': self.enterprise_slug,
                 'enterprise_customer_name': self.enterprise_name,
                 'enterprise_sender_alias': self.enterprise_sender_alias,
@@ -146,19 +150,30 @@ class EmailTaskTests(TestCase):
                     'alias_name': user_email,
                 },
             }
-            mock_braze_client().send_campaign_message.assert_any_call(
-                settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN,
-                recipients=[expected_recipient],
-                trigger_properties=expected_trigger_properties,
-            )
+            expected_recipient['attributes'].update(get_license_tracking_properties(expected_license))
+            expected_recipient['trigger_properties'] = expected_trigger_properties
+            expected_recipients.append(expected_recipient)
+
+        # assert all emails sent for aliasing in a single call
+        actual_alias_call_emails = mock_braze_client.return_value.create_braze_alias.call_args_list[0][0][0]
+        assert sorted(expected_alias_emails) == sorted(actual_alias_call_emails)
+
+        # assert all recipients sent a campaign message in a single call
+        mock_send_message = mock_braze_client.return_value.send_campaign_message
+        actual_recipients_list = mock_send_message.call_args_list[0][1]['recipients']
+
+        def sort_key(x):
+            return x['attributes']['email']
+
+        assert sorted(expected_recipients, key=sort_key) == sorted(actual_recipients_list, key=sort_key)
 
     # pylint: disable=unused-argument
     @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    def test_activation_task_send_email_failure_logged(self, mock_enterprise_client, mock_braze_client, mock_logger):
+    def test_assignment_task_send_email_failure_logged(self, mock_enterprise_client, mock_braze_client, mock_logger):
         """
-        Tests that when sending the activate email fails, an error gets logged
+        Tests that when sending the assignment email fails, an error gets logged
         """
 
         with self.assertRaises(BrazeClientError):
@@ -177,7 +192,7 @@ class EmailTaskTests(TestCase):
 
         mock_logger.exception.assert_called_once()
 
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', autospec=True, return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     def test_send_reminder_email_task(self, mock_enterprise_client, mock_braze_client):
         """
