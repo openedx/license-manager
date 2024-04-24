@@ -40,3 +40,4 @@ rules
 simplejson
 zipp
 django-log-request-id
+git+https://github.com/mailchimp/mailchimp-transactional-python.git

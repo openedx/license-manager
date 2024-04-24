@@ -427,6 +427,9 @@ ENTERPRISE_SUBSIDY_CHECKSUM_MESSAGE_FORMAT = '{lms_user_id}:{course_key}:{licens
 
 SUBSCRIPTION_PLAN_RENEWAL_LOCK_PERIOD_HOURS = 12
 
+# Email
+TRANSACTIONAL_MAIL_SERVICE = 'braze'
+
 # Braze
 AUTOAPPLY_WITH_LEARNER_PORTAL_CAMPAIGN = ''
 AUTOAPPLY_NO_LEARNER_PORTAL_CAMPAIGN = ''
@@ -438,9 +441,9 @@ BRAZE_ACTIVATION_EMAIL_CAMPAIGN = ''
 BRAZE_REMIND_EMAIL_CAMPAIGN = ''
 BRAZE_REVOKE_CAP_EMAIL_CAMPAIGN = ''
 
-BRAZE_API_URL = ''
-BRAZE_API_KEY = os.environ.get('BRAZE_API_KEY', '')
-BRAZE_APP_ID = os.environ.get('BRAZE_APP_ID', '')
+BRAZE_API_KEY = "some"
+BRAZE_API_URL = "some"
+BRAZE_APP_ID = "some"
 
 # Set a datetime that a django action can reset license state to
 # Use year-month-day hour:minute:second format

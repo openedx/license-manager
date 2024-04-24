@@ -85,7 +85,7 @@ class EmailTaskTests(TestCase):
             ENTERPRISE_BRAZE_ALIAS_LABEL,
         )
 
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', side_effect=BrazeClientError)
     def test_create_braze_aliases_task_reraises_braze_exceptions(self, _):
         """
         Assert create_braze_aliases_task reraises any braze exceptions.
@@ -96,7 +96,7 @@ class EmailTaskTests(TestCase):
             )
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', autospec=True, return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', autospec=True, return_value=mock.MagicMock())
     def test_assignment_email_task(self, mock_braze_client, mock_enterprise_client):
         """
         Assert the `send_assignment_email_task()` calls Braze API with the correct arguments.
@@ -168,8 +168,8 @@ class EmailTaskTests(TestCase):
         assert sorted(expected_recipients, key=sort_key) == sorted(actual_recipients_list, key=sort_key)
 
     # pylint: disable=unused-argument
-    @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
+    @mock.patch('license_manager.apps.api.email.logger', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient.send_campaign_message', side_effect=BrazeClientError)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     def test_assignment_task_send_email_failure_logged(self, mock_enterprise_client, mock_braze_client, mock_logger):
         """
@@ -192,7 +192,7 @@ class EmailTaskTests(TestCase):
 
         mock_logger.exception.assert_called_once()
 
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', autospec=True, return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', autospec=True, return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     def test_send_reminder_email_task(self, mock_enterprise_client, mock_braze_client):
         """
@@ -271,7 +271,7 @@ class EmailTaskTests(TestCase):
                 True
             )
 
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', side_effect=BrazeClientError)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     def test_send_reminder_email_failure_no_remind_date_update(self, mock_enterprise_client, mock_braze_client):
         """
@@ -318,7 +318,7 @@ class EmailTaskTests(TestCase):
         assert self.subscription_plan_type == actual_subscription_plan_type  # pylint: disable=no-member
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     def test_send_post_activation_email_task(self, mock_braze_client, mock_enterprise_client):
         """
         Tests that the onboarding email task sends the email
@@ -357,7 +357,7 @@ class EmailTaskTests(TestCase):
         )
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', side_effect=BrazeClientError)
     def test_send_post_activation_email_task_reraises_braze_exceptions(self, _, mock_enterprise_client):
         """
         Assert send_post_activation_email_task reraises any braze exceptions.
@@ -373,7 +373,7 @@ class EmailTaskTests(TestCase):
             tasks.send_post_activation_email_task(self.enterprise_uuid, self.user_email)
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     def test_revocation_cap_email_task(self, mock_braze_client, mock_enterprise_client):
         """
         Tests that the email is sent with the right arguments
@@ -417,7 +417,7 @@ class EmailTaskTests(TestCase):
             )
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', side_effect=BrazeClientError)
     def test_revocation_cap_email_task_reraises_braze_exceptions(self, _, mock_enterprise_client):
         """
         Assert send_revocation_cap_notification_email_task reraises any braze exceptions.
@@ -454,7 +454,7 @@ class EmailTaskTests(TestCase):
         },
     )
     @ddt.unpack
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     def test_auto_applied_license_onboard_email(
         self, mock_enterprise_client, mock_braze_client, lp_search, identity_provider
@@ -504,7 +504,7 @@ class EmailTaskTests(TestCase):
         )
 
     @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', side_effect=Exception)
     def test_auto_applied_license_onboard_email_ent_client_error(
         self, mock_enterprise_client, mock_braze_client, mock_logger
@@ -518,7 +518,7 @@ class EmailTaskTests(TestCase):
         mock_logger.error.assert_called_once()
 
     @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', side_effect=BrazeClientError)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     def test_auto_applied_license_onboard_email_braze_client_error(
         self, mock_enterprise_client, mock_braze_client, mock_logger
@@ -892,7 +892,7 @@ class SendInitialUtilizationEmailTaskTests(BaseLicenseUtilizationEmailTaskTests)
         latest_history.save()
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     def test_email_already_sent(self, mock_braze_api_client, mock_enterprise_api_client):
         """
         Tests that email is not sent if it's already been sent before.
@@ -911,7 +911,7 @@ class SendInitialUtilizationEmailTaskTests(BaseLicenseUtilizationEmailTaskTests)
         mock_braze_api_client.assert_not_called()
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     def test_send_initial_utilization_email_task(self, mock_braze_api_client, mock_enterprise_api_client):
         """
         Tests that the Braze client is called and a Notification object is created.
@@ -940,7 +940,7 @@ class SendInitialUtilizationEmailTaskTests(BaseLicenseUtilizationEmailTaskTests)
             self.assertEqual(notification.last_sent, self.now)
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     def test_send_initial_utilization_email_task_failure(self, mock_braze_api_client, mock_enterprise_api_client):
         """
         Tests that db commits are rolled back if an error occurs.
@@ -991,7 +991,7 @@ class SendUtilizationThresholdReachedEmailTaskTests(BaseLicenseUtilizationEmailT
         )
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     def test_no_utilization_threshold_reached(self, mock_braze_api_client, mock_enterprise_api_client):
         """
         Tests that email is not sent if no utilization threshold has been reached.
@@ -1002,7 +1002,7 @@ class SendUtilizationThresholdReachedEmailTaskTests(BaseLicenseUtilizationEmailT
         mock_braze_api_client.assert_not_called()
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     def test_send_utilization_threshold_reached_email_task_previously_sent(
         self, mock_braze_api_client, mock_enterprise_api_client
     ):
@@ -1041,7 +1041,7 @@ class SendUtilizationThresholdReachedEmailTaskTests(BaseLicenseUtilizationEmailT
     )
     @ddt.unpack
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     def test_send_utilization_threshold_reached_email_task_success(
         self,
         mock_braze_api_client,
@@ -1081,7 +1081,7 @@ class SendUtilizationThresholdReachedEmailTaskTests(BaseLicenseUtilizationEmailT
         )
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     def test_send_utilization_threshold_reached_email_task_failure(
         self, mock_braze_api_client, mock_enterprise_api_client
     ):

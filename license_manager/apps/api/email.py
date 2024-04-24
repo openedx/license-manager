@@ -1,7 +1,6 @@
 import logging
 
 from braze.exceptions import BrazeClientError
-from license_manager.apps.api.tasks import LICENSE_DEBUG_PREFIX
 from license_manager.apps.subscriptions.constants import ENTERPRISE_BRAZE_ALIAS_LABEL
 from license_manager.apps.subscriptions.event_utils import get_license_tracking_properties
 from license_manager.apps.subscriptions.utils import get_enterprise_sender_alias
@@ -13,6 +12,7 @@ from license_manager.apps.api_client.mailchimp import MailchimpTransactionalApiC
 
 
 logger = logging.getLogger(__name__)
+LICENSE_DEBUG_PREFIX = '[LICENSE DEBUGGING]'
 
 
 class EmailClient:
@@ -38,34 +38,31 @@ class EmailClient:
             },
         }
 
-    def _send_braze_assignement_email(self, template_context, user_email, enterprise_name):
+    def _send_braze_email(self, template_context, user_email, braze_campaign_id, err_message, create_alias=False):
         recipient = self._aliased_recipient_object_from_email(user_email)
-        braze_campaign_id = settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN
         try:
+            if create_alias:
+                self._braze_client.create_braze_alias(
+                    [user_email],
+                    ENTERPRISE_BRAZE_ALIAS_LABEL,
+                )
             self._braze_client.send_campaign_message(
                 braze_campaign_id,
                 recipients=[recipient],
                 trigger_properties=template_context,
             )
-            logger.info(
-                f'{LICENSE_DEBUG_PREFIX} Sent license assignment email '
-                f'braze campaign {braze_campaign_id} to {recipient}'
-            )
+            logger.info(f'{LICENSE_DEBUG_PREFIX} Sent email for braze campaign {braze_campaign_id} to {recipient}')
         except BrazeClientError as exc:
-            message = (
-                'License manager activation email sending received an ' f'exception for enterprise: {enterprise_name}.'
-            )
-            logger.exception(message)
+            logger.exception(err_message)
             raise exc
 
-    def _send_mailchimp_assignement_email(self, merge_vars, user_email, enterprise_name):
-        template_slug = settings.MAILCHIMP_ASSIGNMENT_EMAIL_TEMPLATE_SLUG
+    def _send_mailchimp_email(self, merge_vars, user_email, subject, template_slug, err_message):
         try:
             self._mailchimp_client.send_message(
                 template_slug,
                 merge_vars,
                 [{'email': user_email}],
-                subject=settings.MAILCHIMP_ASSIGNMENT_EMAIL_SUBJECT,
+                subject=subject,
                 recipient_metadata=[
                     {
                         'rcpt': user_email,
@@ -73,15 +70,9 @@ class EmailClient:
                     }
                 ],
             )
-            logger.info(
-                f'{LICENSE_DEBUG_PREFIX} Sent license assignment email '
-                f'mailchimp template {template_slug} to {user_email}'
-            )
+            logger.info(f'{LICENSE_DEBUG_PREFIX} Sent email for mailchimp template {template_slug} to {user_email}')
         except MailChimpClientError as exc:
-            message = (
-                'License manager activation email sending received an ' f'exception for enterprise: {enterprise_name}.'
-            )
-            logger.exception(message)
+            logger.exception(err_message)
             raise exc
 
     def send_assignment_email(self, pending_licenses, enterprise_customer, custom_template_text):
@@ -106,7 +97,14 @@ class EmailClient:
                     'enterprise_sender_alias': enterprise_sender_alias,
                     'enterprise_contact_email': enterprise_contact_email,
                 }
-                self._send_braze_assignement_email(template_context, user_email, enterprise_name)
+                self._send_braze_email(
+                    template_context,
+                    user_email,
+                    braze_campaign_id=settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN,
+                    err_message=(
+                        f'License manager activation email sending received an exception for enterprise: {enterprise_name}.'
+                    ),
+                )
             elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
                 template_context = [
                     {'name': 'TEMPLATE_GREETING', 'content': custom_template_text['greeting']},
@@ -117,8 +115,14 @@ class EmailClient:
                     {'name': 'enterprise_sender_alias', 'content': enterprise_sender_alias},
                     {'name': 'enterprise_contact_email', 'content': enterprise_contact_email},
                 ]
-                self._send_mailchimp_assignement_email(
-                    [{'rcpt': user_email, 'vars': template_context}], user_email, enterprise_name
+                self._send_mailchimp_email(
+                    [{'rcpt': user_email, 'vars': template_context}],
+                    user_email,
+                    template_slug=settings.MAILCHIMP_ASSIGNMENT_EMAIL_TEMPLATE_SLUG,
+                    subject=settings.MAILCHIMP_ASSIGNMENT_EMAIL_SUBJECT,
+                    err_message=(
+                        f'License manager activation email sending received an exception for enterprise: {enterprise_name}.'
+                    ),
                 )
         return pending_license_by_email
 
@@ -217,3 +221,154 @@ class EmailClient:
         elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
             self._send_mailchimp_reminder_email(messages, user_emails, recipient_metadata)
         return pending_license_by_email
+
+    def send_post_activation_email(self, enterprise_customer, user_email):
+        enterprise_name = enterprise_customer.get('name')
+        enterprise_slug = enterprise_customer.get('slug')
+        enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
+        enterprise_contact_email = enterprise_customer.get('contact_email')
+        if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
+            template_context = {
+                'enterprise_customer_slug': enterprise_slug,
+                'enterprise_customer_name': enterprise_name,
+                'enterprise_sender_alias': enterprise_sender_alias,
+                'enterprise_contact_email': enterprise_contact_email,
+            }
+            self._send_braze_email(
+                template_context,
+                user_email,
+                settings.BRAZE_ACTIVATION_EMAIL_CAMPAIGN,
+                err_message=f'Error hitting Braze API. Onboarding email to {user_email} for license failed.',
+                create_alias=True,
+            )
+        elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
+            merge_vars = [
+                {'name': 'enterprise_customer_slug', 'content': enterprise_slug},
+                {'name': 'enterprise_customer_name', 'content': enterprise_name},
+                {'name': 'enterprise_sender_alias', 'content': enterprise_sender_alias},
+                {'name': 'enterprise_contact_email', 'content': enterprise_contact_email},
+            ]
+            self._send_mailchimp_email(
+                {'rcpt': user_email, 'vars': merge_vars},
+                user_email,
+                subject=settings.MAILCHIMP_ACTIVATION_EMAIL_SUBJECT,
+                template_slug=settings.MAILCHIMP_ACTIVATION_EMAIL_TEMPLATE_NAME,
+                err_message=f'Error hitting Mailchimp API. Onboarding email to {user_email} for license failed.',
+            )
+
+    def send_auto_applied_license_email(self, enterprise_customer, user_email):
+        enterprise_slug = enterprise_customer.get('slug')
+        enterprise_name = enterprise_customer.get('name')
+        learner_portal_search_enabled = enterprise_customer.get('enable_integrated_customer_learner_portal_search')
+        identity_provider = enterprise_customer.get('identity_provider')
+        enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
+        enterprise_contact_email = enterprise_customer.get('contact_email')
+
+        if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
+            if identity_provider and learner_portal_search_enabled is False:
+                braze_campaign_id = settings.AUTOAPPLY_NO_LEARNER_PORTAL_CAMPAIGN
+            else:
+                braze_campaign_id = settings.AUTOAPPLY_WITH_LEARNER_PORTAL_CAMPAIGN
+
+            # Form data we want to hand to the campaign's email template
+            braze_trigger_properties = {
+                'enterprise_customer_slug': enterprise_slug,
+                'enterprise_customer_name': enterprise_name,
+                'enterprise_sender_alias': enterprise_sender_alias,
+                'enterprise_contact_email': enterprise_contact_email,
+            }
+            self._send_braze_email(
+                braze_trigger_properties,
+                user_email,
+                braze_campaign_id,
+                err_message=(
+                    f'Error hitting Braze API. Onboarding email to {user_email} for auto applied license failed.'
+                ),
+                create_alias=True,
+            )
+        elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
+            if identity_provider and learner_portal_search_enabled is False:
+                template_slug = settings.MAILCHIMP_AUTOAPPLY_NO_LEARNER_PORTAL_TEMPLATE
+                subject = settings.MAILCHIMP_AUTOAPPLY_NO_LEARNER_PORTAL_SUBJECT
+            else:
+                template_slug = settings.MAILCHIMP_AUTOAPPLY_WITH_LEARNER_PORTAL_TEMPLATE
+                subject = settings.MAILCHIMP_AUTOAPPLY_WITH_LEARNER_PORTAL_SUBJECT
+            merge_vars = [
+                {'name': 'enterprise_customer_slug', 'content': enterprise_slug},
+                {'name': 'enterprise_customer_name', 'content': enterprise_name},
+                {'name': 'enterprise_sender_alias', 'content': enterprise_sender_alias},
+                {'name': 'enterprise_contact_email', 'content': enterprise_contact_email},
+            ]
+            self._send_mailchimp_email(
+                {'rcpt': user_email, 'vars': merge_vars},
+                user_email,
+                subject=subject,
+                template_slug=template_slug,
+                err_message=(
+                    f'Error hitting Mailchimp API. Onboarding email to {user_email} for auto applied license failed.'
+                ),
+            )
+
+    def send_revocation_cap_notification_email(self, subscription_plan, enterprise_name, revocation_date):
+        if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
+            braze_campaign_id = settings.BRAZE_REVOKE_CAP_EMAIL_CAMPAIGN
+            braze_trigger_properties = {
+                'SUBSCRIPTION_TITLE': subscription_plan.title,
+                'NUM_REVOCATIONS_APPLIED': subscription_plan.num_revocations_applied,
+                'ENTERPRISE_NAME': enterprise_name,
+                'REVOKED_LIMIT_REACHED_DATE': revocation_date,
+            }
+            self._send_braze_email(
+                braze_trigger_properties,
+                settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
+                braze_campaign_id,
+                err_message='Revocation cap notification email sending received an exception.',
+                create_alias=True,
+            )
+        elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
+            template_slug = settings.MAILCHIMP_REVOKE_CAP_EMAIL_TEMPLATE_NAME
+            merge_vars = [
+                {'name': 'SUBSCRIPTION_TITLE', 'content': subscription_plan.title},
+                {'name': 'NUM_REVOCATIONS_APPLIED', 'content': subscription_plan.num_revocations_applied},
+                {'name': 'ENTERPRISE_NAME', 'content': enterprise_name},
+                {'name': 'REVOKED_LIMIT_REACHED_DATE', 'content': revocation_date},
+            ]
+            self._send_mailchimp_email(
+                {'rcpt': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS, 'vars': merge_vars},
+                settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
+                subject=settings.MAILCHIMP_REVOKE_CAP_EMAIL_SUBJECT,
+                template_slug=template_slug,
+                err_message='Revocation cap notification email sending received an exception.',
+            )
+
+    def send_bulk_enrollment_results_email(self, subscription_plan, enterprise_name, revocation_date):
+        if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
+            braze_campaign_id = settings.BRAZE_REVOKE_CAP_EMAIL_CAMPAIGN
+            braze_trigger_properties = {
+                'SUBSCRIPTION_TITLE': subscription_plan.title,
+                'NUM_REVOCATIONS_APPLIED': subscription_plan.num_revocations_applied,
+                'ENTERPRISE_NAME': enterprise_name,
+                'REVOKED_LIMIT_REACHED_DATE': revocation_date,
+            }
+            self._send_braze_email(
+                braze_trigger_properties,
+                settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
+                braze_campaign_id,
+                err_message='Revocation cap notification email sending received an exception.',
+                create_alias=True,
+            )
+        elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
+            template_slug = settings.MAILCHIMP_REVOKE_CAP_EMAIL_TEMPLATE_NAME
+            merge_vars = [
+                {'name': 'SUBSCRIPTION_TITLE', 'content': subscription_plan.title},
+                {'name': 'NUM_REVOCATIONS_APPLIED', 'content': subscription_plan.num_revocations_applied},
+                {'name': 'ENTERPRISE_NAME', 'content': enterprise_name},
+                {'name': 'REVOKED_LIMIT_REACHED_DATE', 'content': revocation_date},
+            ]
+            self._send_mailchimp_email(
+                {'rcpt': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS, 'vars': merge_vars},
+                settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
+                subject=settings.MAILCHIMP_REVOKE_CAP_EMAIL_SUBJECT,
+                template_slug=template_slug,
+                err_message='Revocation cap notification email sending received an exception.',
+            )

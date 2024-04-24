@@ -47,7 +47,6 @@ from license_manager.apps.subscriptions.models import (
 from license_manager.apps.subscriptions.utils import (
     chunks,
     get_admin_portal_url,
-    get_enterprise_sender_alias,
     localized_utcnow,
 )
 
@@ -309,38 +308,7 @@ def send_post_activation_email_task(enterprise_customer_uuid, user_email):
     Asynchronously sends post license activation email to learner.
     """
     enterprise_customer = EnterpriseApiClient().get_enterprise_customer_data(enterprise_customer_uuid)
-    enterprise_name = enterprise_customer.get('name')
-    enterprise_slug = enterprise_customer.get('slug')
-    enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
-    enterprise_contact_email = enterprise_customer.get('contact_email')
-
-    braze_campaign_id = settings.BRAZE_ACTIVATION_EMAIL_CAMPAIGN
-    braze_trigger_properties = {
-        'enterprise_customer_slug': enterprise_slug,
-        'enterprise_customer_name': enterprise_name,
-        'enterprise_sender_alias': enterprise_sender_alias,
-        'enterprise_contact_email': enterprise_contact_email,
-    }
-    recipient = _aliased_recipient_object_from_email(user_email)
-
-    try:
-        braze_client_instance = BrazeApiClient()
-        braze_client_instance.create_braze_alias(
-            [user_email],
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
-        )
-        braze_client_instance.send_campaign_message(
-            braze_campaign_id,
-            recipients=[recipient],
-            trigger_properties=braze_trigger_properties,
-        )
-    except BrazeClientError as exc:
-        message = (
-            'Error hitting Braze API. '
-            f'Onboarding email to {user_email} for license failed.'
-        )
-        logger.exception(message)
-        raise exc
+    EmailClient().send_post_activation_email(enterprise_customer, user_email)
 
 
 @shared_task(base=LoggedTaskWithRetry)
@@ -350,57 +318,9 @@ def send_auto_applied_license_email_task(enterprise_customer_uuid, user_email):
 
     Uses Braze client to send email via Braze campaign.
     """
-    try:
-        # Get some info about the enterprise customer
-        enterprise_api_client = EnterpriseApiClient()
-        enterprise_customer = enterprise_api_client.get_enterprise_customer_data(enterprise_customer_uuid)
-        enterprise_slug = enterprise_customer.get('slug')
-        enterprise_name = enterprise_customer.get('name')
-        learner_portal_search_enabled = enterprise_customer.get('enable_integrated_customer_learner_portal_search')
-        identity_provider = enterprise_customer.get('identity_provider')
-        enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
-        enterprise_contact_email = enterprise_customer.get('contact_email')
-    except Exception:  # pylint: disable=broad-except
-        message = (
-            f'Error getting data about the enterprise_customer {enterprise_customer_uuid}. '
-            f'Onboarding email to {user_email} for auto applied license failed.'
-        )
-        logger.error(message, exc_info=True)
-        return
-
-    # Determine which email campaign to use
-    if identity_provider and learner_portal_search_enabled is False:
-        braze_campaign_id = settings.AUTOAPPLY_NO_LEARNER_PORTAL_CAMPAIGN
-    else:
-        braze_campaign_id = settings.AUTOAPPLY_WITH_LEARNER_PORTAL_CAMPAIGN
-
-    # Form data we want to hand to the campaign's email template
-    braze_trigger_properties = {
-        'enterprise_customer_slug': enterprise_slug,
-        'enterprise_customer_name': enterprise_name,
-        'enterprise_sender_alias': enterprise_sender_alias,
-        'enterprise_contact_email': enterprise_contact_email,
-    }
-    recipient = _aliased_recipient_object_from_email(user_email)
-
-    try:
-        # Hit the Braze api to send the email
-        braze_client_instance = BrazeApiClient()
-        braze_client_instance.create_braze_alias(
-            [user_email],
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
-        )
-        braze_client_instance.send_campaign_message(
-            braze_campaign_id,
-            recipients=[recipient],
-            trigger_properties=braze_trigger_properties,
-        )
-    except BrazeClientError:
-        message = (
-            'Error hitting Braze API. '
-            f'Onboarding email to {user_email} for auto applied license failed.'
-        )
-        logger.error(message, exc_info=True)
+    enterprise_api_client = EnterpriseApiClient()
+    enterprise_customer = enterprise_api_client.get_enterprise_customer_data(enterprise_customer_uuid)
+    EmailClient().send_auto_applied_license_email(enterprise_customer, user_email)
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -501,46 +421,7 @@ def send_revocation_cap_notification_email_task(subscription_uuid):
 
     now = localized_utcnow()
     revocation_date = datetime.strftime(now, "%B %d, %Y, %I:%M%p %Z")
-
-    braze_campaign_id = settings.BRAZE_REVOKE_CAP_EMAIL_CAMPAIGN
-    braze_trigger_properties = {
-        'SUBSCRIPTION_TITLE': subscription_plan.title,
-        'NUM_REVOCATIONS_APPLIED': subscription_plan.num_revocations_applied,
-        'ENTERPRISE_NAME': enterprise_name,
-        'REVOKED_LIMIT_REACHED_DATE': revocation_date,
-    }
-    recipient = _aliased_recipient_object_from_email(settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS)
-
-    try:
-        braze_client_instance = BrazeApiClient()
-        braze_client_instance.create_braze_alias(
-            [settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS],
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
-        )
-        braze_client_instance.send_campaign_message(
-            braze_campaign_id,
-            recipients=[recipient],
-            trigger_properties=braze_trigger_properties,
-        )
-
-    except BrazeClientError as exc:
-        message = 'Revocation cap notification email sending received an exception.'
-        logger.exception(message)
-        raise exc
-
-
-def _aliased_recipient_object_from_email(user_email):
-    """
-    Returns a dictionary with a braze recipient object, including
-    a braze alias object.
-    """
-    return {
-        'attributes': {'email': user_email},
-        'user_alias': {
-            'alias_label': ENTERPRISE_BRAZE_ALIAS_LABEL,
-            'alias_name': user_email,
-        },
-    }
+    EmailClient().send_revocation_cap_notification_email(subscription_plan, enterprise_name, revocation_date)
 
 
 @shared_task(base=LoggedTaskWithRetry)
