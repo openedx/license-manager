@@ -29,7 +29,7 @@ class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
     def _get_recipients_dict(recipients):
         return [{'email': recipient for recipient in recipients}]
 
-    def send_message(self, template_slug, merge_vars, user_emails, subject, recipient_metadata=None):
+    def send_message(self, template_slug, merge_vars, user_emails, subject, recipient_metadata=None, global_merge_vars=None):
         """Send message via mailchimp transactional api.
         Docs: https://mailchimp.com/developer/transactional/api/messages/send-using-message-template/
 
@@ -39,6 +39,7 @@ class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
             user_emails (list[str]): List of user emails
             subject (str): Email subject
             recipient_metadata (List[dict[str, dict]]): List of per-user metadata
+            global_merge_vars (list[dict[str, any]]): List of global merge vars
 
         Returns:
             response object from mailchimp
@@ -54,6 +55,7 @@ class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
                 'merge_vars': merge_vars,
                 'merge_language': getattr(settings, 'MAILCHIMP_MERGE_LANGUAGE', 'handlebars'),
                 'recipient_metadata': recipient_metadata or [],
+                'global_merge_vars': global_merge_vars or [],
             },
         )
         return response

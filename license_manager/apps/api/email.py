@@ -38,7 +38,7 @@ class EmailClient:
             },
         }
 
-    def _send_braze_email(self, template_context, user_email, braze_campaign_id, err_message, create_alias=False):
+    def _send_single_braze_email(self, template_context, user_email, braze_campaign_id, err_message, create_alias=False):
         recipient = self._aliased_recipient_object_from_email(user_email)
         try:
             if create_alias:
@@ -56,7 +56,7 @@ class EmailClient:
             logger.exception(err_message)
             raise exc
 
-    def _send_mailchimp_email(self, merge_vars, user_email, subject, template_slug, err_message):
+    def _send_single_mailchimp_email(self, merge_vars, user_email, subject, template_slug, err_message):
         try:
             self._mailchimp_client.send_message(
                 template_slug,
@@ -97,7 +97,7 @@ class EmailClient:
                     'enterprise_sender_alias': enterprise_sender_alias,
                     'enterprise_contact_email': enterprise_contact_email,
                 }
-                self._send_braze_email(
+                self._send_single_braze_email(
                     template_context,
                     user_email,
                     braze_campaign_id=settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN,
@@ -115,10 +115,10 @@ class EmailClient:
                     {'name': 'enterprise_sender_alias', 'content': enterprise_sender_alias},
                     {'name': 'enterprise_contact_email', 'content': enterprise_contact_email},
                 ]
-                self._send_mailchimp_email(
+                self._send_single_mailchimp_email(
                     [{'rcpt': user_email, 'vars': template_context}],
                     user_email,
-                    template_slug=settings.MAILCHIMP_ASSIGNMENT_EMAIL_TEMPLATE_SLUG,
+                    template_slug=settings.MAILCHIMP_ASSIGNMENT_EMAIL_TEMPLATE_NAME,
                     subject=settings.MAILCHIMP_ASSIGNMENT_EMAIL_SUBJECT,
                     err_message=(
                         f'License manager activation email sending received an exception for enterprise: {enterprise_name}.'
@@ -149,7 +149,7 @@ class EmailClient:
             raise exc
 
     def _send_mailchimp_reminder_email(self, merge_vars, user_emails, recipient_metadata):
-        template_slug = settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE_SLUG
+        template_slug = settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE_NAME
         try:
             self._mailchimp_client.send_message(
                 template_slug,
@@ -165,7 +165,7 @@ class EmailClient:
         except MailChimpClientError as exc:
             message = (
                 'Error hitting Mailchimp API. '
-                f'reminder email to {settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE_SLUG} for license failed.'
+                f'reminder email to {settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE_NAME} for license failed.'
             )
             logger.exception(message)
             raise exc
@@ -234,7 +234,7 @@ class EmailClient:
                 'enterprise_sender_alias': enterprise_sender_alias,
                 'enterprise_contact_email': enterprise_contact_email,
             }
-            self._send_braze_email(
+            self._send_single_braze_email(
                 template_context,
                 user_email,
                 settings.BRAZE_ACTIVATION_EMAIL_CAMPAIGN,
@@ -248,7 +248,7 @@ class EmailClient:
                 {'name': 'enterprise_sender_alias', 'content': enterprise_sender_alias},
                 {'name': 'enterprise_contact_email', 'content': enterprise_contact_email},
             ]
-            self._send_mailchimp_email(
+            self._send_single_mailchimp_email(
                 {'rcpt': user_email, 'vars': merge_vars},
                 user_email,
                 subject=settings.MAILCHIMP_ACTIVATION_EMAIL_SUBJECT,
@@ -277,7 +277,7 @@ class EmailClient:
                 'enterprise_sender_alias': enterprise_sender_alias,
                 'enterprise_contact_email': enterprise_contact_email,
             }
-            self._send_braze_email(
+            self._send_single_braze_email(
                 braze_trigger_properties,
                 user_email,
                 braze_campaign_id,
@@ -299,7 +299,7 @@ class EmailClient:
                 {'name': 'enterprise_sender_alias', 'content': enterprise_sender_alias},
                 {'name': 'enterprise_contact_email', 'content': enterprise_contact_email},
             ]
-            self._send_mailchimp_email(
+            self._send_single_mailchimp_email(
                 {'rcpt': user_email, 'vars': merge_vars},
                 user_email,
                 subject=subject,
@@ -318,7 +318,7 @@ class EmailClient:
                 'ENTERPRISE_NAME': enterprise_name,
                 'REVOKED_LIMIT_REACHED_DATE': revocation_date,
             }
-            self._send_braze_email(
+            self._send_single_braze_email(
                 braze_trigger_properties,
                 settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
                 braze_campaign_id,
@@ -333,7 +333,7 @@ class EmailClient:
                 {'name': 'ENTERPRISE_NAME', 'content': enterprise_name},
                 {'name': 'REVOKED_LIMIT_REACHED_DATE', 'content': revocation_date},
             ]
-            self._send_mailchimp_email(
+            self._send_single_mailchimp_email(
                 {'rcpt': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS, 'vars': merge_vars},
                 settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
                 subject=settings.MAILCHIMP_REVOKE_CAP_EMAIL_SUBJECT,
@@ -341,34 +341,80 @@ class EmailClient:
                 err_message='Revocation cap notification email sending received an exception.',
             )
 
-    def send_bulk_enrollment_results_email(self, subscription_plan, enterprise_name, revocation_date):
+    def send_bulk_enrollment_results_email(self, enterprise_customer, bulk_enrollment_job, admin_users):
         if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
-            braze_campaign_id = settings.BRAZE_REVOKE_CAP_EMAIL_CAMPAIGN
-            braze_trigger_properties = {
-                'SUBSCRIPTION_TITLE': subscription_plan.title,
-                'NUM_REVOCATIONS_APPLIED': subscription_plan.num_revocations_applied,
-                'ENTERPRISE_NAME': enterprise_name,
-                'REVOKED_LIMIT_REACHED_DATE': revocation_date,
-            }
-            self._send_braze_email(
-                braze_trigger_properties,
-                settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
-                braze_campaign_id,
-                err_message='Revocation cap notification email sending received an exception.',
-                create_alias=True,
-            )
+            campaign_id = settings.BULK_ENROLL_RESULT_CAMPAIGN
+            # https://web.archive.org/web/20211122135949/https://www.braze.com/docs/api/objects_filters/recipient_object/
+            recipients = []
+            for user in admin_users:
+                if int(user['id']) != bulk_enrollment_job.lms_user_id:
+                    continue
+                # must use a mix of send_to_existing_only: false + enternal_id w/ attributes to send to new braze profiles
+                recipient = {
+                    'send_to_existing_only': False,
+                    'external_user_id': str(user['id']),
+                    'attributes': {
+                        'email': user['email'],
+                    }
+                }
+                recipients.append(recipient)
+                break
+
+            try:
+                self._braze_client.send_campaign_message(
+                    campaign_id,
+                    recipients=recipients,
+                    trigger_properties={
+                        'enterprise_customer_slug': enterprise_customer.get('slug'),
+                        'enterprise_customer_name': enterprise_customer.get('name'),
+                        'bulk_enrollment_job_uuid': str(bulk_enrollment_job.uuid),
+                    }
+                )
+                msg = (
+                    f'success _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
+                    f'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
+                )
+                logger.info(msg)
+            except BrazeClientError as ex:
+                msg = (
+                    f'failed _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
+                    f'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
+                )
+                logger.error(msg, exc_info=True)
+                raise ex
         elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
-            template_slug = settings.MAILCHIMP_REVOKE_CAP_EMAIL_TEMPLATE_NAME
-            merge_vars = [
-                {'name': 'SUBSCRIPTION_TITLE', 'content': subscription_plan.title},
-                {'name': 'NUM_REVOCATIONS_APPLIED', 'content': subscription_plan.num_revocations_applied},
-                {'name': 'ENTERPRISE_NAME', 'content': enterprise_name},
-                {'name': 'REVOKED_LIMIT_REACHED_DATE', 'content': revocation_date},
-            ]
-            self._send_mailchimp_email(
-                {'rcpt': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS, 'vars': merge_vars},
-                settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
-                subject=settings.MAILCHIMP_REVOKE_CAP_EMAIL_SUBJECT,
-                template_slug=template_slug,
-                err_message='Revocation cap notification email sending received an exception.',
-            )
+            template_name = settings.MAILCHIMP_BULK_ENROLL_RESULT_TEMPLATE_NAME
+            user_emails = []
+            recipient_metadata = []
+            for user in admin_users:
+                if int(user['id']) != bulk_enrollment_job.lms_user_id:
+                    continue
+                user_emails.append({'email': user['email']})
+                recipient_metadata.append({'rcpt': user['email'], 'values': {'email': user['email']}})
+                break
+
+            try:
+                self._mailchimp_client.send_message(
+                    template_name,
+                    merge_vars=[],
+                    global_merge_vars=[
+                        {'name': 'enterprise_customer_slug', 'content': enterprise_customer.get('slug')},
+                        {'name': 'enterprise_customer_name', 'content': enterprise_customer.get('name')},
+                        {'name': 'bulk_enrollment_job_uuid', 'content': str(bulk_enrollment_job.uuid)},
+                    ],
+                    user_emails=user_emails,
+                    subject=settings.MAILCHIMP_BULK_ENROLL_RESULT_SUBJECT,
+                    recipient_metadata=recipient_metadata,
+                )
+                msg = (
+                    f'success _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
+                    f'template_name={template_name} lms_user_id={bulk_enrollment_job.lms_user_id}'
+                )
+                logger.info(msg)
+            except MailChimpClientError as ex:
+                msg = (
+                    f'failed _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
+                    f'template_name={template_name} lms_user_id={bulk_enrollment_job.lms_user_id}'
+                )
+                logger.error(msg, exc_info=True)
+                raise ex

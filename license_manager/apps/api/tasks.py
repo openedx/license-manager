@@ -35,7 +35,6 @@ from license_manager.apps.subscriptions.constants import (
     NotificationChoices,
 )
 from license_manager.apps.subscriptions.event_utils import (
-    get_license_tracking_properties,
     track_license_changes,
 )
 from license_manager.apps.subscriptions.models import (
@@ -453,66 +452,22 @@ def revoke_all_licenses_task(subscription_uuid):
         execute_post_revocation_tasks(**result)
 
 
-def _send_bulk_enrollment_results_email(
-    bulk_enrollment_job,
-    campaign_id,
-):
+def _send_bulk_enrollment_results_email(bulk_enrollment_job):
     """
     Sends email with properties required to detail the results of a bulk enrollment job.
 
     Arguments:
         bulk_enrollment_job (BulkEnrollmentJob): the completed bulk enrollment job
-        campaign_id: (str): The Braze campaign identifier
 
     """
-    try:
-        enterprise_api_client = EnterpriseApiClient()
-        enterprise_customer = enterprise_api_client.get_enterprise_customer_data(
-            bulk_enrollment_job.enterprise_customer_uuid,
-        )
-
-        admin_users = enterprise_api_client.get_enterprise_admin_users(
-            bulk_enrollment_job.enterprise_customer_uuid,
-        )
-
-        # https://web.archive.org/web/20211122135949/https://www.braze.com/docs/api/objects_filters/recipient_object/
-        recipients = []
-        for user in admin_users:
-            if int(user['id']) != bulk_enrollment_job.lms_user_id:
-                continue
-            # must use a mix of send_to_existing_only: false + enternal_id w/ attributes to send to new braze profiles
-            recipient = {
-                'send_to_existing_only': False,
-                'external_user_id': str(user['id']),
-                'attributes': {
-                    'email': user['email'],
-                }
-            }
-            recipients.append(recipient)
-            break
-
-        braze_client = BrazeApiClient()
-        braze_client.send_campaign_message(
-            campaign_id,
-            recipients=recipients,
-            trigger_properties={
-                'enterprise_customer_slug': enterprise_customer.get('slug'),
-                'enterprise_customer_name': enterprise_customer.get('name'),
-                'bulk_enrollment_job_uuid': str(bulk_enrollment_job.uuid),
-            }
-        )
-        msg = (
-            f'success _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
-            f'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
-        )
-        logger.info(msg)
-    except Exception as ex:
-        msg = (
-            f'failed _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
-            f'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
-        )
-        logger.error(msg, exc_info=True)
-        raise ex
+    enterprise_api_client = EnterpriseApiClient()
+    enterprise_customer = enterprise_api_client.get_enterprise_customer_data(
+        bulk_enrollment_job.enterprise_customer_uuid,
+    )
+    admin_users = enterprise_api_client.get_enterprise_admin_users(
+        bulk_enrollment_job.enterprise_customer_uuid,
+    )
+    EmailClient().send_bulk_enrollment_results_email(enterprise_customer, bulk_enrollment_job, admin_users)
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -623,10 +578,7 @@ def enterprise_enrollment_license_subsidy_task(
                 bulk_enrollment_job.upload_results(result_file.name)
 
             if hasattr(settings, "BULK_ENROLL_RESULT_CAMPAIGN") and settings.BULK_ENROLL_RESULT_CAMPAIGN:
-                _send_bulk_enrollment_results_email(
-                    bulk_enrollment_job=bulk_enrollment_job,
-                    campaign_id=settings.BULK_ENROLL_RESULT_CAMPAIGN,
-                )
+                _send_bulk_enrollment_results_email(bulk_enrollment_job=bulk_enrollment_job)
 
         return results
     except Exception as ex:
