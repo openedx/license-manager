@@ -1,9 +1,10 @@
+from datetime import datetime
 import logging
 
 from braze.exceptions import BrazeClientError
 from license_manager.apps.subscriptions.constants import ENTERPRISE_BRAZE_ALIAS_LABEL
 from license_manager.apps.subscriptions.event_utils import get_license_tracking_properties
-from license_manager.apps.subscriptions.utils import get_enterprise_sender_alias
+from license_manager.apps.subscriptions.utils import get_admin_portal_url, get_enterprise_sender_alias
 from mailchimp_transactional.api_client import ApiClientError as MailChimpClientError
 from django.conf import settings
 
@@ -38,7 +39,9 @@ class EmailClient:
             },
         }
 
-    def _send_single_braze_email(self, template_context, user_email, braze_campaign_id, err_message, create_alias=False):
+    def _send_single_braze_email(
+        self, template_context, user_email, braze_campaign_id, err_message, create_alias=False
+    ):
         recipient = self._aliased_recipient_object_from_email(user_email)
         try:
             if create_alias:
@@ -74,6 +77,48 @@ class EmailClient:
         except MailChimpClientError as exc:
             logger.exception(err_message)
             raise exc
+
+    def _send_braze_emails(
+        self, campaign_id, recipients, success_msg, err_msg, trigger_properties=None, user_emails=None
+    ):
+        try:
+            if user_emails:
+                self._braze_client.create_braze_alias(
+                    user_emails,
+                    ENTERPRISE_BRAZE_ALIAS_LABEL,
+                )
+            self._braze_client.send_campaign_message(
+                campaign_id, recipients=recipients, trigger_properties=trigger_properties
+            )
+            logger.info(success_msg)
+        except BrazeClientError as ex:
+            logger.exception(err_msg)
+            raise ex
+
+    def _send_mailchimp_emails(
+        self,
+        template_name,
+        merge_vars,
+        to_users,
+        subject,
+        success_msg,
+        err_msg,
+        recipient_metadata=None,
+        global_merge_vars=None,
+    ):
+        try:
+            self._mailchimp_client.send_message(
+                template_name,
+                merge_vars,
+                to_users,
+                subject=subject,
+                recipient_metadata=recipient_metadata or [],
+                global_merge_vars=global_merge_vars or [],
+            )
+            logger.info(success_msg)
+        except MailChimpClientError as ex:
+            logger.exception(err_msg)
+            raise ex
 
     def send_assignment_email(self, pending_licenses, enterprise_customer, custom_template_text):
         enterprise_slug = enterprise_customer.get('slug')
@@ -126,50 +171,6 @@ class EmailClient:
                 )
         return pending_license_by_email
 
-    def _send_braze_reminder_email(self, recipients, user_emails):
-        try:
-            self._braze_client.create_braze_alias(
-                user_emails,
-                ENTERPRISE_BRAZE_ALIAS_LABEL,
-            )
-            self._braze_client.send_campaign_message(
-                settings.BRAZE_REMIND_EMAIL_CAMPAIGN,
-                recipients=recipients,
-            )
-            logger.info(
-                f'{LICENSE_DEBUG_PREFIX} Sent license reminder emails '
-                f'braze campaign {settings.BRAZE_REMIND_EMAIL_CAMPAIGN} to {user_emails}'
-            )
-        except BrazeClientError as exc:
-            message = (
-                'Error hitting Braze API. '
-                f'reminder email to {settings.BRAZE_REMIND_EMAIL_CAMPAIGN} for license failed.'
-            )
-            logger.exception(message)
-            raise exc
-
-    def _send_mailchimp_reminder_email(self, merge_vars, user_emails, recipient_metadata):
-        template_slug = settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE_NAME
-        try:
-            self._mailchimp_client.send_message(
-                template_slug,
-                merge_vars,
-                user_emails,
-                subject=settings.MAILCHIMP_ASSIGNMENT_EMAIL_SUBJECT,
-                recipient_metadata=recipient_metadata,
-            )
-            logger.info(
-                f'{LICENSE_DEBUG_PREFIX} Sent license assignment email '
-                f'mailchimp template {template_slug} to {user_emails}'
-            )
-        except MailChimpClientError as exc:
-            message = (
-                'Error hitting Mailchimp API. '
-                f'reminder email to {settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE_NAME} for license failed.'
-            )
-            logger.exception(message)
-            raise exc
-
     def send_reminder_email(self, pending_licenses, enterprise_customer, custom_template_text):
         enterprise_slug = enterprise_customer.get('slug')
         enterprise_name = enterprise_customer.get('name')
@@ -217,9 +218,31 @@ class EmailClient:
                     }
                 )
         if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
-            self._send_braze_reminder_email(messages, user_emails)
+            campaign_id = settings.BRAZE_REMIND_EMAIL_CAMPAIGN
+            self._send_braze_emails(
+                campaign_id,
+                recipients=messages,
+                user_emails=user_emails,
+                success_msg=(
+                    f'{LICENSE_DEBUG_PREFIX} Sent license reminder emails '
+                    f'braze campaign {campaign_id} to {user_emails}'
+                ),
+                err_msg=(f'Error hitting Braze API reminder email to {campaign_id} for license failed.'),
+            )
         elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
-            self._send_mailchimp_reminder_email(messages, user_emails, recipient_metadata)
+            template_name = settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE_NAME
+            self._send_mailchimp_emails(
+                template_name,
+                merge_vars=messages,
+                to_users=user_emails,
+                subject=settings.MAILCHIMP_ASSIGNMENT_EMAIL_SUBJECT,
+                recipient_metadata=recipient_metadata,
+                success_msg=(
+                    f'{LICENSE_DEBUG_PREFIX} Sent license assignment email '
+                    f'mailchimp template {template_name} to {user_emails}'
+                ),
+                err_msg=(f'Error hitting Mailchimp API reminder email to {template_name} for license failed.'),
+            )
         return pending_license_by_email
 
     def send_post_activation_email(self, enterprise_customer, user_email):
@@ -355,7 +378,7 @@ class EmailClient:
                     'external_user_id': str(user['id']),
                     'attributes': {
                         'email': user['email'],
-                    }
+                    },
                 }
                 recipients.append(recipient)
                 break
@@ -368,7 +391,7 @@ class EmailClient:
                         'enterprise_customer_slug': enterprise_customer.get('slug'),
                         'enterprise_customer_name': enterprise_customer.get('name'),
                         'bulk_enrollment_job_uuid': str(bulk_enrollment_job.uuid),
-                    }
+                    },
                 )
                 msg = (
                     f'success _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
@@ -418,3 +441,77 @@ class EmailClient:
                 )
                 logger.error(msg, exc_info=True)
                 raise ex
+
+    def send_license_utilization_email(self, subscription, users):
+        """
+        Sends email with properties required to detail license utilization.
+
+        Arguments:
+            subscription_details (dict): Dictionary containing subscription details in the format of
+                {
+                    'uuid': uuid,
+                    'title': str,
+                    'enterprise_customer_uuid': str,
+                    'enterprise_customer_name': str,
+                    'num_allocated_licenses': str,
+                    'num_licenses': num,
+                    'highest_utilization_threshold_reached': num
+                }
+            users (list of dict): List of users to send the emails to in the format of
+                {
+                    'lms_user_id': str,
+                    'ecu_id': str,
+                    'email': str,
+                }
+        """
+        if not users:
+            return
+
+        subscription_uuid = subscription.uuid
+        if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
+            campaign_id = settings.INITIAL_LICENSE_UTILIZATION_CAMPAIGN
+            trigger_properties = {
+                'subscription_plan_title': subscription.title,
+                'subscription_plan_expiration_date': datetime.strftime(subscription.expiration_date, '%b %-d, %Y'),
+                'enterprise_customer_name': subscription.customer_agreement.enterprise_customer_name,
+                'num_allocated_licenses': subscription.num_allocated_licenses,
+                'num_licenses': subscription.num_licenses,
+                'admin_portal_url': get_admin_portal_url(subscription.customer_agreement.enterprise_customer_slug),
+                'num_auto_applied_licenses_since_turned_on': subscription.auto_applied_licenses_count_since(),
+            }
+            recipients = [
+                {'external_user_id': user['lms_user_id'], 'trigger_properties': {'email': user['email']}} for user in users
+            ]
+            self._send_braze_emails(
+                campaign_id,
+                recipients,
+                success_msg=f'sent {campaign_id} email for subscription {subscription_uuid} to {len(recipients)} admins.',
+                err_msg=f'failed to send {campaign_id} email for subscription {subscription_uuid}.',
+                trigger_properties=trigger_properties,
+            )
+        elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
+            template_name = settings.MAILCHIMP_INITIAL_LICENSE_UTILIZATION_TEMPLATE_NAME
+            template_context = [
+                {'name': 'subscription_plan_title', 'content': subscription.title},
+                {'name': 'subscription_plan_expiration_date', 'content': datetime.strftime(subscription.expiration_date, '%b %-d, %Y')},
+                {'name': 'enterprise_customer_name', 'content': subscription.customer_agreement.enterprise_customer_name},
+                {'name': 'num_allocated_licenses', 'content': subscription.num_allocated_licenses},
+                {'name': 'num_licenses', 'content': subscription.num_licenses},
+                {'name': 'admin_portal_url', 'content': get_admin_portal_url(subscription.customer_agreement.enterprise_customer_slug)},
+                {'name': 'num_auto_applied_licenses_since_turned_on', 'content': subscription.auto_applied_licenses_count_since()},
+            ]
+            recipients = []
+            recipient_metadata = []
+            for user in users:
+                recipients.append({'email': user['email']})
+                recipient_metadata.append({'rcpt': user['email'], 'values': {'email': user['email']}})
+            self._send_mailchimp_emails(
+                template_name,
+                [],
+                recipients,
+                subject=settings.MAILCHIMP_INITIAL_LICENSE_UTILIZATION_SUBJECT,
+                success_msg=f'sent {template_name} email for subscription {subscription_uuid} to {len(recipients)} admins.',
+                err_msg=f'failed to send {template_name} email for subscription {subscription_uuid}.',
+                recipient_metadata=recipient_metadata,
+                global_merge_vars=template_context,
+            )

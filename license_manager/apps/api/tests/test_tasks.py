@@ -85,7 +85,7 @@ class EmailTaskTests(TestCase):
             ENTERPRISE_BRAZE_ALIAS_LABEL,
         )
 
-    @mock.patch('license_manager.apps.api.email.BrazeApiClient', side_effect=BrazeClientError)
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient.create_braze_alias', side_effect=BrazeClientError)
     def test_create_braze_aliases_task_reraises_braze_exceptions(self, _):
         """
         Assert create_braze_aliases_task reraises any braze exceptions.
@@ -517,14 +517,14 @@ class EmailTaskTests(TestCase):
         mock_braze_client().send_campaign_message.assert_not_called()
         mock_logger.error.assert_called_once()
 
-    @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api.email.BrazeApiClient', side_effect=BrazeClientError)
+    @mock.patch('license_manager.apps.api.email.logger', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.email.BrazeApiClient.create_braze_alias', side_effect=BrazeClientError)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     def test_auto_applied_license_onboard_email_braze_client_error(
         self, mock_enterprise_client, mock_braze_client, mock_logger
     ):
         """
-        Tests error logged if brazy client errors.
+        Tests error logged if braze client errors.
         """
         mock_enterprise_client().get_enterprise_customer_data.return_value = {
             'slug': self.enterprise_slug,
@@ -535,9 +535,10 @@ class EmailTaskTests(TestCase):
             'contact_email': self.contact_email,
         }
 
-        tasks.send_auto_applied_license_email_task(self.enterprise_uuid, self.user_email)
+        with self.assertRaises(BrazeClientError):
+            tasks.send_auto_applied_license_email_task(self.enterprise_uuid, self.user_email)
 
-        mock_logger.error.assert_called_once()
+        mock_logger.exception.assert_called_once()
 
 
 @ddt.ddt

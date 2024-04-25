@@ -10,6 +10,7 @@ from celery_utils.logged_task import LoggedTask
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.utils import OperationalError
+from mailchimp_transactional.api_client import ApiClientError as MailChimpClientError
 from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import HTTPError
 from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
@@ -76,6 +77,7 @@ class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
         IntegrityError,
         OperationalError,
         BrazeClientError,
+        MailChimpClientError,
         HTTPError,
     )
     retry_kwargs = {'max_retries': 3}
@@ -317,8 +319,15 @@ def send_auto_applied_license_email_task(enterprise_customer_uuid, user_email):
 
     Uses Braze client to send email via Braze campaign.
     """
-    enterprise_api_client = EnterpriseApiClient()
-    enterprise_customer = enterprise_api_client.get_enterprise_customer_data(enterprise_customer_uuid)
+    try:
+        enterprise_api_client = EnterpriseApiClient()
+        enterprise_customer = enterprise_api_client.get_enterprise_customer_data(enterprise_customer_uuid)
+    except Exception:  # pylint: disable=broad-except
+        message = (
+            f'Error getting data about the enterprise_customer {enterprise_customer_uuid}. '
+        )
+        logger.error(message, exc_info=True)
+        return
     EmailClient().send_auto_applied_license_email(enterprise_customer, user_email)
 
 
@@ -604,71 +613,6 @@ def _get_admin_users_for_enterprise(enterprise_customer_uuid):
     ]
 
 
-def _send_license_utilization_email(
-    subscription,
-    campaign_id,
-    users
-):
-    """
-    Sends email with properties required to detail license utilization.
-
-    Arguments:
-        subscription_details (dict): Dictionary containing subscription details in the format of
-            {
-                'uuid': uuid,
-                'title': str,
-                'enterprise_customer_uuid': str,
-                'enterprise_customer_name': str,
-                'num_allocated_licenses': str,
-                'num_licenses': num,
-                'highest_utilization_threshold_reached': num
-            }
-        campaign_id: (str): The Braze campaign identifier
-        users (list of dict): List of users to send the emails to in the format of
-            {
-                'lms_user_id': str,
-                'ecu_id': str,
-                'email': str,
-            }
-
-    """
-
-    if not users:
-        return
-
-    subscription_uuid = subscription.uuid
-    try:
-        braze_client = BrazeApiClient()
-        trigger_properties = {
-            'subscription_plan_title': subscription.title,
-            'subscription_plan_expiration_date': datetime.strftime(subscription.expiration_date, "%b %-d, %Y"),
-            'enterprise_customer_name': subscription.customer_agreement.enterprise_customer_name,
-            'num_allocated_licenses': subscription.num_allocated_licenses,
-            'num_licenses': subscription.num_licenses,
-            'admin_portal_url': get_admin_portal_url(subscription.customer_agreement.enterprise_customer_slug),
-            'num_auto_applied_licenses_since_turned_on': subscription.auto_applied_licenses_count_since()
-        }
-        recipients = [
-            {
-                'external_user_id': user['lms_user_id'],
-                'trigger_properties': {
-                    'email': user['email']
-                }
-            } for user in users
-        ]
-        braze_client.send_campaign_message(
-            campaign_id,
-            recipients=recipients,
-            trigger_properties=trigger_properties
-        )
-        msg = f'Sent {campaign_id} email for subscription {subscription_uuid} to {len(recipients)} admins.'
-        logger.info(msg)
-    except Exception as ex:
-        msg = f'Failed to send {campaign_id} email for subscription {subscription_uuid}.'
-        logger.exception(msg)
-        raise ex
-
-
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def send_initial_utilization_email_task(subscription_uuid):
     """
@@ -710,11 +654,7 @@ def send_initial_utilization_email_task(subscription_uuid):
             notification.save()
 
         # will raise exception and roll back changes if error occurs
-        _send_license_utilization_email(
-            subscription=subscription,
-            campaign_id=settings.INITIAL_LICENSE_UTILIZATION_CAMPAIGN,
-            users=admin_users
-        )
+        EmailClient().send_license_utilization_email(subscription=subscription, users=admin_users)
 
 
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -771,11 +711,7 @@ def send_utilization_threshold_reached_email_task(subscription_uuid):
                 )
 
             # will raise exception and roll back changes if error occurs
-            _send_license_utilization_email(
-                subscription=subscription,
-                campaign_id=getattr(settings, campaign),
-                users=admin_users
-            )
+            EmailClient().send_license_utilization_email(subscription=subscription, users=admin_users)
 
 
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT, bind=True)
