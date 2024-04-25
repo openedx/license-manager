@@ -505,3 +505,9 @@ class EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer(serializers.Serial
             'course_run_keys',
             'notify',
         ]
+
+
+class SubscriptionPlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionPlan
+        fields = '__all__'  # Include all fields from the SubscriptionPlan model

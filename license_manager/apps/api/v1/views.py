@@ -17,7 +17,7 @@ from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets, mixins
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError, ValidationError
@@ -326,10 +326,17 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
         ).order_by('-start_date')
 
 
-class SubscriptionViewSet(LearnerSubscriptionViewSet):
-    """ Viewset for Admin only read operations on SubscriptionPlans."""
+class SubscriptionViewSet(
+    LearnerSubscriptionViewSet,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    """ Viewset for SubscriptionPlans."""
     permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
+    serializer_class = serializers.SubscriptionPlanSerializer
 
     @property
     def requested_current_plan(self):
@@ -363,6 +370,42 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
                 raise ParseError(current_plan_error) from exc
 
         return queryset.order_by('-start_date')
+
+    def list(self, request, *args, **kwargs):
+        """
+        Returns list of all SubscriptionPlan records
+        """
+        logger.info(f'request.user.is_staff:::: {request.user.is_staff}')
+        logger.info(f'request.user.groups:::: {request.user.groups.all()}')
+        return super().list(request, *args, **kwargs)
+
+    
+    def retrieve(self, request, subscription_uuid):
+        """
+        Returns a single SubscriptionPlan against given uuid
+        """
+        try:
+            instance = SubscriptionPlan.objects.get(uuid=subscription_uuid)
+        except SubscriptionPlan.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Updates SubscriptionPlan record against given uuid
+        """
+        subscription_uuid = kwargs.get('subscription_uuid')
+        if subscription_uuid:
+            # Get the subscription object based on the provided UUID
+            subscription = self.get_object()
+            # Perform partial update
+            serializer = self.get_serializer(subscription, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response({"error": "Subscription UUID not provided"}, status=400)
 
 
 class LearnerLicensesViewSet(
