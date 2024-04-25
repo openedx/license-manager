@@ -163,7 +163,7 @@ class EmailClient:
                 self._send_single_mailchimp_email(
                     [{'rcpt': user_email, 'vars': template_context}],
                     user_email,
-                    template_slug=settings.MAILCHIMP_ASSIGNMENT_EMAIL_TEMPLATE_NAME,
+                    template_slug=settings.MAILCHIMP_ASSIGNMENT_EMAIL_TEMPLATE,
                     subject=settings.MAILCHIMP_ASSIGNMENT_EMAIL_SUBJECT,
                     err_message=(
                         f'License manager activation email sending received an exception for enterprise: {enterprise_name}.'
@@ -230,7 +230,7 @@ class EmailClient:
                 err_msg=(f'Error hitting Braze API reminder email to {campaign_id} for license failed.'),
             )
         elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
-            template_name = settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE_NAME
+            template_name = settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE
             self._send_mailchimp_emails(
                 template_name,
                 merge_vars=messages,
@@ -275,7 +275,7 @@ class EmailClient:
                 {'rcpt': user_email, 'vars': merge_vars},
                 user_email,
                 subject=settings.MAILCHIMP_ACTIVATION_EMAIL_SUBJECT,
-                template_slug=settings.MAILCHIMP_ACTIVATION_EMAIL_TEMPLATE_NAME,
+                template_slug=settings.MAILCHIMP_ACTIVATION_EMAIL_TEMPLATE,
                 err_message=f'Error hitting Mailchimp API. Onboarding email to {user_email} for license failed.',
             )
 
@@ -349,7 +349,7 @@ class EmailClient:
                 create_alias=True,
             )
         elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
-            template_slug = settings.MAILCHIMP_REVOKE_CAP_EMAIL_TEMPLATE_NAME
+            template_slug = settings.MAILCHIMP_REVOKE_CAP_EMAIL_TEMPLATE
             merge_vars = [
                 {'name': 'SUBSCRIPTION_TITLE', 'content': subscription_plan.title},
                 {'name': 'NUM_REVOCATIONS_APPLIED', 'content': subscription_plan.num_revocations_applied},
@@ -406,7 +406,7 @@ class EmailClient:
                 logger.error(msg, exc_info=True)
                 raise ex
         elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
-            template_name = settings.MAILCHIMP_BULK_ENROLL_RESULT_TEMPLATE_NAME
+            template_name = settings.MAILCHIMP_BULK_ENROLL_RESULT_TEMPLATE
             user_emails = []
             recipient_metadata = []
             for user in admin_users:
@@ -490,7 +490,7 @@ class EmailClient:
                 trigger_properties=trigger_properties,
             )
         elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
-            template_name = settings.MAILCHIMP_INITIAL_LICENSE_UTILIZATION_TEMPLATE_NAME
+            template_name = settings.MAILCHIMP_INITIAL_LICENSE_UTILIZATION_TEMPLATE
             template_context = [
                 {'name': 'subscription_plan_title', 'content': subscription.title},
                 {'name': 'subscription_plan_expiration_date', 'content': datetime.strftime(subscription.expiration_date, '%b %-d, %Y')},

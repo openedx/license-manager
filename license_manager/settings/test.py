@@ -46,3 +46,11 @@ DEBUG = False
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": False,
 }
+
+BRAZE_API_URL = 'https://example-url.com'
+BRAZE_API_KEY = 'example-key'
+BRAZE_APP_ID = 'example-id'
+
+MAILCHIMP_API_KEY = 'example-key'
+MAILCHIMP_FROM_EMAIL = 'example-from-email@example.com'
+MAILCHIMP_FROM_NAME = 'example-name'
