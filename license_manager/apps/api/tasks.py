@@ -10,15 +10,16 @@ from celery_utils.logged_task import LoggedTask
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.utils import OperationalError
-from mailchimp_transactional.api_client import ApiClientError as MailChimpClientError
+from mailchimp_transactional.api_client import \
+    ApiClientError as MailChimpClientError
 from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import HTTPError
 from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
 from requests.exceptions import Timeout as RequestsTimeoutError
 
-from license_manager.apps.api.email import EmailClient
 import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api import utils
+from license_manager.apps.api.email import EmailClient
 from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
@@ -35,9 +36,7 @@ from license_manager.apps.subscriptions.constants import (
     TRACK_LICENSE_CHANGES_BATCH_SIZE,
     NotificationChoices,
 )
-from license_manager.apps.subscriptions.event_utils import (
-    track_license_changes,
-)
+from license_manager.apps.subscriptions.event_utils import track_license_changes
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,

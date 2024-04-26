@@ -1,6 +1,9 @@
 import logging
 
 import mailchimp_transactional as MailchimpTransactional
+from mailchimp_transactional.api_client import (
+    ApiClientError as MailChimpClientError
+)
 from django.conf import settings
 
 
@@ -8,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
-    def __init__(self):
+    def __init__(self, logger_prefix):
+        self.logger_prefix = logger_prefix
         required_settings = ['MAILCHIMP_API_KEY', 'MAILCHIMP_FROM_EMAIL', 'MAILCHIMP_FROM_NAME']
 
         for setting in required_settings:
@@ -20,14 +24,6 @@ class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
         super().__init__(
             api_key=settings.MAILCHIMP_API_KEY,
         )
-
-    @staticmethod
-    def get_merge_vars(content):
-        return [{'name': key, 'content': value} for key, value in content.items()]
-
-    @staticmethod
-    def _get_recipients_dict(recipients):
-        return [{'email': recipient for recipient in recipients}]
 
     def send_message(self, template_slug, merge_vars, user_emails, subject, recipient_metadata=None, global_merge_vars=None):
         """Send message via mailchimp transactional api.
@@ -59,3 +55,47 @@ class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
             },
         )
         return response
+
+    def send_single_email(self, merge_vars, user_email, subject, template_slug, err_message):
+        try:
+            self.send_message(
+                template_slug,
+                merge_vars,
+                [{'email': user_email}],
+                subject=subject,
+                recipient_metadata=[
+                    {
+                        'rcpt': user_email,
+                        'values': {'email': user_email},
+                    }
+                ],
+            )
+            logger.info(f'{self.logger_prefix} Sent email for mailchimp template {template_slug} to {user_email}')
+        except MailChimpClientError as exc:
+            logger.exception(err_message)
+            raise exc
+
+    def send_emails(
+        self,
+        template_name,
+        merge_vars,
+        to_users,
+        subject,
+        success_msg,
+        err_msg,
+        recipient_metadata=None,
+        global_merge_vars=None,
+    ):
+        try:
+            self.send_message(
+                template_name,
+                merge_vars,
+                to_users,
+                subject=subject,
+                recipient_metadata=recipient_metadata or [],
+                global_merge_vars=global_merge_vars or [],
+            )
+            logger.info(success_msg)
+        except MailChimpClientError as ex:
+            logger.exception(err_msg)
+            raise ex
