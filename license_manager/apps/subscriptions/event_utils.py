@@ -115,7 +115,7 @@ def _track_batch_events_via_braze_alias(event_name, properties_by_email):
         braze_client_instance.create_braze_alias(braze_alias_emails, ENTERPRISE_BRAZE_ALIAS_LABEL)
         logger.info('Sent batch of braze aliases with batch id %s', batch_id)
     except BrazeClientError as exc:
-        logger.exception()
+        logger.exception('Failed to create braze alias')
         raise exc
 
     try:
@@ -125,7 +125,7 @@ def _track_batch_events_via_braze_alias(event_name, properties_by_email):
         )
         logger.info('Sent batch of braze attribute/events to track_user endpoint with batch id %s', batch_id)
     except BrazeClientError as exc:
-        logger.exception()
+        logger.exception('Failed to track user via braze')
         raise exc
 
 

@@ -1,10 +1,9 @@
 import logging
 
 import mailchimp_transactional as MailchimpTransactional
-from mailchimp_transactional.api_client import (
-    ApiClientError as MailChimpClientError
-)
 from django.conf import settings
+from mailchimp_transactional.api_client import \
+    ApiClientError as MailChimpClientError
 
 
 logger = logging.getLogger(__name__)
@@ -25,8 +24,17 @@ class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
             api_key=settings.MAILCHIMP_API_KEY,
         )
 
-    def send_message(self, template_slug, merge_vars, user_emails, subject, recipient_metadata=None, global_merge_vars=None):
-        """Send message via mailchimp transactional api.
+    def send_message(
+        self,
+        template_slug,
+        merge_vars,
+        user_emails,
+        subject,
+        recipient_metadata=None,
+        global_merge_vars=None
+    ):
+        """
+        Send message via mailchimp transactional api.
         Docs: https://mailchimp.com/developer/transactional/api/messages/send-using-message-template/
 
         Args:

@@ -43,11 +43,7 @@ from license_manager.apps.subscriptions.models import (
     Notification,
     SubscriptionPlan,
 )
-from license_manager.apps.subscriptions.utils import (
-    chunks,
-    get_admin_portal_url,
-    localized_utcnow,
-)
+from license_manager.apps.subscriptions.utils import chunks, localized_utcnow
 
 
 logger = logging.getLogger(__name__)
@@ -100,7 +96,7 @@ def create_braze_aliases_task(user_emails):
 
     """
     try:
-        braze_client_instance = BrazeApiClient()
+        braze_client_instance = BrazeApiClient(logger_prefix=LICENSE_DEBUG_PREFIX)
         braze_client_instance.create_braze_alias(
             user_emails,
             ENTERPRISE_BRAZE_ALIAS_LABEL,
@@ -653,7 +649,13 @@ def send_initial_utilization_email_task(subscription_uuid):
             notification.save()
 
         # will raise exception and roll back changes if error occurs
-        EmailClient().send_license_utilization_email(subscription=subscription, users=admin_users)
+        EmailClient().send_license_utilization_email(
+            subscription=subscription,
+            users=admin_users,
+            campaign_id=settings.INITIAL_LICENSE_UTILIZATION_CAMPAIGN,
+            template_name=settings.MAILCHIMP_INITIAL_LICENSE_UTILIZATION_TEMPLATE,
+            subject=settings.MAILCHIMP_INITIAL_LICENSE_UTILIZATION_SUBJECT,
+        )
 
 
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -670,7 +672,7 @@ def send_utilization_threshold_reached_email_task(subscription_uuid):
     highest_utilization_threshold_reached = subscription.highest_utilization_threshold_reached
     if highest_utilization_threshold_reached is not None:
 
-        notification_type, campaign = NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD[
+        notification_type, campaign, template, subject = NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD[
             highest_utilization_threshold_reached
         ]
 
@@ -710,7 +712,13 @@ def send_utilization_threshold_reached_email_task(subscription_uuid):
                 )
 
             # will raise exception and roll back changes if error occurs
-            EmailClient().send_license_utilization_email(subscription=subscription, users=admin_users)
+            EmailClient().send_license_utilization_email(
+                subscription=subscription,
+                users=admin_users,
+                campaign_id=getattr(settings, campaign),
+                template_name=getattr(settings, template),
+                subject=getattr(settings, subject),
+            )
 
 
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT, bind=True)

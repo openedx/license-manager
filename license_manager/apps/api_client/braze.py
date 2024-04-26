@@ -8,11 +8,12 @@ from license_manager.apps.subscriptions.constants import (
     ENTERPRISE_BRAZE_ALIAS_LABEL,
 )
 
+
 logger = logging.getLogger(__name__)
 
 
 class BrazeApiClient(BrazeClient):
-    def __init__(self, logger_prefix):
+    def __init__(self, logger_prefix=''):
         self.logger_prefix = logger_prefix
         required_settings = ['BRAZE_API_KEY', 'BRAZE_API_URL', 'BRAZE_APP_ID']
 

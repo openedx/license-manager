@@ -348,7 +348,7 @@ class EmailClient:
                 )
             )
 
-    def send_license_utilization_email(self, subscription, users):
+    def send_license_utilization_email(self, subscription, users, campaign_id, template_name, subject):
         """
         Sends email with properties required to detail license utilization.
 
@@ -369,13 +369,15 @@ class EmailClient:
                     'ecu_id': str,
                     'email': str,
                 }
+            campaign_id (str): braze campaign id
+            template_name (str): Mailchimp template name
+            subject (str): email subject for mailchimp
         """
         if not users:
             return
 
         subscription_uuid = subscription.uuid
         if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
-            campaign_id = settings.INITIAL_LICENSE_UTILIZATION_CAMPAIGN
             trigger_properties = {
                 'subscription_plan_title': subscription.title,
                 'subscription_plan_expiration_date': datetime.strftime(subscription.expiration_date, '%b %-d, %Y'),
@@ -399,7 +401,6 @@ class EmailClient:
                 trigger_properties=trigger_properties,
             )
         elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
-            template_name = settings.MAILCHIMP_INITIAL_LICENSE_UTILIZATION_TEMPLATE
             template_context = [
                 {'name': 'subscription_plan_title', 'content': subscription.title},
                 {
@@ -431,7 +432,7 @@ class EmailClient:
                 template_name,
                 [],
                 recipients,
-                subject=settings.MAILCHIMP_INITIAL_LICENSE_UTILIZATION_SUBJECT,
+                subject=subject,
                 success_msg=(
                     f'sent {template_name} email for subscription {subscription_uuid} to {len(recipients)} admins.'
                 ),
