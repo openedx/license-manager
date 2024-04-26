@@ -77,6 +77,7 @@ certifi==2024.2.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
+    #   mailchimp-transactional
     #   requests
 cffi==1.16.0
     # via
@@ -393,6 +394,10 @@ lxml[html-clean,html_clean]==5.2.1
     #   lxml-html-clean
 lxml-html-clean==0.1.1
     # via lxml
+mailchimp-transactional @ git+https://github.com/mailchimp/mailchimp-transactional-python.git
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
 markupsafe==2.1.5
     # via
     #   -r requirements/quality.txt
@@ -537,6 +542,7 @@ python-dateutil==2.9.0.post0
     #   celery
     #   faker
     #   freezegun
+    #   mailchimp-transactional
 python-slugify==8.0.4
     # via
     #   -r requirements/quality.txt
@@ -576,6 +582,7 @@ requests==2.31.0
     #   analytics-python
     #   edx-drf-extensions
     #   edx-rest-api-client
+    #   mailchimp-transactional
     #   requests-oauthlib
     #   slumber
     #   social-auth-core
@@ -616,6 +623,7 @@ six==1.16.0
     #   edx-auth-backends
     #   edx-lint
     #   edx-rbac
+    #   mailchimp-transactional
     #   pathlib2
     #   python-dateutil
 slumber==0.7.1
@@ -693,6 +701,7 @@ urllib3==1.26.18
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   botocore
+    #   mailchimp-transactional
     #   requests
 vine==5.1.0
     # via

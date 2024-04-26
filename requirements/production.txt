@@ -58,6 +58,7 @@ celery==5.4.0
 certifi==2024.2.2
     # via
     #   -r requirements/base.txt
+    #   mailchimp-transactional
     #   requests
 cffi==1.16.0
     # via
@@ -259,6 +260,8 @@ kombu==5.3.7
     # via
     #   -r requirements/base.txt
     #   celery
+mailchimp-transactional @ git+https://github.com/mailchimp/mailchimp-transactional-python.git
+    # via -r requirements/base.txt
 markupsafe==2.1.5
     # via
     #   -r requirements/base.txt
@@ -328,6 +331,7 @@ python-dateutil==2.9.0.post0
     #   analytics-python
     #   botocore
     #   celery
+    #   mailchimp-transactional
 python-memcached==1.62
     # via -r requirements/production.in
 python-slugify==8.0.4
@@ -361,6 +365,7 @@ requests==2.31.0
     #   analytics-python
     #   edx-drf-extensions
     #   edx-rest-api-client
+    #   mailchimp-transactional
     #   requests-oauthlib
     #   slumber
     #   social-auth-core
@@ -391,6 +396,7 @@ six==1.16.0
     #   analytics-python
     #   edx-auth-backends
     #   edx-rbac
+    #   mailchimp-transactional
     #   python-dateutil
 slumber==0.7.1
     # via
@@ -439,6 +445,7 @@ urllib3==1.26.18
     # via
     #   -r requirements/base.txt
     #   botocore
+    #   mailchimp-transactional
     #   requests
 vine==5.1.0
     # via

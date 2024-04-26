@@ -44,7 +44,9 @@ celery==5.4.0
     #   django-celery-results
     #   edx-celeryutils
 certifi==2024.2.2
-    # via requests
+    # via
+    #   mailchimp-transactional
+    #   requests
 cffi==1.16.0
     # via
     #   cryptography
@@ -202,6 +204,8 @@ jsonschema-specifications==2023.12.1
     # via jsonschema
 kombu==5.3.7
     # via celery
+mailchimp-transactional @ git+https://github.com/mailchimp/mailchimp-transactional-python.git
+    # via -r requirements/base.in
 markupsafe==2.1.5
     # via jinja2
 monotonic==1.6
@@ -242,6 +246,7 @@ python-dateutil==2.9.0.post0
     #   analytics-python
     #   botocore
     #   celery
+    #   mailchimp-transactional
 python-slugify==8.0.4
     # via code-annotations
 python3-openid==3.2.0
@@ -265,6 +270,7 @@ requests==2.31.0
     #   analytics-python
     #   edx-drf-extensions
     #   edx-rest-api-client
+    #   mailchimp-transactional
     #   requests-oauthlib
     #   slumber
     #   social-auth-core
@@ -287,6 +293,7 @@ six==1.16.0
     #   analytics-python
     #   edx-auth-backends
     #   edx-rbac
+    #   mailchimp-transactional
     #   python-dateutil
 slumber==0.7.1
     # via edx-rest-api-client
@@ -320,6 +327,7 @@ uritemplate==4.1.1
 urllib3==1.26.18
     # via
     #   botocore
+    #   mailchimp-transactional
     #   requests
 vine==5.1.0
     # via
