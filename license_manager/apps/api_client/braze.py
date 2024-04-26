@@ -46,6 +46,15 @@ class BrazeApiClient(BrazeClient):
     def send_single_email(
         self, template_context, user_email, braze_campaign_id, err_message, create_alias=False
     ):
+        """Helper function to send single email via braze.
+
+        Args:
+            template_context (list[dict[str, str]]): list of email context objects
+            user_email (str): user email
+            braze_campaign_id (str): braze campaign id
+            err_message (str): message to log on failure
+            create_alias: optional (bool): set to true to create alias before sending email
+        """
         recipient = self.aliased_recipient_object_from_email(user_email)
         try:
             if create_alias:
@@ -66,6 +75,17 @@ class BrazeApiClient(BrazeClient):
     def send_emails(
         self, campaign_id, recipients, success_msg, err_msg, trigger_properties=None, user_emails=None
     ):
+        """Helper function to send email to multiple users via braze.
+
+        Args:
+            campaign_id (str): braze campaign id
+            recipients (list[dict[str,str]]): list of recipient objects
+            success_msg (str): message to log on success
+            err_msg (str): message to log on failure
+            trigger_properties (dict[str, str]): email context object
+            user_emails: optional (list[str]): pass list of email ids if you want to create
+                braze aliases before sending the email
+        """
         try:
             if user_emails:
                 self.create_braze_alias(

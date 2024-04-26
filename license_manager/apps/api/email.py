@@ -31,6 +31,17 @@ class EmailClient:
             raise ValueError("Please set TRANSACTIONAL_MAIL_SERVICE setting to either 'braze' or 'mailchimp'.")
 
     def send_assignment_email(self, pending_licenses, enterprise_customer, custom_template_text):
+        """Helper function to send assignment email.
+
+        Args:
+            pending_licenses (list[License]): List of pending license objects
+            enterprise_customer (dict): enterprise customer information
+            custom_template_text (dict): Dictionary containing `greeting` and `closing` keys to be used for customizing
+                the email template.
+
+        Returns:
+            dict of pending license by email
+        """
         enterprise_slug = enterprise_customer.get('slug')
         enterprise_name = enterprise_customer.get('name')
         enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
@@ -72,7 +83,7 @@ class EmailClient:
                     {'name': 'enterprise_contact_email', 'content': enterprise_contact_email},
                 ]
                 self._mailchimp_client.send_single_email(
-                    [{'rcpt': user_email, 'vars': template_context}],
+                    template_context,
                     user_email,
                     template_slug=settings.MAILCHIMP_ASSIGNMENT_EMAIL_TEMPLATE,
                     subject=settings.MAILCHIMP_ASSIGNMENT_EMAIL_SUBJECT,
@@ -84,6 +95,16 @@ class EmailClient:
         return pending_license_by_email
 
     def send_reminder_email(self, pending_licenses, enterprise_customer, custom_template_text):
+        """Helper function to send reminder email.
+
+        Args:
+            pending_licenses (list[License]): List of pending license objects
+            enterprise_customer (dict): enterprise customer information
+            custom_template_text (dict): Dictionary containing `greeting` and `closing` keys to be used for customizing
+                the email template.
+        Returns:
+            dict of pending license by email
+        """
         enterprise_slug = enterprise_customer.get('slug')
         enterprise_name = enterprise_customer.get('name')
         enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
@@ -158,6 +179,12 @@ class EmailClient:
         return pending_license_by_email
 
     def send_post_activation_email(self, enterprise_customer, user_email):
+        """Helper function to send post activation email
+
+        Args:
+            enterprise_customer (dict): enterprise customer information
+            user_email (str): user email id
+        """
         enterprise_name = enterprise_customer.get('name')
         enterprise_slug = enterprise_customer.get('slug')
         enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
@@ -184,7 +211,7 @@ class EmailClient:
                 {'name': 'enterprise_contact_email', 'content': enterprise_contact_email},
             ]
             self._mailchimp_client.send_single_email(
-                {'rcpt': user_email, 'vars': merge_vars},
+                merge_vars,
                 user_email,
                 subject=settings.MAILCHIMP_ACTIVATION_EMAIL_SUBJECT,
                 template_slug=settings.MAILCHIMP_ACTIVATION_EMAIL_TEMPLATE,
@@ -192,6 +219,12 @@ class EmailClient:
             )
 
     def send_auto_applied_license_email(self, enterprise_customer, user_email):
+        """Helper function to send auto applied license email
+
+        Args:
+            enterprise_customer (dict): enterprise customer information
+            user_email (str): user email id
+        """
         enterprise_slug = enterprise_customer.get('slug')
         enterprise_name = enterprise_customer.get('name')
         learner_portal_search_enabled = enterprise_customer.get('enable_integrated_customer_learner_portal_search')
@@ -235,7 +268,7 @@ class EmailClient:
                 {'name': 'enterprise_contact_email', 'content': enterprise_contact_email},
             ]
             self._mailchimp_client.send_single_email(
-                {'rcpt': user_email, 'vars': merge_vars},
+                merge_vars,
                 user_email,
                 subject=subject,
                 template_slug=template_slug,
@@ -245,6 +278,13 @@ class EmailClient:
             )
 
     def send_revocation_cap_notification_email(self, subscription_plan, enterprise_name, revocation_date):
+        """Helper function to send revocation notification email.
+
+        Args:
+            subscription_plan (SubscriptionPlan): SubscriptionPlan object
+            enterprise_name (str): enterprise customer name
+            revocation_date (str): date in `%B %d, %Y, %I:%M%p %Z` format
+        """
         if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
             braze_campaign_id = settings.BRAZE_REVOKE_CAP_EMAIL_CAMPAIGN
             braze_trigger_properties = {
@@ -269,7 +309,7 @@ class EmailClient:
                 {'name': 'REVOKED_LIMIT_REACHED_DATE', 'content': revocation_date},
             ]
             self._mailchimp_client.send_single_email(
-                {'rcpt': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS, 'vars': merge_vars},
+                merge_vars,
                 settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
                 subject=settings.MAILCHIMP_REVOKE_CAP_EMAIL_SUBJECT,
                 template_slug=template_slug,
@@ -277,6 +317,24 @@ class EmailClient:
             )
 
     def send_bulk_enrollment_results_email(self, enterprise_customer, bulk_enrollment_job, admin_users):
+        """Helper function to send bulk enrollment results to admins.
+
+        Args:
+            enterprise_customer (dict): enterprise customer information
+            bulk_enrollment_job (BulkEnrollmentJob): the completed bulk enrollment job
+            admin_users (list[{
+                'id': str,
+                'username': str,
+                'first_name': str,
+                'last_name': str,
+                'email': str,
+                'is_staff': bool,
+                'is_active': bool,
+                'date_joined': str,
+                'ecu_id': str,
+                'created': str
+            }]): list of dictionaries containing admin user information
+        """
         if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
             campaign_id = settings.BULK_ENROLL_RESULT_CAMPAIGN
             # https://web.archive.org/web/20211122135949/https://www.braze.com/docs/api/objects_filters/recipient_object/

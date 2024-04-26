@@ -64,11 +64,20 @@ class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
         )
         return response
 
-    def send_single_email(self, merge_vars, user_email, subject, template_slug, err_message):
+    def send_single_email(self, context, user_email, subject, template_slug, err_message):
+        """
+        Helper function to send a single email via mailchimp.
+        Args:
+            context (dict[str, any]): template context
+            user_email (str): user email
+            subject (str): email subject
+            template_slug (str): template name from mailchimp
+            err_message (str): message to log on failure
+        """
         try:
             self.send_message(
                 template_slug,
-                merge_vars,
+                [{'rcpt': user_email, 'vars': context}],
                 [{'email': user_email}],
                 subject=subject,
                 recipient_metadata=[
@@ -94,6 +103,19 @@ class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
         recipient_metadata=None,
         global_merge_vars=None,
     ):
+        """Helper to send emails to multiple users via mailchimp
+        Docs: https://mailchimp.com/developer/transactional/api/messages/send-using-message-template/
+
+        Args:
+            template_name (str): Mailchimp template name
+            merge_vars (list[dict[str, str]]): per-recipient merge variables.
+            to_users (list[dict[str, str]]): List of user email objects
+            subject (str): email subject
+            success_msg (str): message to log on success
+            err_msg (str): message to log on failure
+            recipient_metadata (list[dict[str, any]]): per-recipient additional metadata
+            global_merge_vars (list[dict[str, str]]): global merge variables.
+        """
         try:
             self.send_message(
                 template_name,
