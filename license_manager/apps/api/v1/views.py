@@ -95,6 +95,11 @@ ESTIMATED_COUNT_PAGINATOR_THRESHOLD = 10000
         summary='Retrieve a CustomerAgreement',
         description='Retrieve a CustomerAgreement by its UUID',
     ),
+    partial_update=extend_schema(
+        summary='Partial update a CustomerAgreement',
+        description='Partial update a CustomerAgreement by its UUID',
+        request=serializers.CustomerAgreementUpdateRequestSerializer,
+    ),
     auto_apply=extend_schema(
         summary='Auto-apply a license',
         description='Auto-apply licenses for the given `user_email` and `lms_user_id`.',
@@ -122,6 +127,27 @@ class CustomerAgreementViewSet(
     list_lookup_field = 'enterprise_customer_uuid'
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Partial update a CustomerAgreement against given UUID.
+        """
+
+        if 'enterprise_customer_uuid' in request.data:
+            return Response(
+                'enterprise_customer_uuid cannot be updated',
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        customer_agreement = self.get_object()
+        serializer = serializers.CustomerAgreementSerializer(
+            customer_agreement,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     @property
     def requested_enterprise_uuid(self):

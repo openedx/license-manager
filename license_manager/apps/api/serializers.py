@@ -182,6 +182,19 @@ class CustomerAgreementCreateRequestSerializer(MinimalCustomerAgreementSerialize
             ]
 
 
+class CustomerAgreementUpdateRequestSerializer(MinimalCustomerAgreementSerializer):
+    """
+    Serializer for partially updating an existing `CustomerAgreement` instance.
+    """
+
+    class Meta:
+        model = CustomerAgreement
+        fields = [
+            'default_enterprise_catalog_uuid',
+            'disable_onboarding_notifications',
+        ]
+
+
 class LicenseSerializer(serializers.ModelSerializer):
     """
     Serializer for the `License` model.
