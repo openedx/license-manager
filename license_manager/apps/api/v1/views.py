@@ -81,6 +81,20 @@ ASSIGNMENT_LOCK_TIMEOUT_SECONDS = 300
 ESTIMATED_COUNT_PAGINATOR_THRESHOLD = 10000
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary='List all CustomerAgreements',
+        description='List all CustomerAgreements with associated `SubscriptionPlans`',
+    ),
+    retrieve=extend_schema(
+        summary='Retrieve a CustomerAgreement',
+        description='Retrieve a CustomerAgreement by its UUID',
+    ),
+    auto_apply=extend_schema(
+        summary='Auto-apply a license',
+        description='Auto-apply licenses for the given `user_email` and `lms_user_id`.',
+    ),
+)
 class CustomerAgreementViewSet(
     PermissionRequiredForListingMixin,
     UserDetailsFromJwtMixin,
