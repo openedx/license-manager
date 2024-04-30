@@ -86,6 +86,11 @@ ESTIMATED_COUNT_PAGINATOR_THRESHOLD = 10000
         summary='List all CustomerAgreements',
         description='List all CustomerAgreements with associated `SubscriptionPlans`',
     ),
+    create=extend_schema(
+        summary='Create a new CustomerAgreement',
+        description='Create a new CustomerAgreement for a given `enterprise_customer_uuid`',
+        request=serializers.CustomerAgreementCreateRequestSerializer,
+    ),
     retrieve=extend_schema(
         summary='Retrieve a CustomerAgreement',
         description='Retrieve a CustomerAgreement by its UUID',
@@ -101,6 +106,7 @@ class CustomerAgreementViewSet(
     viewsets.GenericViewSet,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
 ):
     """ Viewset for read operations on CustomerAgreements. """
 
