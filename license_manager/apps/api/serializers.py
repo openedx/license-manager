@@ -112,6 +112,56 @@ class SubscriptionPlanSerializer(MinimalSubscriptionPlanSerializer):
         }
 
 
+class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
+    prior_renewals=None
+    enterprise_catalog_uuid=serializers.CharField(required=False, allow_null=True)
+    desired_num_licenses=serializers.IntegerField(required=True)
+    customer_agreement_id=serializers.CharField(required=True)
+    is_revocation_cap_enabled=serializers.BooleanField(required=False, default=False)
+    revoke_max_percentage=serializers.IntegerField(required=False, default=5)
+    change_reason=serializers.CharField(read_only=True)
+    salesforce_opportunity_line_item=serializers.CharField(required=True)
+
+    class Meta:
+        model = SubscriptionPlan
+        fields = MinimalSubscriptionPlanSerializer.Meta.fields + [
+            'can_freeze_unused_licenses',
+            'customer_agreement_id', 
+            'desired_num_licenses',
+            'expiration_processed',
+            'for_internal_use_only',
+            'last_freeze_timestamp',
+            'num_revocations_applied',
+            'product',
+            'revoke_max_percentage',
+            'salesforce_opportunity_line_item',
+            'is_revocation_cap_enabled',
+            'change_reason',
+        ]
+
+class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
+    enterprise_catalog_uuid=serializers.CharField(required=False)
+
+    class Meta:
+        model = SubscriptionPlan
+        fields = [
+            'title',
+            'is_active',
+            'for_internal_use_only', 
+            'start_date',
+            'expiration_date',
+            'for_internal_use_only',
+            'enterprise_catalog_uuid',
+            'salesforce_opportunity_line_item',
+            'should_auto_apply_licenses',
+            'is_revocation_cap_enabled',
+            'revoke_max_percentage',
+            'can_freeze_unused_licenses',
+            'product',
+            'change_reason',
+        ]
+
+
 class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
     """
     Minimal serializer for the `CustomerAgreement` model. Does not
@@ -505,9 +555,3 @@ class EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer(serializers.Serial
             'course_run_keys',
             'notify',
         ]
-
-
-class SubscriptionPlanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SubscriptionPlan
-        fields = '__all__'  # Include all fields from the SubscriptionPlan model

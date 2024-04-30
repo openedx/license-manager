@@ -11,11 +11,19 @@ from django.db import DatabaseError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from requests import HTTPError
 from drf_spectacular.utils import extend_schema
 from edx_rbac.decorators import permission_required
 from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
+)
+from license_manager.apps.api_client.enterprise_catalog import (
+    EnterpriseCatalogApiClient,
+)
+from license_manager.apps.subscriptions.tasks import (
+    PROVISION_LICENSES_BATCH_SIZE,
+    provision_licenses_task,
 )
 from rest_framework import filters, permissions, status, viewsets, mixins
 from rest_framework.authentication import SessionAuthentication
@@ -25,7 +33,9 @@ from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_csv.renderers import CSVRenderer
-
+from license_manager.apps.subscriptions.constants import (
+    MAX_NUM_LICENSES,
+)
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
 from license_manager.apps.api.mixins import UserDetailsFromJwtMixin
@@ -59,12 +69,14 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionLicenseSourceType,
     SubscriptionPlan,
     SubscriptionsRoleAssignment,
+    Product
 )
 from license_manager.apps.subscriptions.utils import (
     chunks,
     get_license_activation_link,
     get_subsidy_checksum,
     localized_utcnow,
+    verify_sf_opportunity_product_line_item
 )
 
 from ..pagination import (
@@ -336,7 +348,13 @@ class SubscriptionViewSet(
     """ Viewset for SubscriptionPlans."""
     permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
-    serializer_class = serializers.SubscriptionPlanSerializer
+
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return serializers.SubscriptionPlanCreateSerializer
+        else:
+            return serializers.SubscriptionPlanUpdateSerializer
 
     @property
     def requested_current_plan(self):
@@ -375,10 +393,67 @@ class SubscriptionViewSet(
         """
         Returns list of all SubscriptionPlan records
         """
-        logger.info(f'request.user.is_staff:::: {request.user.is_staff}')
-        logger.info(f'request.user.groups:::: {request.user.groups.all()}')
+        # TODO implement permissions using request.user.groups
         return super().list(request, *args, **kwargs)
 
+    def create(self, request):
+        """
+        Creates a new SubscriptionPlan record
+        """
+        
+        desired_num_licenses = request.data.get('desired_num_licenses')
+        enterprise_catalog_uuid = request.data.get('enterprise_catalog_uuid')
+        expiration_date = request.data.get('expiration_date')
+        start_date = request.data.get('start_date')
+        last_freeze_timestamp = request.data.get('last_freeze_timestamp')
+        customer_agreement_pk = request.data.get('customer_agreement_id')
+        obj = {
+            'title': request.data.get('title'),
+            'start_date': start_date,
+            'expiration_date': expiration_date,
+            'last_freeze_timestamp': last_freeze_timestamp,
+            'enterprise_catalog_uuid': enterprise_catalog_uuid,
+            'customer_agreement_id': customer_agreement_pk,
+            'salesforce_opportunity_line_item': request.data.get('salesforce_opportunity_line_item'),
+            'product': request.data.get('product'),
+            'revoke_max_percentage': request.data.get('revoke_max_percentage'),
+            'is_revocation_cap_enabled': request.data.get('is_revocation_cap_enabled'),
+            'is_active': request.data.get('is_active'),
+            'for_internal_use_only': request.data.get('for_internal_use_only'),
+            'can_freeze_unused_licenses': request.data.get('can_freeze_unused_licenses'),
+            'should_auto_apply_licenses': request.data.get('should_auto_apply_licenses'),
+            'desired_num_licenses': desired_num_licenses,
+            'change_reason': request.data.get('change_reason')
+        }
+        customer_agreement = CustomerAgreement.objects.get(pk=customer_agreement_pk)
+        if not customer_agreement:
+            return Response({'error': 'Invalid customer_agreement_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not enterprise_catalog_uuid:
+            obj['enterprise_catalog_uuid']=str(customer_agreement.default_enterprise_catalog_uuid)
+
+        serializer = self.get_serializer(data=obj)
+        serializer.is_valid(raise_exception=True)
+        validation_error = self._validate(obj, customer_agreement)
+        if validation_error:
+            return Response({'error': validation_error}, status=status.HTTP_400_BAD_REQUEST)
+        instance = serializer.save()
+        instance._change_reason=obj['change_reason']
+        instance.save()
+        
+        instance.customer_agreement = customer_agreement
+        if instance.desired_num_licenses > 0:
+            if instance.desired_num_licenses <= PROVISION_LICENSES_BATCH_SIZE:
+                # We can handle just one batch synchronously.
+                SubscriptionPlan.increase_num_licenses(instance, instance.desired_num_licenses)
+            else:
+                # Multiple batches of licenses will need to be created, so provision them asynchronously.
+                provision_licenses_task.delay(subscription_plan_uuid=instance.uuid)
+
+        
+        response_data = serializer.data.copy()
+        response_data['change_reason'] = obj['change_reason']
+        return Response(response_data)
     
     def retrieve(self, request, subscription_uuid):
         """
@@ -400,13 +475,72 @@ class SubscriptionViewSet(
             # Get the subscription object based on the provided UUID
             subscription = self.get_object()
             # Perform partial update
+            subscription._change_reason=request.data.get('change_reason')
             serializer = self.get_serializer(subscription, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
+            error = self._validate(request.data)
+            if error:
+                return Response({error: error}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
-            return Response(serializer.data)
+            # TODO: provision here
+            response_data = serializer.data.copy()
+            response_data['change_reason'] = subscription._change_reason
+            return Response(response_data)
         else:
             return Response({"error": "Subscription UUID not provided"}, status=400)
 
+    def _validate(self, data, customer_agreement):
+        # Ensure that we are getting an enterprise catalog uuid from the field itself or the linked customer agreement
+        # when the subscription is first created.
+        if 'customer_agreement' in data:
+            form_customer_agreement = data.get('customer_agreement')
+            form_enterprise_catalog_uuid = data.get('enterprise_catalog_uuid')
+            customer_agreement_instance = CustomerAgreement.objects.get(pk=form_customer_agreement)
+            if not customer_agreement_instance.default_enterprise_catalog_uuid and not form_enterprise_catalog_uuid:
+                return 'The subscription must have an enterprise catalog uuid from itself or its customer agreement'
+
+        form_num_licenses = data.get('num_licenses', 0)
+        # Only internal use subscription plans to have more than the maximum number of licenses
+        if form_num_licenses > MAX_NUM_LICENSES and not data.for_internal_use_only:
+            return f'Non-test subscriptions may not have more than {MAX_NUM_LICENSES} licenses'
+
+        # Ensure the revoke max percentage is between 0 and 100
+        if data.get('is_revocation_cap_enabled') and data.get('revoke_max_percentage') > 100:
+            return 'Must be a valid percentage (0-100).'
+
+        product = Product.objects.get(pk=data.get('product'))
+
+        if not product:
+                return 'You must specify a valid product.'
+        if (
+                product.plan_type.sf_id_required
+                and data.get('salesforce_opportunity_line_item') is None
+                or not verify_sf_opportunity_product_line_item(data.get(
+                'salesforce_opportunity_line_item'))
+        ):
+            return 'You must specify Salesforce ID for selected product. It must start with \'00k\'.'
+        if settings.VALIDATE_FORM_EXTERNAL_FIELDS and data.enterprise_catalog_uuid:
+            error = self._validate_enterprise_catalog_uuid(data.enterprise_catalog_uuid, customer_agreement)
+            if error:
+                return error            
+
+    
+    def _validate_enterprise_catalog_uuid(self, enterprise_catalog_uuid, customer_agreement):
+        """
+        Verifies that the enterprise customer has a catalog with the given enterprise_catalog_uuid.
+        """
+
+        try:
+            catalog = EnterpriseCatalogApiClient().get_enterprise_catalog(enterprise_catalog_uuid)
+            catalog_enterprise_customer_uuid = catalog['enterprise_customer']
+            
+            if str(customer_agreement.enterprise_customer_uuid) != catalog_enterprise_customer_uuid:
+                    return 'A catalog with the given UUID does not exist for this enterprise customer.',
+        except HTTPError as ex:
+            if ex.response.status_code == status.HTTP_404_NOT_FOUND:
+                return 'A catalog with the given UUID does not exist for this enterprise customer.'
+            else:
+                return f'Could not verify the given UUID: {ex}. Please try again.'
 
 class LearnerLicensesViewSet(
     PermissionRequiredForListingMixin,
