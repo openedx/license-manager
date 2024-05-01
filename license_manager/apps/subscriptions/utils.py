@@ -187,7 +187,8 @@ def validate_enterprise_catalog_uuid(self):
                 )
             return False
         
-def validate_subscription_plan_payload(payload, handle_error, log_validation_error=None):
+
+def validate_subscription_plan_payload(payload, handle_error, log_validation_error=None, is_admin_form=True):
     # Ensure that we are getting an enterprise catalog uuid from the field itself or the linked customer agreement
     # when the subscription is first created.
     if 'customer_agreement' in payload:
@@ -217,33 +218,36 @@ def validate_subscription_plan_payload(payload, handle_error, log_validation_err
     if payload.get('is_revocation_cap_enabled') and payload.get('revoke_max_percentage') > 100:
         if log_validation_error:
             log_validation_error('bad max revoke settings')
-        handle_error('revoke_max_percentage', 'Must be a valid percentage (0-100).')
+        handle_error('revoke_max_percentage',
+                     'Must be a valid percentage (0-100).')
         return False
 
     product = payload.get('product')
+    # must check for product vaildations if request initiated from admin form.
+    # in case of views, serializers will handle the validation
+    if (product or is_admin_form):
+        if not product:
+            if log_validation_error:
+                log_validation_error('no product specified')
+            handle_error(
+                'product',
+                'You must specify a product.',
+            )
+            return False
 
-    if not product:
-        if log_validation_error:
-            log_validation_error('no product specified')
-        handle_error(
-            'product',
-            'You must specify a product.',
-        )
-        return False
-
-    if (
-            product.plan_type.sf_id_required
-            and payload.get('salesforce_opportunity_line_item') is None
-            or not verify_sf_opportunity_product_line_item(payload.get(
-            'salesforce_opportunity_line_item'))
-    ):
-        if log_validation_error:
-            log_validation_error('no SF ID')
-        handle_error(
-            'salesforce_opportunity_line_item',
-            'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
-        )
-        return False
+        if (
+                product.plan_type.sf_id_required
+                and payload.get('salesforce_opportunity_line_item') is None
+                or not verify_sf_opportunity_product_line_item(payload.get(
+                'salesforce_opportunity_line_item'))
+        ):
+            if log_validation_error:
+                log_validation_error('no SF ID')
+            handle_error(
+                'salesforce_opportunity_line_item',
+                'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
+            )
+            return False
 
     if settings.VALIDATE_FORM_EXTERNAL_FIELDS and payload.get('enterprise_catalog_uuid') and \
             not validate_enterprise_catalog_uuid():

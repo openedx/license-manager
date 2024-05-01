@@ -425,7 +425,7 @@ class SubscriptionViewSet(
         last_freeze_timestamp = request.data.get('last_freeze_timestamp')
         customer_agreement_pk = request.data.get('customer_agreement_id')
         product_id = request.data.get('product')
-        obj = {
+        raw_payload = {
             'title': request.data.get('title'),
             'start_date': start_date,
             'expiration_date': expiration_date,
@@ -447,23 +447,26 @@ class SubscriptionViewSet(
             customer_agreement = CustomerAgreement.objects.get(
                 pk=customer_agreement_pk)
         except CustomerAgreement.DoesNotExist:
-            return Response({'error': 'Invalid customer_agreement_id'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid customer_agreement_id.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not enterprise_catalog_uuid:
-            obj['enterprise_catalog_uuid'] = str(
+            raw_payload['enterprise_catalog_uuid'] = str(
                 customer_agreement.default_enterprise_catalog_uuid)
 
-        serializer = self.get_serializer(data=obj)
+        serializer = self.get_serializer(data=raw_payload)
         serializer.is_valid(raise_exception=True)
-        payload_to_validate = obj.copy()
-        payload_to_validate['product'] = Product.objects.get(pk=product_id)
+        payload_to_validate = raw_payload.copy()
+        try:
+            payload_to_validate['product'] = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist:
+            return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
         payload_to_validate['num_licenses'] = desired_num_licenses
         is_valid = validate_subscription_plan_payload(
-            payload_to_validate, self.handle_error)
+            payload_to_validate, self.handle_error, None, False)
         if (not is_valid):
             return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
         subscription_plan = serializer.save()
-        subscription_plan._change_reason = obj['change_reason']
+        subscription_plan._change_reason = raw_payload['change_reason']
         subscription_plan.save()
 
         subscription_plan.customer_agreement = customer_agreement
@@ -478,7 +481,7 @@ class SubscriptionViewSet(
                     subscription_plan_uuid=subscription_plan.uuid)
 
         response_data = serializer.data.copy()
-        response_data['change_reason'] = obj['change_reason']
+        response_data['change_reason'] = raw_payload['change_reason']
         return Response(response_data)
 
     def retrieve(self, request, subscription_uuid):
@@ -501,12 +504,20 @@ class SubscriptionViewSet(
             # Get the subscription object based on the provided UUID
             subscription = self.get_object()
             # Perform partial update
-            subscription._change_reason=request.data.get('change_reason')
+            subscription._change_reason=kwargs.get('change_reason')
             serializer = self.get_serializer(subscription, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
-            error = self._validate(request.data)
-            if error:
-                return Response({error: error}, status=status.HTTP_400_BAD_REQUEST)
+            payload_to_validate = request.data.copy()
+            product_id = request.data.get('product')
+            if(product_id):
+                try:
+                    payload_to_validate['product'] = Product.objects.get(pk=product_id)
+                except Product.DoesNotExist:
+                    return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            is_valid = validate_subscription_plan_payload(
+                payload_to_validate, self.handle_error, None, False)
+            if (not is_valid):
+                return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             # TODO: provision here
             response_data = serializer.data.copy()

@@ -145,20 +145,19 @@ class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
     class Meta:
         model = SubscriptionPlan
         fields = [
-            'title',
-            'is_active',
-            'for_internal_use_only', 
-            'start_date',
+            'can_freeze_unused_licenses',
+            'change_reason',
+            'enterprise_catalog_uuid',
             'expiration_date',
             'for_internal_use_only',
-            'enterprise_catalog_uuid',
+            'is_active',
+            'is_revocation_cap_enabled',
+            'product',
+            'revoke_max_percentage',
             'salesforce_opportunity_line_item',
             'should_auto_apply_licenses',
-            'is_revocation_cap_enabled',
-            'revoke_max_percentage',
-            'can_freeze_unused_licenses',
-            'product',
-            'change_reason',
+            'start_date',
+            'title',
         ]
 
 
