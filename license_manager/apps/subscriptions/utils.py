@@ -10,8 +10,14 @@ from pytz import UTC
 
 from license_manager.apps.subscriptions.constants import (
     DEFAULT_EMAIL_SENDER_ALIAS,
+    MAX_NUM_LICENSES
 )
+from requests.exceptions import HTTPError
+from rest_framework import status
 
+from license_manager.apps.api_client.enterprise_catalog import (
+    EnterpriseCatalogApiClient,
+)
 
 # pylint: disable=no-value-for-parameter
 def localized_utcnow():
@@ -151,3 +157,98 @@ def verify_sf_opportunity_product_line_item(salesforce_opportunity_line_item):
     is correct
     """
     return re.search(r'^00k', salesforce_opportunity_line_item)
+
+
+def validate_enterprise_catalog_uuid(self):
+        """
+        Verifies that the enterprise customer has a catalog with the given enterprise_catalog_uuid.
+        """
+
+        try:
+            catalog = EnterpriseCatalogApiClient().get_enterprise_catalog(self.instance.enterprise_catalog_uuid)
+            catalog_enterprise_customer_uuid = catalog['enterprise_customer']
+            if str(self.instance.enterprise_customer_uuid) != catalog_enterprise_customer_uuid:
+                self.add_error(
+                    'enterprise_catalog_uuid',
+                    'A catalog with the given UUID does not exist for this enterprise customer.',
+                )
+                return False
+            return True
+        except HTTPError as ex:
+            if ex.response.status_code == status.HTTP_404_NOT_FOUND:
+                self.add_error(
+                    'enterprise_catalog_uuid',
+                    'A catalog with the given UUID does not exist for this enterprise customer.',
+                )
+            else:
+                self.add_error(
+                    'enterprise_catalog_uuid',
+                    f'Could not verify the given UUID: {ex}. Please try again.',
+                )
+            return False
+        
+def validate_subscription_plan_payload(payload, handle_error, log_validation_error=None):
+    # Ensure that we are getting an enterprise catalog uuid from the field itself or the linked customer agreement
+    # when the subscription is first created.
+    if 'customer_agreement' in payload:
+        form_customer_agreement = payload.get('customer_agreement')
+        form_enterprise_catalog_uuid = payload.get('enterprise_catalog_uuid')
+        if not form_customer_agreement.default_enterprise_catalog_uuid and not form_enterprise_catalog_uuid:
+            if log_validation_error:
+                log_validation_error('bad catalog uuid')
+            handle_error(
+                'enterprise_catalog_uuid',
+                'The subscription must have an enterprise catalog uuid from itself or its customer agreement',
+            )
+            return False
+
+    form_num_licenses = payload.get('num_licenses', 0)
+    # Only internal use subscription plans to have more than the maximum number of licenses
+    if form_num_licenses > MAX_NUM_LICENSES and not payload.get('for_internal_use_only'):
+        if log_validation_error:
+            log_validation_error('exceeded max licenses')
+        handle_error(
+            'num_licenses',
+            f'Non-test subscriptions may not have more than {MAX_NUM_LICENSES} licenses',
+        )
+        return False
+
+    # Ensure the revoke max percentage is between 0 and 100
+    if payload.get('is_revocation_cap_enabled') and payload.get('revoke_max_percentage') > 100:
+        if log_validation_error:
+            log_validation_error('bad max revoke settings')
+        handle_error('revoke_max_percentage', 'Must be a valid percentage (0-100).')
+        return False
+
+    product = payload.get('product')
+
+    if not product:
+        if log_validation_error:
+            log_validation_error('no product specified')
+        handle_error(
+            'product',
+            'You must specify a product.',
+        )
+        return False
+
+    if (
+            product.plan_type.sf_id_required
+            and payload.get('salesforce_opportunity_line_item') is None
+            or not verify_sf_opportunity_product_line_item(payload.get(
+            'salesforce_opportunity_line_item'))
+    ):
+        if log_validation_error:
+            log_validation_error('no SF ID')
+        handle_error(
+            'salesforce_opportunity_line_item',
+            'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
+        )
+        return False
+
+    if settings.VALIDATE_FORM_EXTERNAL_FIELDS and payload.get('enterprise_catalog_uuid') and \
+            not validate_enterprise_catalog_uuid():
+        if log_validation_error:
+            log_validation_error('bad catalog uuid validation')
+        return False
+
+    return True

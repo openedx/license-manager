@@ -16,7 +16,6 @@ from license_manager.apps.api_client.enterprise_catalog import (
     EnterpriseCatalogApiClient,
 )
 from license_manager.apps.subscriptions.constants import (
-    MAX_NUM_LICENSES,
     MIN_NUM_LICENSES,
     SubscriptionPlanChangeReasonChoices,
 )
@@ -30,6 +29,7 @@ from license_manager.apps.subscriptions.models import (
 from license_manager.apps.subscriptions.utils import (
     localized_utcnow,
     verify_sf_opportunity_product_line_item,
+    validate_subscription_plan_payload
 )
 
 
@@ -70,34 +70,6 @@ class SubscriptionPlanForm(forms.ModelForm):
         )
     )
 
-    def _validate_enterprise_catalog_uuid(self):
-        """
-        Verifies that the enterprise customer has a catalog with the given enterprise_catalog_uuid.
-        """
-
-        try:
-            catalog = EnterpriseCatalogApiClient().get_enterprise_catalog(self.instance.enterprise_catalog_uuid)
-            catalog_enterprise_customer_uuid = catalog['enterprise_customer']
-            if str(self.instance.enterprise_customer_uuid) != catalog_enterprise_customer_uuid:
-                self.add_error(
-                    'enterprise_catalog_uuid',
-                    'A catalog with the given UUID does not exist for this enterprise customer.',
-                )
-                return False
-            return True
-        except HTTPError as ex:
-            if ex.response.status_code == status.HTTP_404_NOT_FOUND:
-                self.add_error(
-                    'enterprise_catalog_uuid',
-                    'A catalog with the given UUID does not exist for this enterprise customer.',
-                )
-            else:
-                self.add_error(
-                    'enterprise_catalog_uuid',
-                    f'Could not verify the given UUID: {ex}. Please try again.',
-                )
-            return False
-
     def _log_validation_error(self, message):
         """
         Helper to help us log error messages about validation gone awry.
@@ -111,64 +83,8 @@ class SubscriptionPlanForm(forms.ModelForm):
             return False
 
         logger.info(f'More validation of {self.cleaned_data} for plan {self.instance}')
-        # Ensure that we are getting an enterprise catalog uuid from the field itself or the linked customer agreement
-        # when the subscription is first created.
-        if 'customer_agreement' in self.changed_data:
-            form_customer_agreement = self.cleaned_data.get('customer_agreement')
-            form_enterprise_catalog_uuid = self.cleaned_data.get('enterprise_catalog_uuid')
-            if not form_customer_agreement.default_enterprise_catalog_uuid and not form_enterprise_catalog_uuid:
-                self._log_validation_error('bad catalog uuid')
-                self.add_error(
-                    'enterprise_catalog_uuid',
-                    'The subscription must have an enterprise catalog uuid from itself or its customer agreement',
-                )
-                return False
-
-        form_num_licenses = self.cleaned_data.get('num_licenses', 0)
-        # Only internal use subscription plans to have more than the maximum number of licenses
-        if form_num_licenses > MAX_NUM_LICENSES and not self.instance.for_internal_use_only:
-            self._log_validation_error('exceeded max licenses')
-            self.add_error(
-                'num_licenses',
-                f'Non-test subscriptions may not have more than {MAX_NUM_LICENSES} licenses',
-            )
-            return False
-
-        # Ensure the revoke max percentage is between 0 and 100
-        if self.instance.is_revocation_cap_enabled and self.instance.revoke_max_percentage > 100:
-            self._log_validation_error('bad max revoke settings')
-            self.add_error('revoke_max_percentage', 'Must be a valid percentage (0-100).')
-            return False
-
-        product = self.cleaned_data.get('product')
-
-        if not product:
-            self._log_validation_error('no product specified')
-            self.add_error(
-                'product',
-                'You must specify a product.',
-            )
-            return False
-
-        if (
-                product.plan_type.sf_id_required
-                and self.cleaned_data.get('salesforce_opportunity_line_item') is None
-                or not verify_sf_opportunity_product_line_item(self.cleaned_data.get(
-                'salesforce_opportunity_line_item'))
-        ):
-            self._log_validation_error('no SF ID')
-            self.add_error(
-                'salesforce_opportunity_line_item',
-                'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
-            )
-            return False
-
-        if settings.VALIDATE_FORM_EXTERNAL_FIELDS and self.instance.enterprise_catalog_uuid and \
-                not self._validate_enterprise_catalog_uuid():
-            self._log_validation_error('bad catalog uuid validation')
-            return False
-
-        return True
+        result = validate_subscription_plan_payload(self.cleaned_data, self.add_error, self._log_validation_error)
+        return result
 
     class Meta:
         model = SubscriptionPlan
