@@ -56,11 +56,11 @@ billiard==4.2.0
     # via
     #   -r requirements/test.txt
     #   celery
-boto3==1.34.87
+boto3==1.34.95
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.34.87
+botocore==1.34.95
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -115,7 +115,7 @@ code-annotations==1.8.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.4.4
+coverage[toml]==7.5.0
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -138,7 +138,6 @@ dill==0.3.8
 django==4.2.11
     # via
     #   -c requirements/common_constraints.txt
-    #   -c requirements/constraints.txt
     #   -r requirements/test.txt
     #   django-autocomplete-light
     #   django-celery-results
@@ -190,7 +189,7 @@ django-model-utils==4.5.0
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==3.6.0
+django-ses==4.0.0
     # via -r requirements/test.txt
 django-simple-history==3.5.0
     # via -r requirements/test.txt
@@ -212,6 +211,10 @@ djangorestframework==3.15.1
     #   edx-drf-extensions
 djangorestframework-csv==3.0.2
     # via -r requirements/test.txt
+dnspython==2.6.1
+    # via
+    #   -r requirements/test.txt
+    #   pymongo
 doc8==1.1.1
     # via -r requirements/doc.in
 docutils==0.19
@@ -235,7 +238,7 @@ edx-braze-client==0.2.3
     # via -r requirements/test.txt
 edx-celeryutils==1.3.0
     # via -r requirements/test.txt
-edx-django-utils==5.12.0
+edx-django-utils==5.13.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -247,11 +250,11 @@ edx-drf-extensions==10.3.0
     #   edx-rbac
 edx-lint==5.3.6
     # via -r requirements/test.txt
-edx-opaque-keys==2.5.1
+edx-opaque-keys==2.9.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-rbac==1.8.0
+edx-rbac==1.9.0
     # via -r requirements/test.txt
 edx-rest-api-client==5.7.0
     # via -r requirements/test.txt
@@ -263,11 +266,11 @@ exceptiongroup==1.2.1
     #   pytest
 factory-boy==3.3.0
     # via -r requirements/test.txt
-faker==24.11.0
+faker==25.0.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
-freezegun==1.4.0
+freezegun==1.5.0
     # via -r requirements/test.txt
 idna==3.7
     # via
@@ -310,7 +313,7 @@ jsonfield==3.1.0
     # via
     #   -r requirements/test.txt
     #   edx-celeryutils
-jsonschema==4.21.1
+jsonschema==4.22.0
     # via
     #   -r requirements/test.txt
     #   drf-spectacular
@@ -361,11 +364,11 @@ pkgutil-resolve-name==1.3.10
     # via
     #   -r requirements/test.txt
     #   jsonschema
-platformdirs==4.2.0
+platformdirs==4.2.1
     # via
     #   -r requirements/test.txt
     #   pylint
-pluggy==1.4.0
+pluggy==1.5.0
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -422,7 +425,7 @@ pylint-plugin-utils==0.8.2
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==3.13.0
+pymongo==4.4.0
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
@@ -430,7 +433,7 @@ pynacl==1.5.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==8.1.1
+pytest==8.2.0
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -467,9 +470,9 @@ pyyaml==6.0.1
     #   drf-spectacular
 readme-renderer==43.0
     # via -r requirements/doc.in
-redis==5.0.3
+redis==5.0.4
     # via -r requirements/test.txt
-referencing==0.34.0
+referencing==0.35.0
     # via
     #   -r requirements/test.txt
     #   jsonschema
@@ -521,11 +524,11 @@ slumber==0.7.1
     #   edx-rest-api-client
 snowballstemmer==2.2.0
     # via sphinx
-social-auth-app-django==5.4.0
+social-auth-app-django==5.4.1
     # via
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.5.3
+social-auth-core==4.5.4
     # via
     #   -r requirements/test.txt
     #   edx-auth-backends
@@ -584,7 +587,6 @@ typing-extensions==4.11.0
     #   astroid
     #   drf-spectacular
     #   edx-opaque-keys
-    #   faker
     #   kombu
     #   pydata-sphinx-theme
     #   pylint
@@ -617,3 +619,6 @@ zipp==3.18.1
     #   -r requirements/test.txt
     #   importlib-metadata
     #   importlib-resources
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools
