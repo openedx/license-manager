@@ -160,33 +160,34 @@ def verify_sf_opportunity_product_line_item(salesforce_opportunity_line_item):
 
 
 def validate_enterprise_catalog_uuid(self):
-        """
-        Verifies that the enterprise customer has a catalog with the given enterprise_catalog_uuid.
-        """
+    """
+    Verifies that the enterprise customer has a catalog with the given enterprise_catalog_uuid.
+    """
 
-        try:
-            catalog = EnterpriseCatalogApiClient().get_enterprise_catalog(self.instance.enterprise_catalog_uuid)
-            catalog_enterprise_customer_uuid = catalog['enterprise_customer']
-            if str(self.instance.enterprise_customer_uuid) != catalog_enterprise_customer_uuid:
-                self.add_error(
-                    'enterprise_catalog_uuid',
-                    'A catalog with the given UUID does not exist for this enterprise customer.',
-                )
-                return False
-            return True
-        except HTTPError as ex:
-            if ex.response.status_code == status.HTTP_404_NOT_FOUND:
-                self.add_error(
-                    'enterprise_catalog_uuid',
-                    'A catalog with the given UUID does not exist for this enterprise customer.',
-                )
-            else:
-                self.add_error(
-                    'enterprise_catalog_uuid',
-                    f'Could not verify the given UUID: {ex}. Please try again.',
-                )
+    try:
+        catalog = EnterpriseCatalogApiClient().get_enterprise_catalog(
+            self.instance.enterprise_catalog_uuid)
+        catalog_enterprise_customer_uuid = catalog['enterprise_customer']
+        if str(self.instance.enterprise_customer_uuid) != catalog_enterprise_customer_uuid:
+            self.add_error(
+                'enterprise_catalog_uuid',
+                'A catalog with the given UUID does not exist for this enterprise customer.',
+            )
             return False
-        
+        return True
+    except HTTPError as ex:
+        if ex.response.status_code == status.HTTP_404_NOT_FOUND:
+            self.add_error(
+                'enterprise_catalog_uuid',
+                'A catalog with the given UUID does not exist for this enterprise customer.',
+            )
+        else:
+            self.add_error(
+                'enterprise_catalog_uuid',
+                f'Could not verify the given UUID: {ex}. Please try again.',
+            )
+        return False
+
 
 def validate_subscription_plan_payload(payload, handle_error, log_validation_error=None, is_admin_form=True):
     # Ensure that we are getting an enterprise catalog uuid from the field itself or the linked customer agreement

@@ -35,10 +35,8 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlanRenewal,
 )
 from license_manager.apps.subscriptions.tasks import (
-    PROVISION_LICENSES_BATCH_SIZE,
-    provision_licenses_task,
+    provision_licenses
 )
-
 
 def get_related_object_link(admin_viewname, object_pk, object_str):
     return mark_safe('<a href="{href}">{object_string}</a><br/>'.format(
@@ -356,17 +354,7 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
             obj.desired_num_licenses = form.cleaned_data.get('num_licenses', 0)
 
         super().save_model(request, obj, form, change)
-
-        # Finally, provision any additional licenses if necessary.
-        if obj.desired_num_licenses:
-            license_count_gap = obj.desired_num_licenses - obj.num_licenses
-            if license_count_gap > 0:
-                if license_count_gap <= PROVISION_LICENSES_BATCH_SIZE:
-                    # We can handle just one batch synchronously.
-                    SubscriptionPlan.increase_num_licenses(obj, license_count_gap)
-                else:
-                    # Multiple batches of licenses will need to be created, so provision them asynchronously.
-                    provision_licenses_task.delay(subscription_plan_uuid=obj.uuid)
+        provision_licenses(obj)
 
 
 @admin.register(CustomerAgreement)

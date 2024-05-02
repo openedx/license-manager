@@ -7,7 +7,7 @@ from celery import chain
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import DatabaseError, transaction
+from django.db import DatabaseError, IntegrityError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -21,10 +21,6 @@ from edx_rest_framework_extensions.auth.jwt.authentication import (
 from license_manager.apps.api_client.enterprise_catalog import (
     EnterpriseCatalogApiClient,
 )
-from license_manager.apps.subscriptions.tasks import (
-    PROVISION_LICENSES_BATCH_SIZE,
-    provision_licenses_task,
-)
 from rest_framework import filters, permissions, status, viewsets, mixins
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
@@ -33,8 +29,8 @@ from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_csv.renderers import CSVRenderer
-from license_manager.apps.subscriptions.constants import (
-    MAX_NUM_LICENSES,
+from license_manager.apps.subscriptions.tasks import (
+    provision_licenses
 )
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
@@ -357,7 +353,6 @@ class SubscriptionViewSet(
     permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
 
-
     def get_serializer_class(self):
         if self.action == 'create':
             return serializers.SubscriptionPlanCreateSerializer
@@ -387,7 +382,8 @@ class SubscriptionViewSet(
             try:
                 if self.requested_enterprise_uuid is not None:
                     # Use the class method to get the most recent plan
-                    current_plan = SubscriptionPlan.get_current_plan(self.requested_enterprise_uuid)
+                    current_plan = SubscriptionPlan.get_current_plan(
+                        self.requested_enterprise_uuid)
                     queryset = SubscriptionPlan.objects.filter(pk=current_plan.pk) if current_plan \
                         else SubscriptionPlan.objects.none()
                 else:
@@ -417,72 +413,71 @@ class SubscriptionViewSet(
         """
         Creates a new SubscriptionPlan record
         """
-
-        desired_num_licenses = request.data.get('desired_num_licenses')
-        enterprise_catalog_uuid = request.data.get('enterprise_catalog_uuid')
-        expiration_date = request.data.get('expiration_date')
-        start_date = request.data.get('start_date')
-        last_freeze_timestamp = request.data.get('last_freeze_timestamp')
-        customer_agreement_pk = request.data.get('customer_agreement_id')
-        product_id = request.data.get('product')
-        raw_payload = {
-            'title': request.data.get('title'),
-            'start_date': start_date,
-            'expiration_date': expiration_date,
-            'last_freeze_timestamp': last_freeze_timestamp,
-            'enterprise_catalog_uuid': enterprise_catalog_uuid,
-            'customer_agreement_id': customer_agreement_pk,
-            'salesforce_opportunity_line_item': request.data.get('salesforce_opportunity_line_item'),
-            'product': product_id,
-            'revoke_max_percentage': request.data.get('revoke_max_percentage'),
-            'is_revocation_cap_enabled': request.data.get('is_revocation_cap_enabled'),
-            'is_active': request.data.get('is_active'),
-            'for_internal_use_only': request.data.get('for_internal_use_only'),
-            'can_freeze_unused_licenses': request.data.get('can_freeze_unused_licenses'),
-            'should_auto_apply_licenses': request.data.get('should_auto_apply_licenses'),
-            'desired_num_licenses': desired_num_licenses,
-            'change_reason': request.data.get('change_reason')
-        }
         try:
-            customer_agreement = CustomerAgreement.objects.get(
-                pk=customer_agreement_pk)
-        except CustomerAgreement.DoesNotExist:
-            return Response({'error': 'Invalid customer_agreement_id.'}, status=status.HTTP_400_BAD_REQUEST)
+            desired_num_licenses = request.data.get('desired_num_licenses')
+            enterprise_catalog_uuid = request.data.get(
+                'enterprise_catalog_uuid')
+            expiration_date = request.data.get('expiration_date')
+            start_date = request.data.get('start_date')
+            last_freeze_timestamp = request.data.get('last_freeze_timestamp')
+            customer_agreement_pk = request.data.get('customer_agreement_id')
+            product_id = request.data.get('product')
+            raw_payload = {
+                'title': request.data.get('title'),
+                'start_date': start_date,
+                'expiration_date': expiration_date,
+                'last_freeze_timestamp': last_freeze_timestamp,
+                'enterprise_catalog_uuid': enterprise_catalog_uuid,
+                'customer_agreement_id': customer_agreement_pk,
+                'salesforce_opportunity_line_item': request.data.get('salesforce_opportunity_line_item'),
+                'product': product_id,
+                'revoke_max_percentage': request.data.get('revoke_max_percentage'),
+                'is_revocation_cap_enabled': request.data.get('is_revocation_cap_enabled'),
+                'is_active': request.data.get('is_active'),
+                'for_internal_use_only': request.data.get('for_internal_use_only'),
+                'can_freeze_unused_licenses': request.data.get('can_freeze_unused_licenses'),
+                'should_auto_apply_licenses': request.data.get('should_auto_apply_licenses'),
+                'desired_num_licenses': desired_num_licenses,
+                'change_reason': request.data.get('change_reason')
+            }
+            try:
+                customer_agreement = CustomerAgreement.objects.get(
+                    pk=customer_agreement_pk)
+            except CustomerAgreement.DoesNotExist:
+                return Response({'error': 'Invalid customer_agreement_id.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not enterprise_catalog_uuid:
-            raw_payload['enterprise_catalog_uuid'] = str(
-                customer_agreement.default_enterprise_catalog_uuid)
+            if not enterprise_catalog_uuid:
+                raw_payload['enterprise_catalog_uuid'] = str(
+                    customer_agreement.default_enterprise_catalog_uuid)
 
-        serializer = self.get_serializer(data=raw_payload)
-        serializer.is_valid(raise_exception=True)
-        payload_to_validate = raw_payload.copy()
-        try:
-            payload_to_validate['product'] = Product.objects.get(pk=product_id)
-        except Product.DoesNotExist:
-            return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        payload_to_validate['num_licenses'] = desired_num_licenses
-        is_valid = validate_subscription_plan_payload(
-            payload_to_validate, self.handle_error, None, False)
-        if (not is_valid):
-            return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
-        subscription_plan = serializer.save()
-        subscription_plan._change_reason = raw_payload['change_reason']
-        subscription_plan.save()
+            serializer = self.get_serializer(data=raw_payload)
+            serializer.is_valid(raise_exception=True)
+            payload_to_validate = raw_payload.copy()
+            try:
+                payload_to_validate['product'] = Product.objects.get(
+                    pk=product_id)
+            except Product.DoesNotExist:
+                return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            payload_to_validate['num_licenses'] = desired_num_licenses
+            is_valid = validate_subscription_plan_payload(
+                payload_to_validate, self.handle_error, None, False)
+            if (not is_valid):
+                return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
+            subscription_plan = serializer.save()
+            subscription_plan._change_reason = raw_payload['change_reason']
+            subscription_plan.save()
 
-        subscription_plan.customer_agreement = customer_agreement
-        if subscription_plan.desired_num_licenses > 0:
-            if subscription_plan.desired_num_licenses <= PROVISION_LICENSES_BATCH_SIZE:
-                # We can handle just one batch synchronously.
-                SubscriptionPlan.increase_num_licenses(
-                    subscription_plan, subscription_plan.desired_num_licenses)
-            else:
-                # Multiple batches of licenses will need to be created, so provision them asynchronously.
-                provision_licenses_task.delay(
-                    subscription_plan_uuid=subscription_plan.uuid)
+            subscription_plan.customer_agreement = customer_agreement
+            provision_licenses(subscription_plan)
 
-        response_data = serializer.data.copy()
-        response_data['change_reason'] = raw_payload['change_reason']
-        return Response(response_data)
+            response_data = serializer.data.copy()
+            response_data['change_reason'] = raw_payload['change_reason']
+            return Response(response_data)
+        except ValidationError as error:
+            return Response(error.detail, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError as error:
+            message = 'Database integrity error: ' + str(error)
+            return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, subscription_uuid):
         """
@@ -494,54 +489,42 @@ class SubscriptionViewSet(
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
-    
+
     def partial_update(self, request, *args, **kwargs):
         """
         Updates SubscriptionPlan record against given uuid
         """
         subscription_uuid = kwargs.get('subscription_uuid')
+        product_id = request.data.get('product')
         if subscription_uuid:
             # Get the subscription object based on the provided UUID
             subscription = self.get_object()
             # Perform partial update
-            subscription._change_reason=kwargs.get('change_reason')
-            serializer = self.get_serializer(subscription, data=request.data, partial=True)
+            subscription._change_reason = kwargs.get('change_reason')
+            serializer = self.get_serializer(
+                subscription, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             payload_to_validate = request.data.copy()
-            product_id = request.data.get('product')
-            if(product_id):
+
+            # validation requires Product instance instead of just an id
+            if (product_id):
                 try:
-                    payload_to_validate['product'] = Product.objects.get(pk=product_id)
+                    payload_to_validate['product'] = Product.objects.get(
+                        pk=product_id)
                 except Product.DoesNotExist:
                     return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
             is_valid = validate_subscription_plan_payload(
                 payload_to_validate, self.handle_error, None, False)
-            if (not is_valid):
+            if not is_valid:
                 return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
-            # TODO: provision here
+            provision_licenses(subscription)
             response_data = serializer.data.copy()
             response_data['change_reason'] = subscription._change_reason
             return Response(response_data)
         else:
             return Response({"error": "Subscription UUID not provided"}, status=400)
-    
-    def _validate_enterprise_catalog_uuid(self, enterprise_catalog_uuid, customer_agreement):
-        """
-        Verifies that the enterprise customer has a catalog with the given enterprise_catalog_uuid.
-        """
 
-        try:
-            catalog = EnterpriseCatalogApiClient().get_enterprise_catalog(enterprise_catalog_uuid)
-            catalog_enterprise_customer_uuid = catalog['enterprise_customer']
-            
-            if str(customer_agreement.enterprise_customer_uuid) != catalog_enterprise_customer_uuid:
-                    return 'A catalog with the given UUID does not exist for this enterprise customer.',
-        except HTTPError as ex:
-            if ex.response.status_code == status.HTTP_404_NOT_FOUND:
-                return 'A catalog with the given UUID does not exist for this enterprise customer.'
-            else:
-                return f'Could not verify the given UUID: {ex}. Please try again.'
 
 class LearnerLicensesViewSet(
     PermissionRequiredForListingMixin,
