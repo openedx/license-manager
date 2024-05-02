@@ -115,7 +115,7 @@ class CustomerAgreementViewSet(
 ):
     """ Viewset for read operations on CustomerAgreements. """
 
-    authentication_classes = [JwtAuthentication]
+    authentication_classes = [JwtAuthentication, SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     lookup_field = 'uuid'
