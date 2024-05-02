@@ -356,8 +356,11 @@ class SubscriptionViewSet(
     def get_serializer_class(self):
         if self.action == 'create':
             return serializers.SubscriptionPlanCreateSerializer
-        else:
+        elif self.action=='partial_update':
             return serializers.SubscriptionPlanUpdateSerializer
+        else:
+            return serializers.SubscriptionPlanSerializer
+            
 
     @property
     def requested_current_plan(self):
@@ -404,7 +407,6 @@ class SubscriptionViewSet(
         """
         Handles validation errors by adding them to the viewset's error response.
         """
-        print(f'self:{self}, field:{field}, message: {message}')
         errors = getattr(self, 'errors', {})
         errors[field] = message
         setattr(self, 'errors', errors)
@@ -478,12 +480,14 @@ class SubscriptionViewSet(
         except IntegrityError as error:
             message = 'Database integrity error: ' + str(error)
             return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as error:
+            return Response({'error': error}, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, subscription_uuid):
         """
         Returns a single SubscriptionPlan against given uuid
         """
-        try:
+        try: 
             instance = SubscriptionPlan.objects.get(uuid=subscription_uuid)
         except SubscriptionPlan.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -500,7 +504,7 @@ class SubscriptionViewSet(
             # Get the subscription object based on the provided UUID
             subscription = self.get_object()
             # Perform partial update
-            subscription._change_reason = kwargs.get('change_reason')
+            subscription._change_reason = request.data.get('change_reason')
             serializer = self.get_serializer(
                 subscription, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -518,9 +522,11 @@ class SubscriptionViewSet(
             if not is_valid:
                 return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
+            
             provision_licenses(subscription)
             response_data = serializer.data.copy()
             response_data['change_reason'] = subscription._change_reason
+            response_data['uuid'] = subscription.uuid
             return Response(response_data)
         else:
             return Response({"error": "Subscription UUID not provided"}, status=400)

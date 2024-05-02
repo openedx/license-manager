@@ -141,6 +141,11 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
 
 class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
     enterprise_catalog_uuid=serializers.CharField(required=False)
+    customer_agreement_id = serializers.ReadOnlyField()
+    desired_num_licenses = serializers.ReadOnlyField()
+    expiration_processed = serializers.ReadOnlyField()
+    last_freeze_timestamp = serializers.ReadOnlyField()
+    num_revocations_applied = serializers.ReadOnlyField()
 
     class Meta:
         model = SubscriptionPlan
@@ -158,6 +163,11 @@ class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
             'should_auto_apply_licenses',
             'start_date',
             'title',
+            'customer_agreement_id',
+            'desired_num_licenses',
+            'expiration_processed',
+            'last_freeze_timestamp',
+            'num_revocations_applied',
         ]
 
 
