@@ -99,7 +99,7 @@ class ValidateQueryMappingTaskTests(TestCase):
                 catalog_query_ids[index] = [str(uuid.uuid4())]
 
             # add one allowed *custom* catalog uuid to the response payload
-            catalog_query_ids[42] = allowed_custom_catalog_uuid
+            catalog_query_ids[42] = [allowed_custom_catalog_uuid]
 
             mock_api_client.return_value.get_distinct_catalog_queries.return_value = {
                 'num_distinct_query_ids': len(catalog_query_ids),
