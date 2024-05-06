@@ -51,6 +51,7 @@ from license_manager.apps.subscriptions.models import (
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
+    ProductFactory,
     SubscriptionLicenseSourceFactory,
     SubscriptionPlanFactory,
     SubscriptionPlanRenewalFactory,
@@ -204,6 +205,28 @@ def _subscriptions_list_request(api_client, user, enterprise_customer_uuid=None,
     return api_client.get(url)
 
 
+def _subscription_create_request(api_client, user, params):
+    """
+    Helper method that creates a SubscriptionPlan.
+    """
+    if user:
+        api_client.force_authenticate(user=user)
+
+    url = '/api/v1/subscriptions'
+    return api_client.post(url, params)
+
+
+def _subscriptions_patch_request(api_client, user, params, subscription_uuid):
+    """
+    Helper method that updates a SubscriptionPlan.
+    """
+    if user:
+        api_client.force_authenticate(user=user)
+
+    url = f'/api/v1/subscriptions/{subscription_uuid}'
+    return api_client.patch(url, params)
+
+
 def _learner_subscriptions_list_request(api_client, enterprise_customer_uuid=None):
     """
     Helper method that requests a list of active subscriptions entities for a given enterprise_customer_uuid.
@@ -284,6 +307,28 @@ def _iso_8601_format(datetime):
         return None
     return datetime.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
+
+def _prepare_subscription_plan_payload(customer_agreement):
+    return {
+        "title": "foo",
+        "start_date": "2024-04-29T15:17:53.462Z",
+        "expiration_date": "2024-05-10T15:17:53.462Z",
+        "enterprise_catalog_uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "is_active": True,
+        "is_revocation_cap_enabled": False,
+        "should_auto_apply_licenses": True,
+        "can_freeze_unused_licenses": True,
+        "customer_agreement_id": customer_agreement.uuid,
+        "desired_num_licenses": 3,
+        "expiration_processed": True,
+        "for_internal_use_only": True,
+        "last_freeze_timestamp": "2024-04-29T15:17:53.462Z",
+        "num_revocations_applied": 4294967295,
+        "product": 1,
+        "revoke_max_percentage": 5,
+        "salesforce_opportunity_line_item": "00k2222asdfasdfasd",
+        "change_reason": "new"
+    }
 
 def _assert_customer_agreement_response_correct(response, customer_agreement):
     """
@@ -671,6 +716,171 @@ def test_subscription_plan_list_bad_enterprise_uuid_400(api_client, superuser):
     response = _subscriptions_list_request(api_client, superuser, enterprise_customer_uuid='bad')
     assert status.HTTP_400_BAD_REQUEST == response.status_code
     assert 'bad is not a valid uuid' in str(response.content)
+
+
+@pytest.mark.django_db
+def test_subscription_plan_create_superuser_200(api_client, superuser, boolean_toggle):
+    """ 
+    Verify that the subcription POST endpoint creates new record and response includes all expected fields
+    """
+    enterprise_customer_uuid = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(
+        enterprise_customer_uuid=enterprise_customer_uuid)
+    ProductFactory.create_batch(1)
+    params = _prepare_subscription_plan_payload(customer_agreement)
+    _assign_role_via_jwt_or_db(
+        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+
+    response = _subscription_create_request(
+        api_client, superuser, params=params)
+
+    assert status.HTTP_200_OK == response.status_code
+    expected_fields = {
+        "can_freeze_unused_licenses",
+        "change_reason",
+        "customer_agreement_id",
+        "days_until_expiration_including_renewals",
+        "days_until_expiration",
+        "desired_num_licenses",
+        "enterprise_catalog_uuid",
+        "enterprise_customer_uuid",
+        "expiration_date",
+        "expiration_processed",
+        "for_internal_use_only",
+        "is_active",
+        "is_locked_for_renewal_processing",
+        "is_revocation_cap_enabled",
+        "last_freeze_timestamp",
+        "num_revocations_applied",
+        "product",
+        "revoke_max_percentage",
+        "salesforce_opportunity_line_item",
+        "should_auto_apply_licenses",
+        "start_date",
+        "title",
+        "uuid",
+    }
+    assert response.json().keys() == expected_fields
+
+
+@pytest.mark.django_db
+def test_subscription_plan_create_superuser_customer_agreement_400(api_client, superuser, boolean_toggle):
+    """ 
+    Verify that the subscription create endpoint returns error if invalid customer_agreement_id is given
+    """
+    enterprise_customer_uuid = uuid4()
+    invalid_customer_agreement_id = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(
+        enterprise_customer_uuid=enterprise_customer_uuid)
+    ProductFactory.create_batch(1)
+
+    params = _prepare_subscription_plan_payload(customer_agreement)
+    params['customer_agreement_id'] = invalid_customer_agreement_id
+    _assign_role_via_jwt_or_db(
+        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+
+    response = _subscription_create_request(
+        api_client, superuser, params=params)
+
+    assert status.HTTP_400_BAD_REQUEST == response.status_code
+    assert response.json()['error'] == 'Invalid customer_agreement_id.'
+
+
+@pytest.mark.django_db
+def test_subscription_plan_create_superuser_product_400(api_client, superuser, boolean_toggle):
+    """ 
+    Verify that the subscription create endpoint returns error if invalid Product is given
+    """
+    enterprise_customer_uuid = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(
+        enterprise_customer_uuid=enterprise_customer_uuid)
+    ProductFactory.create_batch(1)
+
+    params = _prepare_subscription_plan_payload(customer_agreement)
+    params['product'] = 2  # passing an invalid PK
+    _assign_role_via_jwt_or_db(
+        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+
+    response = _subscription_create_request(
+        api_client, superuser, params=params)
+
+    assert status.HTTP_400_BAD_REQUEST == response.status_code
+    assert response.json()['product'] == [
+        'Invalid pk "2" - object does not exist.']
+
+
+@pytest.mark.django_db
+def test_subscription_plan_create_superuser_salesforce_lineitem_400(api_client, superuser, boolean_toggle):
+    """ 
+    Verify that the subscription create endpoint returns error if invalid salesforce_lineitem is given
+    """
+    enterprise_customer_uuid = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(
+        enterprise_customer_uuid=enterprise_customer_uuid)
+    ProductFactory.create_batch(1)
+
+    params = _prepare_subscription_plan_payload(customer_agreement)
+    # passing a invalid string
+    params['salesforce_opportunity_line_item'] = 'foo'
+    _assign_role_via_jwt_or_db(
+        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+
+    response = _subscription_create_request(
+        api_client, superuser, params=params)
+
+    assert status.HTTP_400_BAD_REQUEST == response.status_code
+    assert response.json()[
+        'salesforce_opportunity_line_item'] == "You must specify Salesforce ID for selected product. It must start with '00k'."
+
+
+@pytest.mark.django_db
+def test_subscription_plan_update_superuser_200(api_client, superuser, boolean_toggle):
+    """ 
+    Verify that the subscription create endpoint returns 200 on patch request
+    """
+    enterprise_customer_uuid = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(
+        enterprise_customer_uuid=enterprise_customer_uuid)
+    ProductFactory.create_batch(1)
+
+    params = _prepare_subscription_plan_payload(customer_agreement)
+    _assign_role_via_jwt_or_db(
+        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+
+    create_response = _subscription_create_request(
+        api_client, superuser, params=params)
+    params['title'] = 'bar'
+    patch_response = _subscriptions_patch_request(
+        api_client, superuser, params=params, subscription_uuid=create_response.json()['uuid'])
+    assert status.HTTP_200_OK == create_response.status_code
+    assert status.HTTP_200_OK == patch_response.status_code
+    expected_fields = {
+        "can_freeze_unused_licenses",
+        "change_reason",
+        "customer_agreement_id",
+        "days_until_expiration_including_renewals",
+        "days_until_expiration",
+        "desired_num_licenses",
+        "enterprise_catalog_uuid",
+        "enterprise_customer_uuid",
+        "expiration_date",
+        "expiration_processed",
+        "for_internal_use_only",
+        "is_active",
+        "is_locked_for_renewal_processing",
+        "is_revocation_cap_enabled",
+        "last_freeze_timestamp",
+        "num_revocations_applied",
+        "product",
+        "revoke_max_percentage",
+        "salesforce_opportunity_line_item",
+        "should_auto_apply_licenses",
+        "start_date",
+        "title",
+        "uuid",
+    }
+    assert patch_response.json()['title'] == params['title']
+    assert patch_response.json().keys() == expected_fields
 
 
 @pytest.mark.django_db
@@ -3759,3 +3969,59 @@ class StaffLicenseLookupViewTests(LicenseViewTestMixin, TestCase):
                 'subscription_plan_title': self.active_subscription_for_customer.title,
             },
         ], response.json())  # pylint: disable=no-member
+
+
+# class SubscriptionViewSetTest(TestCase):
+#     def setUp(self):
+#         super().setUp()
+
+#         # API client setup
+#         self.client = APIClient()
+#         self.client.force_authenticate(user=self.user)
+
+#         # self.product = Product.objects.create(name="Test Product")
+#         # self.customer_agreement = CustomerAgreement.objects.create(
+#         #     enterprise_customer_uuid="test-enterprise-uuid"
+#         # )
+#         # self.subscription_plan = SubscriptionPlan.objects.create(
+#         #     title="Test Plan",
+#         #     product=self.product,
+#         #     customer_agreement=self.customer_agreement,
+#         #     is_active=True,
+#         # )
+#     @classmethod
+#     def setUpTestData(cls):
+#         super().setUpTestData()
+
+#         cls.user = UserFactory()
+#         cls.user2 = UserFactory()
+#         cls.users = [cls.user, cls.user2]
+#         cls.enterprise_customer_uuid = uuid4()
+#         cls.enterprise_catalog_uuid = uuid4()
+#         cls.course_key = 'testX'
+#         cls.lms_user_id = 1
+#         cls.now = localized_utcnow()
+#         cls.activation_key = uuid4()
+
+#         cls.customer_agreement = CustomerAgreementFactory(
+#             enterprise_customer_uuid=cls.enterprise_customer_uuid,
+#         )
+#         cls.active_subscription_for_customer = SubscriptionPlanFactory.create(
+#             customer_agreement=cls.customer_agreement,
+#             enterprise_catalog_uuid=cls.enterprise_catalog_uuid,
+#             is_active=True,
+#         )
+
+#     @property
+#     def _decoded_jwt(self):
+#         return {'user_id': self.lms_user_id}
+    
+#     def test_list_all_subscription_plans(self):
+#         response = self.client.get('/subscription-plans/')
+#         self.assertEqual(response.status_code, status.HTTP_200_OK)
+#         self.assertEqual(len(response.data['results']), 1)
+#         self.assertEqual(response.data['results'][0]['title'], self.subscription_plan.title)
+#         self.assertEqual(
+#             response.data['results'][0]['product'],
+#             ProductSerializer(self.subscription_plan.product).data
+#         )

@@ -225,7 +225,7 @@ def validate_subscription_plan_payload(payload, handle_error, log_validation_err
 
     product = payload.get('product')
     # must check for product vaildations if request initiated from admin form.
-    # in case of views, serializers will handle the validation
+    # in case of views, serializers will also handle the validation
     if (product or is_admin_form):
         if not product:
             if log_validation_error:
