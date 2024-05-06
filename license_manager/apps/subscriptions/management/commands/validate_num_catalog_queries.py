@@ -56,9 +56,11 @@ class Command(BaseCommand):
         for catalog_uuid_batch in chunks(distinct_catalog_uuids, constants.VALIDATE_NUM_CATALOG_QUERIES_BATCH_SIZE):
             response = EnterpriseCatalogApiClient().get_distinct_catalog_queries(catalog_uuid_batch)
             query_ids = response['catalog_uuids_by_catalog_query_id']
-            for catalog_query_id, catalog_uuid in query_ids.items():
-                if catalog_uuid not in settings.CUSTOM_CATALOG_PRODUCTS_ALLOW_LIST:
-                    catalog_uuids_by_catalog_query_id[catalog_query_id] += catalog_uuid
+            for catalog_query_id, catalog_uuid_list in query_ids.items():
+                allow_list = set(settings.CUSTOM_CATALOG_PRODUCTS_ALLOW_LIST)
+                catalog_uuids = set(catalog_uuid_list) - allow_list
+                if catalog_uuids:
+                    catalog_uuids_by_catalog_query_id[catalog_query_id] += list(catalog_uuids)
 
         distinct_catalog_query_ids = catalog_uuids_by_catalog_query_id.keys()
         # Calculate the number of customer types using the distinct number of
