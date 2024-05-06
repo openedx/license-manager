@@ -830,7 +830,8 @@ def test_subscription_plan_create_superuser_salesforce_lineitem_400(api_client, 
 
     assert status.HTTP_400_BAD_REQUEST == response.status_code
     assert response.json()[
-        'salesforce_opportunity_line_item'] == "You must specify Salesforce ID for selected product. It must start with '00k'."
+        'salesforce_opportunity_line_item'] == \
+        "You must specify Salesforce ID for selected product. It must start with '00k'."
 
 
 @pytest.mark.django_db

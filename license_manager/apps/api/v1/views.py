@@ -17,7 +17,6 @@ from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
-from requests import HTTPError
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
@@ -44,9 +43,6 @@ from license_manager.apps.api.tasks import (
     send_utilization_threshold_reached_email_task,
     track_license_changes_task,
     update_user_email_for_licenses_task,
-)
-from license_manager.apps.api_client.enterprise_catalog import (
-    EnterpriseCatalogApiClient,
 )
 from license_manager.apps.subscriptions import constants, event_utils
 from license_manager.apps.subscriptions.api import revoke_license
@@ -397,8 +393,8 @@ class SubscriptionViewSet(
         """
         Returns list of all SubscriptionPlan records
         """
-        # TODO implement permissions using request.user.groups
-        return super().list(request, *args, **kwargs)
+        subscription_plans = super().list(request, *args, **kwargs)
+        return subscription_plans
 
     def handle_error(self, field, message):
         """
@@ -406,7 +402,7 @@ class SubscriptionViewSet(
         """
         errors = getattr(self, 'errors', {})
         errors[field] = message
-        setattr(self, 'errors', errors)
+        self.errors = errors
 
     def create(self, request):
         """
@@ -469,7 +465,7 @@ class SubscriptionViewSet(
             if not is_valid:
                 return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
             subscription_plan = serializer.save()
-            subscription_plan._change_reason = raw_payload['change_reason']
+            subscription_plan._change_reason = raw_payload['change_reason']  # pylint: disable=protected-access
             subscription_plan.save()
 
             subscription_plan.customer_agreement = customer_agreement
@@ -483,7 +479,7 @@ class SubscriptionViewSet(
         except IntegrityError as error:
             message = 'Database integrity error: ' + str(error)
             return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as error:
+        except Exception as error:  # pylint: disable=broad-except
             return Response({'error': error}, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, subscription_uuid):
@@ -507,7 +503,7 @@ class SubscriptionViewSet(
             # Get the subscription object based on the provided UUID
             subscription = self.get_object()
             # Perform partial update
-            subscription._change_reason = request.data.get('change_reason')
+            subscription._change_reason = request.data.get('change_reason')  # pylint: disable=protected-access
             serializer = self.get_serializer(
                 subscription, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -521,7 +517,7 @@ class SubscriptionViewSet(
                 except Product.DoesNotExist:
                     return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
             is_valid = validate_subscription_plan_payload(
-                payload=payload_to_validate, 
+                payload=payload_to_validate,
                 handle_error=self.handle_error,
                 log_validation_error=None,
                 is_admin_form=False,
@@ -533,7 +529,7 @@ class SubscriptionViewSet(
 
             provision_licenses(subscription)
             response = serializer.data.copy()
-            response['change_reason'] = subscription._change_reason
+            response['change_reason'] = subscription._change_reason  # pylint: disable=protected-access
             response['uuid'] = subscription.uuid
             response['days_until_expiration_including_renewals'] = subscription.days_until_expiration_including_renewals
             response['days_until_expiration'] = subscription.days_until_expiration

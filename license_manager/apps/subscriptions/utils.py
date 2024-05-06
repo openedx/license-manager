@@ -191,6 +191,19 @@ def validate_enterprise_catalog_uuid(enterprise_catalog_uuid, enterprise_custome
 
 def validate_subscription_plan_payload(payload, handle_error, log_validation_error=None, is_admin_form=True,
                                        enterprise_customer_uuid=None):
+    """
+    Validate payload before creating or updating a Subscription record
+
+    Args:
+        payload (dictionary): payload dictionary
+        handle_error (function): method to handle error
+        log_validation_error (function, optional): method to log validation error
+        is_admin_form (bool, optional): bool indicateing if this function is being called from admin form or not
+        enterprise_customer_uuid (string, required): enterprise_customer_uuid
+
+    Returns:
+        bool: validation succeded or failed
+    """
     # Ensure that we are getting an enterprise catalog uuid from the field itself or the linked customer agreement
     # when the subscription is first created.
     if 'customer_agreement' in payload:

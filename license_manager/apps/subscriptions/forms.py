@@ -85,7 +85,7 @@ class SubscriptionPlanForm(forms.ModelForm):
         logger.info(f'More validation of {self.cleaned_data} for plan {self.instance}')
         result = validate_subscription_plan_payload(
             payload=self.cleaned_data,
-            handle_error=self.add_error, 
+            handle_error=self.add_error,
             log_validation_error=self._log_validation_error,
             enterprise_customer_uuid=self.instance.enterprise_customer_uuid
         )

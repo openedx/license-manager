@@ -1,6 +1,7 @@
 import logging
 from collections import defaultdict
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from license_manager.apps.api_client.enterprise_catalog import (
@@ -39,7 +40,11 @@ class Command(BaseCommand):
         customer_subs = SubscriptionPlan.objects.filter(
             expiration_processed=False,
             for_internal_use_only=False,
-        ).select_related('product')
+            product__plan_type__internal_use_only=False,
+        ).select_related(
+            'product',
+            'product__plan_type',
+        )
         distinct_catalog_uuids = [
             str(uuid) for uuid in customer_subs.values_list('enterprise_catalog_uuid', flat=True).distinct()
         ]
@@ -51,21 +56,26 @@ class Command(BaseCommand):
         for catalog_uuid_batch in chunks(distinct_catalog_uuids, constants.VALIDATE_NUM_CATALOG_QUERIES_BATCH_SIZE):
             response = EnterpriseCatalogApiClient().get_distinct_catalog_queries(catalog_uuid_batch)
             query_ids = response['catalog_uuids_by_catalog_query_id']
-            for key in query_ids.keys():
-                catalog_uuids_by_catalog_query_id[key] += query_ids[key]
+            for catalog_query_id, catalog_uuid in query_ids.items():
+                if catalog_uuid not in settings.CUSTOM_CATALOG_PRODUCTS_ALLOW_LIST:
+                    catalog_uuids_by_catalog_query_id[catalog_query_id] += catalog_uuid
 
         distinct_catalog_query_ids = catalog_uuids_by_catalog_query_id.keys()
         # Calculate the number of customer types using the distinct number of
-        # subscription Products found among customer subscriptions.
+        # non-internal-use-only Products-Plan Types found among customer subscriptions.
         # If the number of distinct catalog
         # query IDs doesn't match the number of customer types, log an error.
-        num_distinct_products = customer_subs.values_list('product__name', flat=True).distinct().count()
+        num_distinct_external_use_plan_types = customer_subs.values_list(
+            'product__plan_type__label',
+            flat=True,
+        ).distinct().count()
+
         summary = (
             f'{len(distinct_catalog_query_ids)} distinct Subscription Catalog Queries found, '
-            f'{num_distinct_products} expected based on the number of distinct subscription products.'
+            f'{num_distinct_external_use_plan_types} expected based on the number of distinct subscription products.'
         )
 
-        if len(distinct_catalog_query_ids) != num_distinct_products:
+        if len(distinct_catalog_query_ids) > num_distinct_external_use_plan_types:
             # We typically only see a handful of catalogs that relate
             # to some unaccounted-for catalog query, so we'll just log those,
             # instead of logging the potentially thousands of catalog uuids
