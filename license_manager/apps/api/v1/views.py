@@ -356,11 +356,10 @@ class SubscriptionViewSet(
     def get_serializer_class(self):
         if self.action == 'create':
             return serializers.SubscriptionPlanCreateSerializer
-        elif self.action=='partial_update':
+        elif self.action == 'partial_update':
             return serializers.SubscriptionPlanUpdateSerializer
         else:
             return serializers.SubscriptionPlanSerializer
-            
 
     @property
     def requested_current_plan(self):
@@ -487,7 +486,7 @@ class SubscriptionViewSet(
         """
         Returns a single SubscriptionPlan against given uuid
         """
-        try: 
+        try:
             instance = SubscriptionPlan.objects.get(uuid=subscription_uuid)
         except SubscriptionPlan.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -522,12 +521,16 @@ class SubscriptionViewSet(
             if not is_valid:
                 return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
-            
+
             provision_licenses(subscription)
-            response_data = serializer.data.copy()
-            response_data['change_reason'] = subscription._change_reason
-            response_data['uuid'] = subscription.uuid
-            return Response(response_data)
+            response = serializer.data.copy()
+            response['change_reason'] = subscription._change_reason
+            response['uuid'] = subscription.uuid
+            response['days_until_expiration_including_renewals'] = subscription.days_until_expiration_including_renewals
+            response['days_until_expiration'] = subscription.days_until_expiration
+            response['enterprise_customer_uuid'] = subscription.enterprise_customer_uuid
+            response['is_locked_for_renewal_processing'] = subscription.is_locked_for_renewal_processing
+            return Response(response)
         else:
             return Response({"error": "Subscription UUID not provided"}, status=400)
 
