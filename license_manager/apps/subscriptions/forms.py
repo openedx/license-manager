@@ -83,7 +83,12 @@ class SubscriptionPlanForm(forms.ModelForm):
             return False
 
         logger.info(f'More validation of {self.cleaned_data} for plan {self.instance}')
-        result = validate_subscription_plan_payload(self.cleaned_data, self.add_error, self._log_validation_error)
+        result = validate_subscription_plan_payload(
+            payload=self.cleaned_data,
+            handle_error=self.add_error, 
+            log_validation_error=self._log_validation_error,
+            enterprise_customer_uuid=self.instance.enterprise_customer_uuid
+        )
         return result
 
     class Meta:

@@ -393,8 +393,8 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
     search_fields = (
         'uuid__startswith',
         'enterprise_customer_uuid__startswith',
-        'enterprise_customer_slug__startswith',
-        'enterprise_customer_name__startswith',
+        'enterprise_customer_slug__istartswith',
+        'enterprise_customer_name__istartswith',
     )
     actions = ['sync_agreement_with_enterprise_customer']
 
@@ -699,8 +699,8 @@ class LicenseTransferJobAdmin(admin.ModelAdmin):
 
     search_fields = (
         'customer_agreement__enterprise_customer_uuid__startswith',
-        'customer_agreement__enterprise_customer_slug__startswith',
-        'customer_agreement__enterprise_customer_name__startswith',
+        'customer_agreement__enterprise_customer_slug__istartswith',
+        'customer_agreement__enterprise_customer_name__istartswith',
         'old_subscription_plan',
         'new_subscription_plan',
     )

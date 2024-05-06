@@ -11,17 +11,14 @@ from django.db import DatabaseError, IntegrityError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from requests import HTTPError
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from edx_rbac.decorators import permission_required
 from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
-from license_manager.apps.api_client.enterprise_catalog import (
-    EnterpriseCatalogApiClient,
-)
-from rest_framework import filters, permissions, status, viewsets, mixins
+from requests import HTTPError
+from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError, ValidationError
@@ -29,9 +26,7 @@ from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_csv.renderers import CSVRenderer
-from license_manager.apps.subscriptions.tasks import (
-    provision_licenses
-)
+
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
 from license_manager.apps.api.mixins import UserDetailsFromJwtMixin
@@ -50,6 +45,9 @@ from license_manager.apps.api.tasks import (
     track_license_changes_task,
     update_user_email_for_licenses_task,
 )
+from license_manager.apps.api_client.enterprise_catalog import (
+    EnterpriseCatalogApiClient,
+)
 from license_manager.apps.subscriptions import constants, event_utils
 from license_manager.apps.subscriptions.api import revoke_license
 from license_manager.apps.subscriptions.exceptions import (
@@ -61,19 +59,19 @@ from license_manager.apps.subscriptions.exceptions import (
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
+    Product,
     SubscriptionLicenseSource,
     SubscriptionLicenseSourceType,
     SubscriptionPlan,
     SubscriptionsRoleAssignment,
-    Product
 )
+from license_manager.apps.subscriptions.tasks import provision_licenses
 from license_manager.apps.subscriptions.utils import (
     chunks,
     get_license_activation_link,
     get_subsidy_checksum,
     localized_utcnow,
-    validate_subscription_plan_payload
-
+    validate_subscription_plan_payload,
 )
 
 from ..pagination import (
@@ -461,8 +459,14 @@ class SubscriptionViewSet(
                 return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
             payload_to_validate['num_licenses'] = desired_num_licenses
             is_valid = validate_subscription_plan_payload(
-                payload_to_validate, self.handle_error, None, False)
-            if (not is_valid):
+                payload=payload_to_validate,
+                handle_error=self.handle_error,
+                log_validation_error=None,
+                is_admin_form=False,
+                enterprise_customer_uuid=customer_agreement.enterprise_customer_uuid
+            )
+
+            if not is_valid:
                 return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
             subscription_plan = serializer.save()
             subscription_plan._change_reason = raw_payload['change_reason']
@@ -510,14 +514,19 @@ class SubscriptionViewSet(
             payload_to_validate = request.data.copy()
 
             # validation requires Product instance instead of just an id
-            if (product_id):
+            if product_id:
                 try:
                     payload_to_validate['product'] = Product.objects.get(
                         pk=product_id)
                 except Product.DoesNotExist:
                     return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
             is_valid = validate_subscription_plan_payload(
-                payload_to_validate, self.handle_error, None, False)
+                payload=payload_to_validate, 
+                handle_error=self.handle_error,
+                log_validation_error=None,
+                is_admin_form=False,
+                enterprise_customer_uuid=subscription.enterprise_customer_uuid
+            )
             if not is_valid:
                 return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
