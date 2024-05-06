@@ -462,3 +462,9 @@ SPECTACULAR_SETTINGS = {
         'license_manager.apps.api.utils.make_swagger_var_param_optional',
     ],
 }
+
+# An allow list of enterprise catalog uuids that excused from  violations
+# in the ``validate_num_catalog_queries`` management command
+CUSTOM_CATALOG_PRODUCTS_ALLOW_LIST = [
+
+]
