@@ -128,6 +128,13 @@ class CustomerAgreementViewSet(
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
 
+    def get_permission_required(self):
+        if self.action == 'create':
+            return constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
+        if self.action == 'partial_update':
+            return constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
+        return super().get_permission_required()
+
     def partial_update(self, request, *args, **kwargs):
         """
         Partial update a CustomerAgreement against given UUID.
