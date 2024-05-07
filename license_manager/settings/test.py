@@ -47,6 +47,7 @@ DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": False,
 }
 
+TRANSACTIONAL_MAIL_SERVICE = 'braze'
 BRAZE_API_URL = 'https://example-url.com'
 BRAZE_API_KEY = 'example-key'
 BRAZE_APP_ID = 'example-id'

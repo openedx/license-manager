@@ -1,15 +1,14 @@
 import logging
 
-import mailchimp_transactional as MailchimpTransactional
+from mailchimp_transactional import Client
 from django.conf import settings
-from mailchimp_transactional.api_client import \
-    ApiClientError as MailChimpClientError
+from mailchimp_transactional.api_client import ApiClientError
 
 
 logger = logging.getLogger(__name__)
 
 
-class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
+class MailchimpTransactionalApiClient(Client):
     def __init__(self, logger_prefix):
         self.logger_prefix = logger_prefix
         required_settings = ['MAILCHIMP_API_KEY', 'MAILCHIMP_FROM_EMAIL', 'MAILCHIMP_FROM_NAME']
@@ -52,12 +51,12 @@ class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
             template_name=template_slug,
             message={
                 'from_email': settings.MAILCHIMP_FROM_EMAIL,
-                'from name': settings.MAILCHIMP_FROM_NAME,
+                'from_name': settings.MAILCHIMP_FROM_NAME,
                 'subject': subject,
                 'preserve_recipients': getattr(settings, 'MAILCHIMP_PRESERVE_RECIPIENTS', False),
                 'to': user_emails,
                 'merge_vars': merge_vars,
-                'merge_language': getattr(settings, 'MAILCHIMP_MERGE_LANGUAGE', 'handlebars'),
+                'merge_language': getattr(settings, 'MAILCHIMP_MERGE_LANGUAGE', 'mailchimp'),
                 'recipient_metadata': recipient_metadata or [],
                 'global_merge_vars': global_merge_vars or [],
             },
@@ -88,7 +87,7 @@ class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
                 ],
             )
             logger.info(f'{self.logger_prefix} Sent email for mailchimp template {template_slug} to {user_email}')
-        except MailChimpClientError as exc:
+        except ApiClientError as exc:
             logger.exception(err_message)
             raise exc
 
@@ -126,6 +125,6 @@ class MailchimpTransactionalApiClient(MailchimpTransactional.Client):
                 global_merge_vars=global_merge_vars or [],
             )
             logger.info(success_msg)
-        except MailChimpClientError as ex:
+        except ApiClientError as ex:
             logger.exception(err_msg)
             raise ex
