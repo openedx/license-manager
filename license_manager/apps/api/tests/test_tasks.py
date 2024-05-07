@@ -169,26 +169,26 @@ class EmailTaskTests(TestCase):
 
     # pylint: disable=unused-argument
     @mock.patch('license_manager.apps.api_client.braze.logger', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api_client.braze.BrazeClient.send_campaign_message', side_effect=BrazeClientError)
+    @mock.patch('license_manager.apps.api_client.braze.BrazeClient.create_braze_alias', side_effect=BrazeClientError)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    def test_activation_task_send_email_failure_logged(
+    def test_assignment_task_send_email_failure_logged(
         self,
         mock_enterprise_client,
-        mock_send_campaign_message,
+        mock_create_alias,
         mock_logger
     ):
         """
         Tests that when sending the assignment email fails, an error gets logged
         """
 
-        with self.assertRaises(BrazeClientError):
-            mock_enterprise_client().get_enterprise_customer_data.return_value = {
-                'slug': self.enterprise_slug,
-                'name': self.enterprise_name,
-                'sender_alias': self.enterprise_sender_alias,
-                'contact_email': self.contact_email,
-            }
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'contact_email': self.contact_email,
+        }
 
+        with self.assertRaises(BrazeClientError):
             tasks.send_assignment_email_task(
                 self.custom_template_text,
                 self.email_recipient_list,

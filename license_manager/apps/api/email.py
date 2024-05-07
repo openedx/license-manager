@@ -7,6 +7,7 @@ from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.api_client.mailchimp import (
     MailchimpTransactionalApiClient,
 )
+from license_manager.apps.subscriptions.constants import REMIND_EMAIL_ACTION_TYPE
 from license_manager.apps.subscriptions.event_utils import (
     get_license_tracking_properties,
 )
@@ -30,78 +31,16 @@ class EmailClient:
         else:
             raise ValueError("Please set TRANSACTIONAL_MAIL_SERVICE setting to either 'braze' or 'mailchimp'.")
 
-    def send_assignment_email(self, pending_licenses, enterprise_customer, custom_template_text):
-        """Helper function to send assignment email.
+    def send_assignment_or_reminder_email(self, pending_licenses, enterprise_customer, custom_template_text, action_type):
+        """Helper function to send a assignment notification or reminder email.
 
         Args:
             pending_licenses (list[License]): List of pending license objects
             enterprise_customer (dict): enterprise customer information
             custom_template_text (dict): Dictionary containing `greeting` and `closing` keys to be used for customizing
                 the email template.
-
-        Returns:
-            dict of pending license by email
-        """
-        enterprise_slug = enterprise_customer.get('slug')
-        enterprise_name = enterprise_customer.get('name')
-        enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
-        enterprise_contact_email = enterprise_customer.get('contact_email')
-        pending_license_by_email = {}
-        # We need to send these emails individually, because each email's text must be
-        # generated for every single user/activation_key
-        for pending_license in pending_licenses:
-            user_email = pending_license.user_email
-            pending_license_by_email[user_email] = pending_license
-            license_activation_key = str(pending_license.activation_key)
-            if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
-                template_context = {
-                    'TEMPLATE_GREETING': custom_template_text['greeting'],
-                    'TEMPLATE_CLOSING': custom_template_text['closing'],
-                    'license_activation_key': license_activation_key,
-                    'enterprise_customer_slug': enterprise_slug,
-                    'enterprise_customer_name': enterprise_name,
-                    'enterprise_sender_alias': enterprise_sender_alias,
-                    'enterprise_contact_email': enterprise_contact_email,
-                }
-                self._braze_client.send_single_email(
-                    template_context,
-                    user_email,
-                    braze_campaign_id=settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN,
-                    err_message=(
-                        'License manager activation email '
-                        f'sending received an exception for enterprise: {enterprise_name}.'
-                    ),
-                )
-            elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
-                template_context = [
-                    {'name': 'TEMPLATE_GREETING', 'content': custom_template_text['greeting']},
-                    {'name': 'TEMPLATE_CLOSING', 'content': custom_template_text['closing']},
-                    {'name': 'license_activation_key', 'content': license_activation_key},
-                    {'name': 'enterprise_customer_slug', 'content': enterprise_slug},
-                    {'name': 'enterprise_customer_name', 'content': enterprise_name},
-                    {'name': 'enterprise_sender_alias', 'content': enterprise_sender_alias},
-                    {'name': 'enterprise_contact_email', 'content': enterprise_contact_email},
-                ]
-                self._mailchimp_client.send_single_email(
-                    template_context,
-                    user_email,
-                    template_slug=settings.MAILCHIMP_ASSIGNMENT_EMAIL_TEMPLATE,
-                    subject=settings.MAILCHIMP_ASSIGNMENT_EMAIL_SUBJECT,
-                    err_message=(
-                        'License manager activation email '
-                        f'sending received an exception for enterprise: {enterprise_name}.'
-                    ),
-                )
-        return pending_license_by_email
-
-    def send_reminder_email(self, pending_licenses, enterprise_customer, custom_template_text):
-        """Helper function to send reminder email.
-
-        Args:
-            pending_licenses (list[License]): List of pending license objects
-            enterprise_customer (dict): enterprise customer information
-            custom_template_text (dict): Dictionary containing `greeting` and `closing` keys to be used for customizing
-                the email template.
+            action_type (str): A string used in logging messages to indicate which type of notification
+                is being sent and determine template for email.
         Returns:
             dict of pending license by email
         """
@@ -151,30 +90,36 @@ class EmailClient:
                     }
                 )
         if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
-            campaign_id = settings.BRAZE_REMIND_EMAIL_CAMPAIGN
+            campaign_id = settings.BRAZE_REMIND_EMAIL_CAMPAIGN if action_type == REMIND_EMAIL_ACTION_TYPE else settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN
             self._braze_client.send_emails(
                 campaign_id,
                 recipients=messages,
                 user_emails=user_emails,
                 success_msg=(
-                    f'{LICENSE_DEBUG_PREFIX} Sent license reminder emails '
+                    f'{LICENSE_DEBUG_PREFIX} Sent license {action_type} emails '
                     f'braze campaign {campaign_id} to {user_emails}'
                 ),
-                err_msg=(f'Error hitting Braze API reminder email to {campaign_id} for license failed.'),
+                err_msg=(f'Error hitting Braze API {action_type} email to {campaign_id} for license failed.'),
             )
         elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
-            template_name = settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE
+            if action_type == REMIND_EMAIL_ACTION_TYPE:
+                template_name = settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE
+                subject = settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE
+            else:
+                template_name = settings.MAILCHIMP_ASSIGNMENT_EMAIL_TEMPLATE
+                subject = settings.MAILCHIMP_ASSIGNMENT_EMAIL_SUBJECT
+
             self._mailchimp_client.send_emails(
                 template_name,
                 merge_vars=messages,
                 to_users=user_emails,
-                subject=settings.MAILCHIMP_ASSIGNMENT_EMAIL_SUBJECT,
+                subject=subject,
                 recipient_metadata=recipient_metadata,
                 success_msg=(
-                    f'{LICENSE_DEBUG_PREFIX} Sent license assignment email '
+                    f'{LICENSE_DEBUG_PREFIX} Sent license {action_type} emails '
                     f'mailchimp template {template_name} to {user_emails}'
                 ),
-                err_msg=(f'Error hitting Mailchimp API reminder email to {template_name} for license failed.'),
+                err_msg=(f'Error hitting Mailchimp API {action_type} email to {template_name} for license failed.'),
             )
         return pending_license_by_email
 

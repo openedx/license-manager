@@ -34,6 +34,8 @@ from license_manager.apps.subscriptions.constants import (
     REMINDER_EMAIL_BATCH_SIZE,
     REVOCABLE_LICENSE_STATUSES,
     TRACK_LICENSE_CHANGES_BATCH_SIZE,
+    NOTIFY_EMAIL_ACTION_TYPE,
+    REMIND_EMAIL_ACTION_TYPE,
     NotificationChoices,
 )
 from license_manager.apps.subscriptions.event_utils import track_license_changes
@@ -53,10 +55,6 @@ SOFT_TIME_LIMIT = 900
 MAX_TIME_LIMIT = 960
 
 LICENSE_DEBUG_PREFIX = '[LICENSE DEBUGGING]'
-
-# Magic strings for logging in notify/remind email tasks
-NOTIFY_EMAIL_ACTION_TYPE = 'notify'
-REMIND_EMAIL_ACTION_TYPE = 'remind'
 
 
 class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
@@ -107,38 +105,6 @@ def create_braze_aliases_task(user_emails):
 
 
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
-def send_assignment_email_task(custom_template_text, email_recipient_list, subscription_uuid):
-    """
-    Sends license assignment email(s) asynchronously.
-
-    Arguments:
-        custom_template_text (dict): Dictionary containing `greeting` and `closing` keys to be used for customizing
-            the email template.
-        email_recipient_list (list of str): List of recipients to send the emails to.
-        subscription_uuid (str): UUID (string representation) of the subscription that the recipients are associated
-            with or will be associated with.
-    """
-    subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
-    pending_licenses = subscription_plan.licenses.filter(user_email__in=email_recipient_list).order_by('uuid')
-    enterprise_api_client = EnterpriseApiClient()
-    enterprise_customer = enterprise_api_client.get_enterprise_customer_data(subscription_plan.enterprise_customer_uuid)
-
-    email_client = EmailClient()
-    pending_license_by_email = email_client.send_assignment_email(
-        pending_licenses,
-        enterprise_customer,
-        custom_template_text
-    )
-
-    emails_with_no_assignments = [
-        _email for _email in email_recipient_list
-        if _email not in pending_license_by_email
-    ]
-    if emails_with_no_assignments:
-        logger.warning(f'{LICENSE_DEBUG_PREFIX} No assignment email sent for {emails_with_no_assignments}')
-
-
-@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
 def link_learners_to_enterprise_task(learner_emails, enterprise_customer_uuid):
     """
     Links learners to an enterprise asynchronously.
@@ -161,7 +127,6 @@ def _batch_notify_or_remind_assigned_emails(
     email_recipient_list,
     subscription_uuid,
     allowed_batch_size,
-    campaign_uuid,
     action_type,
 ):
     """
@@ -176,9 +141,8 @@ def _batch_notify_or_remind_assigned_emails(
         recipients are (or will be) associated with.
       allowed_batch_size (int): Maximum number of recipients (really their associated assigned licenses)
         which can be processed in a single call to this method.
-      campaign_uuid (str): The identifier of the Braze email campaign via which users are notified.
       action_type (str): A string used in logging messages to indicate which type of notification
-        is being sent.
+        is being sent and determine template for email.
     """
     subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
     pending_licenses = subscription_plan.assigned_licenses.filter(
@@ -192,53 +156,14 @@ def _batch_notify_or_remind_assigned_emails(
     enterprise_customer = enterprise_api_client.get_enterprise_customer_data(
         subscription_plan.enterprise_customer_uuid,
     )
-    enterprise_slug = enterprise_customer.get('slug')
-    enterprise_name = enterprise_customer.get('name')
-    enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
-    enterprise_contact_email = enterprise_customer.get('contact_email')
 
-    pending_license_by_email = {}
-    emails_for_aliasing = []
-    recipients = []
-
-    for pending_license in pending_licenses:
-        user_email = pending_license.user_email
-        emails_for_aliasing.append(user_email)
-        pending_license_by_email[user_email] = pending_license
-        license_activation_key = str(pending_license.activation_key)
-        trigger_properties = {
-            'TEMPLATE_GREETING': custom_template_text['greeting'],
-            'TEMPLATE_CLOSING': custom_template_text['closing'],
-            'license_activation_key': license_activation_key,
-            'enterprise_customer_slug': enterprise_slug,
-            'enterprise_customer_name': enterprise_name,
-            'enterprise_sender_alias': enterprise_sender_alias,
-            'enterprise_contact_email': enterprise_contact_email,
-        }
-        recipient = _aliased_recipient_object_from_email(user_email)
-        recipient['attributes'].update(get_license_tracking_properties(pending_license))
-        recipient['trigger_properties'] = trigger_properties
-        recipients.append(recipient)
-
-    # Batch at the Braze API layer
-    try:
-        braze_client_instance = BrazeApiClient()
-        braze_client_instance.create_braze_alias(
-            emails_for_aliasing,
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
-        )
-        braze_client_instance.send_campaign_message(campaign_uuid, recipients=recipients)
-        logger.info(
-            f'{LICENSE_DEBUG_PREFIX} Sent license {action_type} emails '
-            f'braze campaign {campaign_uuid} to {email_recipient_list}'
-        )
-    except BrazeClientError as exc:
-        message = (
-            'Error hitting Braze API. '
-            f'{action_type} email to campaign {campaign_uuid} for license failed.'
-        )
-        logger.exception(message)
-        raise exc
+    email_client = EmailClient()
+    pending_license_by_email = email_client.send_assignment_or_reminder_email(
+        pending_licenses,
+        enterprise_customer,
+        custom_template_text,
+        action_type,
+    )
 
     emails_with_no_assignments = [
         _email for _email in email_recipient_list
@@ -267,7 +192,6 @@ def send_assignment_email_task(custom_template_text, email_recipient_list, subsc
         email_recipient_list,
         subscription_uuid,
         ASSIGNMENT_EMAIL_BATCH_SIZE,
-        settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN,
         NOTIFY_EMAIL_ACTION_TYPE,
     )
 
@@ -292,7 +216,6 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
         email_recipient_list,
         subscription_uuid,
         REMINDER_EMAIL_BATCH_SIZE,
-        settings.BRAZE_REMIND_EMAIL_CAMPAIGN,
         REMIND_EMAIL_ACTION_TYPE,
     )
     License.set_date_fields_to_now(pending_licenses, ['last_remind_date'])

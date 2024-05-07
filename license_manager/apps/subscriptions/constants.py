@@ -143,3 +143,7 @@ NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD = {
 }
 
 ENTERPRISE_BRAZE_ALIAS_LABEL = 'Enterprise'  # Do Not change this, this is consistent with other uses across edX repos.
+
+# Magic strings for logging in notify/remind email tasks
+NOTIFY_EMAIL_ACTION_TYPE = 'notify'
+REMIND_EMAIL_ACTION_TYPE = 'remind'
