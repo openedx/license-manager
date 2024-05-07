@@ -389,22 +389,15 @@ class SubscriptionViewSet(
 
         return queryset.order_by('-start_date')
 
-    def list(self, request, *args, **kwargs):
-        """
-        Returns list of all SubscriptionPlan records
-        """
-        subscription_plans = super().list(request, *args, **kwargs)
-        return subscription_plans
-
     def handle_error(self, field, message):
         """
         Handles validation errors by adding them to the viewset's error response.
         """
         errors = getattr(self, 'errors', {})
         errors[field] = message
-        self.errors = errors
+        setattr(self, 'errors', errors)  # pylint: disable=literal-used-as-attribute
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         """
         Creates a new SubscriptionPlan record
         """
@@ -415,7 +408,7 @@ class SubscriptionViewSet(
             expiration_date = request.data.get('expiration_date')
             start_date = request.data.get('start_date')
             last_freeze_timestamp = request.data.get('last_freeze_timestamp')
-            customer_agreement_pk = request.data.get('customer_agreement_id')
+            customer_agreement_uuid = request.data.get('customer_agreement_uuid')
             product_id = request.data.get('product')
             raw_payload = {
                 'title': request.data.get('title'),
@@ -423,7 +416,7 @@ class SubscriptionViewSet(
                 'expiration_date': expiration_date,
                 'last_freeze_timestamp': last_freeze_timestamp,
                 'enterprise_catalog_uuid': enterprise_catalog_uuid,
-                'customer_agreement_id': customer_agreement_pk,
+                'customer_agreement_uuid': customer_agreement_uuid,
                 'salesforce_opportunity_line_item': request.data.get('salesforce_opportunity_line_item'),
                 'product': product_id,
                 'revoke_max_percentage': request.data.get('revoke_max_percentage'),
@@ -437,9 +430,9 @@ class SubscriptionViewSet(
             }
             try:
                 customer_agreement = CustomerAgreement.objects.get(
-                    pk=customer_agreement_pk)
+                    pk=customer_agreement_uuid)
             except CustomerAgreement.DoesNotExist:
-                return Response({'error': 'Invalid customer_agreement_id.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Invalid customer_agreement_uuid.'}, status=status.HTTP_400_BAD_REQUEST)
 
             if not enterprise_catalog_uuid:
                 raw_payload['enterprise_catalog_uuid'] = str(
@@ -454,6 +447,7 @@ class SubscriptionViewSet(
             except Product.DoesNotExist:
                 return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
             payload_to_validate['num_licenses'] = desired_num_licenses
+            payload_to_validate['customer_agreement'] = customer_agreement
             is_valid = validate_subscription_plan_payload(
                 payload=payload_to_validate,
                 handle_error=self.handle_error,
@@ -482,62 +476,55 @@ class SubscriptionViewSet(
         except Exception as error:  # pylint: disable=broad-except
             return Response({'error': error}, status=status.HTTP_400_BAD_REQUEST)
 
-    def retrieve(self, request, subscription_uuid):
+    def retrieve(self, request, *args, **kwargs):
         """
         Returns a single SubscriptionPlan against given uuid
         """
-        try:
-            instance = SubscriptionPlan.objects.get(uuid=subscription_uuid)
-        except SubscriptionPlan.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        result = super().retrieve(request, *args, **kwargs)
+        return result
 
     def partial_update(self, request, *args, **kwargs):
         """
         Updates SubscriptionPlan record against given uuid
         """
-        subscription_uuid = kwargs.get('subscription_uuid')
         product_id = request.data.get('product')
-        if subscription_uuid:
-            # Get the subscription object based on the provided UUID
-            subscription = self.get_object()
-            # Perform partial update
-            subscription._change_reason = request.data.get('change_reason')  # pylint: disable=protected-access
-            serializer = self.get_serializer(
-                subscription, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            payload_to_validate = request.data.copy()
+        # Get the subscription object based on the provided UUID
+        subscription = self.get_object()
+        # Perform partial update
+        subscription._change_reason = request.data.get('change_reason')  # pylint: disable=protected-access
+        serializer = self.get_serializer(
+            subscription, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        payload_to_validate = request.data.copy()
 
-            # validation requires Product instance instead of just an id
-            if product_id:
-                try:
-                    payload_to_validate['product'] = Product.objects.get(
-                        pk=product_id)
-                except Product.DoesNotExist:
-                    return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
-            is_valid = validate_subscription_plan_payload(
-                payload=payload_to_validate,
-                handle_error=self.handle_error,
-                log_validation_error=None,
-                is_admin_form=False,
-                enterprise_customer_uuid=subscription.enterprise_customer_uuid
-            )
-            if not is_valid:
-                return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
-            serializer.save()
+        # validation requires Product instance instead of just an id
+        if product_id:
+            try:
+                payload_to_validate['product'] = Product.objects.get(
+                    pk=product_id)
+            except Product.DoesNotExist:
+                return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        is_valid = validate_subscription_plan_payload(
+            payload=payload_to_validate,
+            handle_error=self.handle_error,
+            log_validation_error=None,
+            is_admin_form=False,
+            enterprise_customer_uuid=subscription.enterprise_customer_uuid
+        )
+        if not is_valid:
+            return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
 
-            provision_licenses(subscription)
-            response = serializer.data.copy()
-            response['change_reason'] = subscription._change_reason  # pylint: disable=protected-access
-            response['uuid'] = subscription.uuid
-            response['days_until_expiration_including_renewals'] = subscription.days_until_expiration_including_renewals
-            response['days_until_expiration'] = subscription.days_until_expiration
-            response['enterprise_customer_uuid'] = subscription.enterprise_customer_uuid
-            response['is_locked_for_renewal_processing'] = subscription.is_locked_for_renewal_processing
-            return Response(response)
-        else:
-            return Response({"error": "Subscription UUID not provided"}, status=400)
+        provision_licenses(subscription)
+        response = serializer.data.copy()
+        response['change_reason'] = subscription._change_reason  # pylint: disable=protected-access
+        response['uuid'] = subscription.uuid
+        response['days_until_expiration_including_renewals'] = subscription.days_until_expiration_including_renewals
+        response['days_until_expiration'] = subscription.days_until_expiration
+        response['enterprise_customer_uuid'] = subscription.enterprise_customer_uuid
+        response['is_locked_for_renewal_processing'] = subscription.is_locked_for_renewal_processing
+        response['customer_agreement_uuid'] = subscription.customer_agreement.uuid
+        return Response(response)
 
 
 class LearnerLicensesViewSet(

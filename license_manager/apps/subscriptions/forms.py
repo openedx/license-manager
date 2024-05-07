@@ -28,8 +28,8 @@ from license_manager.apps.subscriptions.models import (
 )
 from license_manager.apps.subscriptions.utils import (
     localized_utcnow,
+    validate_subscription_plan_payload,
     verify_sf_opportunity_product_line_item,
-    validate_subscription_plan_payload
 )
 
 

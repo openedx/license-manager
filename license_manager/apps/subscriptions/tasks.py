@@ -118,6 +118,7 @@ def provision_licenses_task(self, subscription_plan_uuid=None):  # pylint: disab
     for batch_count in batch_counts(license_count_gap, batch_size=PROVISION_LICENSES_BATCH_SIZE):
         subscription_plan.increase_num_licenses(batch_count)
 
+
 def provision_licenses(subscription):
     """
     For a given subscription plan, try to provision in synchronously or asynchronously.

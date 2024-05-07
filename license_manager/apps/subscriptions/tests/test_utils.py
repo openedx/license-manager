@@ -78,3 +78,28 @@ class TestBatchCounts(TestCase):
         """
         actual_batch_counts = list(utils.batch_counts(total_count, batch_size=batch_size))
         assert actual_batch_counts == expected_batch_counts
+
+
+def test_validate_subscription_plan_payload_missing_catalog_uuid():
+    """
+    Test validation fails when customer agreement and payload lack enterprise_catalog_uuid.
+    """
+    payload = {'customer_agreement': {}}
+    mock_agreement = mock.Mock()
+
+    mock_agreement.default_enterprise_catalog_uuid = None
+    payload['customer_agreement'] = mock_agreement
+
+    handle_error = mock.Mock()
+    log_validation_error = mock.Mock()
+
+    is_valid = utils.validate_subscription_plan_payload(
+        payload, handle_error, log_validation_error
+    )
+
+    assert not is_valid
+    handle_error.assert_called_once_with(
+        'enterprise_catalog_uuid',
+        'The subscription must have an enterprise catalog uuid from itself or its customer agreement',
+    )
+    log_validation_error.assert_called_once_with('bad catalog uuid')

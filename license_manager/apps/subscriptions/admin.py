@@ -34,9 +34,8 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
-from license_manager.apps.subscriptions.tasks import (
-    provision_licenses
-)
+from license_manager.apps.subscriptions.tasks import provision_licenses
+
 
 def get_related_object_link(admin_viewname, object_pk, object_str):
     return mark_safe('<a href="{href}">{object_string}</a><br/>'.format(
