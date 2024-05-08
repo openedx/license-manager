@@ -2,6 +2,7 @@
 from unittest import mock
 
 import pytest
+from django.contrib import messages
 from django.contrib.admin.sites import AdminSite
 from django.test import RequestFactory
 
@@ -9,14 +10,12 @@ from license_manager.apps.subscriptions.admin import (
     CustomerAgreementAdmin,
     SubscriptionPlanAdmin,
 )
-from license_manager.apps.subscriptions.forms import SubscriptionPlanForm
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     SubscriptionPlan,
 )
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
-    PlanTypeFactory,
     SubscriptionPlanFactory,
     UserFactory,
 )
@@ -24,6 +23,7 @@ from license_manager.apps.subscriptions.tests.utils import (
     make_bound_customer_agreement_form,
     make_bound_subscription_form,
 )
+from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
 @pytest.mark.django_db
@@ -44,9 +44,10 @@ def test_licenses_subscription_creation():
 
 
 @pytest.mark.django_db
-def test_licenses_subscription_modification():
+@mock.patch('license_manager.apps.subscriptions.admin.messages.add_message')
+def test_subscription_licenses_create_action(mock_add_message):
     """
-    Verify that creating a SubscriptionPlan creates its associated Licenses after it is created.
+    Verify that running the create licenses action will create licenses.
     """
     # Setup an existing plan
     customer_agreement = CustomerAgreementFactory()
@@ -63,15 +64,39 @@ def test_licenses_subscription_modification():
 
     # doesn't really matter what we put for num_licenses in here, save_model
     # will read the desired number of license from the existing object on save.
-    form = make_bound_subscription_form(num_licenses=1)
+    form = make_bound_subscription_form(num_licenses=10)
     form.save()
 
     # save the form as a modify instead of create
     subscription_admin.save_model(request, subscription_plan, form, True)
-
-    # The save_model() method should determine that licenses need to be created,
-    # and then create them (synchronously in this case, since its a small number of licenses).
     subscription_plan.refresh_from_db()
+    # Desired number of licenses won't actually be created until we run the action
+    assert subscription_plan.licenses.count() == 0
+
+    # Now run the action...
+    subscription_admin.create_actual_licenses_action(
+        request,
+        SubscriptionPlan.objects.filter(uuid=subscription_plan.uuid),
+    )
+    subscription_plan.refresh_from_db()
+    # Actual number of licenses should now equal the desired number (ten)
+    assert subscription_plan.licenses.count() == 10
+
+    mock_add_message.assert_called_once_with(
+        request, messages.SUCCESS, 'Successfully created license records for selected Subscription Plans.',
+    )
+
+    # check that freezing the plan means running the create licenses action has no effect
+    subscription_plan.last_freeze_timestamp = localized_utcnow()
+    subscription_plan.desired_num_licenses = 5000
+    subscription_plan.save()
+
+    subscription_admin.create_actual_licenses_action(
+        request,
+        SubscriptionPlan.objects.filter(uuid=subscription_plan.uuid),
+    )
+    subscription_plan.refresh_from_db()
+    # Actual number of licenses should STILL equal 10, because the plan is frozen
     assert subscription_plan.licenses.count() == 10
 
 
