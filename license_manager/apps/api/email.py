@@ -7,7 +7,9 @@ from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.api_client.mailchimp import (
     MailchimpTransactionalApiClient,
 )
-from license_manager.apps.subscriptions.constants import REMIND_EMAIL_ACTION_TYPE
+from license_manager.apps.subscriptions.constants import (
+    REMIND_EMAIL_ACTION_TYPE,
+)
 from license_manager.apps.subscriptions.event_utils import (
     get_license_tracking_properties,
 )
@@ -31,7 +33,13 @@ class EmailClient:
         else:
             raise ValueError("Please set TRANSACTIONAL_MAIL_SERVICE setting to either 'braze' or 'mailchimp'.")
 
-    def send_assignment_or_reminder_email(self, pending_licenses, enterprise_customer, custom_template_text, action_type):
+    def send_assignment_or_reminder_email(
+        self,
+        pending_licenses,
+        enterprise_customer,
+        custom_template_text,
+        action_type
+    ):
         """Helper function to send a assignment notification or reminder email.
 
         Args:
@@ -90,7 +98,8 @@ class EmailClient:
                     }
                 )
         if settings.TRANSACTIONAL_MAIL_SERVICE == 'braze':
-            campaign_id = settings.BRAZE_REMIND_EMAIL_CAMPAIGN if action_type == REMIND_EMAIL_ACTION_TYPE else settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN
+            campaign_id = settings.BRAZE_REMIND_EMAIL_CAMPAIGN if action_type == REMIND_EMAIL_ACTION_TYPE \
+                else settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN
             self._braze_client.send_emails(
                 campaign_id,
                 recipients=messages,

@@ -12,8 +12,9 @@ from braze.exceptions import BrazeClientError
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from mailchimp_transactional.api_client import ApiClientError as MailchimpClientError
 from freezegun import freeze_time
+from mailchimp_transactional.api_client import \
+    ApiClientError as MailchimpClientError
 from requests import models
 
 from license_manager.apps.api import tasks
@@ -97,9 +98,17 @@ class EmailTaskTests(TestCase):
             )
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('license_manager.apps.api_client.braze.BrazeClient.send_campaign_message', return_value=mock.MagicMock())
+    @mock.patch(
+        'license_manager.apps.api_client.braze.BrazeClient.send_campaign_message',
+        return_value=mock.MagicMock()
+    )
     @mock.patch('license_manager.apps.api_client.braze.BrazeClient.create_braze_alias', return_value=mock.MagicMock())
-    def test_braze_assignment_email_task(self, mock_create_braze_alias, mock_send_campaign_message, mock_enterprise_client):
+    def test_braze_assignment_email_task(
+        self,
+        mock_create_braze_alias,
+        mock_send_campaign_message,
+        mock_enterprise_client
+    ):
         """
         Assert the `send_assignment_email_task()` calls Braze API with the correct arguments.
         """
@@ -270,7 +279,10 @@ class EmailTaskTests(TestCase):
 
     # pylint: disable=unused-argument
     @mock.patch('license_manager.apps.api_client.mailchimp.logger', return_value=mock.MagicMock())
-    @mock.patch('mailchimp_transactional.MessagesApi.send_template', side_effect=MailchimpClientError(text="error", status_code=400))
+    @mock.patch(
+        'mailchimp_transactional.MessagesApi.send_template',
+        side_effect=MailchimpClientError(text="error", status_code=400)
+    )
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @override_settings(TRANSACTIONAL_MAIL_SERVICE='mailchimp')
     def test_mailchimp_assignment_task_send_email_failure_logged(
@@ -305,7 +317,12 @@ class EmailTaskTests(TestCase):
     )
     @mock.patch('license_manager.apps.api_client.braze.BrazeClient.create_braze_alias', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    def test_braze_send_reminder_email_task(self, mock_enterprise_client, mock_create_alias, mock_send_campaign_message):
+    def test_braze_send_reminder_email_task(
+        self,
+        mock_enterprise_client,
+        mock_create_alias,
+        mock_send_campaign_message
+    ):
         """
         Assert send_reminder_email_task calls Braze API with the correct arguments
         """
@@ -425,7 +442,7 @@ class EmailTaskTests(TestCase):
                 template_context = [
                     {'name': 'TEMPLATE_GREETING', 'content': 'Hello'},
                     {'name': 'TEMPLATE_CLOSING', 'content': 'Goodbye'},
-                    {'name': 'license_activation_key', 'content': str(expected_license.activation_key)},
+                    {'name': 'license_activation_key', 'content': expected_license_key},
                     {'name': 'enterprise_customer_slug', 'content': self.enterprise_slug},
                     {'name': 'enterprise_customer_name', 'content': self.enterprise_name},
                     {'name': 'enterprise_sender_alias', 'content': self.enterprise_sender_alias},
@@ -441,14 +458,18 @@ class EmailTaskTests(TestCase):
                 expected_messages.append({'rcpt': user_email, 'vars': template_context})
 
             # assert all recipients sent a campaign message in a single call
-            actual_emails = mock_send_template.call_args_list[0][1]['body']['message']['to']
-            actual_recipients_metadata = mock_send_template.call_args_list[0][1]['body']['message']['recipient_metadata']
-            actual_messages = mock_send_template.call_args_list[0][1]['body']['message']['merge_vars']
+            message_arg = mock_send_template.call_args_list[0][1]['body']['message']
+            actual_emails = message_arg['to']
+            actual_recipients_metadata = message_arg['recipient_metadata']
+            actual_messages = message_arg['merge_vars']
 
             def sort_key(key='rcpt'):
                 return lambda x: x[key]
 
-            assert sorted(expected_recipient_metadata, key=sort_key()) == sorted(actual_recipients_metadata, key=sort_key())
+            assert sorted(
+                expected_recipient_metadata,
+                key=sort_key()
+            ) == sorted(actual_recipients_metadata, key=sort_key())
             assert sorted(expected_messages, key=sort_key()) == sorted(actual_messages, key=sort_key())
             assert sorted(expected_emails, key=sort_key('email')) == sorted(actual_emails, key=sort_key('email'))
 
@@ -485,10 +506,17 @@ class EmailTaskTests(TestCase):
             False
         )
 
-    @mock.patch('mailchimp_transactional.MessagesApi.send_template', side_effect=MailchimpClientError(text="error", status_code=400))
+    @mock.patch(
+        'mailchimp_transactional.MessagesApi.send_template',
+        side_effect=MailchimpClientError(text="error", status_code=400)
+    )
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @override_settings(TRANSACTIONAL_MAIL_SERVICE='mailchimp')
-    def test_mailchimp_send_reminder_email_failure_no_remind_date_update(self, mock_enterprise_client, mock_send_template):
+    def test_mailchimp_send_reminder_email_failure_no_remind_date_update(
+        self,
+        mock_enterprise_client,
+        mock_send_template
+    ):
         """
         Tests that when sending the remind email fails, last_remind_date is not updated
         """
@@ -629,7 +657,10 @@ class EmailTaskTests(TestCase):
             tasks.send_post_activation_email_task(self.enterprise_uuid, self.user_email)
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
-    @mock.patch('mailchimp_transactional.MessagesApi.send_template', side_effect=MailchimpClientError(text="error", status_code=400))
+    @mock.patch(
+        'mailchimp_transactional.MessagesApi.send_template',
+        side_effect=MailchimpClientError(text="error", status_code=400)
+    )
     @override_settings(TRANSACTIONAL_MAIL_SERVICE='mailchimp')
     def test_mailchimp_send_post_activation_email_task_reraises_braze_exceptions(self, _, mock_enterprise_client):
         """
@@ -651,7 +682,12 @@ class EmailTaskTests(TestCase):
         'license_manager.apps.api_client.braze.BrazeClient.send_campaign_message',
         return_value=mock.MagicMock()
     )
-    def test_braze_revocation_cap_email_task(self, mock_send_campaign_message, mock_create_alias, mock_enterprise_client):
+    def test_braze_revocation_cap_email_task(
+        self,
+        mock_send_campaign_message,
+        mock_create_alias,
+        mock_enterprise_client
+    ):
         """
         Tests that the email is sent with the right arguments
         """

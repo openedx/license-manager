@@ -30,12 +30,12 @@ from license_manager.apps.subscriptions.constants import (
     ENTERPRISE_BRAZE_ALIAS_LABEL,
     LICENSE_UTILIZATION_THRESHOLDS,
     NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD,
+    NOTIFY_EMAIL_ACTION_TYPE,
     PENDING_ACCOUNT_CREATION_BATCH_SIZE,
+    REMIND_EMAIL_ACTION_TYPE,
     REMINDER_EMAIL_BATCH_SIZE,
     REVOCABLE_LICENSE_STATUSES,
     TRACK_LICENSE_CHANGES_BATCH_SIZE,
-    NOTIFY_EMAIL_ACTION_TYPE,
-    REMIND_EMAIL_ACTION_TYPE,
     NotificationChoices,
 )
 from license_manager.apps.subscriptions.event_utils import track_license_changes

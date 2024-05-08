@@ -1,7 +1,7 @@
 import logging
 
-from mailchimp_transactional import Client
 from django.conf import settings
+from mailchimp_transactional import Client
 from mailchimp_transactional.api_client import ApiClientError
 
 
@@ -48,7 +48,7 @@ class MailchimpTransactionalApiClient(Client):
             response object from mailchimp
         """
         response = self.messages.send_template(
-            body = {
+            body={
                 'template_name': template_slug,
                 'template_content': [{}],
                 'message': {
@@ -129,7 +129,5 @@ class MailchimpTransactionalApiClient(Client):
             )
             logger.info(success_msg)
         except ApiClientError as ex:
-            # __AUTO_GENERATED_PRINT_VAR_START__
-            print(f"""======================================= MailchimpTransactionalApiClient#send_emails ex: {ex.text}""") # __AUTO_GENERATED_PRINT_VAR_END__
             logger.exception(err_msg)
             raise ex
