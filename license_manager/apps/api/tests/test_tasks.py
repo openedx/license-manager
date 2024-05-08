@@ -104,10 +104,7 @@ class EmailTaskTests(TestCase):
     )
     @mock.patch('license_manager.apps.api_client.braze.BrazeClient.create_braze_alias', return_value=mock.MagicMock())
     def test_braze_assignment_email_task(
-        self,
-        mock_create_braze_alias,
-        mock_send_campaign_message,
-        mock_enterprise_client
+        self, mock_create_braze_alias, mock_send_campaign_message, mock_enterprise_client
     ):
         """
         Assert the `send_assignment_email_task()` calls Braze API with the correct arguments.
@@ -252,10 +249,7 @@ class EmailTaskTests(TestCase):
     @mock.patch('license_manager.apps.api_client.braze.BrazeClient.create_braze_alias', side_effect=BrazeClientError)
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     def test_braze_assignment_task_send_email_failure_logged(
-        self,
-        mock_enterprise_client,
-        mock_create_alias,
-        mock_logger
+        self, mock_enterprise_client, mock_create_alias, mock_logger
     ):
         """
         Tests that when sending the assignment email fails, an error gets logged
@@ -286,10 +280,7 @@ class EmailTaskTests(TestCase):
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @override_settings(TRANSACTIONAL_MAIL_SERVICE='mailchimp')
     def test_mailchimp_assignment_task_send_email_failure_logged(
-        self,
-        mock_enterprise_client,
-        mock_send_template,
-        mock_logger
+        self, mock_enterprise_client, mock_send_template, mock_logger
     ):
         """
         Tests that when sending the assignment email fails, an error gets logged
@@ -318,10 +309,7 @@ class EmailTaskTests(TestCase):
     @mock.patch('license_manager.apps.api_client.braze.BrazeClient.create_braze_alias', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     def test_braze_send_reminder_email_task(
-        self,
-        mock_enterprise_client,
-        mock_create_alias,
-        mock_send_campaign_message
+        self, mock_enterprise_client, mock_create_alias, mock_send_campaign_message
     ):
         """
         Assert send_reminder_email_task calls Braze API with the correct arguments
@@ -513,9 +501,7 @@ class EmailTaskTests(TestCase):
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @override_settings(TRANSACTIONAL_MAIL_SERVICE='mailchimp')
     def test_mailchimp_send_reminder_email_failure_no_remind_date_update(
-        self,
-        mock_enterprise_client,
-        mock_send_template
+        self, mock_enterprise_client, mock_send_template
     ):
         """
         Tests that when sending the remind email fails, last_remind_date is not updated
@@ -547,10 +533,7 @@ class EmailTaskTests(TestCase):
         return_value=mock.MagicMock()
     )
     def test_braze_send_post_activation_email_task(
-        self,
-        mock_send_campaign_message,
-        mock_create_alias,
-        mock_enterprise_client
+        self, mock_send_campaign_message, mock_create_alias, mock_enterprise_client
     ):
         """
         Tests that the onboarding email task sends the email
@@ -596,9 +579,7 @@ class EmailTaskTests(TestCase):
         MAILCHIMP_ACTIVATION_EMAIL_TEMPLATE='activatationtemplate',
     )
     def test_mailchimp_send_post_activation_email_task(
-        self,
-        mock_send_template,
-        mock_enterprise_client
+        self, mock_send_template, mock_enterprise_client
     ):
         """
         Tests that the onboarding email task sends the email
@@ -683,10 +664,7 @@ class EmailTaskTests(TestCase):
         return_value=mock.MagicMock()
     )
     def test_braze_revocation_cap_email_task(
-        self,
-        mock_send_campaign_message,
-        mock_create_alias,
-        mock_enterprise_client
+        self, mock_send_campaign_message, mock_create_alias, mock_enterprise_client
     ):
         """
         Tests that the email is sent with the right arguments
@@ -783,7 +761,7 @@ class EmailTaskTests(TestCase):
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.email.BrazeApiClient', side_effect=BrazeClientError)
-    def test_revocation_cap_email_task_reraises_braze_exceptions(self, _, mock_enterprise_client):
+    def test_braze_revocation_cap_email_task_reraises_braze_exceptions(self, _, mock_enterprise_client):
         """
         Assert send_revocation_cap_notification_email_task reraises any braze exceptions.
         """
@@ -795,6 +773,28 @@ class EmailTaskTests(TestCase):
         }
 
         with self.assertRaises(BrazeClientError):
+            tasks.send_revocation_cap_notification_email_task(
+                self.subscription_plan.uuid
+            )
+
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    @mock.patch(
+        'mailchimp_transactional.MessagesApi.send_template',
+        side_effect=MailchimpClientError(text="error", status_code=400)
+    )
+    @override_settings(TRANSACTIONAL_MAIL_SERVICE='mailchimp')
+    def test_mailchimp_revocation_cap_email_task_reraises_braze_exceptions(self, _, mock_enterprise_client):
+        """
+        Assert send_revocation_cap_notification_email_task reraises any mailchimp exceptions.
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'contact_email': self.contact_email,
+        }
+
+        with self.assertRaises(MailchimpClientError):
             tasks.send_revocation_cap_notification_email_task(
                 self.subscription_plan.uuid
             )
@@ -872,6 +872,80 @@ class EmailTaskTests(TestCase):
             trigger_properties=expected_trigger_properties,
         )
 
+    @override_settings(MAILCHIMP_AUTOAPPLY_WITH_LEARNER_PORTAL_TEMPLATE='LP-campaign-id')
+    @ddt.data(
+        {
+            'lp_search': True,
+            'identity_provider': uuid4(),
+        },
+        {
+            'lp_search': False,
+            'identity_provider': uuid4(),
+        },
+        {
+            'lp_search': True,
+            'identity_provider': None,
+        },
+        {
+            'lp_search': False,
+            'identity_provider': None,
+        },
+    )
+    @ddt.unpack
+    @mock.patch('mailchimp_transactional.MessagesApi.send_template', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    @override_settings(TRANSACTIONAL_MAIL_SERVICE='mailchimp')
+    def test_mailchimp_auto_applied_license_onboard_email(
+        self, mock_enterprise_client, mock_send_template, lp_search, identity_provider
+    ):
+        """
+        Tests mailchimp API is called when everything works as expected.
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'enable_integrated_customer_learner_portal_search': lp_search,
+            'identity_provider': identity_provider,
+            'contact_email': self.contact_email,
+        }
+
+        tasks.send_auto_applied_license_email_task(self.enterprise_uuid, self.user_email)
+
+        expected_merge_vars = {
+            'rcpt': self.user_email,
+            'vars': [
+                {'name': 'enterprise_customer_slug', 'content': self.enterprise_slug},
+                {'name': 'enterprise_customer_name', 'content': self.enterprise_name},
+                {'name': 'enterprise_sender_alias', 'content': self.enterprise_sender_alias},
+                {'name': 'enterprise_contact_email', 'content': self.contact_email},
+            ]
+        }
+        expected_recipient_metadata = {'rcpt': self.user_email, 'values': {'email': self.user_email}}
+
+        if identity_provider and lp_search is False:
+            expected_campaign_id = ''  # Empty because setting isn't set in tests
+        else:
+            expected_campaign_id = 'LP-campaign-id'
+
+        mock_send_template.assert_called_with(
+            body={
+                'template_name': expected_campaign_id,
+                'template_content': [{}],
+                "message": {
+                    'from_email': settings.MAILCHIMP_FROM_EMAIL,
+                    'from_name': settings.MAILCHIMP_FROM_NAME,
+                    'subject': settings.MAILCHIMP_AUTOAPPLY_WITH_LEARNER_PORTAL_SUBJECT,
+                    'preserve_recipients': False,
+                    'to': [{'email': self.user_email}],
+                    'merge_vars': [expected_merge_vars],
+                    'merge_language': 'mailchimp',
+                    'recipient_metadata': [expected_recipient_metadata],
+                    'global_merge_vars': [],
+                }
+            }
+        )
+
     @mock.patch('license_manager.apps.api.tasks.logger', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.email.BrazeApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', side_effect=Exception)
@@ -905,6 +979,33 @@ class EmailTaskTests(TestCase):
         }
 
         with self.assertRaises(BrazeClientError):
+            tasks.send_auto_applied_license_email_task(self.enterprise_uuid, self.user_email)
+
+        mock_logger.exception.assert_called_once()
+
+    @mock.patch('license_manager.apps.api_client.mailchimp.logger', return_value=mock.MagicMock())
+    @mock.patch(
+        'mailchimp_transactional.MessagesApi.send_template',
+        side_effect=MailchimpClientError(text="error", status_code=400)
+    )
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    @override_settings(TRANSACTIONAL_MAIL_SERVICE='mailchimp')
+    def test_auto_applied_license_onboard_email_mailchimp_client_error(
+        self, mock_enterprise_client, mock_send_template, mock_logger
+    ):
+        """
+        Tests error logged if mailchimp client errors.
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'enable_integrated_customer_learner_portal_search': True,
+            'identity-provider': uuid4(),
+            'contact_email': self.contact_email,
+        }
+
+        with self.assertRaises(MailchimpClientError):
             tasks.send_auto_applied_license_email_task(self.enterprise_uuid, self.user_email)
 
         mock_logger.exception.assert_called_once()
