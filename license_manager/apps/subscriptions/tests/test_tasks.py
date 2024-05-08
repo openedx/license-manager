@@ -1,28 +1,17 @@
 """
 Tests for subscriptions app celery tasks
 """
-from datetime import datetime, timedelta
 from unittest import mock
-from uuid import uuid4
 
 import ddt
-import freezegun
-import pytest
-from braze.exceptions import BrazeClientError
-from django.conf import settings
 from django.test import TestCase
-from django.test.utils import override_settings
-from freezegun import freeze_time
-from requests import models
 
 from license_manager.apps.api.utils import (
     acquire_subscription_plan_lock,
     release_subscription_plan_lock,
 )
 from license_manager.apps.subscriptions import tasks
-from license_manager.apps.subscriptions.models import License, SubscriptionPlan
 from license_manager.apps.subscriptions.tests.factories import (
-    LicenseFactory,
     SubscriptionPlanFactory,
 )
 
@@ -102,6 +91,7 @@ class ProvisionLicensesTaskTests(TestCase):
         self.subscription_plan.save()
         self.subscription_plan.increase_num_licenses(num_initial_licenses)
 
+        # pylint: disable=no-value-for-parameter
         tasks.provision_licenses_task(subscription_plan_uuid=self.subscription_plan.uuid)
 
         assert self.subscription_plan.num_licenses == expected_num_licenses
@@ -116,6 +106,7 @@ class ProvisionLicensesTaskTests(TestCase):
         acquire_subscription_plan_lock(self.subscription_plan)
 
         with self.assertRaises(tasks.RequiredTaskUnreadyError):
+            # pylint: disable=no-value-for-parameter
             tasks.provision_licenses_task(subscription_plan_uuid=self.subscription_plan.uuid)
 
         assert self.subscription_plan.num_licenses == 0

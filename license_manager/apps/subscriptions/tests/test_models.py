@@ -8,7 +8,6 @@ import pytest
 from django.core.cache import cache
 from django.forms import ValidationError
 from django.test import TestCase
-from requests.exceptions import HTTPError
 
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
@@ -17,7 +16,6 @@ from license_manager.apps.subscriptions.constants import (
     UNASSIGNED,
     SegmentEvents,
 )
-from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.models import (
     License,
     LicenseTransferJob,
@@ -92,7 +90,9 @@ class SubscriptionsModelTests(TestCase):
             if is_locked_for_renewal_processing:
                 renewal_kwargs.update({'effective_date': renewed_subscription_plan.expiration_date})
             SubscriptionPlanRenewalFactory.create(**renewal_kwargs)
-            self.assertEqual(renewed_subscription_plan.is_locked_for_renewal_processing, is_locked_for_renewal_processing)
+            self.assertEqual(
+                renewed_subscription_plan.is_locked_for_renewal_processing, is_locked_for_renewal_processing,
+            )
 
     def test_auto_apply_licenses_turned_on_at(self):
         """
@@ -116,13 +116,19 @@ class SubscriptionsModelTests(TestCase):
         """
         subscription_plan = SubscriptionPlanFactory.create(should_auto_apply_licenses=True)
         timestamp_1 = localized_utcnow()
-        LicenseFactory.create_batch(1, subscription_plan=subscription_plan, auto_applied=True, activation_date=timestamp_1)
-        LicenseFactory.create_batch(3, subscription_plan=subscription_plan, auto_applied=False, activation_date=timestamp_1)
+        LicenseFactory.create_batch(
+            1, subscription_plan=subscription_plan, auto_applied=True, activation_date=timestamp_1,
+        )
+        LicenseFactory.create_batch(
+            3, subscription_plan=subscription_plan, auto_applied=False, activation_date=timestamp_1,
+        )
 
         self.assertEqual(subscription_plan.auto_applied_licenses_count_since(), 1)
         timestamp_2 = timestamp_1 + timedelta(seconds=1)
         self.assertEqual(subscription_plan.auto_applied_licenses_count_since(timestamp_2), 0)
-        LicenseFactory.create_batch(5, subscription_plan=subscription_plan, auto_applied=True, activation_date=timestamp_2)
+        LicenseFactory.create_batch(
+            5, subscription_plan=subscription_plan, auto_applied=True, activation_date=timestamp_2,
+        )
         self.assertEqual(subscription_plan.auto_applied_licenses_count_since(timestamp_2), 5)
 
 
