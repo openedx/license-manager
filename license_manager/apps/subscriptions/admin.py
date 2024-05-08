@@ -195,7 +195,6 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
     read_only_fields = [
         'num_revocations_remaining',
         'num_licenses',
-        'desired_num_licenses',
         'expiration_processed',
         'customer_agreement',
         'last_freeze_timestamp',
@@ -204,6 +203,7 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
     # Writable fields appear higher on the page.
     writable_fields = [
         'title',
+        'desired_num_licenses',
         'start_date',
         'expiration_date',
         'enterprise_catalog_uuid',
@@ -289,7 +289,10 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
 
     autocomplete_fields = ['customer_agreement']
 
-    actions = ['process_unused_licenses_post_freeze']
+    actions = [
+        'process_unused_licenses_post_freeze',
+        'create_actual_licenses_action',
+    ]
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
@@ -342,6 +345,36 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         except UnprocessableSubscriptionPlanFreezeError as exc:
             messages.add_message(request, messages.ERROR, exc)
 
+    @admin.action(
+        description='Create actual licenses to match desired number'
+    )
+    def create_actual_licenses_action(self, request, queryset):
+        """
+        Django action to make the actual number of License records associated with this
+        plan match the *desired* number of licenses for the plan.
+        """
+        for subscription_plan in queryset:
+            self._create_actual_licenses(subscription_plan)
+
+        messages.add_message(
+            request, messages.SUCCESS, 'Successfully created license records for selected Subscription Plans.',
+        )
+
+    def _create_actual_licenses(self, obj):
+        """
+        Provision any additional licenses if necessary, assuming that the plan
+        has not been "frozen"
+        """
+        if obj.desired_num_licenses and not obj.last_freeze_timestamp:
+            license_count_gap = obj.desired_num_licenses - obj.num_licenses
+            if license_count_gap > 0:
+                if license_count_gap <= PROVISION_LICENSES_BATCH_SIZE:
+                    # We can handle just one batch synchronously.
+                    SubscriptionPlan.increase_num_licenses(obj, license_count_gap)
+                else:
+                    # Multiple batches of licenses will need to be created, so provision them asynchronously.
+                    provision_licenses_task.delay(subscription_plan_uuid=obj.uuid)
+
     def save_model(self, request, obj, form, change):
         # Record change reason for simple history
         obj._change_reason = form.cleaned_data.get('change_reason')  # pylint: disable=protected-access
@@ -357,16 +390,9 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
 
         super().save_model(request, obj, form, change)
 
-        # Finally, provision any additional licenses if necessary.
-        if obj.desired_num_licenses:
-            license_count_gap = obj.desired_num_licenses - obj.num_licenses
-            if license_count_gap > 0:
-                if license_count_gap <= PROVISION_LICENSES_BATCH_SIZE:
-                    # We can handle just one batch synchronously.
-                    SubscriptionPlan.increase_num_licenses(obj, license_count_gap)
-                else:
-                    # Multiple batches of licenses will need to be created, so provision them asynchronously.
-                    provision_licenses_task.delay(subscription_plan_uuid=obj.uuid)
+        # Finally, if we're creating the model instance, go ahead and create the related license records.
+        if not change:
+            self._create_actual_licenses(obj)
 
 
 @admin.register(CustomerAgreement)
