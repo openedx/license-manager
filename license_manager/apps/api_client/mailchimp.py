@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class MailchimpTransactionalApiClient(Client):
     def __init__(self, logger_prefix):
         self.logger_prefix = logger_prefix
-        required_settings = ['MAILCHIMP_API_KEY', 'MAILCHIMP_FROM_EMAIL', 'MAILCHIMP_FROM_NAME']
+        required_settings = ['MAILCHIMP_API_KEY']
 
         for setting in required_settings:
             if not getattr(settings, setting, None):
@@ -48,18 +48,21 @@ class MailchimpTransactionalApiClient(Client):
             response object from mailchimp
         """
         response = self.messages.send_template(
-            template_name=template_slug,
-            message={
-                'from_email': settings.MAILCHIMP_FROM_EMAIL,
-                'from_name': settings.MAILCHIMP_FROM_NAME,
-                'subject': subject,
-                'preserve_recipients': getattr(settings, 'MAILCHIMP_PRESERVE_RECIPIENTS', False),
-                'to': user_emails,
-                'merge_vars': merge_vars,
-                'merge_language': getattr(settings, 'MAILCHIMP_MERGE_LANGUAGE', 'mailchimp'),
-                'recipient_metadata': recipient_metadata or [],
-                'global_merge_vars': global_merge_vars or [],
-            },
+            body = {
+                'template_name': template_slug,
+                'template_content': [{}],
+                'message': {
+                    'from_email': getattr(settings, "MAILCHIMP_FROM_EMAIL", None),
+                    'from_name': getattr(settings, "MAILCHIMP_FROM_NAME", None),
+                    'subject': subject,
+                    'preserve_recipients': getattr(settings, 'MAILCHIMP_PRESERVE_RECIPIENTS', False),
+                    'to': user_emails,
+                    'merge_vars': merge_vars,
+                    'merge_language': getattr(settings, 'MAILCHIMP_MERGE_LANGUAGE', 'mailchimp'),
+                    'recipient_metadata': recipient_metadata or [],
+                    'global_merge_vars': global_merge_vars or [],
+                },
+            }
         )
         return response
 
@@ -126,5 +129,7 @@ class MailchimpTransactionalApiClient(Client):
             )
             logger.info(success_msg)
         except ApiClientError as ex:
+            # __AUTO_GENERATED_PRINT_VAR_START__
+            print(f"""======================================= MailchimpTransactionalApiClient#send_emails ex: {ex.text}""") # __AUTO_GENERATED_PRINT_VAR_END__
             logger.exception(err_msg)
             raise ex

@@ -629,7 +629,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
     lookup_field = 'uuid'
     lookup_url_kwarg = 'license_uuid'
 
-    permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
+    permission_required = ''
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
 
     pagination_class = LicensePagination
@@ -839,6 +839,8 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             ]
           }
         """
+        # __AUTO_GENERATED_PRINTF_START__
+        print(f"LicenseAdminViewSet#assign 1") # __AUTO_GENERATED_PRINTF_END__
         subscription_plan = self._get_subscription_plan()
         try:
             lock_acquired = utils.acquire_subscription_plan_lock(

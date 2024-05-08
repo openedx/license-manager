@@ -104,7 +104,7 @@ class EmailClient:
         elif settings.TRANSACTIONAL_MAIL_SERVICE == 'mailchimp':
             if action_type == REMIND_EMAIL_ACTION_TYPE:
                 template_name = settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE
-                subject = settings.MAILCHIMP_REMINDER_EMAIL_TEMPLATE
+                subject = settings.MAILCHIMP_REMINDER_EMAIL_SUBJECT
             else:
                 template_name = settings.MAILCHIMP_ASSIGNMENT_EMAIL_TEMPLATE
                 subject = settings.MAILCHIMP_ASSIGNMENT_EMAIL_SUBJECT

@@ -191,7 +191,7 @@ class EmailTaskTests(TestCase):
         )
 
         called_emails = [
-            _call.kwargs['message']['to']
+            _call.kwargs['body']['message']['to']
             for _call in mock_send_template.call_args_list
         ]
         self.assertNotIn('no-license@foo.com', called_emails)
@@ -227,9 +227,9 @@ class EmailTaskTests(TestCase):
             expected_messages.append({'rcpt': user_email, 'vars': template_context})
 
         # assert all recipients sent a campaign message in a single call
-        actual_emails = mock_send_template.call_args_list[0][1]['message']['to']
-        actual_recipients_metadata = mock_send_template.call_args_list[0][1]['message']['recipient_metadata']
-        actual_messages = mock_send_template.call_args_list[0][1]['message']['merge_vars']
+        actual_emails = mock_send_template.call_args_list[0][1]['body']['message']['to']
+        actual_recipients_metadata = mock_send_template.call_args_list[0][1]['body']['message']['recipient_metadata']
+        actual_messages = mock_send_template.call_args_list[0][1]['body']['message']['merge_vars']
 
         def sort_key(key='rcpt'):
             return lambda x: x[key]
@@ -404,7 +404,7 @@ class EmailTaskTests(TestCase):
             )
 
             called_emails = [
-                _call.kwargs['message']['to']
+                _call.kwargs['body']['message']['to']
                 for _call in mock_send_template.call_args_list
             ]
             self.assertNotIn('no-license@foo.com', called_emails)
@@ -441,9 +441,9 @@ class EmailTaskTests(TestCase):
                 expected_messages.append({'rcpt': user_email, 'vars': template_context})
 
             # assert all recipients sent a campaign message in a single call
-            actual_emails = mock_send_template.call_args_list[0][1]['message']['to']
-            actual_recipients_metadata = mock_send_template.call_args_list[0][1]['message']['recipient_metadata']
-            actual_messages = mock_send_template.call_args_list[0][1]['message']['merge_vars']
+            actual_emails = mock_send_template.call_args_list[0][1]['body']['message']['to']
+            actual_recipients_metadata = mock_send_template.call_args_list[0][1]['body']['message']['recipient_metadata']
+            actual_messages = mock_send_template.call_args_list[0][1]['body']['message']['merge_vars']
 
             def sort_key(key='rcpt'):
                 return lambda x: x[key]
@@ -595,23 +595,26 @@ class EmailTaskTests(TestCase):
         }
         expected_recipient_metadata = {'rcpt': self.user_email, 'values': {'email': self.user_email}}
         mock_send_template.assert_called_with(
-            template_name=settings.MAILCHIMP_ACTIVATION_EMAIL_TEMPLATE,
-            message={
-                'from_email': settings.MAILCHIMP_FROM_EMAIL,
-                'from_name': settings.MAILCHIMP_FROM_NAME,
-                'subject': settings.MAILCHIMP_ACTIVATION_EMAIL_SUBJECT,
-                'preserve_recipients': False,
-                'to': [{'email': self.user_email}],
-                'merge_vars': [expected_merge_vars],
-                'merge_language': 'mailchimp',
-                'recipient_metadata': [expected_recipient_metadata],
-                'global_merge_vars': [],
+            body={
+                'template_name': settings.MAILCHIMP_ACTIVATION_EMAIL_TEMPLATE,
+                'template_content': [{}],
+                "message": {
+                    'from_email': settings.MAILCHIMP_FROM_EMAIL,
+                    'from_name': settings.MAILCHIMP_FROM_NAME,
+                    'subject': settings.MAILCHIMP_ACTIVATION_EMAIL_SUBJECT,
+                    'preserve_recipients': False,
+                    'to': [{'email': self.user_email}],
+                    'merge_vars': [expected_merge_vars],
+                    'merge_language': 'mailchimp',
+                    'recipient_metadata': [expected_recipient_metadata],
+                    'global_merge_vars': [],
+                }
             }
         )
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.email.BrazeApiClient', side_effect=BrazeClientError)
-    def test_send_post_activation_email_task_reraises_braze_exceptions(self, _, mock_enterprise_client):
+    def test_braze_send_post_activation_email_task_reraises_braze_exceptions(self, _, mock_enterprise_client):
         """
         Assert send_post_activation_email_task reraises any braze exceptions.
         """
@@ -626,12 +629,29 @@ class EmailTaskTests(TestCase):
             tasks.send_post_activation_email_task(self.enterprise_uuid, self.user_email)
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    @mock.patch('mailchimp_transactional.MessagesApi.send_template', side_effect=MailchimpClientError(text="error", status_code=400))
+    @override_settings(TRANSACTIONAL_MAIL_SERVICE='mailchimp')
+    def test_mailchimp_send_post_activation_email_task_reraises_braze_exceptions(self, _, mock_enterprise_client):
+        """
+        Assert send_post_activation_email_task reraises any mailchimp exceptions.
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'contact_email': self.contact_email,
+        }
+
+        with self.assertRaises(MailchimpClientError):
+            tasks.send_post_activation_email_task(self.enterprise_uuid, self.user_email)
+
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api_client.braze.BrazeClient.create_braze_alias', return_value=mock.MagicMock())
     @mock.patch(
         'license_manager.apps.api_client.braze.BrazeClient.send_campaign_message',
         return_value=mock.MagicMock()
     )
-    def test_revocation_cap_email_task(self, mock_send_campaign_message, mock_create_alias, mock_enterprise_client):
+    def test_braze_revocation_cap_email_task(self, mock_send_campaign_message, mock_create_alias, mock_enterprise_client):
         """
         Tests that the email is sent with the right arguments
         """
@@ -671,6 +691,58 @@ class EmailTaskTests(TestCase):
                 settings.BRAZE_REVOKE_CAP_EMAIL_CAMPAIGN,
                 recipients=[expected_recipient],
                 trigger_properties=expected_trigger_properties,
+            )
+
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    @mock.patch('mailchimp_transactional.MessagesApi.send_template', return_value=mock.MagicMock())
+    @override_settings(TRANSACTIONAL_MAIL_SERVICE='mailchimp')
+    def test_mailchimp_revocation_cap_email_task(self, mock_send_template, mock_enterprise_client):
+        """
+        Tests that the email is sent with the right arguments
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'contact_email': self.contact_email,
+        }
+
+        with freeze_time(localized_utcnow()):
+            tasks.send_revocation_cap_notification_email_task(
+                self.subscription_plan.uuid
+            )
+
+            now = localized_utcnow()
+            expected_date = datetime.strftime(now, "%B %d, %Y, %I:%M%p %Z")
+            expected_merge_vars = {
+                'rcpt': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
+                'vars': [
+                    {'name': 'SUBSCRIPTION_TITLE', 'content': self.subscription_plan.title},
+                    {'name': 'NUM_REVOCATIONS_APPLIED', 'content': self.subscription_plan.num_revocations_applied},
+                    {'name': 'ENTERPRISE_NAME', 'content': self.enterprise_name},
+                    {'name': 'REVOKED_LIMIT_REACHED_DATE', 'content': expected_date},
+                ],
+            }
+            expected_recipient_metadata = {
+                'rcpt': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS,
+                'values': {'email': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS}
+            }
+            mock_send_template.assert_called_with(
+                body={
+                    'template_name': settings.MAILCHIMP_REVOKE_CAP_EMAIL_TEMPLATE,
+                    'template_content': [{}],
+                    'message': {
+                        'from_email': settings.MAILCHIMP_FROM_EMAIL,
+                        'from_name': settings.MAILCHIMP_FROM_NAME,
+                        'subject': settings.MAILCHIMP_REVOKE_CAP_EMAIL_SUBJECT,
+                        'preserve_recipients': False,
+                        'to': [{'email': settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS}],
+                        'merge_vars': [expected_merge_vars],
+                        'merge_language': 'mailchimp',
+                        'recipient_metadata': [expected_recipient_metadata],
+                        'global_merge_vars': [],
+                    }
+                }
             )
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
