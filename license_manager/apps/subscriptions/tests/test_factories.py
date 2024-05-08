@@ -1,5 +1,3 @@
-import pytest
-from django.db import IntegrityError
 from django.test import TestCase
 
 from license_manager.apps.subscriptions.constants import UNASSIGNED
@@ -20,17 +18,17 @@ class SubscriptionsModelFactoryTests(TestCase):
         """
         Verify an unassigned license is created and associated with a subscription.
         """
-        license = LicenseFactory()
-        self.assertEqual(license.status, UNASSIGNED)
-        subscription_licenses = [license.uuid for license in license.subscription_plan.licenses.all()]
-        self.assertIn(license.uuid, subscription_licenses)
+        _license = LicenseFactory()
+        self.assertEqual(_license.status, UNASSIGNED)
+        subscription_licenses = [_license.uuid for _license in _license.subscription_plan.licenses.all()]
+        self.assertIn(_license.uuid, subscription_licenses)
 
     def test_subscription_factory(self):
         """
         Verify an unexpired subscription plan is created by default.
         """
         subscription = SubscriptionPlanFactory()
-        self.assertTrue(subscription.start_date < subscription.expiration_date)
+        self.assertTrue(subscription.start_date < subscription.expiration_date)  # pylint: disable=wrong-assert-type
 
     def test_subscription_factory_licenses(self):
         """
@@ -40,8 +38,8 @@ class SubscriptionsModelFactoryTests(TestCase):
         licenses = LicenseFactory.create_batch(5)
         subscription.licenses.set(licenses)
         # Verify the subscription plan uuid is correctly set on the licenses
-        license = subscription.licenses.first()
-        self.assertEqual(subscription.uuid, license.subscription_plan.uuid)
+        _license = subscription.licenses.first()
+        self.assertEqual(subscription.uuid, _license.subscription_plan.uuid)
 
     def test_customer_agreement_factory(self):
         """
@@ -60,4 +58,5 @@ class SubscriptionsModelFactoryTests(TestCase):
         Verify an unexpired subscription plan renewal is created by default.
         """
         subscription_renewal = SubscriptionPlanRenewalFactory()
+        # pylint: disable=wrong-assert-type
         self.assertTrue(subscription_renewal.effective_date < subscription_renewal.renewed_expiration_date)

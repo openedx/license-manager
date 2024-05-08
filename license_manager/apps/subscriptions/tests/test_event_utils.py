@@ -3,7 +3,6 @@ Tests for the event_utils.py module.
 """
 from unittest import mock
 
-from django.test.utils import override_settings
 from pytest import mark
 
 from license_manager.apps.subscriptions.constants import (
@@ -56,7 +55,7 @@ def test_get_license_tracking_properties():
     # Check that all the data is a basic type that can be serialized so it will be clean in segment:
     for k, v in flat_data.items():
         assert isinstance(k, str)
-        assert (isinstance(v, str) or isinstance(v, int) or isinstance(v, bool))
+        assert isinstance(v, (str, int, bool))
 
 
 @mark.django_db
@@ -70,7 +69,9 @@ def test_track_license_changes(mock_track_event, _):
 
 
 @mark.django_db
-@mock.patch('license_manager.apps.subscriptions.event_utils.get_license_tracking_properties', return_value={'counter': 1})
+@mock.patch(
+    'license_manager.apps.subscriptions.event_utils.get_license_tracking_properties', return_value={'counter': 1},
+)
 @mock.patch('license_manager.apps.subscriptions.event_utils.track_event')
 def test_track_license_changes_with_properties(mock_track_event, _):
     licenses = LicenseFactory.create_batch(5)

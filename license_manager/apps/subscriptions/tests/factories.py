@@ -31,7 +31,8 @@ FAKER = Faker()
 
 def get_random_salesforce_id():
     """
-    Returns a random alpha-numeric string of the correct length that starts with 00k for a salesforce opportunity line item.
+    Returns a random alpha-numeric string of the correct length that
+    starts with 00k for a salesforce opportunity line item.
     """
     return '00k' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=SALESFORCE_ID_LENGTH - 3))
 

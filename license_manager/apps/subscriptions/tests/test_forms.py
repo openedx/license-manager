@@ -97,9 +97,8 @@ class TestSubscriptionPlanForm(TestCase):
             error.response.status_code = http_status_code
             mock_catalog_api_client().get_enterprise_catalog.side_effect = error
         else:
-            mock_catalog_api_client().get_enterprise_catalog.return_value = {
-                'enterprise_customer': str(enterprise_customer_uuid) if catalog_enterprise_customer_matches else str(uuid4())
-            }
+            value = str(enterprise_customer_uuid) if catalog_enterprise_customer_matches else str(uuid4())
+            mock_catalog_api_client().get_enterprise_catalog.return_value = {'enterprise_customer': value}
 
         form = make_bound_subscription_form(
             enterprise_customer_uuid=enterprise_customer_uuid,
@@ -147,7 +146,9 @@ class TestSubscriptionPlanForm(TestCase):
         """
         Verify subscription plan form is invalid if salesforce_opportunity_id is None and the product requires it.
         """
-        invalid_form = make_bound_subscription_form(is_sf_id_required=True, salesforce_opportunity_line_item=salesforce_id)
+        invalid_form = make_bound_subscription_form(
+            is_sf_id_required=True, salesforce_opportunity_line_item=salesforce_id,
+        )
         assert invalid_form.is_valid() is expected_value
 
 
@@ -262,8 +263,14 @@ class TestCustomerAgreementAdminForm(TestCase):
         choices = field.choices
         self.assertEqual(len(choices), 2)
         self.assertEqual(choices[0], ('', '------'))
-        self.assertEqual(choices[1], (current_sub_for_auto_applied_licenses.uuid, current_sub_for_auto_applied_licenses.title))
-        self.assertEqual(field.initial, (current_sub_for_auto_applied_licenses.uuid, current_sub_for_auto_applied_licenses.title))
+        self.assertEqual(
+            choices[1],
+            (current_sub_for_auto_applied_licenses.uuid, current_sub_for_auto_applied_licenses.title),
+        )
+        self.assertEqual(
+            field.initial,
+            (current_sub_for_auto_applied_licenses.uuid, current_sub_for_auto_applied_licenses.title),
+        )
 
     def test_populate_subscription_for_auto_applied_licenses_plans_outside_agreement_not_included(self):
         customer_agreement_1 = CustomerAgreementFactory()
@@ -369,9 +376,8 @@ class TestCustomerAgreementAdminForm(TestCase):
             error.response.status_code = http_status_code
             mock_catalog_api_client().get_enterprise_catalog.side_effect = error
         else:
-            mock_catalog_api_client().get_enterprise_catalog.return_value = {
-                'enterprise_customer': str(enterprise_customer_uuid) if catalog_enterprise_customer_matches else str(uuid4())
-            }
+            value = str(enterprise_customer_uuid) if catalog_enterprise_customer_matches else str(uuid4())
+            mock_catalog_api_client().get_enterprise_catalog.return_value = {'enterprise_customer': value}
 
         form = make_bound_customer_agreement_form(
             customer_agreement=CustomerAgreementFactory(enterprise_customer_uuid=enterprise_customer_uuid),
