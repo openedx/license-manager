@@ -1788,7 +1788,6 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
     )
     @ddt.unpack
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.create_braze_aliases_task.si')
     @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
     def test_assign_notify_users(
         self,
@@ -1797,7 +1796,6 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         should_send_assignment_email,
         mock_send_assignment_email_task,
         _,
-        __,
     ):
         """
         Verify that users are not sent a license assignment email if notify_users=False

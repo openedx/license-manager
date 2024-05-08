@@ -32,7 +32,6 @@ from license_manager.apps.api.mixins import UserDetailsFromJwtMixin
 from license_manager.apps.api.models import BulkEnrollmentJob
 from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
-    create_braze_aliases_task,
     execute_post_revocation_tasks,
     link_learners_to_enterprise_task,
     revoke_all_licenses_task,
@@ -629,7 +628,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
     lookup_field = 'uuid'
     lookup_url_kwarg = 'license_uuid'
 
-    permission_required = ''
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
 
     pagination_class = LicensePagination
@@ -732,9 +731,9 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         custom_template_text,
     ):
         """
-        Helper to create async chains of link_learners_to_enterprise_task, create_braze_aliases_task,
-        and send_assignment_email_task for each batch of users. The task signatures are immutable,
-        hence the `si()` - we don't want the result of each task passed to the next task in the chain.
+        Helper to create async chains of link_learners_to_enterprise_task, and send_assignment_email_task
+        for each batch of users. The task signatures are immutable, hence the `si()` - we don't want the
+        result of each task passed to the next task in the chain.
 
         If disable_onboarding_notifications is set to true on the CustomerAgreement or notify_users=False,
         Braze aliases will be created but no license assignment email will be sent.
@@ -752,10 +751,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             )
 
             if notify_users and not disable_onboarding_notifications:
-                # Braze aliases must be created before we attempt to send assignment emails.
-                tasks.link(
-                    create_braze_aliases_task.si(pending_learner_batch),
-                )
                 tasks.link(
                     send_assignment_email_task.si(
                         custom_template_text,

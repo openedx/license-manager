@@ -21,13 +21,11 @@ import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api import utils
 from license_manager.apps.api.email import EmailClient
 from license_manager.apps.api.models import BulkEnrollmentJob
-from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNMENT_EMAIL_BATCH_SIZE,
     DAYS_BEFORE_INITIAL_UTILIZATION_EMAIL_SENT,
-    ENTERPRISE_BRAZE_ALIAS_LABEL,
     LICENSE_UTILIZATION_THRESHOLDS,
     NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD,
     NOTIFY_EMAIL_ACTION_TYPE,
@@ -81,27 +79,6 @@ class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
     # Add randomness to backoff delays to prevent all tasks in queue from executing simultaneously.
     # The actual delay value will be a random number in the range (0, retry_backoff)
     retry_jitter = True
-
-
-@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
-def create_braze_aliases_task(user_emails):
-    """
-    Creates a Braze alias for each email using the ENTERPRISE_BRAZE_ALIAS_LABEL.
-    A Braze alias must be created when sending emails to anonymous users.
-
-    Arguments:
-        user_emails (list of str): List of emails to create aliases for.
-
-    """
-    try:
-        braze_client_instance = BrazeApiClient(logger_prefix=LICENSE_DEBUG_PREFIX)
-        braze_client_instance.create_braze_alias(
-            user_emails,
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
-        )
-    except BrazeClientError as exc:
-        logger.exception(exc)
-        raise exc
 
 
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)

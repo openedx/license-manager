@@ -74,29 +74,6 @@ class EmailTaskTests(TestCase):
         self.enterprise_sender_alias = 'Mock Enterprise Alias'
         self.contact_email = 'cool_biz@example.com'
 
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
-    def test_create_braze_aliases_task(self, mock_braze_client):
-        """
-        Assert create_braze_aliases_task calls Braze API with the correct arguments.
-        """
-        tasks.create_braze_aliases_task(
-            self.email_recipient_list
-        )
-        mock_braze_client().create_braze_alias.assert_any_call(
-            self.email_recipient_list,
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
-        )
-
-    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', side_effect=BrazeClientError)
-    def test_create_braze_aliases_task_reraises_braze_exceptions(self, _):
-        """
-        Assert create_braze_aliases_task reraises any braze exceptions.
-        """
-        with self.assertRaises(BrazeClientError):
-            tasks.create_braze_aliases_task(
-                self.email_recipient_list
-            )
-
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch(
         'license_manager.apps.api_client.braze.BrazeClient.send_campaign_message',
