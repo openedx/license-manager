@@ -1,16 +1,24 @@
 from django.core.validators import MinLengthValidator
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
+from django.conf import settings
 
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
     REVOKED,
     SALESFORCE_ID_LENGTH,
+    MAX_NUM_LICENSES
 )
+from license_manager.apps.subscriptions.utils import (
+    verify_sf_opportunity_product_line_item,
+    validate_enterprise_catalog_uuid
+)
+
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
+    Product,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
@@ -117,10 +125,7 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
     enterprise_catalog_uuid = serializers.CharField(
         required=False, allow_null=True)
     desired_num_licenses = serializers.IntegerField(required=True)
-    customer_agreement_uuid = serializers.PrimaryKeyRelatedField(
-        queryset=CustomerAgreement.objects.all(),
-        source='customer_agreement',
-    )
+    customer_agreement = serializers.UUIDField(required=True)
 
     is_revocation_cap_enabled = serializers.BooleanField(
         required=False, default=False)
@@ -132,7 +137,7 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
         model = SubscriptionPlan
         fields = MinimalSubscriptionPlanSerializer.Meta.fields + [
             'can_freeze_unused_licenses',
-            'customer_agreement_uuid',
+            'customer_agreement',
             'desired_num_licenses',
             'expiration_processed',
             'for_internal_use_only',
@@ -145,10 +150,74 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
             'change_reason',
         ]
 
+    def validate(self, attrs):
+        enterprise_catalog_uuid = attrs.get('enterprise_catalog_uuid')
+        customer_agreement_uuid=attrs.get("customer_agreement")
+        product = attrs.get('product')
+        if not product:
+            raise serializers.ValidationError('Product is required.')
+            
+        customer_agreement = CustomerAgreement.objects.none()
+        try:
+            customer_agreement = CustomerAgreement.objects.get(
+                pk=customer_agreement_uuid)
+            attrs['customer_agreement']=customer_agreement
+        except CustomerAgreement.DoesNotExist:
+            raise serializers.ValidationError('Invalid customer_agreement.')
+        
+        if not enterprise_catalog_uuid:
+            attrs['enterprise_catalog_uuid'] = str(
+                customer_agreement.default_enterprise_catalog_uuid)
+        
+        if 'customer_agreement' in attrs:
+            if not customer_agreement.default_enterprise_catalog_uuid and not enterprise_catalog_uuid:
+                raise serializers.ValidationError(
+                    'The subscription must have an enterprise catalog uuid from itself or its customer agreement',
+                )
+
+        licenses = attrs.get('num_licenses', 0)
+        # Only internal use subscription plans to have more than the maximum number of licenses
+        if licenses > MAX_NUM_LICENSES and not attrs.get('for_internal_use_only'):
+            raise serializers.ValidationError(
+                f'Non-test subscriptions may not have more than {MAX_NUM_LICENSES} licenses',
+            )
+
+        # Ensure the revoke max percentage is between 0 and 100
+        if attrs.get('is_revocation_cap_enabled') and attrs.get('revoke_max_percentage') > 100:
+            raise serializers.ValidationError('Must be a valid percentage (0-100).')
+
+        if (
+                product.plan_type.sf_id_required
+                and attrs.get('salesforce_opportunity_line_item') is None
+                or not verify_sf_opportunity_product_line_item(attrs.get(
+                'salesforce_opportunity_line_item'))
+        ):
+            raise serializers.ValidationError(
+                'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
+            )
+        if settings.VALIDATE_FORM_EXTERNAL_FIELDS and attrs.get('enterprise_catalog_uuid') and \
+                not validate_enterprise_catalog_uuid(enterprise_catalog_uuid=attrs.get('enterprise_catalog_uuid'),
+                                                    enterprise_customer_uuid=customer_agreement.enterprise_customer_uuid,
+                                                    ):
+            raise serializers.ValidationError('bad catalog uuid validation')
+        return attrs
+    
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['uuid'] = instance.uuid
+        data['change_reason'] = instance._change_reason  # pylint: disable=protected-access
+        data['uuid'] = instance.uuid
+        data['days_until_expiration_including_renewals'] = instance.days_until_expiration_including_renewals
+        data['days_until_expiration'] = instance.days_until_expiration
+        data['enterprise_customer_uuid'] = instance.enterprise_customer_uuid
+        data['is_locked_for_renewal_processing'] = instance.is_locked_for_renewal_processing
+        data['customer_agreement'] = instance.customer_agreement.uuid
+        return data
 
 class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
     enterprise_catalog_uuid = serializers.CharField(required=False)
-    customer_agreement_uuid = serializers.ReadOnlyField()
+    customer_agreement = serializers.ReadOnlyField()
     desired_num_licenses = serializers.ReadOnlyField()
     expiration_processed = serializers.ReadOnlyField()
     last_freeze_timestamp = serializers.ReadOnlyField()
@@ -170,12 +239,37 @@ class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
             'should_auto_apply_licenses',
             'start_date',
             'title',
-            'customer_agreement_uuid',
+            'customer_agreement',
             'desired_num_licenses',
             'expiration_processed',
             'last_freeze_timestamp',
             'num_revocations_applied',
         ]
+
+    def validate(self, attrs):
+        # Ensure the revoke max percentage is between 0 and 100
+        if attrs.get('is_revocation_cap_enabled') and attrs.get('revoke_max_percentage') > 100:
+            raise serializers.ValidationError(
+                'Must be a valid percentage (0-100).')
+        subscription = self.context.get('subscription')
+        product = attrs.get('product')
+        if (product):
+            if (
+                    product.plan_type.sf_id_required
+                    and attrs.get('salesforce_opportunity_line_item') is None
+                    or not verify_sf_opportunity_product_line_item(attrs.get(
+                    'salesforce_opportunity_line_item'))
+            ):
+                raise serializers.ValidationError(
+                    'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
+                )
+        if settings.VALIDATE_FORM_EXTERNAL_FIELDS and attrs.get('enterprise_catalog_uuid') and \
+                not validate_enterprise_catalog_uuid(enterprise_catalog_uuid=attrs.get('enterprise_catalog_uuid'),
+                                                     enterprise_customer_uuid=subscription.customer_agreement.enterprise_customer_uuid,
+                                                     ):
+            raise serializers.ValidationError('bad catalog uuid validation')
+
+        return attrs
 
 
 class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):

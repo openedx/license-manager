@@ -67,7 +67,6 @@ from license_manager.apps.subscriptions.utils import (
     get_license_activation_link,
     get_subsidy_checksum,
     localized_utcnow,
-    validate_subscription_plan_payload,
 )
 
 from ..pagination import (
@@ -403,71 +402,15 @@ class SubscriptionViewSet(
         """
         try:
             desired_num_licenses = request.data.get('desired_num_licenses')
-            enterprise_catalog_uuid = request.data.get(
-                'enterprise_catalog_uuid')
-            expiration_date = request.data.get('expiration_date')
-            start_date = request.data.get('start_date')
-            last_freeze_timestamp = request.data.get('last_freeze_timestamp')
-            customer_agreement_uuid = request.data.get('customer_agreement_uuid')
-            product_id = request.data.get('product')
-            raw_payload = {
-                'title': request.data.get('title'),
-                'start_date': start_date,
-                'expiration_date': expiration_date,
-                'last_freeze_timestamp': last_freeze_timestamp,
-                'enterprise_catalog_uuid': enterprise_catalog_uuid,
-                'customer_agreement_uuid': customer_agreement_uuid,
-                'salesforce_opportunity_line_item': request.data.get('salesforce_opportunity_line_item'),
-                'product': product_id,
-                'revoke_max_percentage': request.data.get('revoke_max_percentage'),
-                'is_revocation_cap_enabled': request.data.get('is_revocation_cap_enabled'),
-                'is_active': request.data.get('is_active'),
-                'for_internal_use_only': request.data.get('for_internal_use_only'),
-                'can_freeze_unused_licenses': request.data.get('can_freeze_unused_licenses'),
-                'should_auto_apply_licenses': request.data.get('should_auto_apply_licenses'),
-                'desired_num_licenses': desired_num_licenses,
-                'change_reason': request.data.get('change_reason')
-            }
-            try:
-                customer_agreement = CustomerAgreement.objects.get(
-                    pk=customer_agreement_uuid)
-            except CustomerAgreement.DoesNotExist:
-                return Response({'error': 'Invalid customer_agreement_uuid.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            if not enterprise_catalog_uuid:
-                raw_payload['enterprise_catalog_uuid'] = str(
-                    customer_agreement.default_enterprise_catalog_uuid)
-
+            raw_payload = request.data.copy()
+            raw_payload['num_licenses'] = desired_num_licenses
             serializer = self.get_serializer(data=raw_payload)
             serializer.is_valid(raise_exception=True)
-            payload_to_validate = raw_payload.copy()
-            try:
-                payload_to_validate['product'] = Product.objects.get(
-                    pk=product_id)
-            except Product.DoesNotExist:
-                return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
-            payload_to_validate['num_licenses'] = desired_num_licenses
-            payload_to_validate['customer_agreement'] = customer_agreement
-            is_valid = validate_subscription_plan_payload(
-                payload=payload_to_validate,
-                handle_error=self.handle_error,
-                log_validation_error=None,
-                is_admin_form=False,
-                enterprise_customer_uuid=customer_agreement.enterprise_customer_uuid
-            )
-
-            if not is_valid:
-                return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
             subscription_plan = serializer.save()
             subscription_plan._change_reason = raw_payload['change_reason']  # pylint: disable=protected-access
             subscription_plan.save()
-
-            subscription_plan.customer_agreement = customer_agreement
             provision_licenses(subscription_plan)
-
-            response_data = serializer.data.copy()
-            response_data['change_reason'] = raw_payload['change_reason']
-            return Response(response_data)
+            return Response(serializer.data)
         except ValidationError as error:
             return Response(error.detail, status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError as error:
@@ -487,43 +430,17 @@ class SubscriptionViewSet(
         """
         Updates SubscriptionPlan record against given uuid
         """
-        product_id = request.data.get('product')
         # Get the subscription object based on the provided UUID
         subscription = self.get_object()
         # Perform partial update
         subscription._change_reason = request.data.get('change_reason')  # pylint: disable=protected-access
         serializer = self.get_serializer(
-            subscription, data=request.data, partial=True)
+            subscription, data=request.data, partial=True, context={'subscription':subscription})
         serializer.is_valid(raise_exception=True)
-        payload_to_validate = request.data.copy()
-
-        # validation requires Product instance instead of just an id
-        if product_id:
-            try:
-                payload_to_validate['product'] = Product.objects.get(
-                    pk=product_id)
-            except Product.DoesNotExist:
-                return Response({'error': 'A valid product is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        is_valid = validate_subscription_plan_payload(
-            payload=payload_to_validate,
-            handle_error=self.handle_error,
-            log_validation_error=None,
-            is_admin_form=False,
-            enterprise_customer_uuid=subscription.enterprise_customer_uuid
-        )
-        if not is_valid:
-            return Response(getattr(self, 'errors', {}), status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
 
         provision_licenses(subscription)
         response = serializer.data.copy()
-        response['change_reason'] = subscription._change_reason  # pylint: disable=protected-access
-        response['uuid'] = subscription.uuid
-        response['days_until_expiration_including_renewals'] = subscription.days_until_expiration_including_renewals
-        response['days_until_expiration'] = subscription.days_until_expiration
-        response['enterprise_customer_uuid'] = subscription.enterprise_customer_uuid
-        response['is_locked_for_renewal_processing'] = subscription.is_locked_for_renewal_processing
-        response['customer_agreement_uuid'] = subscription.customer_agreement.uuid
         return Response(response)
 
 

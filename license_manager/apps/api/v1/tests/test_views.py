@@ -329,7 +329,7 @@ def _prepare_subscription_plan_payload(customer_agreement):
         "is_revocation_cap_enabled": False,
         "should_auto_apply_licenses": True,
         "can_freeze_unused_licenses": True,
-        "customer_agreement_uuid": customer_agreement.uuid,
+        "customer_agreement": customer_agreement.uuid,
         "desired_num_licenses": 3,
         "expiration_processed": True,
         "for_internal_use_only": True,
@@ -745,12 +745,12 @@ def test_subscription_plan_create_superuser_200(api_client, superuser, boolean_t
 
     response = _subscription_create_request(
         api_client, superuser, params=params)
-    print(f'responseee::::::: {response.json()}')
+
     assert status.HTTP_200_OK == response.status_code
     expected_fields = {
         "can_freeze_unused_licenses",
         "change_reason",
-        "customer_agreement_uuid",
+        "customer_agreement",
         "days_until_expiration_including_renewals",
         "days_until_expiration",
         "desired_num_licenses",
@@ -778,7 +778,7 @@ def test_subscription_plan_create_superuser_200(api_client, superuser, boolean_t
 @pytest.mark.django_db
 def test_subscription_plan_create_superuser_customer_agreement_400(api_client, superuser, boolean_toggle):
     """
-    Verify that the subscription create endpoint returns error if invalid customer_agreement_uuid is given
+    Verify that the subscription create endpoint returns error if invalid customer_agreement is given
     """
     enterprise_customer_uuid = uuid4()
     invalid_customer_agreement_uuid = uuid4()
@@ -787,7 +787,7 @@ def test_subscription_plan_create_superuser_customer_agreement_400(api_client, s
     ProductFactory.create_batch(1)
 
     params = _prepare_subscription_plan_payload(customer_agreement)
-    params['customer_agreement_uuid'] = invalid_customer_agreement_uuid
+    params['customer_agreement'] = invalid_customer_agreement_uuid
     _assign_role_via_jwt_or_db(
         api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
 
@@ -795,7 +795,7 @@ def test_subscription_plan_create_superuser_customer_agreement_400(api_client, s
         api_client, superuser, params=params)
 
     assert status.HTTP_400_BAD_REQUEST == response.status_code
-    assert response.json()['error'] == 'Invalid customer_agreement_uuid.'
+    assert response.json()['non_field_errors'][0] == 'Invalid customer_agreement.'
 
 
 @pytest.mark.django_db
@@ -841,8 +841,7 @@ def test_subscription_plan_create_superuser_salesforce_lineitem_400(api_client, 
         api_client, superuser, params=params)
 
     assert status.HTTP_400_BAD_REQUEST == response.status_code
-    assert response.json()[
-        'salesforce_opportunity_line_item'] == \
+    assert response.json()['non_field_errors'][0] == \
         "You must specify Salesforce ID for selected product. It must start with '00k'."
 
 
@@ -870,7 +869,7 @@ def test_subscription_plan_update_superuser_200(api_client, superuser, boolean_t
     expected_fields = {
         "can_freeze_unused_licenses",
         "change_reason",
-        "customer_agreement_uuid",
+        "customer_agreement",
         "days_until_expiration_including_renewals",
         "days_until_expiration",
         "desired_num_licenses",
@@ -1011,8 +1010,9 @@ def test_subscription_plan_create_superuser_db_integrity_error(api_client, super
 
     assert status.HTTP_200_OK == first_create_response.status_code
     assert status.HTTP_400_BAD_REQUEST == second_create_response.status_code
-    assert "must make a unique set." in second_create_response.json()[
-        'non_field_errors'][0]
+    assert second_create_response.json() == \
+        {"non_field_errors": [
+            "The fields title, customer_agreement must make a unique set."]}
 
 
 @pytest.mark.django_db
