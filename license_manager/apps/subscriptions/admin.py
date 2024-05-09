@@ -407,7 +407,12 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         if not change:
             obj.desired_num_licenses = form.cleaned_data.get('num_licenses', 0)
 
-        super().save_model(request, obj, form, change)
+        # If the desired number of licenses is large enough, we trigger an async celery task
+        # after the creation of this record.  We wrap that creation in a transaction here
+        # to force a commit, so that the async task does not encounter a race condition
+        # where the plan it expects to read from the DB does not yet exist.
+        with transaction.atomic():
+            super().save_model(request, obj, form, change)
 
         # Finally, if we're creating the model instance, go ahead and create the related license records.
         if not change:
