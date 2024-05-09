@@ -192,7 +192,6 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
     read_only_fields = [
         'num_revocations_remaining',
         'num_licenses',
-        'desired_num_licenses',
         'expiration_processed',
         'customer_agreement',
         'last_freeze_timestamp',
@@ -201,6 +200,7 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
     # Writable fields appear higher on the page.
     writable_fields = [
         'title',
+        'desired_num_licenses',
         'start_date',
         'expiration_date',
         'enterprise_catalog_uuid',
@@ -286,7 +286,10 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
 
     autocomplete_fields = ['customer_agreement']
 
-    actions = ['process_unused_licenses_post_freeze']
+    actions = [
+        'process_unused_licenses_post_freeze',
+        'create_actual_licenses_action',
+    ]
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
@@ -339,6 +342,21 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         except UnprocessableSubscriptionPlanFreezeError as exc:
             messages.add_message(request, messages.ERROR, exc)
 
+    @admin.action(
+        description='Create actual licenses to match desired number'
+    )
+    def create_actual_licenses_action(self, request, queryset):
+        """
+        Django action to make the actual number of License records associated with this
+        plan match the *desired* number of licenses for the plan.
+        """
+        for subscription_plan in queryset:
+            provision_licenses(subscription_plan)
+
+        messages.add_message(
+            request, messages.SUCCESS, 'Successfully created license records for selected Subscription Plans.',
+        )
+
     def save_model(self, request, obj, form, change):
         # Record change reason for simple history
         obj._change_reason = form.cleaned_data.get('change_reason')  # pylint: disable=protected-access
@@ -353,7 +371,10 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
             obj.desired_num_licenses = form.cleaned_data.get('num_licenses', 0)
 
         super().save_model(request, obj, form, change)
-        provision_licenses(obj)
+
+        # Finally, if we're creating the model instance, go ahead and create the related license records.
+        if not change:
+            provision_licenses(obj)
 
 
 @admin.register(CustomerAgreement)

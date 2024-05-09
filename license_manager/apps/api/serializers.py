@@ -21,7 +21,6 @@ from license_manager.apps.subscriptions.exceptions import (
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
-    Product,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
@@ -139,7 +138,7 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
     is_revocation_cap_enabled = serializers.BooleanField(
         required=False, default=False)
     revoke_max_percentage = serializers.IntegerField(required=False, default=5)
-    change_reason = serializers.CharField(read_only=True)
+    change_reason = serializers.CharField(write_only=True)
     salesforce_opportunity_line_item = serializers.CharField(required=True)
 
     class Meta:
@@ -159,25 +158,33 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
             'change_reason',
         ]
 
+    def create(self, validated_data):
+        change_reason = validated_data.pop('change_reason')
+        instance = SubscriptionPlan.objects.create(**validated_data)
+        instance._change_reason = change_reason
+        instance.save()
+        return instance
+
     def validate(self, attrs):
         enterprise_catalog_uuid = attrs.get('enterprise_catalog_uuid')
-        customer_agreement_uuid=attrs.get("customer_agreement")
+        customer_agreement_uuid = attrs.get("customer_agreement")
         product = attrs.get('product')
         if not product:
             raise InvalidSubscriptionPlanPayloadError('Product is required.')
-            
+
         customer_agreement = CustomerAgreement.objects.none()
         try:
             customer_agreement = CustomerAgreement.objects.get(
                 pk=customer_agreement_uuid)
-            attrs['customer_agreement']=customer_agreement
-        except CustomerAgreement.DoesNotExist:
-            raise InvalidSubscriptionPlanPayloadError('Invalid customer_agreement.')
-        
+            attrs['customer_agreement'] = customer_agreement
+        except Exception as ex:  # pylint: disable=broad-except
+            raise InvalidSubscriptionPlanPayloadError(
+                'Invalid customer_agreement.') from ex
+
         if not enterprise_catalog_uuid:
             attrs['enterprise_catalog_uuid'] = str(
                 customer_agreement.default_enterprise_catalog_uuid)
-        
+
         if 'customer_agreement' in attrs:
             if not customer_agreement.default_enterprise_catalog_uuid and not enterprise_catalog_uuid:
                 raise InvalidSubscriptionPlanPayloadError(
@@ -193,7 +200,8 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
 
         # Ensure the revoke max percentage is between 0 and 100
         if attrs.get('is_revocation_cap_enabled') and attrs.get('revoke_max_percentage') > 100:
-            raise InvalidSubscriptionPlanPayloadError('Must be a valid percentage (0-100).')
+            raise InvalidSubscriptionPlanPayloadError(
+                'Must be a valid percentage (0-100).')
 
         if (
                 product.plan_type.sf_id_required
@@ -205,12 +213,14 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
                 'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
             )
         if settings.VALIDATE_FORM_EXTERNAL_FIELDS and attrs.get('enterprise_catalog_uuid') and \
-                not validate_enterprise_catalog_uuid(enterprise_catalog_uuid=attrs.get('enterprise_catalog_uuid'),
-                                                    enterprise_customer_uuid=customer_agreement.enterprise_customer_uuid,
-                                                    ):
-            raise InvalidSubscriptionPlanPayloadError('bad catalog uuid validation')
+                not validate_enterprise_catalog_uuid(
+                    enterprise_catalog_uuid=attrs.get(
+                        'enterprise_catalog_uuid'),
+                    enterprise_customer_uuid=customer_agreement.enterprise_customer_uuid,
+        ):
+            raise InvalidSubscriptionPlanPayloadError(
+                'bad catalog uuid validation')
         return attrs
-    
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -224,6 +234,7 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
         data['customer_agreement'] = instance.customer_agreement.uuid
         return data
 
+
 class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
     """
     Serializer for SubscriptionPlan model to validate and update existing records via API.
@@ -231,7 +242,7 @@ class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
     Raises:
         InvalidSubscriptionPlanPayloadError: message
     """
-    
+
     enterprise_catalog_uuid = serializers.CharField(required=False)
     customer_agreement = serializers.ReadOnlyField()
     desired_num_licenses = serializers.ReadOnlyField()
@@ -265,25 +276,27 @@ class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
     def validate(self, attrs):
         # Ensure the revoke max percentage is between 0 and 100
         if attrs.get('is_revocation_cap_enabled') and attrs.get('revoke_max_percentage') > 100:
-            raise serializers.ValidationError(
+            raise InvalidSubscriptionPlanPayloadError(
                 'Must be a valid percentage (0-100).')
         subscription = self.context.get('subscription')
         product = attrs.get('product')
-        if (product):
+        if product:
             if (
-                    product.plan_type.sf_id_required
-                    and attrs.get('salesforce_opportunity_line_item') is None
-                    or not verify_sf_opportunity_product_line_item(attrs.get(
+                product.plan_type.sf_id_required
+                and attrs.get('salesforce_opportunity_line_item') is None
+                or not verify_sf_opportunity_product_line_item(attrs.get(
                     'salesforce_opportunity_line_item'))
             ):
-                raise serializers.ValidationError(
+                raise InvalidSubscriptionPlanPayloadError(
                     'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
                 )
         if settings.VALIDATE_FORM_EXTERNAL_FIELDS and attrs.get('enterprise_catalog_uuid') and \
-                not validate_enterprise_catalog_uuid(enterprise_catalog_uuid=attrs.get('enterprise_catalog_uuid'),
-                                                     enterprise_customer_uuid=subscription.customer_agreement.enterprise_customer_uuid,
-                                                     ):
-            raise serializers.ValidationError('bad catalog uuid validation')
+                not validate_enterprise_catalog_uuid(
+                    enterprise_catalog_uuid=attrs.get(
+                        'enterprise_catalog_uuid'),
+                    enterprise_customer_uuid=subscription.customer_agreement.enterprise_customer_uuid,
+        ):
+            raise InvalidSubscriptionPlanPayloadError('bad catalog uuid validation')
 
         return attrs
 

@@ -125,7 +125,7 @@ def provision_licenses(subscription):
     Args:
         subscription_plan: SubscriptionPlan instance
     """
-    if subscription.desired_num_licenses:
+    if subscription.desired_num_licenses and not subscription.last_freeze_timestamp:
         license_count_gap = subscription.desired_num_licenses - subscription.num_licenses
         if license_count_gap > 0:
             if license_count_gap <= PROVISION_LICENSES_BATCH_SIZE:

@@ -78,11 +78,7 @@ class TestSubscriptionPlanForm(TestCase):
     )
     @ddt.unpack
     @mock.patch(
-        'license_manager.apps.subscriptions.forms.EnterpriseCatalogApiClient',
-        'license_manager.apps.subscriptions.utils.EnterpriseCatalogApiClient'
-    )
-    @mock.patch(
-        'license_manager.apps.subscriptions.utils.EnterpriseCatalogApiClient')
+        'license_manager.apps.subscriptions.forms.EnterpriseCatalogApiClient')
     @override_settings(VALIDATE_FORM_EXTERNAL_FIELDS=True)
     def test_validate_catalog_uuid(
         self,

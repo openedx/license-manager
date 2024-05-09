@@ -7,7 +7,7 @@ from celery import chain
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import DatabaseError, IntegrityError, transaction
+from django.db import DatabaseError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -57,7 +57,6 @@ from license_manager.apps.subscriptions.exceptions import (
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
-    Product,
     SubscriptionLicenseSource,
     SubscriptionLicenseSourceType,
     SubscriptionPlan,
@@ -409,14 +408,16 @@ class SubscriptionViewSet(
             serializer = self.get_serializer(data=raw_payload)
             serializer.is_valid(raise_exception=True)
             subscription_plan = serializer.save()
-            subscription_plan._change_reason = raw_payload['change_reason']  # pylint: disable=protected-access
-            subscription_plan.save()
             provision_licenses(subscription_plan)
             return Response(serializer.data)
         except InvalidSubscriptionPlanPayloadError as error:
             return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as error:
+            return Response({'error': error.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except AttributeError as error:
+            return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as error:  # pylint: disable=broad-except
-            return Response(error.detail, status=status.HTTP_400_BAD_REQUEST)
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, *args, **kwargs):
         """
@@ -432,9 +433,10 @@ class SubscriptionViewSet(
         # Get the subscription object based on the provided UUID
         subscription = self.get_object()
         # Perform partial update
-        subscription._change_reason = request.data.get('change_reason')  # pylint: disable=protected-access
+        subscription._change_reason = request.data.get(  # pylint: disable=protected-access
+            'change_reason')
         serializer = self.get_serializer(
-            subscription, data=request.data, partial=True, context={'subscription':subscription})
+            subscription, data=request.data, partial=True, context={'subscription': subscription})
         serializer.is_valid(raise_exception=True)
         serializer.save()
 

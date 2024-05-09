@@ -4,9 +4,7 @@ import hmac
 import re
 from base64 import b64encode
 from datetime import datetime
-from license_manager.apps.subscriptions.exceptions import (
-    InvalidSubscriptionPlanPayloadError
-)
+
 from django.conf import settings
 from pytz import UTC
 from requests.exceptions import HTTPError
@@ -17,6 +15,9 @@ from license_manager.apps.api_client.enterprise_catalog import (
 )
 from license_manager.apps.subscriptions.constants import (
     DEFAULT_EMAIL_SENDER_ALIAS,
+)
+from license_manager.apps.subscriptions.exceptions import (
+    InvalidSubscriptionPlanPayloadError,
 )
 
 
@@ -178,12 +179,11 @@ def validate_enterprise_catalog_uuid(enterprise_catalog_uuid, enterprise_custome
         if ex.response.status_code == status.HTTP_404_NOT_FOUND:
             raise InvalidSubscriptionPlanPayloadError(
                 'A catalog with the given UUID does not exist for this enterprise customer.',
-            )
-        else:
-            raise InvalidSubscriptionPlanPayloadError(
-                f'Could not verify the given UUID: {ex}. Please try again.',
-            )
+            ) from ex
+        raise InvalidSubscriptionPlanPayloadError(
+            f'Could not verify the given UUID: {ex}. Please try again.',
+        ) from ex
     except Exception as ex:
         raise InvalidSubscriptionPlanPayloadError(
             f'Unknown error occured while connecting to enterprise catalog API. {ex}',
-        )
+        ) from ex

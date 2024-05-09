@@ -23,6 +23,9 @@ from edx_rest_framework_extensions.auth.jwt.tests.utils import (
     generate_jwt_token,
     generate_unversioned_payload,
 )
+from license_manager.apps.subscriptions.exceptions import (
+    InvalidSubscriptionPlanPayloadError,
+)
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -794,7 +797,7 @@ def test_subscription_plan_create_superuser_customer_agreement_400(api_client, s
     response = _subscription_create_request(
         api_client, superuser, params=params)
     assert status.HTTP_400_BAD_REQUEST == response.status_code
-    assert response.json() == {'error': 'Something went wrong: Invalid customer_agreement.'}
+    assert response.json() == {'error': 'An error occurred: Invalid customer_agreement.'}
 
 
 @pytest.mark.django_db
@@ -816,9 +819,8 @@ def test_subscription_plan_create_superuser_product_400(api_client, superuser, b
         api_client, superuser, params=params)
 
     assert status.HTTP_400_BAD_REQUEST == response.status_code
-    
-    assert response.json()['product'] == [
-        'Invalid pk "2" - object does not exist.']
+    assert response.json() == {'error': {'product': [
+        'Invalid pk "2" - object does not exist.']}}
 
 
 @pytest.mark.django_db
@@ -842,7 +844,7 @@ def test_subscription_plan_create_superuser_salesforce_lineitem_400(api_client, 
 
     assert status.HTTP_400_BAD_REQUEST == response.status_code
     assert response.json() == \
-        {'error': "Something went wrong: You must specify Salesforce ID for selected product. It must start with '00k'."}
+        {'error': "An error occurred: You must specify Salesforce ID for selected product. It must start with '00k'."}
 
 
 @pytest.mark.django_db
@@ -935,10 +937,12 @@ def test_subscription_plan_update_superuser_invalid_payload(api_client, superuse
     create_response = _subscription_create_request(
         api_client, superuser, params=params)
     params['salesforce_opportunity_line_item'] = 'foo'  # set invalid ID
-    patch_response = _subscriptions_patch_request(
-        api_client, superuser, params=params, subscription_uuid=create_response.json()['uuid'])
-    assert status.HTTP_200_OK == create_response.status_code
-    assert status.HTTP_400_BAD_REQUEST == patch_response.status_code
+
+    with pytest.raises(InvalidSubscriptionPlanPayloadError):
+        patch_response = _subscriptions_patch_request(
+            api_client, superuser, params=params, subscription_uuid=create_response.json()['uuid'])
+        assert status.HTTP_200_OK == create_response.status_code
+        assert status.HTTP_400_BAD_REQUEST == patch_response.status_code
 
 
 @pytest.mark.django_db
@@ -985,7 +989,7 @@ def test_subscription_plan_create_superuser_invalid_product_id(api_client, super
 
     assert status.HTTP_400_BAD_REQUEST == create_response.status_code
     assert create_response.json(
-    )['product'][0] == 'Invalid pk "12" - object does not exist.'
+    ) == {'error': {'product': ['Invalid pk "12" - object does not exist.']}}
 
 
 @pytest.mark.django_db
@@ -1011,8 +1015,8 @@ def test_subscription_plan_create_superuser_db_integrity_error(api_client, super
     assert status.HTTP_200_OK == first_create_response.status_code
     assert status.HTTP_400_BAD_REQUEST == second_create_response.status_code
     assert second_create_response.json() == \
-        {"non_field_errors": [
-            "The fields title, customer_agreement must make a unique set."]}
+        {"error": {"non_field_errors": ["The fields title, customer_agreement must "
+                                        "make a unique set."]}}
 
 
 @pytest.mark.django_db
