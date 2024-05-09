@@ -66,6 +66,26 @@ class RenewalProcessingError(Exception):
     """
 
 
+class InvalidSubscriptionPlanPayloadError(Exception):
+    """
+    An exception indicating that the provided data (payload) was invalid
+    and prevented the creation or update of a subscription plan.
+    """
+
+    def __init__(self, message):
+        """
+        Arguments:
+            message (str): error message raised
+        """
+        super().__init__('Invalid payload.', message)
+        self.message = message
+
+    def __str__(self):
+        return "An error occurred: {}".format(
+            self.message,
+        )
+
+
 class UnprocessableSubscriptionPlanExpirationError(Exception):
     """
     An exception indicating that a subscription plan's

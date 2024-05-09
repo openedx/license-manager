@@ -4,7 +4,9 @@ import hmac
 import re
 from base64 import b64encode
 from datetime import datetime
-
+from license_manager.apps.subscriptions.exceptions import (
+    InvalidSubscriptionPlanPayloadError
+)
 from django.conf import settings
 from pytz import UTC
 from requests.exceptions import HTTPError
@@ -158,7 +160,7 @@ def verify_sf_opportunity_product_line_item(salesforce_opportunity_line_item):
     return re.search(r'^00k', salesforce_opportunity_line_item)
 
 
-def validate_enterprise_catalog_uuid(enterprise_catalog_uuid, enterprise_customer_uuid, handle_error):
+def validate_enterprise_catalog_uuid(enterprise_catalog_uuid, enterprise_customer_uuid):
     """
     Verifies that the enterprise customer has a catalog with the given enterprise_catalog_uuid.
     """
@@ -168,21 +170,20 @@ def validate_enterprise_catalog_uuid(enterprise_catalog_uuid, enterprise_custome
             enterprise_catalog_uuid)
         catalog_enterprise_customer_uuid = catalog['enterprise_customer']
         if str(enterprise_customer_uuid) != catalog_enterprise_customer_uuid:
-            handle_error(
-                'enterprise_catalog_uuid',
+            raise InvalidSubscriptionPlanPayloadError(
                 'A catalog with the given UUID does not exist for this enterprise customer.',
             )
-            return False
         return True
     except HTTPError as ex:
         if ex.response.status_code == status.HTTP_404_NOT_FOUND:
-            handle_error(
-                'enterprise_catalog_uuid',
+            raise InvalidSubscriptionPlanPayloadError(
                 'A catalog with the given UUID does not exist for this enterprise customer.',
             )
         else:
-            handle_error(
-                'enterprise_catalog_uuid',
+            raise InvalidSubscriptionPlanPayloadError(
                 f'Could not verify the given UUID: {ex}. Please try again.',
             )
-        return False
+    except Exception as ex:
+        raise InvalidSubscriptionPlanPayloadError(
+            f'Unknown error occured while connecting to enterprise catalog API. {ex}',
+        )

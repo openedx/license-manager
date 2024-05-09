@@ -25,7 +25,9 @@ from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_csv.renderers import CSVRenderer
-
+from license_manager.apps.subscriptions.exceptions import (
+    InvalidSubscriptionPlanPayloadError
+)
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
 from license_manager.apps.api.mixins import UserDetailsFromJwtMixin
@@ -411,13 +413,10 @@ class SubscriptionViewSet(
             subscription_plan.save()
             provision_licenses(subscription_plan)
             return Response(serializer.data)
-        except ValidationError as error:
-            return Response(error.detail, status=status.HTTP_400_BAD_REQUEST)
-        except IntegrityError as error:
-            message = 'Database integrity error: ' + str(error)
-            return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
+        except InvalidSubscriptionPlanPayloadError as error:
+            return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as error:  # pylint: disable=broad-except
-            return Response({'error': error}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(error.detail, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, *args, **kwargs):
         """

@@ -793,9 +793,8 @@ def test_subscription_plan_create_superuser_customer_agreement_400(api_client, s
 
     response = _subscription_create_request(
         api_client, superuser, params=params)
-
     assert status.HTTP_400_BAD_REQUEST == response.status_code
-    assert response.json()['non_field_errors'][0] == 'Invalid customer_agreement.'
+    assert response.json() == {'error': 'Something went wrong: Invalid customer_agreement.'}
 
 
 @pytest.mark.django_db
@@ -817,6 +816,7 @@ def test_subscription_plan_create_superuser_product_400(api_client, superuser, b
         api_client, superuser, params=params)
 
     assert status.HTTP_400_BAD_REQUEST == response.status_code
+    
     assert response.json()['product'] == [
         'Invalid pk "2" - object does not exist.']
 
@@ -841,8 +841,8 @@ def test_subscription_plan_create_superuser_salesforce_lineitem_400(api_client, 
         api_client, superuser, params=params)
 
     assert status.HTTP_400_BAD_REQUEST == response.status_code
-    assert response.json()['non_field_errors'][0] == \
-        "You must specify Salesforce ID for selected product. It must start with '00k'."
+    assert response.json() == \
+        {'error': "Something went wrong: You must specify Salesforce ID for selected product. It must start with '00k'."}
 
 
 @pytest.mark.django_db
@@ -1031,7 +1031,6 @@ def test_subscription_plan_get_superuser_success(api_client, superuser, boolean_
 
     create_response = _subscription_create_request(
         api_client, superuser, params)
-    print(f'create_response::::{create_response}')
     created_uuid = str(create_response.json()['uuid'])
 
     retrieved_subscription = _subscription_get_request(
