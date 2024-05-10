@@ -1,28 +1,27 @@
+from django.conf import settings
 from django.core.validators import MinLengthValidator
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
-from django.conf import settings
 
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
+    MAX_NUM_LICENSES,
     REVOKED,
     SALESFORCE_ID_LENGTH,
-    MAX_NUM_LICENSES
 )
-from license_manager.apps.subscriptions.utils import (
-    verify_sf_opportunity_product_line_item,
-    validate_enterprise_catalog_uuid
-)
-
 from license_manager.apps.subscriptions.exceptions import (
-    InvalidSubscriptionPlanPayloadError
+    InvalidSubscriptionPlanPayloadError,
 )
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
+)
+from license_manager.apps.subscriptions.utils import (
+    validate_enterprise_catalog_uuid,
+    verify_sf_opportunity_product_line_item,
 )
 
 
@@ -161,7 +160,7 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
     def create(self, validated_data):
         change_reason = validated_data.pop('change_reason')
         instance = SubscriptionPlan.objects.create(**validated_data)
-        instance._change_reason = change_reason
+        instance._change_reason = change_reason  # pylint: disable=protected-access
         instance.save()
         return instance
 
@@ -169,8 +168,12 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
         enterprise_catalog_uuid = attrs.get('enterprise_catalog_uuid')
         customer_agreement_uuid = attrs.get("customer_agreement")
         product = attrs.get('product')
+        change_reason = attrs.get('change_reason')
         if not product:
             raise InvalidSubscriptionPlanPayloadError('Product is required.')
+
+        if not change_reason:
+            raise InvalidSubscriptionPlanPayloadError('change_reason is required.')
 
         customer_agreement = CustomerAgreement.objects.none()
         try:
@@ -245,7 +248,6 @@ class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
 
     enterprise_catalog_uuid = serializers.CharField(required=False)
     customer_agreement = serializers.ReadOnlyField()
-    desired_num_licenses = serializers.ReadOnlyField()
     expiration_processed = serializers.ReadOnlyField()
     last_freeze_timestamp = serializers.ReadOnlyField()
     num_revocations_applied = serializers.ReadOnlyField()
@@ -274,6 +276,10 @@ class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
         ]
 
     def validate(self, attrs):
+        change_reason = attrs.get('change_reason')
+        if not change_reason:
+            raise InvalidSubscriptionPlanPayloadError('change_reason is required.')
+
         # Ensure the revoke max percentage is between 0 and 100
         if attrs.get('is_revocation_cap_enabled') and attrs.get('revoke_max_percentage') > 100:
             raise InvalidSubscriptionPlanPayloadError(

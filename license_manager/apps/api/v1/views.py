@@ -25,9 +25,7 @@ from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_csv.renderers import CSVRenderer
-from license_manager.apps.subscriptions.exceptions import (
-    InvalidSubscriptionPlanPayloadError
-)
+
 from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
 from license_manager.apps.api.mixins import UserDetailsFromJwtMixin
@@ -49,6 +47,7 @@ from license_manager.apps.api.tasks import (
 from license_manager.apps.subscriptions import constants, event_utils
 from license_manager.apps.subscriptions.api import revoke_license
 from license_manager.apps.subscriptions.exceptions import (
+    InvalidSubscriptionPlanPayloadError,
     LicenseActivationMissingError,
     LicenseNotFoundError,
     LicenseRevocationError,
@@ -389,14 +388,6 @@ class SubscriptionViewSet(
 
         return queryset.order_by('-start_date')
 
-    def handle_error(self, field, message):
-        """
-        Handles validation errors by adding them to the viewset's error response.
-        """
-        errors = getattr(self, 'errors', {})
-        errors[field] = message
-        setattr(self, 'errors', errors)  # pylint: disable=literal-used-as-attribute
-
     def create(self, request, *args, **kwargs):
         """
         Creates a new SubscriptionPlan record
@@ -411,13 +402,17 @@ class SubscriptionViewSet(
             provision_licenses(subscription_plan)
             return Response(serializer.data)
         except InvalidSubscriptionPlanPayloadError as error:
+            logger.exception(error)
             return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as error:
+            logger.exception(error)
             return Response({'error': error.detail}, status=status.HTTP_400_BAD_REQUEST)
         except AttributeError as error:
+            logger.exception(error)
             return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as error:  # pylint: disable=broad-except
-            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception(error)
+            return Response({'error': 'Unknown error.'}, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, *args, **kwargs):
         """
@@ -430,19 +425,31 @@ class SubscriptionViewSet(
         """
         Updates SubscriptionPlan record against given uuid
         """
-        # Get the subscription object based on the provided UUID
-        subscription = self.get_object()
-        # Perform partial update
-        subscription._change_reason = request.data.get(  # pylint: disable=protected-access
-            'change_reason')
-        serializer = self.get_serializer(
-            subscription, data=request.data, partial=True, context={'subscription': subscription})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            # Get the subscription object based on the provided UUID
+            subscription = self.get_object()
+            # Perform partial update
+            subscription._change_reason = request.data.get(  # pylint: disable=protected-access
+                'change_reason')
+            serializer = self.get_serializer(
+                subscription, data=request.data, partial=True, context={'subscription': subscription})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
-        provision_licenses(subscription)
-        response = serializer.data.copy()
-        return Response(response)
+            provision_licenses(subscription)
+            return Response(serializer.data)
+        except InvalidSubscriptionPlanPayloadError as error:
+            logger.exception(error)
+            return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as error:
+            logger.exception(error)
+            return Response({'error': error.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except AttributeError as error:
+            logger.exception(error)
+            return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as error:  # pylint: disable=broad-except
+            logger.exception(error)
+            return Response({'error': 'Unknown error.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LearnerLicensesViewSet(

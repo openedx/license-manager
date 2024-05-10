@@ -289,6 +289,7 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
     actions = [
         'process_unused_licenses_post_freeze',
         'create_actual_licenses_action',
+        'delete_all_revoked_licenses',
     ]
 
     def get_queryset(self, request):
@@ -343,6 +344,24 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
             messages.add_message(request, messages.ERROR, exc)
 
     @admin.action(
+        description='Delete all revoked licenses for the selected Subscription Plans'
+    )
+    def delete_all_revoked_licenses(self, request, queryset):
+        """
+        Delete all revoked licenses for the selected Subscription Plans. Good to use when
+        you want to delete a plan with thousands of revoked licenses and don't want to worry
+        about timeouts from the deletion confirmation page.
+        """
+        processed_plan_titles = []
+        with transaction.atomic():
+            for subscription_plan in queryset:
+                subscription_plan.revoked_licenses.delete()
+                processed_plan_titles.append(subscription_plan.title)
+        messages.add_message(
+            request, messages.SUCCESS, f'Successfully deleted revoked licenses for plans {processed_plan_titles}.',
+        )
+
+    @admin.action(
         description='Create actual licenses to match desired number'
     )
     def create_actual_licenses_action(self, request, queryset):
@@ -370,7 +389,12 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         if not change:
             obj.desired_num_licenses = form.cleaned_data.get('num_licenses', 0)
 
-        super().save_model(request, obj, form, change)
+        # If the desired number of licenses is large enough, we trigger an async celery task
+        # after the creation of this record.  We wrap that creation in a transaction here
+        # to force a commit, so that the async task does not encounter a race condition
+        # where the plan it expects to read from the DB does not yet exist.
+        with transaction.atomic():
+            super().save_model(request, obj, form, change)
 
         # Finally, if we're creating the model instance, go ahead and create the related license records.
         if not change:

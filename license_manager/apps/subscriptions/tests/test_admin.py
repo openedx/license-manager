@@ -16,6 +16,7 @@ from license_manager.apps.subscriptions.models import (
 )
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
+    LicenseFactory,
     SubscriptionPlanFactory,
     UserFactory,
 )
@@ -24,6 +25,8 @@ from license_manager.apps.subscriptions.tests.utils import (
     make_bound_subscription_form,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
+
+from ..constants import REVOKED
 
 
 @pytest.mark.django_db
@@ -127,3 +130,39 @@ def test_select_subscription_for_auto_applied_licenses(mock_toggle_auto_apply_li
     args = mock_toggle_auto_apply_licenses.call_args[0]
     assert args[0] is customer_agreement_uuid
     assert args[1] is subscription_uuid
+
+
+@pytest.mark.django_db
+@mock.patch('license_manager.apps.subscriptions.admin.messages.add_message')
+def test_delete_all_revoked_licenses(mock_add_message):
+    """
+    Verify that creating a SubscriptionPlan creates its associated Licenses after it is created.
+    """
+    subscription_admin = SubscriptionPlanAdmin(SubscriptionPlan, AdminSite())
+    request = RequestFactory()
+    request.user = UserFactory()
+
+    # Setup an existing plan with revoked licenses
+    customer_agreement = CustomerAgreementFactory()
+    subscription_plan = SubscriptionPlanFactory.create(
+        customer_agreement=customer_agreement,
+    )
+    LicenseFactory.create_batch(
+        10,
+        subscription_plan=subscription_plan,
+        status=REVOKED,
+    )
+    subscription_plan.refresh_from_db()
+    assert subscription_plan.revoked_licenses.count() == 10
+
+    # Now use the admin action to delete all revoked licenses for the plan
+    subscription_admin.delete_all_revoked_licenses(
+        request,
+        SubscriptionPlan.objects.filter(uuid=subscription_plan.uuid),
+    )
+    subscription_plan.refresh_from_db()
+    assert subscription_plan.revoked_licenses.count() == 0
+
+    mock_add_message.assert_called_once_with(
+        request, messages.SUCCESS, f"Successfully deleted revoked licenses for plans ['{subscription_plan.title}'].",
+    )

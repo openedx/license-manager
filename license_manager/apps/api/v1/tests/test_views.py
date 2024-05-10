@@ -23,9 +23,6 @@ from edx_rest_framework_extensions.auth.jwt.tests.utils import (
     generate_jwt_token,
     generate_unversioned_payload,
 )
-from license_manager.apps.subscriptions.exceptions import (
-    InvalidSubscriptionPlanPayloadError,
-)
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -44,7 +41,9 @@ from license_manager.apps.api.v1.views import (
 )
 from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
-from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
+from license_manager.apps.subscriptions.exceptions import (
+    LicenseRevocationError,
+)
 from license_manager.apps.subscriptions.models import (
     License,
     SubscriptionLicenseSource,
@@ -938,11 +937,10 @@ def test_subscription_plan_update_superuser_invalid_payload(api_client, superuse
         api_client, superuser, params=params)
     params['salesforce_opportunity_line_item'] = 'foo'  # set invalid ID
 
-    with pytest.raises(InvalidSubscriptionPlanPayloadError):
-        patch_response = _subscriptions_patch_request(
-            api_client, superuser, params=params, subscription_uuid=create_response.json()['uuid'])
-        assert status.HTTP_200_OK == create_response.status_code
-        assert status.HTTP_400_BAD_REQUEST == patch_response.status_code
+    patch_response = _subscriptions_patch_request(
+        api_client, superuser, params=params, subscription_uuid=create_response.json()['uuid'])
+    assert status.HTTP_200_OK == create_response.status_code
+    assert status.HTTP_400_BAD_REQUEST == patch_response.status_code
 
 
 @pytest.mark.django_db
