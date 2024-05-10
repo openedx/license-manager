@@ -2164,8 +2164,9 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         """
         self._setup_request_jwt(user=self.user)
         alice_license = LicenseFactory.create(user_email='alice@example.com', status=constants.ACTIVATED)
+        alice_assigned_license = LicenseFactory.create(user_email='alice@example.com', status=constants.ASSIGNED)
         bob_license = LicenseFactory.create(user_email='bob@example.com', status=constants.ACTIVATED)
-        self.subscription_plan.licenses.set([alice_license, bob_license])
+        self.subscription_plan.licenses.set([alice_license, bob_license, alice_assigned_license])
 
         request_payload = {
             'user_emails': [
@@ -2174,21 +2175,65 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             ],
         }
 
-        revoke_alice_license_result = {'revoked_license': alice_license, 'original_status': alice_license.status}
+        revoke_alice_license_result = {
+            'revoked_license': alice_assigned_license, 'original_status': alice_assigned_license.status,
+        }
         revoke_bob_license_result = {'revoked_license': bob_license, 'original_status': bob_license.status}
         mock_revoke_license.side_effect = [revoke_alice_license_result, revoke_bob_license_result]
 
         response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
+        # Since alice has multiple licenses, we should only revoke her assigned one.
         mock_revoke_license.assert_has_calls([
-            mock.call(alice_license),
+            mock.call(alice_assigned_license),
             mock.call(bob_license),
         ])
 
         mock_execute_post_revocation_tasks.assert_has_calls([
             mock.call(**revoke_alice_license_result),
             mock.call(**revoke_bob_license_result),
+        ])
+
+    @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
+    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
+    def test_bulk_revoke_multiple_activated_same_email(self, mock_revoke_license, mock_execute_post_revocation_tasks):
+        """
+        Test the edge condition where one email in a single plan has multiple activated licenses.
+        """
+        self._setup_request_jwt(user=self.user)
+        alice_license_1 = LicenseFactory.create(
+            uuid='00000000-0000-0000-0000-000000000000',
+            user_email='alice@example.com', status=constants.ACTIVATED,
+        )
+        alice_license_2 = alice_license_1 = LicenseFactory.create(
+            uuid='00000000-0000-0000-0000-000000000001',
+            user_email='alice@example.com', status=constants.ACTIVATED,
+        )
+        self.subscription_plan.licenses.set([alice_license_1, alice_license_2])
+
+        request_payload = {
+            'user_emails': [
+                'alice@example.com',
+            ],
+        }
+
+        revoke_alice_license_result = {
+            'revoked_license': alice_license_1, 'original_status': alice_license_1.status,
+        }
+        mock_revoke_license.side_effect = [revoke_alice_license_result]
+
+        response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        # Since alice has multiple licenses, we should only revoke the first one (which is arbitrarily
+        # the one with the smallest uuid).
+        mock_revoke_license.assert_has_calls([
+            mock.call(alice_license_1),
+        ])
+
+        mock_execute_post_revocation_tasks.assert_has_calls([
+            mock.call(**revoke_alice_license_result),
         ])
 
     @ddt.data(
