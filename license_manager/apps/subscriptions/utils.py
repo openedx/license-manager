@@ -169,7 +169,7 @@ def validate_enterprise_catalog_uuid(enterprise_catalog_uuid, enterprise_custome
     try:
         catalog = EnterpriseCatalogApiClient().get_enterprise_catalog(
             enterprise_catalog_uuid)
-        catalog_enterprise_customer_uuid = catalog['enterprise_customer']
+        catalog_enterprise_customer_uuid = catalog.get('enterprise_customer', None)
         if str(enterprise_customer_uuid) != catalog_enterprise_customer_uuid:
             raise InvalidSubscriptionPlanPayloadError(
                 'A catalog with the given UUID does not exist for this enterprise customer.',

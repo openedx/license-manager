@@ -9,6 +9,7 @@ from license_manager.apps.subscriptions.constants import (
     MAX_NUM_LICENSES,
     REVOKED,
     SALESFORCE_ID_LENGTH,
+    SubscriptionPlanChangeReasonChoices,
 )
 from license_manager.apps.subscriptions.exceptions import (
     InvalidSubscriptionPlanPayloadError,
@@ -137,7 +138,10 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
     is_revocation_cap_enabled = serializers.BooleanField(
         required=False, default=False)
     revoke_max_percentage = serializers.IntegerField(required=False, default=5)
-    change_reason = serializers.CharField(write_only=True)
+    change_reason = serializers.ChoiceField(write_only=True,
+                                            choices=SubscriptionPlanChangeReasonChoices.CHOICES,
+                                            )
+
     salesforce_opportunity_line_item = serializers.CharField(required=True)
 
     class Meta:
@@ -169,6 +173,8 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
         customer_agreement_uuid = attrs.get("customer_agreement")
         product = attrs.get('product')
         change_reason = attrs.get('change_reason')
+        licenses = attrs.get('num_licenses', 0)
+
         if not product:
             raise InvalidSubscriptionPlanPayloadError('Product is required.')
 
@@ -180,9 +186,9 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
             customer_agreement = CustomerAgreement.objects.get(
                 pk=customer_agreement_uuid)
             attrs['customer_agreement'] = customer_agreement
-        except Exception as ex:  # pylint: disable=broad-except
+        except CustomerAgreement.DoesNotExist as ex:
             raise InvalidSubscriptionPlanPayloadError(
-                'Invalid customer_agreement.') from ex
+                "Provided customer_agreement doesn't exist.") from ex
 
         if not enterprise_catalog_uuid:
             attrs['enterprise_catalog_uuid'] = str(
@@ -194,7 +200,6 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
                     'The subscription must have an enterprise catalog uuid from itself or its customer agreement',
                 )
 
-        licenses = attrs.get('num_licenses', 0)
         # Only internal use subscription plans to have more than the maximum number of licenses
         if licenses > MAX_NUM_LICENSES and not attrs.get('for_internal_use_only'):
             raise InvalidSubscriptionPlanPayloadError(
@@ -229,7 +234,6 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
         data = super().to_representation(instance)
         data['uuid'] = instance.uuid
         data['change_reason'] = instance._change_reason  # pylint: disable=protected-access
-        data['uuid'] = instance.uuid
         data['days_until_expiration_including_renewals'] = instance.days_until_expiration_including_renewals
         data['days_until_expiration'] = instance.days_until_expiration
         data['enterprise_customer_uuid'] = instance.enterprise_customer_uuid

@@ -1105,11 +1105,28 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         """
         Helper method to revoke a single license.
         """
+        user_license = None
         try:
-            user_license = subscription_plan.licenses.get(
+            user_licenses = subscription_plan.licenses.filter(
                 user_email=user_email,
                 status__in=constants.REVOCABLE_LICENSE_STATUSES,
-            )
+            ).order_by('uuid')
+            if len(user_licenses) == 0:
+                raise LicenseNotFoundError(user_email, subscription_plan, constants.REVOCABLE_LICENSE_STATUSES)
+            if len(user_licenses) == 1:
+                user_license = user_licenses[0]
+            else:
+                # if this email address has multiple licenses, prefer to revoke the assigned one.
+                assigned_licenses = [record for record in user_licenses if record.status == constants.ASSIGNED]
+                if assigned_licenses:
+                    user_license = assigned_licenses[0]
+                else:
+                    # Otherwise, we're in a super weird, maybe-impossible edge case where this email
+                    # address is associated with multiple activated licenses in the same plan.
+                    # So we'll just revoke the first one in the result set, which
+                    # *must* be an activated one, because the revocable states are only (assigned, activated),
+                    # and we know from the `if` conditional that there are no assigned licenses.
+                    user_license = user_licenses[0]
         except License.DoesNotExist as exc:
             logger.error(exc)
             raise LicenseNotFoundError(user_email, subscription_plan, constants.REVOCABLE_LICENSE_STATUSES) from exc
