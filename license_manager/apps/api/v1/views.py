@@ -17,7 +17,7 @@ from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
-from rest_framework import filters, permissions, status, viewsets, mixins
+from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError, ValidationError
