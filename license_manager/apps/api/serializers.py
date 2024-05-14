@@ -179,7 +179,7 @@ class CustomerAgreementCreateRequestSerializer(MinimalCustomerAgreementSerialize
             'default_enterprise_catalog_uuid',
             'disable_expiration_notifications',
             'disable_onboarding_notifications',
-        ]
+            ]
 
 
 class CustomerAgreementUpdateRequestSerializer(MinimalCustomerAgreementSerializer):
