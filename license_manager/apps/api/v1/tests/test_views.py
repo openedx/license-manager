@@ -43,6 +43,7 @@ from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
+    CustomerAgreement,
     License,
     SubscriptionLicenseSource,
     SubscriptionsFeatureRole,
@@ -530,6 +531,7 @@ def test_customer_agreement_create_superuser_201(api_client, superuser):
 
     assert status.HTTP_201_CREATED == response.status_code
     _assert_customer_agreement_response_correct(response.data, customer_agreement)
+    assert CustomerAgreement.objects.filter(uuid=response.data['uuid']).exists()
 
 
 @pytest.mark.django_db
