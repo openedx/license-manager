@@ -17,7 +17,7 @@ from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError, ValidationError
@@ -81,14 +81,41 @@ ASSIGNMENT_LOCK_TIMEOUT_SECONDS = 300
 ESTIMATED_COUNT_PAGINATOR_THRESHOLD = 10000
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary='List all CustomerAgreements',
+        description='List all CustomerAgreements with associated `SubscriptionPlans`',
+    ),
+    create=extend_schema(
+        summary='Create a new CustomerAgreement',
+        description='Create a new CustomerAgreement for a given `enterprise_customer_uuid`',
+        request=serializers.CustomerAgreementCreateRequestSerializer,
+    ),
+    retrieve=extend_schema(
+        summary='Retrieve a CustomerAgreement',
+        description='Retrieve a CustomerAgreement by its UUID',
+    ),
+    partial_update=extend_schema(
+        summary='Partial update a CustomerAgreement',
+        description='Partial update a CustomerAgreement by its UUID',
+        request=serializers.CustomerAgreementUpdateRequestSerializer,
+    ),
+    auto_apply=extend_schema(
+        summary='Auto-apply a license',
+        description='Auto-apply licenses for the given `user_email` and `lms_user_id`.',
+    ),
+)
 class CustomerAgreementViewSet(
     PermissionRequiredForListingMixin,
     UserDetailsFromJwtMixin,
-    viewsets.ReadOnlyModelViewSet,
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
 ):
     """ Viewset for read operations on CustomerAgreements. """
 
-    authentication_classes = [JwtAuthentication]
+    authentication_classes = [JwtAuthentication, SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     lookup_field = 'uuid'
@@ -100,6 +127,27 @@ class CustomerAgreementViewSet(
     list_lookup_field = 'enterprise_customer_uuid'
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE, constants.SUBSCRIPTIONS_LEARNER_ROLE]
     role_assignment_class = SubscriptionsRoleAssignment
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Partial update a CustomerAgreement against given UUID.
+        """
+
+        if 'enterprise_customer_uuid' in request.data:
+            return Response(
+                'enterprise_customer_uuid cannot be updated',
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        customer_agreement = self.get_object()
+        serializer = serializers.CustomerAgreementSerializer(
+            customer_agreement,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     @property
     def requested_enterprise_uuid(self):
