@@ -52,6 +52,7 @@ from license_manager.apps.subscriptions.utils import (
     get_license_activation_link,
     hours_until,
     localized_utcnow,
+    provision_licenses
 )
 
 from .exceptions import (
@@ -755,6 +756,14 @@ class SubscriptionPlan(TimeStampedModel):
         """
         new_licenses = [License(subscription_plan=self) for _ in range(num_new_licenses)]
         License.bulk_create(new_licenses)
+
+    def provision_licenses(self, subscription):
+        """
+        For a given subscription plan, try to provision in synchronously or asynchronously.
+        Args:
+            subscription: SubscriptionPlan instance
+        """
+        provision_licenses(subscription)
 
     def contains_content(self, content_ids):
         """

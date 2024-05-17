@@ -61,7 +61,6 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionsRoleAssignment,
 )
-from license_manager.apps.subscriptions.tasks import provision_licenses
 from license_manager.apps.subscriptions.utils import (
     chunks,
     get_license_activation_link,
@@ -447,7 +446,7 @@ class SubscriptionViewSet(
             serializer = self.get_serializer(data=raw_payload)
             serializer.is_valid(raise_exception=True)
             subscription_plan = serializer.save()
-            provision_licenses(subscription_plan)
+            subscription_plan.provision_licenses(subscription_plan)
             return Response(serializer.data)
         except InvalidSubscriptionPlanPayloadError as error:
             logger.exception(error)
@@ -483,8 +482,7 @@ class SubscriptionViewSet(
                 subscription, data=request.data, partial=True, context={'subscription': subscription})
             serializer.is_valid(raise_exception=True)
             serializer.save()
-
-            provision_licenses(subscription)
+            subscription.provision_licenses(subscription)
             return Response(serializer.data)
         except InvalidSubscriptionPlanPayloadError as error:
             logger.exception(error)

@@ -117,20 +117,3 @@ def provision_licenses_task(self, subscription_plan_uuid=None):  # pylint: disab
     # because we lock this subscription plan anyway (via @subscription_plan_semaphore decorator).
     for batch_count in batch_counts(license_count_gap, batch_size=PROVISION_LICENSES_BATCH_SIZE):
         subscription_plan.increase_num_licenses(batch_count)
-
-
-def provision_licenses(subscription):
-    """
-    For a given subscription plan, try to provision in synchronously or asynchronously.
-    Args:
-        subscription_plan: SubscriptionPlan instance
-    """
-    if subscription.desired_num_licenses and not subscription.last_freeze_timestamp:
-        license_count_gap = subscription.desired_num_licenses - subscription.num_licenses
-        if license_count_gap > 0:
-            if license_count_gap <= PROVISION_LICENSES_BATCH_SIZE:
-                # We can handle just one batch synchronously.
-                SubscriptionPlan.increase_num_licenses(subscription, license_count_gap)
-            else:
-                # Multiple batches of licenses will need to be created, so provision them asynchronously.
-                provision_licenses_task.delay(subscription_plan_uuid=subscription.uuid)

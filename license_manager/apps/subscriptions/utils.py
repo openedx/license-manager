@@ -187,3 +187,24 @@ def validate_enterprise_catalog_uuid(enterprise_catalog_uuid, enterprise_custome
         raise InvalidSubscriptionPlanPayloadError(
             f'Unknown error occured while connecting to enterprise catalog API. {ex}',
         ) from ex
+
+
+def provision_licenses(subscription):
+    """
+    For a given subscription plan, try to provision in synchronously or asynchronously.
+    Args:
+        subscription: SubscriptionPlan instance
+    """
+    from license_manager.apps.subscriptions.tasks import (provision_licenses_task,
+                                                          PROVISION_LICENSES_BATCH_SIZE)
+
+    if subscription.desired_num_licenses and not subscription.last_freeze_timestamp:
+        license_count_gap = subscription.desired_num_licenses - subscription.num_licenses
+        if license_count_gap > 0:
+            if license_count_gap <= PROVISION_LICENSES_BATCH_SIZE:
+                # We can handle just one batch synchronously.
+                subscription.increase_num_licenses(license_count_gap)
+            else:
+                # Multiple batches of licenses will need to be created, so provision them asynchronously.
+                provision_licenses_task.delay(
+                    subscription_plan_uuid=subscription.uuid)

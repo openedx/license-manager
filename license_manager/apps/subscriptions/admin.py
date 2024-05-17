@@ -34,7 +34,6 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
-from license_manager.apps.subscriptions.tasks import provision_licenses
 
 
 def get_related_object_link(admin_viewname, object_pk, object_str):
@@ -370,7 +369,7 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         plan match the *desired* number of licenses for the plan.
         """
         for subscription_plan in queryset:
-            provision_licenses(subscription_plan)
+            subscription_plan.provision_licenses(subscription_plan)
 
         messages.add_message(
             request, messages.SUCCESS, 'Successfully created license records for selected Subscription Plans.',
@@ -398,7 +397,7 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
 
         # Finally, if we're creating the model instance, go ahead and create the related license records.
         if not change:
-            provision_licenses(obj)
+            obj.provision_licenses(obj)
 
 
 @admin.register(CustomerAgreement)
