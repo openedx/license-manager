@@ -369,7 +369,7 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
         plan match the *desired* number of licenses for the plan.
         """
         for subscription_plan in queryset:
-            subscription_plan.provision_licenses(subscription_plan)
+            subscription_plan.provision_licenses()
 
         messages.add_message(
             request, messages.SUCCESS, 'Successfully created license records for selected Subscription Plans.',
@@ -397,7 +397,7 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
 
         # Finally, if we're creating the model instance, go ahead and create the related license records.
         if not change:
-            obj.provision_licenses(obj)
+            obj.provision_licenses()
 
 
 @admin.register(CustomerAgreement)

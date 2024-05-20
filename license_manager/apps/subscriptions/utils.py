@@ -191,12 +191,14 @@ def validate_enterprise_catalog_uuid(enterprise_catalog_uuid, enterprise_custome
 
 def provision_licenses(subscription):
     """
-    For a given subscription plan, try to provision in synchronously or asynchronously.
+    For a given subscription plan, try to provision it synchronously or asynchronously.
     Args:
         subscription: SubscriptionPlan instance
     """
-    from license_manager.apps.subscriptions.tasks import (provision_licenses_task,
-                                                          PROVISION_LICENSES_BATCH_SIZE)
+    from license_manager.apps.subscriptions.tasks import (
+        PROVISION_LICENSES_BATCH_SIZE,
+        provision_licenses_task,
+    )
 
     if subscription.desired_num_licenses and not subscription.last_freeze_timestamp:
         license_count_gap = subscription.desired_num_licenses - subscription.num_licenses

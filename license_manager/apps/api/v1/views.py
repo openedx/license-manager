@@ -446,8 +446,8 @@ class SubscriptionViewSet(
             serializer = self.get_serializer(data=raw_payload)
             serializer.is_valid(raise_exception=True)
             subscription_plan = serializer.save()
-            subscription_plan.provision_licenses(subscription_plan)
-            return Response(serializer.data)
+            subscription_plan.provision_licenses()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except InvalidSubscriptionPlanPayloadError as error:
             logger.exception(error)
             return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
@@ -466,7 +466,7 @@ class SubscriptionViewSet(
         Returns a single SubscriptionPlan against given uuid
         """
         result = super().retrieve(request, *args, **kwargs)
-        return result
+        return Response(data=result.data, status=status.HTTP_200_OK)
 
     def partial_update(self, request, *args, **kwargs):
         """
@@ -482,8 +482,8 @@ class SubscriptionViewSet(
                 subscription, data=request.data, partial=True, context={'subscription': subscription})
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            subscription.provision_licenses(subscription)
-            return Response(serializer.data)
+            subscription.provision_licenses()
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except InvalidSubscriptionPlanPayloadError as error:
             logger.exception(error)
             return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)

@@ -858,7 +858,7 @@ def test_subscription_plan_create_superuser_200(api_client, superuser, boolean_t
     response = _subscription_create_request(
         api_client, superuser, params=params)
 
-    assert status.HTTP_200_OK == response.status_code
+    assert status.HTTP_201_CREATED == response.status_code
     expected_fields = {
         "can_freeze_unused_licenses",
         "change_reason",
@@ -975,7 +975,7 @@ def test_subscription_plan_update_superuser_200(api_client, superuser, boolean_t
     params['title'] = 'bar'
     patch_response = _subscriptions_patch_request(
         api_client, superuser, params=params, subscription_uuid=create_response.json()['uuid'])
-    assert status.HTTP_200_OK == create_response.status_code
+    assert status.HTTP_201_CREATED == create_response.status_code
     assert status.HTTP_200_OK == patch_response.status_code
     expected_fields = {
         "can_freeze_unused_licenses",
@@ -1025,7 +1025,7 @@ def test_subscription_plan_update_superuser_invalid_product_id(api_client, super
     params['product'] = 10  # set invalid ID
     patch_response = _subscriptions_patch_request(
         api_client, superuser, params=params, subscription_uuid=create_response.json()['uuid'])
-    assert status.HTTP_200_OK == create_response.status_code
+    assert status.HTTP_201_CREATED == create_response.status_code
     assert status.HTTP_400_BAD_REQUEST == patch_response.status_code
 
 
@@ -1049,7 +1049,7 @@ def test_subscription_plan_update_superuser_invalid_payload(api_client, superuse
 
     patch_response = _subscriptions_patch_request(
         api_client, superuser, params=params, subscription_uuid=create_response.json()['uuid'])
-    assert status.HTTP_200_OK == create_response.status_code
+    assert status.HTTP_201_CREATED == create_response.status_code
     assert status.HTTP_400_BAD_REQUEST == patch_response.status_code
 
 
@@ -1071,7 +1071,7 @@ def test_subscription_plan_create_superuser_cataog_uuid_missing(api_client, supe
     create_response = _subscription_create_request(
         api_client, superuser, params=params)
 
-    assert status.HTTP_200_OK == create_response.status_code
+    assert status.HTTP_201_CREATED == create_response.status_code
 
     assert create_response.json()['enterprise_catalog_uuid'] == str(
         customer_agreement.default_enterprise_catalog_uuid)
@@ -1120,7 +1120,7 @@ def test_subscription_plan_create_superuser_db_integrity_error(api_client, super
     second_create_response = _subscription_create_request(
         api_client, superuser, params=params)
 
-    assert status.HTTP_200_OK == first_create_response.status_code
+    assert status.HTTP_201_CREATED == first_create_response.status_code
     assert status.HTTP_400_BAD_REQUEST == second_create_response.status_code
     assert second_create_response.json() == \
         {"error": {"non_field_errors": ["The fields title, customer_agreement must "
@@ -1149,7 +1149,7 @@ def test_subscription_plan_get_superuser_success(api_client, superuser, boolean_
         api_client, superuser, created_uuid)
 
     assert retrieved_subscription.json()['uuid'] == created_uuid
-    assert status.HTTP_200_OK == create_response.status_code
+    assert status.HTTP_201_CREATED == create_response.status_code
 
 
 @pytest.mark.django_db

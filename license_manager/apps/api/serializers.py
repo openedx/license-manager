@@ -137,10 +137,10 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
 
     is_revocation_cap_enabled = serializers.BooleanField(
         required=False, default=False)
-    revoke_max_percentage = serializers.IntegerField(required=False, default=5)
-    change_reason = serializers.ChoiceField(write_only=True,
-                                            choices=SubscriptionPlanChangeReasonChoices.CHOICES,
-                                            )
+    revoke_max_percentage = serializers.IntegerField(
+        required=False, default=5, min_value=0, max_value=100)
+    change_reason = serializers.ChoiceField(
+        write_only=True, choices=SubscriptionPlanChangeReasonChoices.CHOICES)
 
     salesforce_opportunity_line_item = serializers.CharField(required=True)
 
@@ -162,6 +162,11 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
         ]
 
     def create(self, validated_data):
+        """
+        Pops change_reason from validated_payload to avoid SubscriptionPlan model exception.
+        Then creates a new subscription plan record with the change_reason(from djang-simple-history).
+        """
+
         change_reason = validated_data.pop('change_reason')
         instance = SubscriptionPlan.objects.create(**validated_data)
         instance._change_reason = change_reason  # pylint: disable=protected-access
@@ -169,6 +174,13 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
         return instance
 
     def validate(self, attrs):
+        """
+        Validates payload before creating a subscription plan.
+
+        Raises:
+            InvalidSubscriptionPlanPayloadError
+        """
+
         enterprise_catalog_uuid = attrs.get('enterprise_catalog_uuid')
         customer_agreement_uuid = attrs.get("customer_agreement")
         product = attrs.get('product')
@@ -206,31 +218,31 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
                 f'Non-test subscriptions may not have more than {MAX_NUM_LICENSES} licenses',
             )
 
-        # Ensure the revoke max percentage is between 0 and 100
-        if attrs.get('is_revocation_cap_enabled') and attrs.get('revoke_max_percentage') > 100:
-            raise InvalidSubscriptionPlanPayloadError(
-                'Must be a valid percentage (0-100).')
-
         if (
-                product.plan_type.sf_id_required
-                and attrs.get('salesforce_opportunity_line_item') is None
-                or not verify_sf_opportunity_product_line_item(attrs.get(
+            product.plan_type.sf_id_required
+            and attrs.get('salesforce_opportunity_line_item') is None
+            or not verify_sf_opportunity_product_line_item(attrs.get(
                 'salesforce_opportunity_line_item'))
         ):
             raise InvalidSubscriptionPlanPayloadError(
                 'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
             )
         if settings.VALIDATE_FORM_EXTERNAL_FIELDS and attrs.get('enterprise_catalog_uuid') and \
-                not validate_enterprise_catalog_uuid(
-                    enterprise_catalog_uuid=attrs.get(
-                        'enterprise_catalog_uuid'),
-                    enterprise_customer_uuid=customer_agreement.enterprise_customer_uuid,
+            not validate_enterprise_catalog_uuid(
+            enterprise_catalog_uuid=attrs.get(
+                'enterprise_catalog_uuid'),
+            enterprise_customer_uuid=customer_agreement.enterprise_customer_uuid,
         ):
             raise InvalidSubscriptionPlanPayloadError(
-                'bad catalog uuid validation')
+                'Bad catalog UUID! \
+                    please make sure enterprise customer has a catalog with the given enterprise_catalog_uuid'
+            )
         return attrs
 
     def to_representation(self, instance):
+        """
+        Custom representation to return all required fields in API view
+        """
         data = super().to_representation(instance)
         data['uuid'] = instance.uuid
         data['change_reason'] = instance._change_reason  # pylint: disable=protected-access
@@ -280,14 +292,17 @@ class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
         ]
 
     def validate(self, attrs):
+        """
+        Validates payload before creating a subscription plan.
+
+        Raises:
+            InvalidSubscriptionPlanPayloadError
+        """
+
         change_reason = attrs.get('change_reason')
         if not change_reason:
             raise InvalidSubscriptionPlanPayloadError('change_reason is required.')
 
-        # Ensure the revoke max percentage is between 0 and 100
-        if attrs.get('is_revocation_cap_enabled') and attrs.get('revoke_max_percentage') > 100:
-            raise InvalidSubscriptionPlanPayloadError(
-                'Must be a valid percentage (0-100).')
         subscription = self.context.get('subscription')
         product = attrs.get('product')
         if product:
@@ -301,12 +316,15 @@ class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
                     'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
                 )
         if settings.VALIDATE_FORM_EXTERNAL_FIELDS and attrs.get('enterprise_catalog_uuid') and \
-                not validate_enterprise_catalog_uuid(
-                    enterprise_catalog_uuid=attrs.get(
-                        'enterprise_catalog_uuid'),
-                    enterprise_customer_uuid=subscription.customer_agreement.enterprise_customer_uuid,
+            not validate_enterprise_catalog_uuid(
+            enterprise_catalog_uuid=attrs.get(
+                'enterprise_catalog_uuid'),
+            enterprise_customer_uuid=subscription.customer_agreement.enterprise_customer_uuid,
         ):
-            raise InvalidSubscriptionPlanPayloadError('bad catalog uuid validation')
+            raise InvalidSubscriptionPlanPayloadError(
+                'Bad catalog UUID! \
+                    please make sure enterprise customer has a catalog with the given enterprise_catalog_uuid'
+            )
 
         return attrs
 
