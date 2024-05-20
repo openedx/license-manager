@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.validators import MinLengthValidator
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
@@ -5,14 +6,23 @@ from rest_framework.fields import SerializerMethodField
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNED,
+    MAX_NUM_LICENSES,
     REVOKED,
     SALESFORCE_ID_LENGTH,
+    SubscriptionPlanChangeReasonChoices,
+)
+from license_manager.apps.subscriptions.exceptions import (
+    InvalidSubscriptionPlanPayloadError,
 )
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
+)
+from license_manager.apps.subscriptions.utils import (
+    validate_enterprise_catalog_uuid,
+    verify_sf_opportunity_product_line_item,
 )
 
 
@@ -110,6 +120,213 @@ class SubscriptionPlanSerializer(MinimalSubscriptionPlanSerializer):
             'applied': obj.num_revocations_applied,
             'remaining': obj.num_revocations_remaining,
         }
+
+
+class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
+    """
+    Serializer for SubscriptionPlan model to validate and create new records via API.
+
+    Raises:
+        InvalidSubscriptionPlanPayloadError: message
+    """
+    prior_renewals = None
+    enterprise_catalog_uuid = serializers.UUIDField(
+        required=False, allow_null=True)
+    desired_num_licenses = serializers.IntegerField(required=True)
+    customer_agreement = serializers.UUIDField(required=True)
+
+    is_revocation_cap_enabled = serializers.BooleanField(
+        required=False, default=False)
+    revoke_max_percentage = serializers.IntegerField(
+        required=False, default=5, min_value=0, max_value=100)
+    change_reason = serializers.ChoiceField(
+        write_only=True, choices=SubscriptionPlanChangeReasonChoices.CHOICES)
+
+    salesforce_opportunity_line_item = serializers.CharField(required=True)
+
+    class Meta:
+        model = SubscriptionPlan
+        fields = MinimalSubscriptionPlanSerializer.Meta.fields + [
+            'can_freeze_unused_licenses',
+            'customer_agreement',
+            'desired_num_licenses',
+            'expiration_processed',
+            'for_internal_use_only',
+            'last_freeze_timestamp',
+            'num_revocations_applied',
+            'product',
+            'revoke_max_percentage',
+            'salesforce_opportunity_line_item',
+            'is_revocation_cap_enabled',
+            'change_reason',
+        ]
+
+    def create(self, validated_data):
+        """
+        Pops change_reason from validated_payload to avoid SubscriptionPlan model exception.
+        Then creates a new subscription plan record with the change_reason(from djang-simple-history).
+        """
+
+        change_reason = validated_data.pop('change_reason')
+        instance = SubscriptionPlan.objects.create(**validated_data)
+        instance._change_reason = change_reason  # pylint: disable=protected-access
+        instance.save()
+        return instance
+
+    def validate(self, attrs):
+        """
+        Validates payload before creating a subscription plan.
+
+        Raises:
+            InvalidSubscriptionPlanPayloadError
+        """
+
+        enterprise_catalog_uuid = attrs.get('enterprise_catalog_uuid')
+        customer_agreement_uuid = attrs.get("customer_agreement")
+        product = attrs.get('product')
+        change_reason = attrs.get('change_reason')
+        licenses = attrs.get('num_licenses', 0)
+
+        if not product:
+            raise InvalidSubscriptionPlanPayloadError('Product is required.')
+
+        if not change_reason:
+            raise InvalidSubscriptionPlanPayloadError('change_reason is required.')
+
+        customer_agreement = CustomerAgreement.objects.none()
+        try:
+            customer_agreement = CustomerAgreement.objects.get(
+                pk=customer_agreement_uuid)
+            attrs['customer_agreement'] = customer_agreement
+        except CustomerAgreement.DoesNotExist as ex:
+            raise InvalidSubscriptionPlanPayloadError(
+                "Provided customer_agreement doesn't exist.") from ex
+
+        if not enterprise_catalog_uuid:
+            attrs['enterprise_catalog_uuid'] = str(
+                customer_agreement.default_enterprise_catalog_uuid)
+
+        if 'customer_agreement' in attrs:
+            if not customer_agreement.default_enterprise_catalog_uuid and not enterprise_catalog_uuid:
+                raise InvalidSubscriptionPlanPayloadError(
+                    'The subscription must have an enterprise catalog uuid from itself or its customer agreement',
+                )
+
+        # Only internal use subscription plans to have more than the maximum number of licenses
+        if licenses > MAX_NUM_LICENSES and not attrs.get('for_internal_use_only'):
+            raise InvalidSubscriptionPlanPayloadError(
+                f'Non-test subscriptions may not have more than {MAX_NUM_LICENSES} licenses',
+            )
+
+        if (
+            product.plan_type.sf_id_required
+            and attrs.get('salesforce_opportunity_line_item') is None
+            or not verify_sf_opportunity_product_line_item(attrs.get(
+                'salesforce_opportunity_line_item'))
+        ):
+            raise InvalidSubscriptionPlanPayloadError(
+                'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
+            )
+        if settings.VALIDATE_FORM_EXTERNAL_FIELDS and attrs.get('enterprise_catalog_uuid') and \
+            not validate_enterprise_catalog_uuid(
+            enterprise_catalog_uuid=attrs.get(
+                'enterprise_catalog_uuid'),
+            enterprise_customer_uuid=customer_agreement.enterprise_customer_uuid,
+        ):
+            raise InvalidSubscriptionPlanPayloadError(
+                'Bad catalog UUID! \
+                    please make sure enterprise customer has a catalog with the given enterprise_catalog_uuid'
+            )
+        return attrs
+
+    def to_representation(self, instance):
+        """
+        Custom representation to return all required fields in API view
+        """
+        data = super().to_representation(instance)
+        data['uuid'] = instance.uuid
+        data['change_reason'] = instance._change_reason  # pylint: disable=protected-access
+        data['days_until_expiration_including_renewals'] = instance.days_until_expiration_including_renewals
+        data['days_until_expiration'] = instance.days_until_expiration
+        data['enterprise_customer_uuid'] = instance.enterprise_customer_uuid
+        data['is_locked_for_renewal_processing'] = instance.is_locked_for_renewal_processing
+        data['customer_agreement'] = instance.customer_agreement.uuid
+        return data
+
+
+class SubscriptionPlanUpdateSerializer(SubscriptionPlanCreateSerializer):
+    """
+    Serializer for SubscriptionPlan model to validate and update existing records via API.
+
+    Raises:
+        InvalidSubscriptionPlanPayloadError: message
+    """
+
+    enterprise_catalog_uuid = serializers.CharField(required=False)
+    customer_agreement = serializers.ReadOnlyField()
+    expiration_processed = serializers.ReadOnlyField()
+    last_freeze_timestamp = serializers.ReadOnlyField()
+    num_revocations_applied = serializers.ReadOnlyField()
+
+    class Meta:
+        model = SubscriptionPlan
+        fields = [
+            'can_freeze_unused_licenses',
+            'change_reason',
+            'enterprise_catalog_uuid',
+            'expiration_date',
+            'for_internal_use_only',
+            'is_active',
+            'is_revocation_cap_enabled',
+            'product',
+            'revoke_max_percentage',
+            'salesforce_opportunity_line_item',
+            'should_auto_apply_licenses',
+            'start_date',
+            'title',
+            'customer_agreement',
+            'desired_num_licenses',
+            'expiration_processed',
+            'last_freeze_timestamp',
+            'num_revocations_applied',
+        ]
+
+    def validate(self, attrs):
+        """
+        Validates payload before creating a subscription plan.
+
+        Raises:
+            InvalidSubscriptionPlanPayloadError
+        """
+
+        change_reason = attrs.get('change_reason')
+        if not change_reason:
+            raise InvalidSubscriptionPlanPayloadError('change_reason is required.')
+
+        subscription = self.context.get('subscription')
+        product = attrs.get('product')
+        if product:
+            if (
+                product.plan_type.sf_id_required
+                and attrs.get('salesforce_opportunity_line_item') is None
+                or not verify_sf_opportunity_product_line_item(attrs.get(
+                    'salesforce_opportunity_line_item'))
+            ):
+                raise InvalidSubscriptionPlanPayloadError(
+                    'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
+                )
+        if settings.VALIDATE_FORM_EXTERNAL_FIELDS and attrs.get('enterprise_catalog_uuid') and \
+            not validate_enterprise_catalog_uuid(
+            enterprise_catalog_uuid=attrs.get(
+                'enterprise_catalog_uuid'),
+            enterprise_customer_uuid=subscription.customer_agreement.enterprise_customer_uuid,
+        ):
+            raise InvalidSubscriptionPlanPayloadError(
+                'Bad catalog UUID! \
+                    please make sure enterprise customer has a catalog with the given enterprise_catalog_uuid'
+            )
+
+        return attrs
 
 
 class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
