@@ -187,6 +187,7 @@ def _original_licenses_to_copy(original_plan, license_types_to_copy):
     if license_types_to_copy == LicenseTypesToRenew.NOTHING:
         return []
 
+    license_status_kwargs = {}
     if license_types_to_copy == LicenseTypesToRenew.ASSIGNED_AND_ACTIVATED:
         license_status_kwargs = {'status__in': (ASSIGNED, ACTIVATED)}
     elif license_types_to_copy == LicenseTypesToRenew.ACTIVATED:
