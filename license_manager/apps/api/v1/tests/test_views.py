@@ -43,6 +43,7 @@ from license_manager.apps.core.models import User
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
+    CustomerAgreement,
     License,
     SubscriptionLicenseSource,
     SubscriptionsFeatureRole,
@@ -181,6 +182,42 @@ def _customer_agreement_list_request(api_client, user, enterprise_customer_uuid)
         url += f'?enterprise_customer_uuid={enterprise_customer_uuid}'
 
     return api_client.get(url)
+
+
+def _customer_agreement_create_request(api_client, user, enterprise_customer_uuid):
+    """
+    Helper method that requests to create a new CustomerAgreement for a specific enterprise customer uuid.
+    """
+    if user:
+        api_client.force_authenticate(user=user)
+
+    url = reverse('api:v1:customer-agreement-list')
+    data = {
+        'enterprise_customer_uuid': str(enterprise_customer_uuid),
+        'default_enterprise_catalog_uuid': str(uuid4()),
+        'disable_expiration_notifications': False,
+        'disable_onboarding_notifications': True,
+    }
+
+    return api_client.post(url, data=data)
+
+
+def _customer_agreement_partial_update_request(api_client, user, customer_agreement_uuid):
+    """
+    Helper method that requests to partially update a CustomerAgreement.
+    """
+    if user:
+        api_client.force_authenticate(user=user)
+
+    url = reverse('api:v1:customer-agreement-detail', kwargs={
+        'customer_agreement_uuid': customer_agreement_uuid,
+    })
+
+    data = {
+        'disable_onboarding_notifications': False,
+    }
+
+    return api_client.patch(url, data=data)
 
 
 def _subscriptions_list_request(api_client, user, enterprise_customer_uuid=None, current_plan=None):
@@ -367,11 +404,59 @@ def test_customer_agreement_unauthenticated_user_401(api_client):
 
 
 @pytest.mark.django_db
+def test_customer_agreement_create_unauthenticated_user_401(api_client):
+    """
+    Verify that unauthenticated users receive a 401 from the customer agreement create endpoint.
+    """
+    response = _customer_agreement_create_request(
+        api_client=api_client,
+        user=None,
+        enterprise_customer_uuid=uuid4(),
+    )
+    assert status.HTTP_401_UNAUTHORIZED == response.status_code
+
+
+@pytest.mark.django_db
+def test_customer_agreement_partial_update_unauthenticated_user_401(api_client):
+    """
+    Verify that unauthenticated users receive a 401 from the customer agreement partial update endpoint.
+    """
+    response = _customer_agreement_partial_update_request(
+        api_client=api_client,
+        user=None,
+        customer_agreement_uuid=uuid4(),
+    )
+    assert status.HTTP_401_UNAUTHORIZED == response.status_code
+
+
+@pytest.mark.django_db
+def test_customer_agreement_create_non_staff_user_403(api_client, staff_user):
+    """
+    Verify that non-staff users without JWT roles receive a 403 from the customer agreement create endpoint.
+    """
+    response = _customer_agreement_create_request(
+        api_client=api_client,
+        user=staff_user,
+        enterprise_customer_uuid=uuid4(),
+    )
+    assert status.HTTP_403_FORBIDDEN == response.status_code
+
+
+@pytest.mark.django_db
 def test_customer_agreement_non_staff_user_403(api_client, non_staff_user):
     """
     Verify that non-staff users without JWT roles receive a 403 from the customer agreement detail endpoint.
     """
     response = _customer_agreement_detail_request(api_client, non_staff_user, uuid4())
+    assert status.HTTP_403_FORBIDDEN == response.status_code
+
+
+@pytest.mark.django_db
+def test_customer_agreement_partial_update_non_staff_user_403(api_client, non_staff_user):
+    """
+    Verify that non-staff users without JWT roles receive a 403 from the customer agreement partial update endpoint.
+    """
+    response = _customer_agreement_partial_update_request(api_client, non_staff_user, uuid4())
     assert status.HTTP_403_FORBIDDEN == response.status_code
 
 
@@ -433,6 +518,33 @@ def test_customer_agreement_list_superuser_200(api_client, superuser):
     assert status.HTTP_200_OK == response.status_code
     assert 1 == response.data['count']
     _assert_customer_agreement_response_correct(response.data['results'][0], customer_agreement)
+
+
+@pytest.mark.django_db
+def test_customer_agreement_create_superuser_201(api_client, superuser):
+    """
+    Verify that superusers can create a new customer agreement.
+    """
+    enterprise_customer_uuid = uuid4()
+    response = _customer_agreement_create_request(api_client, superuser, enterprise_customer_uuid)
+    customer_agreement = CustomerAgreementFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
+
+    assert status.HTTP_201_CREATED == response.status_code
+    _assert_customer_agreement_response_correct(response.data, customer_agreement)
+    assert CustomerAgreement.objects.filter(uuid=response.data['uuid']).exists()
+
+
+@pytest.mark.django_db
+def test_customer_agreement_partial_update_superuser_200(api_client, superuser):
+    """
+    Verify that superusers can partially update a customer agreement.
+    """
+    enterprise_customer_uuid = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
+    response = _customer_agreement_partial_update_request(api_client, superuser, customer_agreement.uuid)
+
+    assert status.HTTP_200_OK == response.status_code
+    _assert_customer_agreement_response_correct(response.data, customer_agreement)
 
 
 @pytest.mark.django_db
