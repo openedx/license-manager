@@ -47,6 +47,7 @@ from license_manager.apps.api.tasks import (
 from license_manager.apps.subscriptions import constants, event_utils
 from license_manager.apps.subscriptions.api import revoke_license
 from license_manager.apps.subscriptions.exceptions import (
+    InvalidSubscriptionPlanPayloadError,
     LicenseActivationMissingError,
     LicenseNotFoundError,
     LicenseRevocationError,
@@ -381,10 +382,24 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
         parameters=[serializers.SubscriptionPlanQueryParamsSerializer],
     ),
 )
-class SubscriptionViewSet(LearnerSubscriptionViewSet):
+class SubscriptionViewSet(
+    LearnerSubscriptionViewSet,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
     """ Viewset for Admin only read operations on SubscriptionPlans."""
     permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return serializers.SubscriptionPlanCreateSerializer
+        elif self.action == 'partial_update':
+            return serializers.SubscriptionPlanUpdateSerializer
+        else:
+            return serializers.SubscriptionPlanSerializer
 
     @property
     def requested_current_plan(self):
@@ -409,7 +424,8 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
             try:
                 if self.requested_enterprise_uuid is not None:
                     # Use the class method to get the most recent plan
-                    current_plan = SubscriptionPlan.get_current_plan(self.requested_enterprise_uuid)
+                    current_plan = SubscriptionPlan.get_current_plan(
+                        self.requested_enterprise_uuid)
                     queryset = SubscriptionPlan.objects.filter(pk=current_plan.pk) if current_plan \
                         else SubscriptionPlan.objects.none()
                 else:
@@ -418,6 +434,68 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
                 raise ParseError(current_plan_error) from exc
 
         return queryset.order_by('-start_date')
+
+    def create(self, request, *args, **kwargs):
+        """
+        Creates a new SubscriptionPlan record
+        """
+        try:
+            desired_num_licenses = request.data.get('desired_num_licenses')
+            raw_payload = request.data.copy()
+            raw_payload['num_licenses'] = desired_num_licenses
+            serializer = self.get_serializer(data=raw_payload)
+            serializer.is_valid(raise_exception=True)
+            subscription_plan = serializer.save()
+            subscription_plan.provision_licenses()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except InvalidSubscriptionPlanPayloadError as error:
+            logger.exception(error)
+            return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as error:
+            logger.exception(error)
+            return Response({'error': error.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except AttributeError as error:
+            logger.exception(error)
+            return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as error:  # pylint: disable=broad-except
+            logger.exception(error)
+            return Response({'error': 'Unknown error.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Returns a single SubscriptionPlan against given uuid
+        """
+        result = super().retrieve(request, *args, **kwargs)
+        return Response(data=result.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Updates SubscriptionPlan record against given uuid
+        """
+        try:
+            # Get the subscription object based on the provided UUID
+            subscription = self.get_object()
+            # Perform partial update
+            subscription._change_reason = request.data.get(  # pylint: disable=protected-access
+                'change_reason')
+            serializer = self.get_serializer(
+                subscription, data=request.data, partial=True, context={'subscription': subscription})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            subscription.provision_licenses()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except InvalidSubscriptionPlanPayloadError as error:
+            logger.exception(error)
+            return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as error:
+            logger.exception(error)
+            return Response({'error': error.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except AttributeError as error:
+            logger.exception(error)
+            return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as error:  # pylint: disable=broad-except
+            logger.exception(error)
+            return Response({'error': 'Unknown error.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LearnerLicensesViewSet(

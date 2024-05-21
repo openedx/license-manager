@@ -7,9 +7,17 @@ from datetime import datetime
 
 from django.conf import settings
 from pytz import UTC
+from requests.exceptions import HTTPError
+from rest_framework import status
 
+from license_manager.apps.api_client.enterprise_catalog import (
+    EnterpriseCatalogApiClient,
+)
 from license_manager.apps.subscriptions.constants import (
     DEFAULT_EMAIL_SENDER_ALIAS,
+)
+from license_manager.apps.subscriptions.exceptions import (
+    InvalidSubscriptionPlanPayloadError,
 )
 
 
@@ -151,3 +159,54 @@ def verify_sf_opportunity_product_line_item(salesforce_opportunity_line_item):
     is correct
     """
     return re.search(r'^00k', salesforce_opportunity_line_item)
+
+
+def validate_enterprise_catalog_uuid(enterprise_catalog_uuid, enterprise_customer_uuid):
+    """
+    Verifies that the enterprise customer has a catalog with the given enterprise_catalog_uuid.
+    """
+
+    try:
+        catalog = EnterpriseCatalogApiClient().get_enterprise_catalog(
+            enterprise_catalog_uuid)
+        catalog_enterprise_customer_uuid = catalog.get('enterprise_customer', None)
+        if str(enterprise_customer_uuid) != catalog_enterprise_customer_uuid:
+            raise InvalidSubscriptionPlanPayloadError(
+                'A catalog with the given UUID does not exist for this enterprise customer.',
+            )
+        return True
+    except HTTPError as ex:
+        if ex.response.status_code == status.HTTP_404_NOT_FOUND:
+            raise InvalidSubscriptionPlanPayloadError(
+                'A catalog with the given UUID does not exist for this enterprise customer.',
+            ) from ex
+        raise InvalidSubscriptionPlanPayloadError(
+            f'Could not verify the given UUID: {ex}. Please try again.',
+        ) from ex
+    except Exception as ex:
+        raise InvalidSubscriptionPlanPayloadError(
+            f'Unknown error occured while connecting to enterprise catalog API. {ex}',
+        ) from ex
+
+
+def provision_licenses(subscription):
+    """
+    For a given subscription plan, try to provision it synchronously or asynchronously.
+    Args:
+        subscription: SubscriptionPlan instance
+    """
+    from license_manager.apps.subscriptions.tasks import (
+        PROVISION_LICENSES_BATCH_SIZE,
+        provision_licenses_task,
+    )
+
+    if subscription.desired_num_licenses and not subscription.last_freeze_timestamp:
+        license_count_gap = subscription.desired_num_licenses - subscription.num_licenses
+        if license_count_gap > 0:
+            if license_count_gap <= PROVISION_LICENSES_BATCH_SIZE:
+                # We can handle just one batch synchronously.
+                subscription.increase_num_licenses(license_count_gap)
+            else:
+                # Multiple batches of licenses will need to be created, so provision them asynchronously.
+                provision_licenses_task.delay(
+                    subscription_plan_uuid=subscription.uuid)
