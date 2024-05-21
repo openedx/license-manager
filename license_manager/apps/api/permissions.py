@@ -25,7 +25,7 @@ class CanProvisionLicenses(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return (
-            super().has_permission(request, view) and (
+            super().has_permission(self, request, view) and (
                 request.user.groups.filter(name__in=self.ALLOWED_API_GROUPS).exists()
             )
         )

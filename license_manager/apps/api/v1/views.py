@@ -30,7 +30,7 @@ from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
 from license_manager.apps.api.mixins import UserDetailsFromJwtMixin
 from license_manager.apps.api.models import BulkEnrollmentJob
-from license_manager.apps.api.permissions import CanRetireUser
+from license_manager.apps.api.permissions import CanRetireUser, CanProvisionLicenses
 from license_manager.apps.api.tasks import (
     create_braze_aliases_task,
     execute_post_revocation_tasks,
@@ -390,8 +390,14 @@ class SubscriptionViewSet(
     viewsets.GenericViewSet
 ):
     """ Viewset for Admin only read operations on SubscriptionPlans."""
-    permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
+    permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
+
+    def get_permissions(self):
+        if self.action in ('create', 'partial_update'):
+            return [permissions.IsAuthenticated(), CanProvisionLicenses()]
+        else:
+            return [permission() for permission in self.permission_classes]
 
     def get_serializer_class(self):
         if self.action == 'create':
