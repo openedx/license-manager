@@ -12,6 +12,7 @@ import ddt
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError
 from django.http import QueryDict
@@ -23,7 +24,6 @@ from edx_rest_framework_extensions.auth.jwt.tests.utils import (
     generate_jwt_token,
     generate_unversioned_payload,
 )
-from django.contrib.auth.models import Group
 from rest_framework import status
 from rest_framework.test import APIClient
 

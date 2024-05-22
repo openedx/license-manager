@@ -446,7 +446,6 @@ class SubscriptionPlanProvisionViewSet(
             is_active=True
         ).order_by('-start_date')
 
-
     def create(self, request, *args, **kwargs):
         """
         Creates a new SubscriptionPlan record

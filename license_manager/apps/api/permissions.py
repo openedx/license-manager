@@ -17,11 +17,10 @@ class CanRetireUser(permissions.BasePermission):
 
 class CanProvisionLicenses(permissions.BasePermission):
     """
-    Grant access to the user retirement API for the service user, and to superusers. This mimics the
-    retirement permissions check in edx-platform.
+    Grant access to those users only who are part of the license provisiioning django group
     """
     ALLOWED_API_GROUPS = ['license_provisioning_admins']
-    message = 'User is not allowed to access the view.'
+    message = 'Access denied: You do not have the necessary permissions to access this.'
 
     def has_permission(self, request, view):
         return (
