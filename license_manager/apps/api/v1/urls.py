@@ -71,6 +71,11 @@ router.register(
     viewset=views.CustomerAgreementViewSet,
     basename='customer-agreement',
 )
+router.register(
+    prefix=r'provision-license',
+    viewset=views.SubscriptionPlanProvisionViewSet,
+    basename='provision-license',
+)
 
 subscription_router = NestedSimpleRouter(
     parent_router=router,

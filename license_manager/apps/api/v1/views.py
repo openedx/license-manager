@@ -382,30 +382,10 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
         parameters=[serializers.SubscriptionPlanQueryParamsSerializer],
     ),
 )
-class SubscriptionViewSet(
-    LearnerSubscriptionViewSet,
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet
-):
+class SubscriptionViewSet(LearnerSubscriptionViewSet):
     """ Viewset for Admin only read operations on SubscriptionPlans."""
-    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
     permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
-
-    def get_permissions(self):
-        if self.action in ('create', 'partial_update'):
-            return [permissions.IsAuthenticated(), CanProvisionLicenses()]
-        else:
-            return [permission() for permission in self.permission_classes]
-
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return serializers.SubscriptionPlanCreateSerializer
-        elif self.action == 'partial_update':
-            return serializers.SubscriptionPlanUpdateSerializer
-        else:
-            return serializers.SubscriptionPlanSerializer
+    allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
 
     @property
     def requested_current_plan(self):
@@ -430,8 +410,7 @@ class SubscriptionViewSet(
             try:
                 if self.requested_enterprise_uuid is not None:
                     # Use the class method to get the most recent plan
-                    current_plan = SubscriptionPlan.get_current_plan(
-                        self.requested_enterprise_uuid)
+                    current_plan = SubscriptionPlan.get_current_plan(self.requested_enterprise_uuid)
                     queryset = SubscriptionPlan.objects.filter(pk=current_plan.pk) if current_plan \
                         else SubscriptionPlan.objects.none()
                 else:
@@ -440,6 +419,33 @@ class SubscriptionViewSet(
                 raise ParseError(current_plan_error) from exc
 
         return queryset.order_by('-start_date')
+
+
+class SubscriptionPlanProvisionViewSet(
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet
+):
+    """ Viewset for Admin only read operations on SubscriptionPlans."""
+    authentication_classes = [JwtAuthentication, SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated, CanProvisionLicenses]
+    lookup_field = 'uuid'
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return serializers.SubscriptionPlanCreateSerializer
+        elif self.action == 'partial_update':
+            return serializers.SubscriptionPlanUpdateSerializer
+
+    def get_queryset(self):
+        """
+        Required by the `PermissionRequiredForListingMixin`.
+        For non-list actions, this is what's returned by `get_queryset()`.
+        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
+        """
+        return SubscriptionPlan.objects.filter(
+            is_active=True
+        ).order_by('-start_date')
+
 
     def create(self, request, *args, **kwargs):
         """
@@ -466,13 +472,6 @@ class SubscriptionViewSet(
         except Exception as error:  # pylint: disable=broad-except
             logger.exception(error)
             return Response({'error': 'Unknown error.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Returns a single SubscriptionPlan against given uuid
-        """
-        result = super().retrieve(request, *args, **kwargs)
-        return Response(data=result.data, status=status.HTTP_200_OK)
 
     def partial_update(self, request, *args, **kwargs):
         """

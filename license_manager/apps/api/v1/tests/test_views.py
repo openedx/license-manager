@@ -23,6 +23,7 @@ from edx_rest_framework_extensions.auth.jwt.tests.utils import (
     generate_jwt_token,
     generate_unversioned_payload,
 )
+from django.contrib.auth.models import Group
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -242,14 +243,14 @@ def _subscriptions_list_request(api_client, user, enterprise_customer_uuid=None,
     return api_client.get(url)
 
 
-def _subscription_create_request(api_client, user, params):
+def _provision_license_create_request(api_client, user, params):
     """
     Helper method that creates a SubscriptionPlan.
     """
     if user:
         api_client.force_authenticate(user=user)
 
-    url = '/api/v1/subscriptions'
+    url = '/api/v1/provision-license'
     return api_client.post(url, params)
 
 
@@ -264,14 +265,14 @@ def _subscription_get_request(api_client, user, subscription_uuid):
     return api_client.get(url)
 
 
-def _subscriptions_patch_request(api_client, user, params, subscription_uuid):
+def _provision_license_patch_request(api_client, user, params, subscription_uuid):
     """
     Helper method that updates a SubscriptionPlan.
     """
     if user:
         api_client.force_authenticate(user=user)
 
-    url = f'/api/v1/subscriptions/{subscription_uuid}'
+    url = f'/api/v1/provision-license/{subscription_uuid}'
     return api_client.patch(url, params)
 
 
@@ -843,7 +844,7 @@ def test_subscription_plan_list_bad_enterprise_uuid_400(api_client, superuser):
 
 
 @pytest.mark.django_db
-def test_subscription_plan_create_superuser_200(api_client, superuser, boolean_toggle):
+def test_subscription_plan_create_staff_user_200(api_client, staff_user, boolean_toggle):
     """
     Verify that the subcription POST endpoint creates new record and response includes all expected fields
     """
@@ -853,10 +854,11 @@ def test_subscription_plan_create_superuser_200(api_client, superuser, boolean_t
     ProductFactory.create_batch(1)
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-
-    response = _subscription_create_request(
-        api_client, superuser, params=params)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+    response = _provision_license_create_request(
+        api_client, staff_user, params=params)
 
     assert status.HTTP_201_CREATED == response.status_code
     expected_fields = {
@@ -888,7 +890,65 @@ def test_subscription_plan_create_superuser_200(api_client, superuser, boolean_t
 
 
 @pytest.mark.django_db
-def test_subscription_plan_create_superuser_customer_agreement_400(api_client, superuser, boolean_toggle):
+def test_subscription_plan_create_staff_user_403(api_client, staff_user, boolean_toggle):
+    """
+    Verify that the subcription POST endpoint is accessible to authorised users only
+    """
+    enterprise_customer_uuid = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(
+        enterprise_customer_uuid=enterprise_customer_uuid)
+    ProductFactory.create_batch(1)
+    params = _prepare_subscription_plan_payload(customer_agreement)
+    _assign_role_via_jwt_or_db(
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+
+    response = _provision_license_create_request(
+        api_client, staff_user, params=params)
+    assert status.HTTP_403_FORBIDDEN == response.status_code
+
+
+@pytest.mark.django_db
+def test_subscription_plan_update_staff_user_403(api_client, staff_user, boolean_toggle):
+    """
+    Verify that the subcription update endpoint is accessible to authorised users only
+    """
+    enterprise_customer_uuid = uuid4()
+    fake_uuid = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(
+        enterprise_customer_uuid=enterprise_customer_uuid)
+    ProductFactory.create_batch(1)
+    params = _prepare_subscription_plan_payload(customer_agreement)
+    _assign_role_via_jwt_or_db(
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+
+    response = _provision_license_patch_request(
+        api_client, staff_user, params=params, subscription_uuid=fake_uuid)
+
+    assert status.HTTP_403_FORBIDDEN == response.status_code
+
+
+@pytest.mark.django_db
+def test_subscription_plan_create_staff_user_201(api_client, staff_user, boolean_toggle):
+    """
+    Verify that the subcription update endpoint is accessible to authorised users only
+    """
+    enterprise_customer_uuid = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(
+        enterprise_customer_uuid=enterprise_customer_uuid)
+    ProductFactory.create_batch(1)
+    params = _prepare_subscription_plan_payload(customer_agreement)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+
+    _assign_role_via_jwt_or_db(
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    response = _provision_license_create_request(
+        api_client, staff_user, params=params)
+    assert status.HTTP_201_CREATED == response.status_code
+
+
+@pytest.mark.django_db
+def test_subscription_plan_create_staff_user_customer_agreement_400(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription create endpoint returns error if invalid customer_agreement is given
     """
@@ -901,16 +961,17 @@ def test_subscription_plan_create_superuser_customer_agreement_400(api_client, s
     params = _prepare_subscription_plan_payload(customer_agreement)
     params['customer_agreement'] = invalid_customer_agreement_uuid
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-
-    response = _subscription_create_request(
-        api_client, superuser, params=params)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+    response = _provision_license_create_request(
+        api_client, staff_user, params=params)
     assert status.HTTP_400_BAD_REQUEST == response.status_code
     assert response.json() == {'error': "An error occurred: Provided customer_agreement doesn't exist."}
 
 
 @pytest.mark.django_db
-def test_subscription_plan_create_superuser_product_400(api_client, superuser, boolean_toggle):
+def test_subscription_plan_create_staff_user_product_400(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription create endpoint returns error if invalid Product is given
     """
@@ -922,10 +983,11 @@ def test_subscription_plan_create_superuser_product_400(api_client, superuser, b
     params = _prepare_subscription_plan_payload(customer_agreement)
     params['product'] = 2  # passing an invalid PK
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-
-    response = _subscription_create_request(
-        api_client, superuser, params=params)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+    response = _provision_license_create_request(
+        api_client, staff_user, params=params)
 
     assert status.HTTP_400_BAD_REQUEST == response.status_code
     assert response.json() == {'error': {'product': [
@@ -933,7 +995,7 @@ def test_subscription_plan_create_superuser_product_400(api_client, superuser, b
 
 
 @pytest.mark.django_db
-def test_subscription_plan_create_superuser_salesforce_lineitem_400(api_client, superuser, boolean_toggle):
+def test_subscription_plan_create_staff_user_salesforce_lineitem_400(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription create endpoint returns error if invalid salesforce_lineitem is given
     """
@@ -946,10 +1008,11 @@ def test_subscription_plan_create_superuser_salesforce_lineitem_400(api_client, 
     # passing a invalid string
     params['salesforce_opportunity_line_item'] = 'foo'
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-
-    response = _subscription_create_request(
-        api_client, superuser, params=params)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+    response = _provision_license_create_request(
+        api_client, staff_user, params=params)
 
     assert status.HTTP_400_BAD_REQUEST == response.status_code
     assert response.json() == \
@@ -957,7 +1020,7 @@ def test_subscription_plan_create_superuser_salesforce_lineitem_400(api_client, 
 
 
 @pytest.mark.django_db
-def test_subscription_plan_update_superuser_200(api_client, superuser, boolean_toggle):
+def test_subscription_plan_update_staff_user_200(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription create endpoint returns 200 on patch request
     """
@@ -968,13 +1031,14 @@ def test_subscription_plan_update_superuser_200(api_client, superuser, boolean_t
 
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-
-    create_response = _subscription_create_request(
-        api_client, superuser, params=params)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+    create_response = _provision_license_create_request(
+        api_client, staff_user, params=params)
     params['title'] = 'bar'
-    patch_response = _subscriptions_patch_request(
-        api_client, superuser, params=params, subscription_uuid=create_response.json()['uuid'])
+    patch_response = _provision_license_patch_request(
+        api_client, staff_user, params=params, subscription_uuid=create_response.json()['uuid'])
     assert status.HTTP_201_CREATED == create_response.status_code
     assert status.HTTP_200_OK == patch_response.status_code
     expected_fields = {
@@ -1007,7 +1071,7 @@ def test_subscription_plan_update_superuser_200(api_client, superuser, boolean_t
 
 
 @pytest.mark.django_db
-def test_subscription_plan_update_superuser_invalid_product_id(api_client, superuser, boolean_toggle):
+def test_subscription_plan_update_staff_user_invalid_product_id(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription create endpoint returns 200 on patch request
     """
@@ -1018,19 +1082,20 @@ def test_subscription_plan_update_superuser_invalid_product_id(api_client, super
 
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-
-    create_response = _subscription_create_request(
-        api_client, superuser, params=params)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+    create_response = _provision_license_create_request(
+        api_client, staff_user, params=params)
     params['product'] = 10  # set invalid ID
-    patch_response = _subscriptions_patch_request(
-        api_client, superuser, params=params, subscription_uuid=create_response.json()['uuid'])
+    patch_response = _provision_license_patch_request(
+        api_client, staff_user, params=params, subscription_uuid=create_response.json()['uuid'])
     assert status.HTTP_201_CREATED == create_response.status_code
     assert status.HTTP_400_BAD_REQUEST == patch_response.status_code
 
 
 @pytest.mark.django_db
-def test_subscription_plan_update_superuser_invalid_payload(api_client, superuser, boolean_toggle):
+def test_subscription_plan_update_staff_user_invalid_payload(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription create endpoint returns 200 on patch request
     """
@@ -1041,20 +1106,21 @@ def test_subscription_plan_update_superuser_invalid_payload(api_client, superuse
 
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-
-    create_response = _subscription_create_request(
-        api_client, superuser, params=params)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+    create_response = _provision_license_create_request(
+        api_client, staff_user, params=params)
     params['salesforce_opportunity_line_item'] = 'foo'  # set invalid ID
 
-    patch_response = _subscriptions_patch_request(
-        api_client, superuser, params=params, subscription_uuid=create_response.json()['uuid'])
+    patch_response = _provision_license_patch_request(
+        api_client, staff_user, params=params, subscription_uuid=create_response.json()['uuid'])
     assert status.HTTP_201_CREATED == create_response.status_code
     assert status.HTTP_400_BAD_REQUEST == patch_response.status_code
 
 
 @pytest.mark.django_db
-def test_subscription_plan_create_superuser_cataog_uuid_missing(api_client, superuser, boolean_toggle):
+def test_subscription_plan_create_staff_user_cataog_uuid_missing(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription create endpoint handles request gracefully if enterprise_catalog_uuid is missing
     """
@@ -1066,10 +1132,11 @@ def test_subscription_plan_create_superuser_cataog_uuid_missing(api_client, supe
     params = _prepare_subscription_plan_payload(customer_agreement)
     params['enterprise_catalog_uuid'] = None
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-
-    create_response = _subscription_create_request(
-        api_client, superuser, params=params)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+    create_response = _provision_license_create_request(
+        api_client, staff_user, params=params)
 
     assert status.HTTP_201_CREATED == create_response.status_code
 
@@ -1078,7 +1145,7 @@ def test_subscription_plan_create_superuser_cataog_uuid_missing(api_client, supe
 
 
 @pytest.mark.django_db
-def test_subscription_plan_create_superuser_invalid_product_id(api_client, superuser, boolean_toggle):
+def test_subscription_plan_create_staff_user_invalid_product_id(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription create endpoint returns error if invalid product id is provided
     """
@@ -1090,10 +1157,11 @@ def test_subscription_plan_create_superuser_invalid_product_id(api_client, super
     params = _prepare_subscription_plan_payload(customer_agreement)
     params['product'] = 12
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-
-    create_response = _subscription_create_request(
-        api_client, superuser, params=params)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+    create_response = _provision_license_create_request(
+        api_client, staff_user, params=params)
 
     assert status.HTTP_400_BAD_REQUEST == create_response.status_code
     assert create_response.json(
@@ -1101,7 +1169,7 @@ def test_subscription_plan_create_superuser_invalid_product_id(api_client, super
 
 
 @pytest.mark.django_db
-def test_subscription_plan_create_superuser_db_integrity_error(api_client, superuser, boolean_toggle):
+def test_subscription_plan_create_staff_user_db_integrity_error(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription create endpoint returns error if invalid product id is provided
     """
@@ -1112,13 +1180,14 @@ def test_subscription_plan_create_superuser_db_integrity_error(api_client, super
 
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+    first_create_response = _provision_license_create_request(
+        api_client, staff_user, params=params)
 
-    first_create_response = _subscription_create_request(
-        api_client, superuser, params=params)
-
-    second_create_response = _subscription_create_request(
-        api_client, superuser, params=params)
+    second_create_response = _provision_license_create_request(
+        api_client, staff_user, params=params)
 
     assert status.HTTP_201_CREATED == first_create_response.status_code
     assert status.HTTP_400_BAD_REQUEST == second_create_response.status_code
@@ -1128,7 +1197,7 @@ def test_subscription_plan_create_superuser_db_integrity_error(api_client, super
 
 
 @pytest.mark.django_db
-def test_subscription_plan_get_superuser_success(api_client, superuser, boolean_toggle):
+def test_subscription_plan_get_staff_user_success(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription create endpoint returns error if invalid product id is provided
     """
@@ -1139,14 +1208,15 @@ def test_subscription_plan_get_superuser_success(api_client, superuser, boolean_
 
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-
-    create_response = _subscription_create_request(
-        api_client, superuser, params)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    staff_user.groups.add(allowed_group)
+    create_response = _provision_license_create_request(
+        api_client, staff_user, params)
     created_uuid = str(create_response.json()['uuid'])
 
     retrieved_subscription = _subscription_get_request(
-        api_client, superuser, created_uuid)
+        api_client, staff_user, created_uuid)
 
     assert retrieved_subscription.json()['uuid'] == created_uuid
     assert status.HTTP_201_CREATED == create_response.status_code
