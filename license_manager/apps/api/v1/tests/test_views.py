@@ -35,6 +35,7 @@ from license_manager.apps.api.utils import (
 from license_manager.apps.api.v1.tests.constants import (
     ADMIN_ROLES,
     LEARNER_ROLES,
+    PROVISIONING_ADMINS_GROUP,
     SUBSCRIPTION_RENEWAL_DAYS_OFFSET,
 )
 from license_manager.apps.api.v1.views import (
@@ -250,7 +251,7 @@ def _provision_license_create_request(api_client, user, params):
     if user:
         api_client.force_authenticate(user=user)
 
-    url = '/api/v1/provision-license'
+    url = '/api/v1/provisioning-admins/subscriptions'
     return api_client.post(url, params)
 
 
@@ -261,7 +262,7 @@ def _subscription_get_request(api_client, user, subscription_uuid):
     if user:
         api_client.force_authenticate(user=user)
 
-    url = f'/api/v1/subscriptions/{subscription_uuid}'
+    url = f'/api/v1/provisioning-admins/subscriptions/{subscription_uuid}'
     return api_client.get(url)
 
 
@@ -272,7 +273,7 @@ def _provision_license_patch_request(api_client, user, params, subscription_uuid
     if user:
         api_client.force_authenticate(user=user)
 
-    url = f'/api/v1/provision-license/{subscription_uuid}'
+    url = f'/api/v1/provisioning-admins/subscriptions/{subscription_uuid}'
     return api_client.patch(url, params)
 
 
@@ -855,7 +856,7 @@ def test_subscription_plan_create_staff_user_200(api_client, staff_user, boolean
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
         api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
     response = _provision_license_create_request(
         api_client, staff_user, params=params)
@@ -937,7 +938,7 @@ def test_subscription_plan_create_staff_user_201(api_client, staff_user, boolean
         enterprise_customer_uuid=enterprise_customer_uuid)
     ProductFactory.create_batch(1)
     params = _prepare_subscription_plan_payload(customer_agreement)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
 
     _assign_role_via_jwt_or_db(
@@ -962,7 +963,7 @@ def test_subscription_plan_create_staff_user_customer_agreement_400(api_client, 
     params['customer_agreement'] = invalid_customer_agreement_uuid
     _assign_role_via_jwt_or_db(
         api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
     response = _provision_license_create_request(
         api_client, staff_user, params=params)
@@ -984,7 +985,7 @@ def test_subscription_plan_create_staff_user_product_400(api_client, staff_user,
     params['product'] = 2  # passing an invalid PK
     _assign_role_via_jwt_or_db(
         api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
     response = _provision_license_create_request(
         api_client, staff_user, params=params)
@@ -1009,7 +1010,7 @@ def test_subscription_plan_create_staff_user_salesforce_lineitem_400(api_client,
     params['salesforce_opportunity_line_item'] = 'foo'
     _assign_role_via_jwt_or_db(
         api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
     response = _provision_license_create_request(
         api_client, staff_user, params=params)
@@ -1032,7 +1033,7 @@ def test_subscription_plan_update_staff_user_200(api_client, staff_user, boolean
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
         api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
     create_response = _provision_license_create_request(
         api_client, staff_user, params=params)
@@ -1083,7 +1084,7 @@ def test_subscription_plan_update_staff_user_invalid_product_id(api_client, staf
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
         api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
     create_response = _provision_license_create_request(
         api_client, staff_user, params=params)
@@ -1107,7 +1108,7 @@ def test_subscription_plan_update_staff_user_invalid_payload(api_client, staff_u
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
         api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
     create_response = _provision_license_create_request(
         api_client, staff_user, params=params)
@@ -1133,7 +1134,7 @@ def test_subscription_plan_create_staff_user_cataog_uuid_missing(api_client, sta
     params['enterprise_catalog_uuid'] = None
     _assign_role_via_jwt_or_db(
         api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
     create_response = _provision_license_create_request(
         api_client, staff_user, params=params)
@@ -1158,7 +1159,7 @@ def test_subscription_plan_create_staff_user_invalid_product_id(api_client, staf
     params['product'] = 12
     _assign_role_via_jwt_or_db(
         api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
     create_response = _provision_license_create_request(
         api_client, staff_user, params=params)
@@ -1181,7 +1182,7 @@ def test_subscription_plan_create_staff_user_db_integrity_error(api_client, staf
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
         api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
     first_create_response = _provision_license_create_request(
         api_client, staff_user, params=params)
@@ -1209,7 +1210,7 @@ def test_subscription_plan_get_staff_user_success(api_client, staff_user, boolea
     params = _prepare_subscription_plan_payload(customer_agreement)
     _assign_role_via_jwt_or_db(
         api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
-    allowed_group = Group.objects.create(name='license_provisioning_admins')
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
     staff_user.groups.add(allowed_group)
     create_response = _provision_license_create_request(
         api_client, staff_user, params)
@@ -1223,7 +1224,7 @@ def test_subscription_plan_get_staff_user_success(api_client, staff_user, boolea
 
 
 @pytest.mark.django_db
-def test_subscription_plan_get_superuser_failure(api_client, superuser, boolean_toggle):
+def test_subscription_plan_get_staff_user_failure(api_client, staff_user, boolean_toggle):
     """
     Verify that the subscription create endpoint returns error if invalid product id is provided
     """
@@ -1231,9 +1232,11 @@ def test_subscription_plan_get_superuser_failure(api_client, superuser, boolean_
     invalid_subscription_id = uuid4()
 
     _assign_role_via_jwt_or_db(
-        api_client, superuser, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
+    staff_user.groups.add(allowed_group)
     response = _subscription_get_request(
-        api_client, superuser, invalid_subscription_id)
+        api_client, staff_user, invalid_subscription_id)
 
     assert status.HTTP_404_NOT_FOUND == response.status_code
 

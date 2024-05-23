@@ -15,11 +15,11 @@ class CanRetireUser(permissions.BasePermission):
         return request.user.username == settings.RETIREMENT_SERVICE_WORKER_USERNAME or request.user.is_superuser
 
 
-class CanProvisionLicenses(permissions.BasePermission):
+class IsInProvisioningAdminGroup(permissions.BasePermission):
     """
     Grant access to those users only who are part of the license provisiioning django group
     """
-    ALLOWED_API_GROUPS = ['license_provisioning_admins']
+    ALLOWED_API_GROUPS = ['provisioning-admins-group']
     message = 'Access denied: You do not have the necessary permissions to access this.'
 
     def has_permission(self, request, view):

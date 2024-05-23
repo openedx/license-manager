@@ -30,7 +30,10 @@ from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
 from license_manager.apps.api.mixins import UserDetailsFromJwtMixin
 from license_manager.apps.api.models import BulkEnrollmentJob
-from license_manager.apps.api.permissions import CanRetireUser, CanProvisionLicenses
+from license_manager.apps.api.permissions import (
+    CanRetireUser,
+    IsInProvisioningAdminGroup,
+)
 from license_manager.apps.api.tasks import (
     create_braze_aliases_task,
     execute_post_revocation_tasks,
@@ -421,30 +424,32 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
         return queryset.order_by('-start_date')
 
 
-class SubscriptionPlanProvisionViewSet(
+class SubscriptionPlanProvisioningAdminViewset(
     mixins.CreateModelMixin,
     viewsets.GenericViewSet
 ):
-    """ Viewset for Admin only read operations on SubscriptionPlans."""
+    """ Viewset for Provisioning Admins write operations."""
     authentication_classes = [JwtAuthentication, SessionAuthentication]
-    permission_classes = [permissions.IsAuthenticated, CanProvisionLicenses]
+    permission_classes = [permissions.IsAuthenticated, IsInProvisioningAdminGroup]
     lookup_field = 'uuid'
+    lookup_url_kwarg = 'subscription_uuid'  # URL keyword for the lookup field
 
     def get_serializer_class(self):
         if self.action == 'create':
             return serializers.SubscriptionPlanCreateSerializer
         elif self.action == 'partial_update':
             return serializers.SubscriptionPlanUpdateSerializer
+        else:
+            return serializers.SubscriptionPlanSerializer
 
     def get_queryset(self):
-        """
-        Required by the `PermissionRequiredForListingMixin`.
-        For non-list actions, this is what's returned by `get_queryset()`.
-        For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
-        """
         return SubscriptionPlan.objects.filter(
             is_active=True
         ).order_by('-start_date')
+
+    @property
+    def requested_subscription_uuid(self):
+        return self.kwargs.get('subscription_uuid')
 
     def create(self, request, *args, **kwargs):
         """
@@ -500,6 +505,18 @@ class SubscriptionPlanProvisionViewSet(
         except Exception as error:  # pylint: disable=broad-except
             logger.exception(error)
             return Response({'error': 'Unknown error.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Returns a single SubscriptionPlan object against given uuid
+        """
+        try:
+            subscription_plan = SubscriptionPlan.objects.get(
+                uuid=self.requested_subscription_uuid)
+            serializer = self.get_serializer(subscription_plan)
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+        except SubscriptionPlan.DoesNotExist:
+            return Response({'error': "No record found."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class LearnerLicensesViewSet(
