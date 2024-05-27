@@ -30,7 +30,10 @@ from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
 from license_manager.apps.api.mixins import UserDetailsFromJwtMixin
 from license_manager.apps.api.models import BulkEnrollmentJob
-from license_manager.apps.api.permissions import CanRetireUser
+from license_manager.apps.api.permissions import (
+    CanRetireUser,
+    IsInProvisioningAdminGroup,
+)
 from license_manager.apps.api.tasks import (
     create_braze_aliases_task,
     execute_post_revocation_tasks,
@@ -382,24 +385,10 @@ class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.Rea
         parameters=[serializers.SubscriptionPlanQueryParamsSerializer],
     ),
 )
-class SubscriptionViewSet(
-    LearnerSubscriptionViewSet,
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet
-):
+class SubscriptionViewSet(LearnerSubscriptionViewSet):
     """ Viewset for Admin only read operations on SubscriptionPlans."""
     permission_required = constants.SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION
     allowed_roles = [constants.SUBSCRIPTIONS_ADMIN_ROLE]
-
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return serializers.SubscriptionPlanCreateSerializer
-        elif self.action == 'partial_update':
-            return serializers.SubscriptionPlanUpdateSerializer
-        else:
-            return serializers.SubscriptionPlanSerializer
 
     @property
     def requested_current_plan(self):
@@ -424,8 +413,7 @@ class SubscriptionViewSet(
             try:
                 if self.requested_enterprise_uuid is not None:
                     # Use the class method to get the most recent plan
-                    current_plan = SubscriptionPlan.get_current_plan(
-                        self.requested_enterprise_uuid)
+                    current_plan = SubscriptionPlan.get_current_plan(self.requested_enterprise_uuid)
                     queryset = SubscriptionPlan.objects.filter(pk=current_plan.pk) if current_plan \
                         else SubscriptionPlan.objects.none()
                 else:
@@ -434,6 +422,34 @@ class SubscriptionViewSet(
                 raise ParseError(current_plan_error) from exc
 
         return queryset.order_by('-start_date')
+
+
+class SubscriptionPlanProvisioningAdminViewset(
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet
+):
+    """ Viewset for Provisioning Admins write operations."""
+    authentication_classes = [JwtAuthentication, SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated, IsInProvisioningAdminGroup]
+    lookup_field = 'uuid'
+    lookup_url_kwarg = 'subscription_uuid'  # URL keyword for the lookup field
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return serializers.SubscriptionPlanCreateSerializer
+        elif self.action == 'partial_update':
+            return serializers.SubscriptionPlanUpdateSerializer
+        else:
+            return serializers.SubscriptionPlanSerializer
+
+    def get_queryset(self):
+        return SubscriptionPlan.objects.filter(
+            is_active=True
+        ).order_by('-start_date')
+
+    @property
+    def requested_subscription_uuid(self):
+        return self.kwargs.get('subscription_uuid')
 
     def create(self, request, *args, **kwargs):
         """
@@ -460,13 +476,6 @@ class SubscriptionViewSet(
         except Exception as error:  # pylint: disable=broad-except
             logger.exception(error)
             return Response({'error': 'Unknown error.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Returns a single SubscriptionPlan against given uuid
-        """
-        result = super().retrieve(request, *args, **kwargs)
-        return Response(data=result.data, status=status.HTTP_200_OK)
 
     def partial_update(self, request, *args, **kwargs):
         """
@@ -496,6 +505,18 @@ class SubscriptionViewSet(
         except Exception as error:  # pylint: disable=broad-except
             logger.exception(error)
             return Response({'error': 'Unknown error.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Returns a single SubscriptionPlan object against given uuid
+        """
+        try:
+            subscription_plan = SubscriptionPlan.objects.get(
+                uuid=self.requested_subscription_uuid)
+            serializer = self.get_serializer(subscription_plan)
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+        except SubscriptionPlan.DoesNotExist:
+            return Response({'error': "No record found."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class LearnerLicensesViewSet(
