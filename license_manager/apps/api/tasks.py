@@ -79,7 +79,10 @@ class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
         BrazeClientError,
         HTTPError,
     )
-    retry_kwargs = {'max_retries': 3}
+    # The default number of max_retries is 3, but Braze times out a lot so we will use 5 instead.
+    # 5 retries means retrying potentially up to ~31 minutes:
+    # (2⁰ + 2¹ + 2² + 2³ + 2⁴) × (60 seconds) = 31 min
+    retry_kwargs = {'max_retries': 5}
     # Use exponential backoff for retrying tasks
     # see https://docs.celeryq.dev/en/stable/userguide/tasks.html#Task.retry_backoff
     # First retry will delay 60 seconds, second will delay 120 seconds, third 240 seconds.
