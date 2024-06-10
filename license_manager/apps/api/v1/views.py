@@ -294,6 +294,59 @@ class CustomerAgreementViewSet(
             return Response(error_message, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
+@extend_schema_view(
+    create=extend_schema(
+        summary='Create a CustomerAgreement',
+        description='Create a new CustomerAgreement',
+        request=serializers.CustomerAgreementCreateRequestSerializer,
+    ),
+    retrieve=extend_schema(
+        summary='Retrieve a CustomerAgreement',
+        description='Retrieve a CustomerAgreement by its UUID',
+    ),
+    partial_update=extend_schema(
+        summary='Update a CustomerAgreement',
+        description='Update a CustomerAgreement by its UUID',
+        request=serializers.CustomerAgreementUpdateRequestSerializer,
+    ),
+)
+class CustomerAgreementProvisioningAdminViewset(
+    viewsets.GenericViewSet,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin
+):
+    """ Viewset for Provisioning Admins write operations."""
+    authentication_classes = [JwtAuthentication, SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated, IsInProvisioningAdminGroup]
+    lookup_field = 'uuid'
+    lookup_url_kwarg = 'customer_agreement_uuid'
+    serializer_class = serializers.CustomerAgreementSerializer
+
+    def get_queryset(self):
+        return CustomerAgreement.objects.all()
+    
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Partial update a CustomerAgreement against given UUID.
+        """
+
+        if 'enterprise_customer_uuid' in request.data:
+            return Response(
+                'enterprise_customer_uuid cannot be updated',
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        customer_agreement = self.get_object()
+        serializer = serializers.CustomerAgreementSerializer(
+            customer_agreement,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
 class LearnerSubscriptionViewSet(PermissionRequiredForListingMixin, viewsets.ReadOnlyModelViewSet):
     """ Viewset for read operations on LearnerSubscriptionPlans."""
     authentication_classes = [JwtAuthentication, SessionAuthentication]
