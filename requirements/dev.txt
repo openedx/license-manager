@@ -15,8 +15,7 @@ asgiref==3.8.1
     #   -r requirements/validation.txt
     #   django
     #   django-cors-headers
-    #   django-simple-history
-astroid==3.2.0
+astroid==3.2.2
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -46,11 +45,11 @@ billiard==4.2.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.34.105
+boto3==1.34.117
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.34.105
+botocore==1.34.117
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -111,7 +110,7 @@ code-annotations==1.8.0
     #   -r requirements/validation.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.5.1
+coverage[toml]==7.5.3
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -152,6 +151,7 @@ django==4.2.13
     #   django-log-request-id
     #   django-model-utils
     #   django-ses
+    #   django-simple-history
     #   django-waffle
     #   djangorestframework
     #   drf-jwt
@@ -178,7 +178,7 @@ django-crum==0.7.9
     #   edx-django-utils
     #   edx-rbac
     #   edx-toggles
-django-debug-toolbar==4.3.0
+django-debug-toolbar==4.4.2
     # via -r requirements/dev.in
 django-durationwidget==1.0.5
     # via -r requirements/validation.txt
@@ -197,9 +197,9 @@ django-model-utils==4.5.1
     #   -r requirements/validation.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.0.0
+django-ses==4.1.0
     # via -r requirements/validation.txt
-django-simple-history==3.5.0
+django-simple-history==3.7.0
     # via -r requirements/validation.txt
 django-waffle==4.1.0
     # via
@@ -237,7 +237,7 @@ edx-braze-client==0.2.5
     # via -r requirements/validation.txt
 edx-celeryutils==1.3.0
     # via -r requirements/validation.txt
-edx-django-utils==5.13.0
+edx-django-utils==5.14.2
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
@@ -267,7 +267,7 @@ exceptiongroup==1.2.1
     #   pytest
 factory-boy==3.3.0
     # via -r requirements/validation.txt
-faker==25.2.0
+faker==25.3.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -360,7 +360,7 @@ more-itertools==10.2.0
     # via inflect
 mysqlclient==2.2.4
     # via -r requirements/validation.txt
-newrelic==9.9.1
+newrelic==9.10.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -392,7 +392,7 @@ pkgutil-resolve-name==1.3.10
     # via
     #   -r requirements/validation.txt
     #   jsonschema
-platformdirs==4.2.1
+platformdirs==4.2.2
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -409,7 +409,7 @@ polib==1.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
-prompt-toolkit==3.0.43
+prompt-toolkit==3.0.45
     # via
     #   -r requirements/validation.txt
     #   click-repl
@@ -435,7 +435,7 @@ pyjwt[crypto]==2.8.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.2.0
+pylint==3.2.2
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -468,7 +468,7 @@ pyproject-hooks==1.1.0
     #   -r requirements/pip-tools.txt
     #   build
     #   pip-tools
-pytest==8.2.0
+pytest==8.2.1
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -530,7 +530,7 @@ rpds-py==0.18.1
     #   -r requirements/validation.txt
     #   jsonschema
     #   referencing
-rules==3.3
+rules==3.4
     # via -r requirements/validation.txt
 s3transfer==0.10.1
     # via
@@ -596,9 +596,9 @@ tomlkit==0.12.5
     # via
     #   -r requirements/validation.txt
     #   pylint
-typeguard==4.2.1
+typeguard==4.3.0
     # via inflect
-typing-extensions==4.11.0
+typing-extensions==4.12.0
     # via
     #   -r requirements/validation.txt
     #   asgiref
@@ -637,7 +637,7 @@ wheel==0.43.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-zipp==3.18.1
+zipp==3.19.1
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/validation.txt
