@@ -558,8 +558,9 @@ def test_customer_agreement_detail_provisioning_admin_user_200(api_client, staff
         staff_user,
         customer_agreement.uuid,
         viewname='provisioning-admins-customer-agreement-detail',
-        )
+    )
     assert status.HTTP_200_OK == response.status_code
+
 
 @pytest.mark.django_db
 def test_customer_agreement_detail_staff_user_403(api_client, staff_user):

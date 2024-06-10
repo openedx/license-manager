@@ -324,7 +324,7 @@ class CustomerAgreementProvisioningAdminViewset(
 
     def get_queryset(self):
         return CustomerAgreement.objects.all()
-    
+
     def partial_update(self, request, *args, **kwargs):
         """
         Partial update a CustomerAgreement against given UUID.
