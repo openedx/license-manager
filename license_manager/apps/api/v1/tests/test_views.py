@@ -161,14 +161,14 @@ def user_role(request):
     return request.param
 
 
-def _customer_agreement_detail_request(api_client, user, customer_agreement_uuid):
+def _customer_agreement_detail_request(api_client, user, customer_agreement_uuid, viewname='customer-agreement-detail'):
     """
     Helper method that requests details for a specific customer agreement.
     """
     if user:
         api_client.force_authenticate(user=user)
 
-    url = reverse('api:v1:customer-agreement-detail', kwargs={
+    url = reverse(f'api:v1:{viewname}', kwargs={
         'customer_agreement_uuid': customer_agreement_uuid,
     })
 
@@ -194,7 +194,7 @@ def _customer_agreement_create_request(api_client, user, enterprise_customer_uui
     if user:
         api_client.force_authenticate(user=user)
 
-    url = reverse('api:v1:customer-agreement-list')
+    url = reverse('api:v1:provisioning-admins-customer-agreement-list')
     data = {
         'enterprise_customer_uuid': str(enterprise_customer_uuid),
         'default_enterprise_catalog_uuid': str(uuid4()),
@@ -212,7 +212,7 @@ def _customer_agreement_partial_update_request(api_client, user, customer_agreem
     if user:
         api_client.force_authenticate(user=user)
 
-    url = reverse('api:v1:customer-agreement-detail', kwargs={
+    url = reverse('api:v1:provisioning-admins-customer-agreement-detail', kwargs={
         'customer_agreement_uuid': customer_agreement_uuid,
     })
 
@@ -489,9 +489,9 @@ def test_customer_agreement_partial_update_unauthenticated_user_401(api_client):
 
 
 @pytest.mark.django_db
-def test_customer_agreement_create_non_staff_user_403(api_client, staff_user):
+def test_customer_agreement_create_staff_user_403(api_client, staff_user):
     """
-    Verify that non-staff users without JWT roles receive a 403 from the customer agreement create endpoint.
+    Verify that staff users which are not in provision-admin-group receive a 403.
     """
     response = _customer_agreement_create_request(
         api_client=api_client,
@@ -511,11 +511,11 @@ def test_customer_agreement_non_staff_user_403(api_client, non_staff_user):
 
 
 @pytest.mark.django_db
-def test_customer_agreement_partial_update_non_staff_user_403(api_client, non_staff_user):
+def test_customer_agreement_partial_update_staff_user_403(api_client, staff_user):
     """
-    Verify that non-staff users without JWT roles receive a 403 from the customer agreement partial update endpoint.
+    Verify that staff users which are not in provision-admin-group receive a 403.
     """
-    response = _customer_agreement_partial_update_request(api_client, non_staff_user, uuid4())
+    response = _customer_agreement_partial_update_request(api_client, staff_user, uuid4())
     assert status.HTTP_403_FORBIDDEN == response.status_code
 
 
@@ -540,6 +540,26 @@ def test_customer_agreement_detail_non_staff_user_200(api_client, non_staff_user
     response = _customer_agreement_detail_request(api_client, non_staff_user, customer_agreement.uuid)
     assert status.HTTP_200_OK == response.status_code
 
+
+@pytest.mark.django_db
+def test_customer_agreement_detail_provisioning_admin_user_200(api_client, staff_user):
+    """
+    Verify that provisioning admins can access the customer agreement detail endpoint.
+    """
+    enterprise_customer_uuid = uuid4()
+    _, _, customer_agreement = _create_subscription_plans(enterprise_customer_uuid)
+
+    _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, assign_via_jwt=True)
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
+    staff_user.groups.add(allowed_group)
+
+    response = _customer_agreement_detail_request(
+        api_client,
+        staff_user,
+        customer_agreement.uuid,
+        viewname='provisioning-admins-customer-agreement-detail',
+        )
+    assert status.HTTP_200_OK == response.status_code
 
 @pytest.mark.django_db
 def test_customer_agreement_detail_staff_user_403(api_client, staff_user):
@@ -580,12 +600,17 @@ def test_customer_agreement_list_superuser_200(api_client, superuser):
 
 
 @pytest.mark.django_db
-def test_customer_agreement_create_superuser_201(api_client, superuser):
+def test_customer_agreement_create_provisioning_admin_201(api_client, staff_user):
     """
-    Verify that superusers can create a new customer agreement.
+    Verify that provisioning admins can create a new customer agreement.
     """
     enterprise_customer_uuid = uuid4()
-    response = _customer_agreement_create_request(api_client, superuser, enterprise_customer_uuid)
+
+    _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, assign_via_jwt=True)
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
+    staff_user.groups.add(allowed_group)
+
+    response = _customer_agreement_create_request(api_client, staff_user, enterprise_customer_uuid)
     customer_agreement = CustomerAgreementFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
 
     assert status.HTTP_201_CREATED == response.status_code
@@ -594,13 +619,18 @@ def test_customer_agreement_create_superuser_201(api_client, superuser):
 
 
 @pytest.mark.django_db
-def test_customer_agreement_partial_update_superuser_200(api_client, superuser):
+def test_customer_agreement_partial_update_provisioning_admin_200(api_client, staff_user):
     """
-    Verify that superusers can partially update a customer agreement.
+    Verify that provisioning admins can partially update a customer agreement.
     """
     enterprise_customer_uuid = uuid4()
+
+    _assign_role_via_jwt_or_db(api_client, staff_user, enterprise_customer_uuid, assign_via_jwt=True)
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
+    staff_user.groups.add(allowed_group)
+
     customer_agreement = CustomerAgreementFactory.create(enterprise_customer_uuid=enterprise_customer_uuid)
-    response = _customer_agreement_partial_update_request(api_client, superuser, customer_agreement.uuid)
+    response = _customer_agreement_partial_update_request(api_client, staff_user, customer_agreement.uuid)
 
     assert status.HTTP_200_OK == response.status_code
     _assert_customer_agreement_response_correct(response.data, customer_agreement)
