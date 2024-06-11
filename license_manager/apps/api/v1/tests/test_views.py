@@ -254,6 +254,16 @@ def _provision_license_create_request(api_client, user, params):
     url = '/api/v1/provisioning-admins/subscriptions'
     return api_client.post(url, params)
 
+def _provision_license_list_request(api_client, user):
+    """
+    Helper method that creates a SubscriptionPlan.
+    """
+    if user:
+        api_client.force_authenticate(user=user)
+
+    url = '/api/v1/provisioning-admins/subscriptions'
+    return api_client.get(url)
+
 
 def _subscription_get_request(api_client, user, subscription_uuid):
     """
@@ -906,6 +916,58 @@ def test_subscription_plan_create_staff_user_403(api_client, staff_user, boolean
     response = _provision_license_create_request(
         api_client, staff_user, params=params)
     assert status.HTTP_403_FORBIDDEN == response.status_code
+
+
+@pytest.mark.django_db
+def test_subscription_plan_list_staff_user_403(api_client, staff_user, boolean_toggle):
+    """
+    Verify that the subcription POST endpoint is accessible to authorised users only
+    """
+    enterprise_customer_uuid = uuid4()
+    ProductFactory.create_batch(1)
+    _assign_role_via_jwt_or_db(
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+
+    response = _provision_license_list_request(
+        api_client, staff_user)
+    assert status.HTTP_403_FORBIDDEN == response.status_code
+
+
+@pytest.mark.django_db
+def test_subscription_plan_provisioning_admins_list_staff_user_200(api_client, staff_user, boolean_toggle):
+    """
+    Verify that the subcription POST endpoint is accessible to authorised users only
+    """
+    enterprise_customer_uuid = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(
+        enterprise_customer_uuid=enterprise_customer_uuid)
+    ProductFactory.create_batch(1)
+    allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
+    staff_user.groups.add(allowed_group)
+    _assign_role_via_jwt_or_db(
+        api_client, staff_user, enterprise_customer_uuid=enterprise_customer_uuid, assign_via_jwt=boolean_toggle)
+
+    params = _prepare_subscription_plan_payload(customer_agreement)
+
+    _provision_license_create_request(
+        api_client, staff_user, params=params)
+
+    response = _provision_license_list_request(
+        api_client, staff_user)
+
+    expected_keys = {'count', 'next', 'previous', 'results'}
+    assert expected_keys.issubset(response.json().keys())
+    expected_result_keys = {
+        'title', 'uuid', 'start_date', 'expiration_date',
+        'enterprise_customer_uuid', 'enterprise_catalog_uuid',
+        'is_active', 'is_revocation_cap_enabled', 'days_until_expiration',
+        'days_until_expiration_including_renewals',
+        'is_locked_for_renewal_processing', 'should_auto_apply_licenses',
+        'licenses', 'revocations', 'prior_renewals'
+    }
+    for result in response.json()['results']:
+        assert expected_result_keys.issubset(result.keys())
+    assert status.HTTP_200_OK == response.status_code
 
 
 @pytest.mark.django_db

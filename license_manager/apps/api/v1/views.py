@@ -426,6 +426,7 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
 
 class SubscriptionPlanProvisioningAdminViewset(
     mixins.CreateModelMixin,
+    mixins.ListModelMixin,
     viewsets.GenericViewSet
 ):
     """ Viewset for Provisioning Admins write operations."""
