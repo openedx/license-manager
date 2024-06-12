@@ -443,6 +443,13 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
         return queryset.order_by('-start_date')
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary='List all SubscriptionPlans',
+        description='List all SubscriptionPlans or for a given enterprise_customer_uuid',
+        parameters=[serializers.SubscriptionPlanQueryParamsSerializer],
+    ),
+)
 class SubscriptionPlanProvisioningAdminViewset(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
@@ -463,13 +470,21 @@ class SubscriptionPlanProvisioningAdminViewset(
             return serializers.SubscriptionPlanSerializer
 
     def get_queryset(self):
-        return SubscriptionPlan.objects.filter(
-            is_active=True
-        ).order_by('-start_date')
+        """
+        Appends enterprise_customer_uuid in queryset if found in query params
+        """
+        model_filters = {'is_active': True}
+        if self.requested_enterprise_uuid:
+            model_filters['customer_agreement__enterprise_customer_uuid'] = self.requested_enterprise_uuid
+        return SubscriptionPlan.objects.filter(**model_filters).order_by('-start_date')
 
     @property
     def requested_subscription_uuid(self):
         return self.kwargs.get('subscription_uuid')
+
+    @property
+    def requested_enterprise_uuid(self):
+        return utils.get_requested_enterprise_uuid(self.request)
 
     def create(self, request, *args, **kwargs):
         """
