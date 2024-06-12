@@ -72,6 +72,11 @@ router.register(
     basename='customer-agreement',
 )
 router.register(
+    prefix='provisioning-admins/customer-agreement',
+    viewset=views.CustomerAgreementProvisioningAdminViewset,
+    basename='provisioning-admins-customer-agreement',
+)
+router.register(
     prefix='provisioning-admins/subscriptions',
     viewset=views.SubscriptionPlanProvisioningAdminViewset,
     basename='provisioning-admins',
