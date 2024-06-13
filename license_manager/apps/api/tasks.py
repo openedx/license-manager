@@ -86,6 +86,9 @@ class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
     # Use exponential backoff for retrying tasks
     # see https://docs.celeryq.dev/en/stable/userguide/tasks.html#Task.retry_backoff
     # First retry will delay 60 seconds, second will delay 120 seconds, third 240 seconds.
+    # The retry_backoff_max default value is 600 seconds -> 10 minutes
+    # https://docs.celeryq.dev/en/stable/userguide/tasks.html#Task.retry_backoff_max
+    # This will result in the final backoff time reducing from 2⁴ × 60 seconds = 960 seconds to 600 seconds
     retry_backoff = 60
     # Add randomness to backoff delays to prevent all tasks in queue from executing simultaneously.
     # The actual delay value will be a random number in the range (0, retry_backoff)
