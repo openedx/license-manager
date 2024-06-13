@@ -10,6 +10,8 @@ from celery_utils.logged_task import LoggedTask
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.utils import OperationalError
+from mailchimp_transactional.api_client import \
+    ApiClientError as MailChimpClientError
 from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import HTTPError
 from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
@@ -17,38 +19,31 @@ from requests.exceptions import Timeout as RequestsTimeoutError
 
 import license_manager.apps.subscriptions.api as subscriptions_api
 from license_manager.apps.api import utils
+from license_manager.apps.api.email import EmailClient
 from license_manager.apps.api.models import BulkEnrollmentJob
-from license_manager.apps.api_client.braze import BrazeApiClient
 from license_manager.apps.api_client.enterprise import EnterpriseApiClient
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
     ASSIGNMENT_EMAIL_BATCH_SIZE,
     DAYS_BEFORE_INITIAL_UTILIZATION_EMAIL_SENT,
-    ENTERPRISE_BRAZE_ALIAS_LABEL,
     LICENSE_UTILIZATION_THRESHOLDS,
     NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD,
+    NOTIFY_EMAIL_ACTION_TYPE,
     PENDING_ACCOUNT_CREATION_BATCH_SIZE,
+    REMIND_EMAIL_ACTION_TYPE,
     REMINDER_EMAIL_BATCH_SIZE,
     REVOCABLE_LICENSE_STATUSES,
     TRACK_LICENSE_CHANGES_BATCH_SIZE,
     NotificationChoices,
 )
-from license_manager.apps.subscriptions.event_utils import (
-    get_license_tracking_properties,
-    track_license_changes,
-)
+from license_manager.apps.subscriptions.event_utils import track_license_changes
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
     Notification,
     SubscriptionPlan,
 )
-from license_manager.apps.subscriptions.utils import (
-    chunks,
-    get_admin_portal_url,
-    get_enterprise_sender_alias,
-    localized_utcnow,
-)
+from license_manager.apps.subscriptions.utils import chunks, localized_utcnow
 
 
 logger = logging.getLogger(__name__)
@@ -58,10 +53,6 @@ SOFT_TIME_LIMIT = 900
 MAX_TIME_LIMIT = 960
 
 LICENSE_DEBUG_PREFIX = '[LICENSE DEBUGGING]'
-
-# Magic strings for logging in notify/remind email tasks
-NOTIFY_EMAIL_ACTION_TYPE = 'notify'
-REMIND_EMAIL_ACTION_TYPE = 'remind'
 
 
 class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
@@ -77,6 +68,7 @@ class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
         IntegrityError,
         OperationalError,
         BrazeClientError,
+        MailChimpClientError,
         HTTPError,
     )
     # The default number of max_retries is 3, but Braze times out a lot so we will use 5 instead.
@@ -90,27 +82,6 @@ class LoggedTaskWithRetry(LoggedTask):  # pylint: disable=abstract-method
     # Add randomness to backoff delays to prevent all tasks in queue from executing simultaneously.
     # The actual delay value will be a random number in the range (0, retry_backoff)
     retry_jitter = True
-
-
-@shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
-def create_braze_aliases_task(user_emails):
-    """
-    Creates a Braze alias for each email using the ENTERPRISE_BRAZE_ALIAS_LABEL.
-    A Braze alias must be created when sending emails to anonymous users.
-
-    Arguments:
-        user_emails (list of str): List of emails to create aliases for.
-
-    """
-    try:
-        braze_client_instance = BrazeApiClient()
-        braze_client_instance.create_braze_alias(
-            user_emails,
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
-        )
-    except BrazeClientError as exc:
-        logger.exception(exc)
-        raise exc
 
 
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -136,7 +107,6 @@ def _batch_notify_or_remind_assigned_emails(
     email_recipient_list,
     subscription_uuid,
     allowed_batch_size,
-    campaign_uuid,
     action_type,
 ):
     """
@@ -151,9 +121,8 @@ def _batch_notify_or_remind_assigned_emails(
         recipients are (or will be) associated with.
       allowed_batch_size (int): Maximum number of recipients (really their associated assigned licenses)
         which can be processed in a single call to this method.
-      campaign_uuid (str): The identifier of the Braze email campaign via which users are notified.
       action_type (str): A string used in logging messages to indicate which type of notification
-        is being sent.
+        is being sent and determine template for email.
     """
     subscription_plan = SubscriptionPlan.objects.get(uuid=subscription_uuid)
     pending_licenses = subscription_plan.assigned_licenses.filter(
@@ -167,53 +136,14 @@ def _batch_notify_or_remind_assigned_emails(
     enterprise_customer = enterprise_api_client.get_enterprise_customer_data(
         subscription_plan.enterprise_customer_uuid,
     )
-    enterprise_slug = enterprise_customer.get('slug')
-    enterprise_name = enterprise_customer.get('name')
-    enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
-    enterprise_contact_email = enterprise_customer.get('contact_email')
 
-    pending_license_by_email = {}
-    emails_for_aliasing = []
-    recipients = []
-
-    for pending_license in pending_licenses:
-        user_email = pending_license.user_email
-        emails_for_aliasing.append(user_email)
-        pending_license_by_email[user_email] = pending_license
-        license_activation_key = str(pending_license.activation_key)
-        trigger_properties = {
-            'TEMPLATE_GREETING': custom_template_text['greeting'],
-            'TEMPLATE_CLOSING': custom_template_text['closing'],
-            'license_activation_key': license_activation_key,
-            'enterprise_customer_slug': enterprise_slug,
-            'enterprise_customer_name': enterprise_name,
-            'enterprise_sender_alias': enterprise_sender_alias,
-            'enterprise_contact_email': enterprise_contact_email,
-        }
-        recipient = _aliased_recipient_object_from_email(user_email)
-        recipient['attributes'].update(get_license_tracking_properties(pending_license))
-        recipient['trigger_properties'] = trigger_properties
-        recipients.append(recipient)
-
-    # Batch at the Braze API layer
-    try:
-        braze_client_instance = BrazeApiClient()
-        braze_client_instance.create_braze_alias(
-            emails_for_aliasing,
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
-        )
-        braze_client_instance.send_campaign_message(campaign_uuid, recipients=recipients)
-        logger.info(
-            f'{LICENSE_DEBUG_PREFIX} Sent license {action_type} emails '
-            f'braze campaign {campaign_uuid} to {email_recipient_list}'
-        )
-    except BrazeClientError as exc:
-        message = (
-            'Error hitting Braze API. '
-            f'{action_type} email to campaign {campaign_uuid} for license failed.'
-        )
-        logger.exception(message)
-        raise exc
+    email_client = EmailClient()
+    pending_license_by_email = email_client.send_assignment_or_reminder_email(
+        pending_licenses,
+        enterprise_customer,
+        custom_template_text,
+        action_type,
+    )
 
     emails_with_no_assignments = [
         _email for _email in email_recipient_list
@@ -242,7 +172,6 @@ def send_assignment_email_task(custom_template_text, email_recipient_list, subsc
         email_recipient_list,
         subscription_uuid,
         ASSIGNMENT_EMAIL_BATCH_SIZE,
-        settings.BRAZE_ASSIGNMENT_EMAIL_CAMPAIGN,
         NOTIFY_EMAIL_ACTION_TYPE,
     )
 
@@ -267,7 +196,6 @@ def send_reminder_email_task(custom_template_text, email_recipient_list, subscri
         email_recipient_list,
         subscription_uuid,
         REMINDER_EMAIL_BATCH_SIZE,
-        settings.BRAZE_REMIND_EMAIL_CAMPAIGN,
         REMIND_EMAIL_ACTION_TYPE,
     )
     License.set_date_fields_to_now(pending_licenses, ['last_remind_date'])
@@ -279,38 +207,7 @@ def send_post_activation_email_task(enterprise_customer_uuid, user_email):
     Asynchronously sends post license activation email to learner.
     """
     enterprise_customer = EnterpriseApiClient().get_enterprise_customer_data(enterprise_customer_uuid)
-    enterprise_name = enterprise_customer.get('name')
-    enterprise_slug = enterprise_customer.get('slug')
-    enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
-    enterprise_contact_email = enterprise_customer.get('contact_email')
-
-    braze_campaign_id = settings.BRAZE_ACTIVATION_EMAIL_CAMPAIGN
-    braze_trigger_properties = {
-        'enterprise_customer_slug': enterprise_slug,
-        'enterprise_customer_name': enterprise_name,
-        'enterprise_sender_alias': enterprise_sender_alias,
-        'enterprise_contact_email': enterprise_contact_email,
-    }
-    recipient = _aliased_recipient_object_from_email(user_email)
-
-    try:
-        braze_client_instance = BrazeApiClient()
-        braze_client_instance.create_braze_alias(
-            [user_email],
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
-        )
-        braze_client_instance.send_campaign_message(
-            braze_campaign_id,
-            recipients=[recipient],
-            trigger_properties=braze_trigger_properties,
-        )
-    except BrazeClientError as exc:
-        message = (
-            'Error hitting Braze API. '
-            f'Onboarding email to {user_email} for license failed.'
-        )
-        logger.exception(message)
-        raise exc
+    EmailClient().send_post_activation_email(enterprise_customer, user_email)
 
 
 @shared_task(base=LoggedTaskWithRetry)
@@ -321,56 +218,15 @@ def send_auto_applied_license_email_task(enterprise_customer_uuid, user_email):
     Uses Braze client to send email via Braze campaign.
     """
     try:
-        # Get some info about the enterprise customer
         enterprise_api_client = EnterpriseApiClient()
         enterprise_customer = enterprise_api_client.get_enterprise_customer_data(enterprise_customer_uuid)
-        enterprise_slug = enterprise_customer.get('slug')
-        enterprise_name = enterprise_customer.get('name')
-        learner_portal_search_enabled = enterprise_customer.get('enable_integrated_customer_learner_portal_search')
-        identity_provider = enterprise_customer.get('identity_provider')
-        enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
-        enterprise_contact_email = enterprise_customer.get('contact_email')
     except Exception:  # pylint: disable=broad-except
         message = (
             f'Error getting data about the enterprise_customer {enterprise_customer_uuid}. '
-            f'Onboarding email to {user_email} for auto applied license failed.'
         )
         logger.error(message, exc_info=True)
         return
-
-    # Determine which email campaign to use
-    if identity_provider and learner_portal_search_enabled is False:
-        braze_campaign_id = settings.AUTOAPPLY_NO_LEARNER_PORTAL_CAMPAIGN
-    else:
-        braze_campaign_id = settings.AUTOAPPLY_WITH_LEARNER_PORTAL_CAMPAIGN
-
-    # Form data we want to hand to the campaign's email template
-    braze_trigger_properties = {
-        'enterprise_customer_slug': enterprise_slug,
-        'enterprise_customer_name': enterprise_name,
-        'enterprise_sender_alias': enterprise_sender_alias,
-        'enterprise_contact_email': enterprise_contact_email,
-    }
-    recipient = _aliased_recipient_object_from_email(user_email)
-
-    try:
-        # Hit the Braze api to send the email
-        braze_client_instance = BrazeApiClient()
-        braze_client_instance.create_braze_alias(
-            [user_email],
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
-        )
-        braze_client_instance.send_campaign_message(
-            braze_campaign_id,
-            recipients=[recipient],
-            trigger_properties=braze_trigger_properties,
-        )
-    except BrazeClientError:
-        message = (
-            'Error hitting Braze API. '
-            f'Onboarding email to {user_email} for auto applied license failed.'
-        )
-        logger.error(message, exc_info=True)
+    EmailClient().send_auto_applied_license_email(enterprise_customer, user_email)
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -471,46 +327,7 @@ def send_revocation_cap_notification_email_task(subscription_uuid):
 
     now = localized_utcnow()
     revocation_date = datetime.strftime(now, "%B %d, %Y, %I:%M%p %Z")
-
-    braze_campaign_id = settings.BRAZE_REVOKE_CAP_EMAIL_CAMPAIGN
-    braze_trigger_properties = {
-        'SUBSCRIPTION_TITLE': subscription_plan.title,
-        'NUM_REVOCATIONS_APPLIED': subscription_plan.num_revocations_applied,
-        'ENTERPRISE_NAME': enterprise_name,
-        'REVOKED_LIMIT_REACHED_DATE': revocation_date,
-    }
-    recipient = _aliased_recipient_object_from_email(settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS)
-
-    try:
-        braze_client_instance = BrazeApiClient()
-        braze_client_instance.create_braze_alias(
-            [settings.CUSTOMER_SUCCESS_EMAIL_ADDRESS],
-            ENTERPRISE_BRAZE_ALIAS_LABEL,
-        )
-        braze_client_instance.send_campaign_message(
-            braze_campaign_id,
-            recipients=[recipient],
-            trigger_properties=braze_trigger_properties,
-        )
-
-    except BrazeClientError as exc:
-        message = 'Revocation cap notification email sending received an exception.'
-        logger.exception(message)
-        raise exc
-
-
-def _aliased_recipient_object_from_email(user_email):
-    """
-    Returns a dictionary with a braze recipient object, including
-    a braze alias object.
-    """
-    return {
-        'attributes': {'email': user_email},
-        'user_alias': {
-            'alias_label': ENTERPRISE_BRAZE_ALIAS_LABEL,
-            'alias_name': user_email,
-        },
-    }
+    EmailClient().send_revocation_cap_notification_email(subscription_plan, enterprise_name, revocation_date)
 
 
 @shared_task(base=LoggedTaskWithRetry)
@@ -542,66 +359,22 @@ def revoke_all_licenses_task(subscription_uuid):
         execute_post_revocation_tasks(**result)
 
 
-def _send_bulk_enrollment_results_email(
-    bulk_enrollment_job,
-    campaign_id,
-):
+def _send_bulk_enrollment_results_email(bulk_enrollment_job):
     """
     Sends email with properties required to detail the results of a bulk enrollment job.
 
     Arguments:
         bulk_enrollment_job (BulkEnrollmentJob): the completed bulk enrollment job
-        campaign_id: (str): The Braze campaign identifier
 
     """
-    try:
-        enterprise_api_client = EnterpriseApiClient()
-        enterprise_customer = enterprise_api_client.get_enterprise_customer_data(
-            bulk_enrollment_job.enterprise_customer_uuid,
-        )
-
-        admin_users = enterprise_api_client.get_enterprise_admin_users(
-            bulk_enrollment_job.enterprise_customer_uuid,
-        )
-
-        # https://web.archive.org/web/20211122135949/https://www.braze.com/docs/api/objects_filters/recipient_object/
-        recipients = []
-        for user in admin_users:
-            if int(user['id']) != bulk_enrollment_job.lms_user_id:
-                continue
-            # must use a mix of send_to_existing_only: false + enternal_id w/ attributes to send to new braze profiles
-            recipient = {
-                'send_to_existing_only': False,
-                'external_user_id': str(user['id']),
-                'attributes': {
-                    'email': user['email'],
-                }
-            }
-            recipients.append(recipient)
-            break
-
-        braze_client = BrazeApiClient()
-        braze_client.send_campaign_message(
-            campaign_id,
-            recipients=recipients,
-            trigger_properties={
-                'enterprise_customer_slug': enterprise_customer.get('slug'),
-                'enterprise_customer_name': enterprise_customer.get('name'),
-                'bulk_enrollment_job_uuid': str(bulk_enrollment_job.uuid),
-            }
-        )
-        msg = (
-            f'success _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
-            f'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
-        )
-        logger.info(msg)
-    except Exception as ex:
-        msg = (
-            f'failed _send_bulk_enrollment_results_email for bulk_enrollment_job_uuid={bulk_enrollment_job.uuid} '
-            f'braze_campaign_id={campaign_id} lms_user_id={bulk_enrollment_job.lms_user_id}'
-        )
-        logger.error(msg, exc_info=True)
-        raise ex
+    enterprise_api_client = EnterpriseApiClient()
+    enterprise_customer = enterprise_api_client.get_enterprise_customer_data(
+        bulk_enrollment_job.enterprise_customer_uuid,
+    )
+    admin_users = enterprise_api_client.get_enterprise_admin_users(
+        bulk_enrollment_job.enterprise_customer_uuid,
+    )
+    EmailClient().send_bulk_enrollment_results_email(enterprise_customer, bulk_enrollment_job, admin_users)
 
 
 @shared_task(base=LoggedTask, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -712,10 +485,7 @@ def enterprise_enrollment_license_subsidy_task(
                 bulk_enrollment_job.upload_results(result_file.name)
 
             if hasattr(settings, "BULK_ENROLL_RESULT_CAMPAIGN") and settings.BULK_ENROLL_RESULT_CAMPAIGN:
-                _send_bulk_enrollment_results_email(
-                    bulk_enrollment_job=bulk_enrollment_job,
-                    campaign_id=settings.BULK_ENROLL_RESULT_CAMPAIGN,
-                )
+                _send_bulk_enrollment_results_email(bulk_enrollment_job=bulk_enrollment_job)
 
         return results
     except Exception as ex:
@@ -739,71 +509,6 @@ def _get_admin_users_for_enterprise(enterprise_customer_uuid):
         }
         for admin_user in admin_users
     ]
-
-
-def _send_license_utilization_email(
-    subscription,
-    campaign_id,
-    users
-):
-    """
-    Sends email with properties required to detail license utilization.
-
-    Arguments:
-        subscription_details (dict): Dictionary containing subscription details in the format of
-            {
-                'uuid': uuid,
-                'title': str,
-                'enterprise_customer_uuid': str,
-                'enterprise_customer_name': str,
-                'num_allocated_licenses': str,
-                'num_licenses': num,
-                'highest_utilization_threshold_reached': num
-            }
-        campaign_id: (str): The Braze campaign identifier
-        users (list of dict): List of users to send the emails to in the format of
-            {
-                'lms_user_id': str,
-                'ecu_id': str,
-                'email': str,
-            }
-
-    """
-
-    if not users:
-        return
-
-    subscription_uuid = subscription.uuid
-    try:
-        braze_client = BrazeApiClient()
-        trigger_properties = {
-            'subscription_plan_title': subscription.title,
-            'subscription_plan_expiration_date': datetime.strftime(subscription.expiration_date, "%b %-d, %Y"),
-            'enterprise_customer_name': subscription.customer_agreement.enterprise_customer_name,
-            'num_allocated_licenses': subscription.num_allocated_licenses,
-            'num_licenses': subscription.num_licenses,
-            'admin_portal_url': get_admin_portal_url(subscription.customer_agreement.enterprise_customer_slug),
-            'num_auto_applied_licenses_since_turned_on': subscription.auto_applied_licenses_count_since()
-        }
-        recipients = [
-            {
-                'external_user_id': user['lms_user_id'],
-                'trigger_properties': {
-                    'email': user['email']
-                }
-            } for user in users
-        ]
-        braze_client.send_campaign_message(
-            campaign_id,
-            recipients=recipients,
-            trigger_properties=trigger_properties
-        )
-        msg = f'Sent {campaign_id} email for subscription {subscription_uuid} to {len(recipients)} admins.'
-        logger.info(msg)
-    except Exception as ex:
-        msg = f'Failed to send {campaign_id} email for subscription {subscription_uuid}.'
-        logger.exception(msg)
-        raise ex
 
 
 @shared_task(base=LoggedTaskWithRetry, soft_time_limit=SOFT_TIME_LIMIT, time_limit=MAX_TIME_LIMIT)
@@ -847,10 +552,12 @@ def send_initial_utilization_email_task(subscription_uuid):
             notification.save()
 
         # will raise exception and roll back changes if error occurs
-        _send_license_utilization_email(
+        EmailClient().send_license_utilization_email(
             subscription=subscription,
+            users=admin_users,
             campaign_id=settings.INITIAL_LICENSE_UTILIZATION_CAMPAIGN,
-            users=admin_users
+            template_name=settings.MAILCHIMP_INITIAL_LICENSE_UTILIZATION_TEMPLATE,
+            subject=settings.MAILCHIMP_INITIAL_LICENSE_UTILIZATION_SUBJECT,
         )
 
 
@@ -868,7 +575,7 @@ def send_utilization_threshold_reached_email_task(subscription_uuid):
     highest_utilization_threshold_reached = subscription.highest_utilization_threshold_reached
     if highest_utilization_threshold_reached is not None:
 
-        notification_type, campaign = NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD[
+        notification_type, campaign, template, subject = NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD[
             highest_utilization_threshold_reached
         ]
 
@@ -908,10 +615,12 @@ def send_utilization_threshold_reached_email_task(subscription_uuid):
                 )
 
             # will raise exception and roll back changes if error occurs
-            _send_license_utilization_email(
+            EmailClient().send_license_utilization_email(
                 subscription=subscription,
+                users=admin_users,
                 campaign_id=getattr(settings, campaign),
-                users=admin_users
+                template_name=getattr(settings, template),
+                subject=getattr(settings, subject),
             )
 
 
