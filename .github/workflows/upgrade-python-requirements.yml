@@ -2,8 +2,7 @@ name: Upgrade Python Requirements
 
 on:
   schedule:
-    # Run twice a month
-    - cron: "0 0 1,15 * *"
+    - cron: "0 2 * * 1"
   workflow_dispatch:
     inputs:
       branch:
