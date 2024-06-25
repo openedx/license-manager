@@ -1,4 +1,3 @@
-version: "2.1"
 services:
   mysql:
     image: mysql:8.0.28-oracle
@@ -44,7 +43,7 @@ services:
       ENABLE_DJANGO_TOOLBAR: 1
 
   memcached:
-    image: memcached:1.4.24
+    image: memcached:1.6.6
     container_name: license-manager.memcache
 
   worker:
