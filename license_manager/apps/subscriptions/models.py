@@ -1682,6 +1682,34 @@ class SubscriptionsRoleAssignment(UserRoleAssignment):
         return self.__str__()
 
 
+class LicenseEvent(TimeStampedModel):
+    """
+    Track events triggered for a license.
+
+    .. no_pii:
+    """
+    license = models.ForeignKey(
+        License,
+        related_name='events',
+        on_delete=models.DO_NOTHING,
+        null=False,
+        blank=False,
+    )
+
+    event_name = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+    )
+
+    class Meta:
+        verbose_name = _("License Triggered Event")
+        verbose_name_plural = _("License Triggered Events")
+
+    def __str__(self):
+        return f'{self.license.uuid}'
+
+
 @receiver(post_delete, sender=License)
 def dispatch_license_delete_event(sender, **kwargs):  # pylint: disable=unused-argument
     license_obj = kwargs['instance']
