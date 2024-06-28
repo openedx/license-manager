@@ -65,6 +65,7 @@ class SegmentEvents:
     LICENSE_RENEWED = 'edx.server.license-manager.license-lifecycle.renewed'
     LICENSE_REVOKED = 'edx.server.license-manager.license-lifecycle.revoked'
     LICENSE_NOT_ASSIGNED = 'edx.server.license-manager.license-lifecycle.not-assigned'
+    LICENSE_ACTIVATED_180_DAYS_AGO = 'edx.server.license-manager.license.activated.180.days.ago'
 
 
 # Template names used for emails

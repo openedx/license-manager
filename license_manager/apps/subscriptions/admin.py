@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib import admin, messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -27,6 +28,7 @@ from license_manager.apps.subscriptions.forms import (
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
     License,
+    LicenseEvent,
     LicenseTransferJob,
     Notification,
     PlanType,
@@ -784,3 +786,48 @@ class LicenseTransferJobAdmin(admin.ModelAdmin):
     def process_transfer_jobs(self, request, queryset):
         for transfer_job in queryset:
             transfer_job.process()
+
+
+@admin.register(LicenseEvent)
+class LicenseEventAdmin(admin.ModelAdmin):
+    list_display = (
+        'event_name',
+        'enterprise',
+        'email',
+        'lms_user_id',
+        'plan_uuid',
+    )
+
+    search_fields = (
+        'event_name',
+        'license__user_email',
+        'license__lms_user_id',
+        'license__subscription_plan__title',
+        'license__subscription_plan__customer_agreement__enterprise_customer_uuid__startswith',
+        'license__subscription_plan__customer_agreement__enterprise_customer_slug__startswith'
+    )
+
+    @admin.display(description='Enterprise')
+    def enterprise(self, instance):
+        """Return license enterprise"""
+        try:
+            plan = SubscriptionPlan.objects.get(uuid=instance.license.subscription_plan_id)
+            agreement = plan.customer_agreement
+            return agreement.enterprise_customer_uuid
+        except ObjectDoesNotExist:
+            return ''
+
+    @admin.display(description='email')
+    def email(self, instance):
+        """Return license email"""
+        return instance.license.user_email
+
+    @admin.display(description='LMS User Id')
+    def lms_user_id(self, instance):
+        """Return license lms_user_id"""
+        return instance.license.lms_user_id
+
+    @admin.display(description='Plan UUID')
+    def plan_uuid(self, instance):
+        """Return license plan uuid"""
+        return instance.license.subscription_plan.uuid
