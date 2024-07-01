@@ -55,12 +55,12 @@ billiard==4.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.34.131
+boto3==1.34.136
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.34.131
+botocore==1.34.136
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -325,7 +325,7 @@ exceptiongroup==1.2.1
     #   pytest
 factory-boy==3.3.0
     # via -r requirements/test.txt
-faker==25.9.1
+faker==26.0.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -485,7 +485,7 @@ pyjwt[crypto]==2.8.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.2.3
+pylint==3.2.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -509,7 +509,7 @@ pylint-plugin-utils==0.8.2
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.7.3
+pymongo==4.8.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -559,7 +559,7 @@ pyyaml==6.0.1
     #   code-annotations
     #   drf-spectacular
     #   edx-i18n-tools
-redis==5.0.6
+redis==5.0.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -594,7 +594,7 @@ rules==3.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-s3transfer==0.10.1
+s3transfer==0.10.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
