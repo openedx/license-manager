@@ -108,11 +108,11 @@ class Command(BaseCommand):
             )
             return
 
-        triggered_event_records = []
         paginator = Paginator(activated_licenses, 100)
         for page_number in paginator.page_range:
             licenses = paginator.page(page_number)
 
+            triggered_event_records = []
             user_ids = []
             for license in licenses:
                 user_id = license.get('lms_user_id')
