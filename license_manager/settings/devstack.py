@@ -3,6 +3,8 @@ from license_manager.settings.local import *
 # Generic OAuth2 variables irrespective of SSO/backend service key types.
 OAUTH2_PROVIDER_URL = 'http://edx.devstack.lms:18000/oauth2'
 ALLOWED_HOSTS = ['*']
+# API GATEWAY Settings
+API_GATEWAY_URL = 'api.gateway.url'
 
 DATABASES = {
     'default': {
