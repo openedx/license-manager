@@ -14,7 +14,6 @@ from edx_django_utils.cache.utils import (
     TieredCache,
     get_cache_key,
 )
-from edx_django_utils.monitoring import set_custom_attribute
 from edx_rbac.utils import get_decoded_jwt
 from rest_framework.exceptions import ParseError, status
 
@@ -347,11 +346,3 @@ def make_swagger_var_param_optional(result, generator=None, request=None, public
                     if param.get("name") == "var":
                         param["allowEmptyValue"] = True
     return result
-
-
-def set_datadog_tags(tags_dict):
-    """
-    Iterates key-value pairs and add send tags to Data Dog.
-    """
-    for key, value in tags_dict.items():
-        set_custom_attribute(key, value)

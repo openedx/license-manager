@@ -2321,35 +2321,6 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
 
     @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
     @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
-    @mock.patch('license_manager.apps.api.utils.set_datadog_tags')
-    @ddt.data(True, False)
-    def test_assign_set_custom_tags(
-            self,
-            use_superuser,
-            mock_set_tags_util,
-            mock_send_assignment_email_task, # pylint: disable=unused-argument
-            mock_link_learners_task # pylint: disable=unused-argument
-    ):
-        """
-        Verify the assign endpoint sets tags 'enterprise_customer_uuid' and 'external_request' on the request.
-        """
-        self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
-        self._create_available_licenses()
-        user_emails = ['bb8@mit.edu', self.test_email]
-        response = self.api_client.post(
-            self.assign_url,
-            {'greeting': self.greeting, 'closing': self.closing, 'user_emails': user_emails},
-        )
-        tags_dict = {
-            'enterprise_customer_uuid': self.subscription_plan.customer_agreement.enterprise_customer_uuid,
-            'external_request': False
-        }
-        # Verify that set_tags util was called with right arguments
-        mock_set_tags_util.assert_called_with(tags_dict)
-        assert response.status_code == status.HTTP_200_OK
-
-    @mock.patch('license_manager.apps.api.v1.views.link_learners_to_enterprise_task.si')
-    @mock.patch('license_manager.apps.api.v1.views.send_assignment_email_task.si')
     @ddt.data(True, False)
     def test_assign_with_salesforce_ids(self, use_superuser, *arge, **kwargs):  # pylint: disable=unused-argument
         """
@@ -2683,35 +2654,6 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
             ),
         ])
 
-    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
-    @mock.patch('license_manager.apps.api.utils.set_datadog_tags')
-    @ddt.data(True, False)
-    def test_remind_set_custom_tags(self, use_superuser, mock_set_tags_util, mock_send_reminder_emails_task): # pylint: disable=unused-argument
-        """
-        Verify the remind endpoint sets tags 'enterprise_customer_uuid' and 'external_request' on the request.
-        """
-        self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
-        pending_license = LicenseFactory.create(user_email=self.test_email, status=constants.ASSIGNED)
-        pending_license_b = LicenseFactory.create(user_email='other@example.com', status=constants.ASSIGNED)
-        self.subscription_plan.licenses.set([pending_license, pending_license_b])
-
-        with mock.patch('license_manager.apps.subscriptions.constants.REMINDER_EMAIL_BATCH_SIZE', new=1):
-            response = self.api_client.post(
-                self.remind_url,
-                {
-                    'user_emails': [self.test_email, 'other@example.com'],
-                    'greeting': self.greeting,
-                    'closing': self.closing,
-                },
-            )
-        tags_dict = {
-            'enterprise_customer_uuid': self.subscription_plan.customer_agreement.enterprise_customer_uuid,
-            'external_request': False
-        }
-        # Verify that set_tags util was called with right arguments
-        mock_set_tags_util.assert_called_with(tags_dict)
-        assert response.status_code == status.HTTP_204_NO_CONTENT
-
     @ddt.data(
         ([{'name': 'user_email', 'filter_value': 'al'}], ['alice@example.com']),
         ([{'name': 'status_in', 'filter_value': [constants.ACTIVATED]}], []),
@@ -2964,46 +2906,6 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
             mock.call(**revoke_alice_license_result),
             mock.call(**revoke_bob_license_result),
         ])
-
-    @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
-    @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    @mock.patch('license_manager.apps.api.utils.set_datadog_tags')
-    def test_bulk_revoke_set_custom_tags(
-        self,
-        mock_set_tags_util,
-        mock_revoke_license,
-        mock_execute_post_revocation_tasks # pylint: disable=unused-argument
-    ):
-        """
-        Verify the bulk-revoke endpoint sets tags 'enterprise_customer_uuid' and 'external_request' on the request.
-        """
-        self._setup_request_jwt(user=self.user)
-        alice_license = LicenseFactory.create(user_email='alice@example.com', status=constants.ACTIVATED)
-        alice_assigned_license = LicenseFactory.create(user_email='alice@example.com', status=constants.ASSIGNED)
-        bob_license = LicenseFactory.create(user_email='bob@example.com', status=constants.ACTIVATED)
-        self.subscription_plan.licenses.set([alice_license, bob_license, alice_assigned_license])
-
-        request_payload = {
-            'user_emails': [
-                'alice@example.com',
-                'bob@example.com',
-            ],
-        }
-
-        revoke_alice_license_result = {
-            'revoked_license': alice_assigned_license, 'original_status': alice_assigned_license.status,
-        }
-        revoke_bob_license_result = {'revoked_license': bob_license, 'original_status': bob_license.status}
-        mock_revoke_license.side_effect = [revoke_alice_license_result, revoke_bob_license_result]
-
-        response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
-        tags_dict = {
-            'enterprise_customer_uuid': self.subscription_plan.customer_agreement.enterprise_customer_uuid,
-            'external_request': False
-        }
-        # Verify that set_tags util was called with right arguments
-        mock_set_tags_util.assert_called_with(tags_dict)
-        assert response.status_code == status.HTTP_204_NO_CONTENT
 
     @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
