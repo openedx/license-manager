@@ -3,8 +3,6 @@ import os
 from license_manager.settings.base import *
 import tempfile
 
-# API GATEWAY Settings
-API_GATEWAY_URL = 'api.gateway.url'
 
 # IN-MEMORY TEST DATABASE
 DATABASES = {

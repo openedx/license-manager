@@ -1021,13 +1021,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             ]
           }
         """
-        # to capture custom metrics
-        custom_tags = {
-            'enterprise_customer_uuid': self.get_permission_object(),
-            'external_request': settings.API_GATEWAY_URL in request.path
-        }
-        utils.set_datadog_tags(custom_tags)
-
         subscription_plan = self._get_subscription_plan()
         try:
             lock_acquired = utils.acquire_subscription_plan_lock(
@@ -1136,13 +1129,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         This endpoint reminds users by sending an email to the given email
         addresses if there is a an associated license which has not yet been activated.
         """
-        # to capture custom metrics
-        custom_tags = {
-            'enterprise_customer_uuid': self.get_permission_object(),
-            'external_request': settings.API_GATEWAY_URL in request.path
-        }
-        utils.set_datadog_tags(custom_tags)
-
         # Validate the user_email and text sent in the data
         self._validate_data(request.data)
         subscription_plan = self._get_subscription_plan()
@@ -1320,12 +1306,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         The revocation of licenses is atomic: if an error occurs while processing any of the license revocations,
         no status change is committed for any of the licenses.
         """
-        # to capture custom metrics
-        custom_tags = {
-            'enterprise_customer_uuid': self.get_permission_object(),
-            'external_request': settings.API_GATEWAY_URL in request.path
-        }
-        utils.set_datadog_tags(custom_tags)
 
         self._validate_data(request.data)
 
