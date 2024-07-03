@@ -5,7 +5,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.paginator import Paginator
-from django.db.models import Exists, Min, OuterRef
+from django.db.models import Exists, OuterRef
 
 from license_manager.apps.subscriptions.constants import (
     ACTIVATED,
@@ -39,26 +39,6 @@ class Command(BaseCommand):
             default=False,
             help='Dry Run, print log messages without firing the segment event.',
         )
-
-    def remove_duplicates(self):
-        """
-        Remove duplicate records.
-        """
-        logger.info('Removing Duplicates.')
-
-        excluded_ids = list(LicenseEvent.objects.values(
-            'license_id'
-        ).annotate(
-            min_id=Min('id')
-        ).values_list(
-            'min_id',
-            flat=True
-        ))
-        logger.info('Going to remove all records except records with ids: %s', excluded_ids)
-
-        LicenseEvent.objects.exclude(id__in=excluded_ids).delete()
-
-        logger.info('Duplicates Removal Completed.')
 
     def activated_licenses(self, enterprise_customer_uuid):
         """
@@ -106,8 +86,6 @@ class Command(BaseCommand):
             log_prefix = '[DRY RUN]'
 
         logger.info('%s Command started.', log_prefix)
-
-        self.remove_duplicates()
 
         enterprise_customer_uuids = settings.CUSTOMERS_WITH_CUSTOM_LICENSE_EVENTS
         for enterprise_customer_uuid in enterprise_customer_uuids:
