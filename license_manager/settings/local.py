@@ -49,6 +49,9 @@ INTERNAL_IPS = ('127.0.0.1',)
 # Use a non-SSL URL for authorization redirects
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
 
+# API GATEWAY Settings
+API_GATEWAY_URL = 'api.gateway.url'
+
 # Generic OAuth2 variables irrespective of SSO/backend service key types.
 OAUTH2_PROVIDER_URL = 'http://localhost:18000/oauth2'
 
