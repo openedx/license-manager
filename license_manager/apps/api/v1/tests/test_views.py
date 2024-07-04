@@ -4,6 +4,7 @@ Tests for the Subscription and License V1 API view sets.
 """
 import datetime
 import random
+import string
 from math import ceil, sqrt
 from unittest import mock
 from uuid import uuid4
@@ -66,6 +67,18 @@ from license_manager.apps.subscriptions.tests.utils import (
     assert_pii_cleared,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
+import os
+import django
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'license_manager.settings.test'
+django.setup()
+
+
+def generate_random_email():
+    name = ''.join(random.choices(string.ascii_lowercase + string.digits, k=10))
+    domain = ''.join(random.choices(string.ascii_lowercase, k=5))
+
+    return f"{name}@{domain}.com"
 
 
 def _jwt_payload_from_role_context_pairs(user, role_context_pairs):
@@ -3979,6 +3992,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         self._assign_learner_roles()
         mock_get_decoded_jwt.return_value = self._decoded_jwt
         data = {
+            'emails': [self.user.email],
             'course_run_keys': [self.course_key],
             'notify': True,
         }
@@ -4012,6 +4026,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         self._assign_learner_roles()
         mock_get_decoded_jwt.return_value = self._decoded_jwt
         data = {
+            'emails': [self.user.email],
             'course_run_keys': [self.course_key],
             'notify': True,
         }
@@ -4054,6 +4069,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         self._assign_learner_roles()
         mock_get_decoded_jwt.return_value = self._decoded_jwt
         data = {
+            'emails': [self.user.email],
             'course_run_keys': [self.course_key],
             'notify': True,
         }
@@ -4085,8 +4101,8 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         url = self._get_url_with_params(enroll_all=True)
         response = self.api_client.post(url, data)
         assert response.status_code == 400
-
-        assert response.json() == "Missing the following required request data: ['subscription_id']"
+        expected_json = {'subscription_id': ['This field is required when enroll_all is True.']}
+        assert response.json() == expected_json
 
     def test_bulk_licensed_enrollment_with_missing_emails(self):
         """
@@ -4102,7 +4118,8 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         url = self._get_url_with_params()
         response = self.api_client.post(url, empty_email_data)
         assert response.status_code == 400
-        assert response.json() == "Missing the following required request data: ['emails']"
+        expected_json = {'emails': ['This list may not be empty.']}
+        assert response.json() == expected_json
 
     def test_bulk_enroll_too_many_enrollments(self):
         # Unnecessary math time!
@@ -4111,7 +4128,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         self._assign_multi_learner_roles()
 
         payload = {
-            'emails': random.sample(range(1, 100), enrollment_split),
+            'emails': [generate_random_email() for _ in range(enrollment_split)],
             'course_run_keys': random.sample(range(1, 100), enrollment_split),
             'notify': True,
         }

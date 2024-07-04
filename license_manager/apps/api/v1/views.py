@@ -1518,29 +1518,24 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
         """
         Helper function to validate both the existence of required params and their typing.
         """
-        self.validation_errors = []
-        self.missing_params = []
-        if self.requested_notify_learners is None:
-            self.missing_params.append('notify')
+        query_params_serializer = serializers.EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer(
+            data=self.request.query_params
+        )
+        request_body_serializer = serializers.EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer(
+            data=self.request.data
+        )
 
-        # Gather all missing and incorrect typing validation errors
-        if not self.requested_course_run_keys:
-            self.missing_params.append('course_run_keys')
+        # Validate the query parameters
+        if not query_params_serializer.is_valid():
+            raise ValidationError(query_params_serializer.errors)
+
+        # Validate the request body
+        if not request_body_serializer.is_valid():
+            raise ValidationError(request_body_serializer.errors)
+
         if not self.requested_enroll_all:
             if not self.requested_user_emails:
-                self.missing_params.append('emails')
-        if self.requested_enroll_all and not self.requested_subscription_id:
-            self.missing_params.append('subscription_id')
-        if not self.requested_enterprise_id:
-            self.missing_params.append('enterprise_customer_uuid')
-
-        # Report param type errors
-        if self.validation_errors:
-            return 'Received invalid types for the following required params: {}'.format(self.validation_errors)
-
-        # Report required params type errors
-        if self.missing_params:
-            return 'Missing the following required request data: {}'.format(self.missing_params)
+                return 'Missing the following required request data: {}'.format(['emails'])
 
         return ''
 
