@@ -721,6 +721,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer(serializers.Se
             raise serializers.ValidationError({'subscription_id': 'This field is required when enroll_all is True.'})
         return attrs
 
+
 class EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer(serializers.Serializer):  # pylint: disable=abstract-method
     """
     Serializer for the enterprise enrollment with license subsidy request
