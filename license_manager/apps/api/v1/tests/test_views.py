@@ -71,10 +71,6 @@ from license_manager.apps.subscriptions.tests.utils import (
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'license_manager.settings.test'
-django.setup()
-
-
 def generate_random_email():
     name = ''.join(random.choices(string.ascii_lowercase + string.digits, k=10))
     domain = ''.join(random.choices(string.ascii_lowercase, k=5))
