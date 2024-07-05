@@ -3,7 +3,6 @@
 Tests for the Subscription and License V1 API view sets.
 """
 import datetime
-import os
 import random
 import string
 from math import ceil, sqrt
@@ -11,7 +10,6 @@ from unittest import mock
 from uuid import uuid4
 
 import ddt
-import django
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
