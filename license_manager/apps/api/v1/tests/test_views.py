@@ -3,6 +3,7 @@
 Tests for the Subscription and License V1 API view sets.
 """
 import datetime
+import os
 import random
 import string
 from math import ceil, sqrt
@@ -10,6 +11,7 @@ from unittest import mock
 from uuid import uuid4
 
 import ddt
+import django
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -67,8 +69,7 @@ from license_manager.apps.subscriptions.tests.utils import (
     assert_pii_cleared,
 )
 from license_manager.apps.subscriptions.utils import localized_utcnow
-import os
-import django
+
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'license_manager.settings.test'
 django.setup()
