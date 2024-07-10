@@ -116,7 +116,9 @@ class CustomerAgreement(TimeStampedModel):
     disable_expiration_notifications = models.BooleanField(
         default=False,
         help_text=_(
-            "Used in MFEs to disable subscription expiration notifications"
+            "Used to disable subscription expiration notifications, and the expiration date in the "
+            "subsidy summary box in the enterprise learner portal MFE. If the subscription is expired, the subsidy "
+            "summary box will not display the subscription status with the expired messaging."
         )
     )
 
