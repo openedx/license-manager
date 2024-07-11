@@ -716,6 +716,11 @@ class EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer(serializers.Se
             'subscription_uuid',
         ]
 
+    def validate(self, attrs):
+        if attrs.get('enroll_all') and not attrs.get('subscription_uuid'):
+            raise serializers.ValidationError({'subscription_id': 'This field is required when enroll_all is True.'})
+        return attrs
+
 
 class EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer(serializers.Serializer):  # pylint: disable=abstract-method
     """

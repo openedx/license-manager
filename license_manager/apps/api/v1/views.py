@@ -1514,36 +1514,6 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
 
         return ''
 
-    def _validate_enrollment_request_params(self):
-        """
-        Helper function to validate both the existence of required params and their typing.
-        """
-        self.validation_errors = []
-        self.missing_params = []
-        if self.requested_notify_learners is None:
-            self.missing_params.append('notify')
-
-        # Gather all missing and incorrect typing validation errors
-        if not self.requested_course_run_keys:
-            self.missing_params.append('course_run_keys')
-        if not self.requested_enroll_all:
-            if not self.requested_user_emails:
-                self.missing_params.append('emails')
-        if self.requested_enroll_all and not self.requested_subscription_id:
-            self.missing_params.append('subscription_id')
-        if not self.requested_enterprise_id:
-            self.missing_params.append('enterprise_customer_uuid')
-
-        # Report param type errors
-        if self.validation_errors:
-            return 'Received invalid types for the following required params: {}'.format(self.validation_errors)
-
-        # Report required params type errors
-        if self.missing_params:
-            return 'Missing the following required request data: {}'.format(self.missing_params)
-
-        return ''
-
     @permission_required(
         constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
         fn=lambda request: utils.get_context_for_customer_agreement_from_request(request),  # pylint: disable=unnecessary-lambda
@@ -1576,9 +1546,20 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                 - Exceeding BULK_ENROLL_REQUEST_LIMIT by passing too many learners + course keys, 400
                 - Enterprise UUID without a valid CustomerAgreement, 404
         """
-        param_validation = self._validate_enrollment_request_params()
-        if param_validation:
-            return Response(param_validation, status=status.HTTP_400_BAD_REQUEST)
+        query_params_serializer = serializers.EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer(
+            data=self.request.query_params
+        )
+        request_body_serializer = serializers.EnterpriseEnrollmentWithLicenseSubsidyRequestSerializer(
+            data=self.request.data
+        )
+
+        # Validate the query parameters
+        if not query_params_serializer.is_valid():
+            raise ValidationError(query_params_serializer.errors)
+
+        # Validate the request body
+        if not request_body_serializer.is_valid():
+            raise ValidationError(request_body_serializer.errors)
 
         num_enrollments = len(self.requested_course_run_keys) * len(self.request.data.get('emails', []))
         if settings.BULK_ENROLL_REQUEST_LIMIT < num_enrollments:
