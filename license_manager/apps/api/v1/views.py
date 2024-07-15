@@ -442,6 +442,15 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
 
         return queryset.order_by('-start_date')
 
+    def list(self, request, *args, **kwargs):
+        # to capture custom metrics
+        custom_tags = {
+            'enterprise_customer_uuid': str(self.requested_enterprise_uuid),
+        }
+        utils.set_datadog_tags(custom_tags)
+
+        return super().list(request, *args, **kwargs)
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -1024,7 +1033,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         # to capture custom metrics
         custom_tags = {
             'enterprise_customer_uuid': self.get_permission_object(),
-            'external_request': settings.API_GATEWAY_URL in request.path
         }
         utils.set_datadog_tags(custom_tags)
 
@@ -1136,12 +1144,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         This endpoint reminds users by sending an email to the given email
         addresses if there is a an associated license which has not yet been activated.
         """
-        # to capture custom metrics
-        custom_tags = {
-            'enterprise_customer_uuid': self.get_permission_object(),
-            'external_request': settings.API_GATEWAY_URL in request.path
-        }
-        utils.set_datadog_tags(custom_tags)
 
         # Validate the user_email and text sent in the data
         self._validate_data(request.data)
@@ -1323,7 +1325,6 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         # to capture custom metrics
         custom_tags = {
             'enterprise_customer_uuid': self.get_permission_object(),
-            'external_request': settings.API_GATEWAY_URL in request.path
         }
         utils.set_datadog_tags(custom_tags)
 
@@ -1546,6 +1547,12 @@ class EnterpriseEnrollmentWithLicenseSubsidyView(LicenseBaseView):
                 - Exceeding BULK_ENROLL_REQUEST_LIMIT by passing too many learners + course keys, 400
                 - Enterprise UUID without a valid CustomerAgreement, 404
         """
+        # to capture custom metrics
+        custom_tags = {
+            'enterprise_customer_uuid': str(self.requested_enterprise_id),
+        }
+        utils.set_datadog_tags(custom_tags)
+
         query_params_serializer = serializers.EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer(
             data=self.request.query_params
         )
