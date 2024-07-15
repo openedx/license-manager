@@ -702,6 +702,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer(serializers.Se
     )
     enroll_all = serializers.BooleanField(
         required=False,
+        allow_null=True,
         help_text='A boolean indicating whether to enroll all learners or not',
     )
     subscription_uuid = serializers.UUIDField(
@@ -717,8 +718,8 @@ class EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer(serializers.Se
         ]
 
     def validate(self, attrs):
-        if attrs.get('enroll_all') and not attrs.get('subscription_uuid'):
-            raise serializers.ValidationError({'subscription_id': 'This field is required when enroll_all is True.'})
+        if attrs.get('enroll_all') is not None and not attrs.get('subscription_uuid'):
+            raise serializers.ValidationError({'subscription_id': 'This field is required when enroll_all is provided'})
         return attrs
 
 

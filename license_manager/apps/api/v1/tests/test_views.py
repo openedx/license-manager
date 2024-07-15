@@ -4096,7 +4096,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         url = self._get_url_with_params(enroll_all=True)
         response = self.api_client.post(url, data)
         assert response.status_code == 400
-        expected_json = {'subscription_id': ['This field is required when enroll_all is True.']}
+        expected_json = {'subscription_id': ['This field is required when enroll_all is provided']}
         assert response.json() == expected_json
 
     def test_bulk_licensed_enrollment_with_missing_emails(self):
