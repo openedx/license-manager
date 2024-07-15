@@ -717,7 +717,7 @@ class EnterpriseEnrollmentWithLicenseSubsidyQueryParamsSerializer(serializers.Se
         ]
 
     def validate(self, attrs):
-        if attrs.get('enroll_all') and not attrs.get('subscription_uuid'):
+        if attrs.get('enroll_all') is not None and not attrs.get('subscription_uuid'):
             raise serializers.ValidationError({'subscription_id': 'This field is required when enroll_all is True.'})
         return attrs
 
