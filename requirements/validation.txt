@@ -19,7 +19,7 @@ asgiref==3.8.1
     #   -r requirements/test.txt
     #   django
     #   django-cors-headers
-astroid==3.2.2
+astroid==3.2.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -55,12 +55,12 @@ billiard==4.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.34.136
+boto3==1.34.144
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.34.136
+botocore==1.34.144
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -72,7 +72,7 @@ celery==5.4.0
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2024.6.2
+certifi==2024.7.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -126,7 +126,7 @@ code-annotations==1.8.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.5.4
+coverage[toml]==7.6.0
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -149,7 +149,7 @@ dill==0.3.8
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==4.2.13
+django==4.2.14
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -319,7 +319,7 @@ edx-toggles==5.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-exceptiongroup==1.2.1
+exceptiongroup==1.2.2
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -372,7 +372,7 @@ jsonfield==3.1.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-celeryutils
-jsonschema==4.22.0
+jsonschema==4.23.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -412,7 +412,7 @@ mysqlclient==2.2.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==9.11.0
+newrelic==9.12.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -584,7 +584,7 @@ requests-oauthlib==2.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-rpds-py==0.18.1
+rpds-py==0.19.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -627,7 +627,7 @@ snowballstemmer==2.2.0
     # via
     #   -r requirements/quality.txt
     #   pydocstyle
-social-auth-app-django==5.4.1
+social-auth-app-django==5.4.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -662,7 +662,7 @@ tomli==2.0.1
     #   coverage
     #   pylint
     #   pytest
-tomlkit==0.12.5
+tomlkit==0.13.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

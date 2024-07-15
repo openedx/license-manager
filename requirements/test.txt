@@ -15,7 +15,7 @@ asgiref==3.8.1
     #   -r requirements/base.txt
     #   django
     #   django-cors-headers
-astroid==3.2.2
+astroid==3.2.3
     # via
     #   pylint
     #   pylint-celery
@@ -44,11 +44,11 @@ billiard==4.2.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.34.136
+boto3==1.34.144
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.34.136
+botocore==1.34.144
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -58,7 +58,7 @@ celery==5.4.0
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2024.6.2
+certifi==2024.7.4
     # via
     #   -r requirements/base.txt
     #   requests
@@ -102,7 +102,7 @@ code-annotations==1.8.0
     #   -r requirements/test.in
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.5.4
+coverage[toml]==7.6.0
     # via
     #   -r requirements/test.in
     #   pytest-cov
@@ -120,7 +120,7 @@ defusedxml==0.8.0rc2
     #   social-auth-core
 dill==0.3.8
     # via pylint
-django==4.2.13
+django==4.2.14
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -237,7 +237,7 @@ edx-rest-api-client==5.7.1
     # via -r requirements/base.txt
 edx-toggles==5.2.0
     # via -r requirements/base.txt
-exceptiongroup==1.2.1
+exceptiongroup==1.2.2
     # via pytest
 factory-boy==3.3.0
     # via -r requirements/test.in
@@ -275,7 +275,7 @@ jsonfield==3.1.0
     # via
     #   -r requirements/base.txt
     #   edx-celeryutils
-jsonschema==4.22.0
+jsonschema==4.23.0
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
@@ -299,7 +299,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.4
     # via -r requirements/base.txt
-newrelic==9.11.0
+newrelic==9.12.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -421,7 +421,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-rpds-py==0.18.1
+rpds-py==0.19.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -450,7 +450,7 @@ slumber==0.7.1
     # via
     #   -r requirements/base.txt
     #   edx-rest-api-client
-social-auth-app-django==5.4.1
+social-auth-app-django==5.4.2
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
@@ -478,7 +478,7 @@ tomli==2.0.1
     #   coverage
     #   pylint
     #   pytest
-tomlkit==0.12.5
+tomlkit==0.13.0
     # via pylint
 typing-extensions==4.12.2
     # via
