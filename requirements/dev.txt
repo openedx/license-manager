@@ -137,7 +137,7 @@ dill==0.3.8
     # via
     #   -r requirements/validation.txt
     #   pylint
-django==4.2.13
+django==4.2.14
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/validation.txt
