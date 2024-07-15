@@ -2350,7 +2350,6 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
         )
         tags_dict = {
             'enterprise_customer_uuid': self.subscription_plan.customer_agreement.enterprise_customer_uuid,
-            'external_request': False
         }
         # Verify that set_tags util was called with right arguments
         mock_set_tags_util.assert_called_with(tags_dict)
@@ -2691,35 +2690,6 @@ class LicenseViewSetActionTests(LicenseViewSetActionMixin, TestCase):
             ),
         ])
 
-    @mock.patch('license_manager.apps.api.v1.views.send_reminder_email_task.delay')
-    @mock.patch('license_manager.apps.api.utils.set_datadog_tags')
-    @ddt.data(True, False)
-    def test_remind_set_custom_tags(self, use_superuser, mock_set_tags_util, mock_send_reminder_emails_task): # pylint: disable=unused-argument
-        """
-        Verify the remind endpoint sets tags 'enterprise_customer_uuid' and 'external_request' on the request.
-        """
-        self._setup_request_jwt(user=self.super_user if use_superuser else self.user)
-        pending_license = LicenseFactory.create(user_email=self.test_email, status=constants.ASSIGNED)
-        pending_license_b = LicenseFactory.create(user_email='other@example.com', status=constants.ASSIGNED)
-        self.subscription_plan.licenses.set([pending_license, pending_license_b])
-
-        with mock.patch('license_manager.apps.subscriptions.constants.REMINDER_EMAIL_BATCH_SIZE', new=1):
-            response = self.api_client.post(
-                self.remind_url,
-                {
-                    'user_emails': [self.test_email, 'other@example.com'],
-                    'greeting': self.greeting,
-                    'closing': self.closing,
-                },
-            )
-        tags_dict = {
-            'enterprise_customer_uuid': self.subscription_plan.customer_agreement.enterprise_customer_uuid,
-            'external_request': False
-        }
-        # Verify that set_tags util was called with right arguments
-        mock_set_tags_util.assert_called_with(tags_dict)
-        assert response.status_code == status.HTTP_204_NO_CONTENT
-
     @ddt.data(
         ([{'name': 'user_email', 'filter_value': 'al'}], ['alice@example.com']),
         ([{'name': 'status_in', 'filter_value': [constants.ACTIVATED]}], []),
@@ -3007,7 +2977,6 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
         tags_dict = {
             'enterprise_customer_uuid': self.subscription_plan.customer_agreement.enterprise_customer_uuid,
-            'external_request': False
         }
         # Verify that set_tags util was called with right arguments
         mock_set_tags_util.assert_called_with(tags_dict)
@@ -3973,6 +3942,33 @@ class EnterpriseEnrollmentWithLicenseSubsidyViewTests(LicenseViewTestMixin, Test
         }
         url = self._get_url_with_params()
         response = self.api_client.post(url, data)
+
+        mock_send_task.assert_called()
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json().get('job_id')
+
+    @mock.patch('license_manager.apps.api.models.current_app.send_task')
+    @mock.patch('license_manager.apps.api.v1.views.utils.get_decoded_jwt')
+    @mock.patch('license_manager.apps.api.utils.set_datadog_tags')
+    def test_bulk_enroll_set_custom_tags(self, mock_set_tags_util, mock_get_decoded_jwt, mock_send_task):
+        """
+        Verify the view assigns tags to the request correctly.
+        """
+        self._assign_learner_roles()
+        mock_get_decoded_jwt.return_value = self._decoded_jwt
+        data = {
+            'emails': [self.user.email],
+            'course_run_keys': [self.course_key],
+            'notify': True,
+        }
+        url = self._get_url_with_params()
+        response = self.api_client.post(url, data)
+
+        # Verify that set_tags util was called with right arguments
+        tags_dict = {
+            'enterprise_customer_uuid': str(self.enterprise_customer_uuid),
+        }
+        mock_set_tags_util.assert_called_with(tags_dict)
 
         mock_send_task.assert_called()
         assert response.status_code == status.HTTP_201_CREATED
