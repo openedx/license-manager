@@ -65,6 +65,14 @@ CORS_ORIGIN_WHITELIST = [
 ]
 # END CORS
 
+# CSRF CONFIG
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:1991',  # frontend-app-admin-portal
+    'http://localhost:8734',  # frontend-app-learner-portal-enterprise
+    'http://localhost:18450',  # frontend-app-support-tools
+]
+# END CSRF CONFIG
+
 ENTERPRISE_LEARNER_PORTAL_BASE_URL = 'http://localhost:8734'
 ENTERPRISE_CATALOG_URL = 'http://enterprise.catalog.app:18160'
 LMS_URL = 'http://edx.devstack.lms:18000'
