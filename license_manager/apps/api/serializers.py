@@ -48,6 +48,10 @@ class MinimalSubscriptionPlanSerializer(serializers.ModelSerializer):
     """
     Minimal serializer for the `SubscriptionPlan` model.
     """
+    is_current = serializers.BooleanField(
+        help_text='Indicates whether start_date <= now <= expiration_date.',
+        read_only=True,
+    )
 
     class Meta:
         model = SubscriptionPlan
@@ -59,6 +63,7 @@ class MinimalSubscriptionPlanSerializer(serializers.ModelSerializer):
             'enterprise_customer_uuid',
             'enterprise_catalog_uuid',
             'is_active',
+            'is_current',
             'is_revocation_cap_enabled',
             'days_until_expiration',
             'days_until_expiration_including_renewals',

@@ -15,6 +15,7 @@ from django.db.models import Q
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.forms import ValidationError
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from edx_rbac.models import UserRole, UserRoleAssignment
@@ -490,6 +491,13 @@ class SubscriptionPlan(TimeStampedModel):
         Note: expiration_date is a required field so checking for None isn't needed.
         """
         return days_until(self.expiration_date)
+
+    @property
+    def is_current(self):
+        """
+        Returns a boolean indicating whether start_date <= now <= expiration_date.
+        """
+        return self.start_date <= timezone.now() <= self.expiration_date
 
     @property
     def has_revocations_remaining(self):

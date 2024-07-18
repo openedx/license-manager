@@ -81,6 +81,29 @@ class SubscriptionsModelTests(TestCase):
         )
         self.assertEqual(renewed_subscription_plan_2.prior_renewals, [renewal_1, renewal_2])
 
+    @ddt.data(
+        {'start_date_delta': timedelta(days=-1), 'end_date_delta': timedelta(days=1), 'expected_current': True},
+        {'start_date_delta': timedelta(days=-1), 'end_date_delta': timedelta(days=0), 'expected_current': True},
+        {'start_date_delta': timedelta(days=0), 'end_date_delta': timedelta(days=1), 'expected_current': True},
+        {'start_date_delta': timedelta(days=0), 'end_date_delta': timedelta(days=0), 'expected_current': True},
+        {'start_date_delta': timedelta(days=1), 'end_date_delta': timedelta(days=1), 'expected_current': False},
+        {'start_date_delta': timedelta(days=10), 'end_date_delta': timedelta(days=150), 'expected_current': False},
+        {'start_date_delta': timedelta(days=-1), 'end_date_delta': timedelta(days=-1), 'expected_current': False},
+        {'start_date_delta': timedelta(days=-10), 'end_date_delta': timedelta(days=-5), 'expected_current': False},
+    )
+    @ddt.unpack
+    def test_is_current(self, start_date_delta, end_date_delta, expected_current):
+        today = localized_utcnow()
+        with freezegun.freeze_time(today):
+            subscription_plan = SubscriptionPlanFactory.create(
+                start_date=today + start_date_delta,
+                expiration_date=today + end_date_delta,
+            )
+            if expected_current:
+                self.assertTrue(subscription_plan.is_current)
+            else:
+                self.assertFalse(subscription_plan.is_current)
+
     @ddt.data(True, False)
     def test_is_locked_for_renewal_processing(self, is_locked_for_renewal_processing):
         today = localized_utcnow()

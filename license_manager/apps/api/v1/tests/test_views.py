@@ -938,6 +938,7 @@ def test_subscription_plan_create_staff_user_200(api_client, staff_user, boolean
         "start_date",
         "title",
         "uuid",
+        "is_current",
     }
     assert response.json().keys() == expected_fields
 
