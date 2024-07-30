@@ -349,8 +349,9 @@ packaging==24.1
     #   build
     #   gunicorn
     #   pytest
-path==17.0.0
+path==16.14.0
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/validation.txt
     #   edx-i18n-tools
 pathlib2==2.3.7.post1
