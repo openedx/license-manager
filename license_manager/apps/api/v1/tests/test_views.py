@@ -3172,7 +3172,8 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         assert response.status_code == status.HTTP_404_NOT_FOUND
         expected_error_msg = (
             "No license for email bob@example.com exists in plan "
-            "{} with a status in ['activated', 'assigned']".format(self.subscription_plan.uuid)
+            "{} with a status in ['activated', 'assigned']. user_email: bob@example.com".format(
+                self.subscription_plan.uuid)
         )
         self.assertEqual(expected_error_msg, response.json())
         mock_revoke_license.assert_called_once_with(alice_license)
@@ -3203,7 +3204,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         expected_error_msg = "Action: license revocation failed for license: {} because: {}".format(
             alice_license.uuid,
-            'floor is lava',
+            'floor is lava. user_email: alice@example.com',
         )
         self.assertEqual(expected_error_msg, response.json())
         mock_revoke_license.assert_called_once_with(alice_license)

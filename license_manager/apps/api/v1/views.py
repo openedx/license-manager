@@ -1358,8 +1358,9 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                     revocation_result = self._revoke_by_email_and_plan(user_email, subscription_plan)
                     revocation_results.append(revocation_result)
                 except (LicenseNotFoundError, LicenseRevocationError) as exc:
-                    error_message = str(exc)
+                    error_message = f'{str(exc)}. user_email: {user_email}'
                     error_response_status = utils.get_http_status_for_exception(exc)
+                    logger.error(f'{error_message}, error_response_status:{error_response_status}')
                     break
 
         if error_response_status:
