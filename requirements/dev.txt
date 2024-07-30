@@ -15,8 +15,7 @@ asgiref==3.8.1
     #   -r requirements/validation.txt
     #   django
     #   django-cors-headers
-    #   django-simple-history
-astroid==3.2.0
+astroid==3.2.4
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -34,11 +33,11 @@ billiard==4.2.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.34.105
+boto3==1.34.150
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.34.105
+botocore==1.34.150
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -99,11 +98,11 @@ code-annotations==1.8.0
     #   -r requirements/validation.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.5.1
+coverage[toml]==7.6.0
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==42.0.7
+cryptography==43.0.0
     # via
     #   -r requirements/validation.txt
     #   pyjwt
@@ -182,7 +181,6 @@ django-filter==24.2
 django-log-request-id==2.1.0
     # via -r requirements/validation.txt
 django-model-utils==4.5.1
-django-model-utils==4.5.1
     # via
     #   -r requirements/validation.txt
     #   edx-celeryutils
@@ -218,13 +216,11 @@ drf-jwt==1.19.2
     #   -r requirements/validation.txt
     #   edx-drf-extensions
 drf-nested-routers==0.94.1
-drf-nested-routers==0.94.1
     # via -r requirements/validation.txt
 drf-spectacular==0.27.2
     # via -r requirements/validation.txt
 edx-auth-backends==4.3.0
     # via -r requirements/validation.txt
-edx-braze-client==0.2.5
 edx-braze-client==0.2.5
     # via -r requirements/validation.txt
 edx-celeryutils==1.3.0
@@ -239,9 +235,9 @@ edx-drf-extensions==10.3.0
     # via
     #   -r requirements/validation.txt
     #   edx-rbac
-edx-i18n-tools==1.6.0
+edx-i18n-tools==1.6.1
     # via -r requirements/validation.txt
-edx-lint==5.3.6
+edx-lint==5.3.7
     # via -r requirements/validation.txt
 edx-opaque-keys==2.10.0
     # via
@@ -255,11 +251,10 @@ edx-toggles==5.2.0
     # via -r requirements/validation.txt
 factory-boy==3.3.0
     # via -r requirements/validation.txt
-faker==25.2.0
+faker==26.0.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
-freezegun==1.5.1
 freezegun==1.5.1
     # via -r requirements/validation.txt
 gunicorn==22.0.0
@@ -268,7 +263,7 @@ idna==3.7
     # via
     #   -r requirements/validation.txt
     #   requests
-inflect==7.2.1
+inflect==7.3.1
     # via
     #   -r requirements/dev.in
     #   jinja2-pluralize
@@ -284,7 +279,6 @@ isort==5.13.2
     # via
     #   -r requirements/validation.txt
     #   pylint
-jinja2==3.1.4
 jinja2==3.1.4
     # via
     #   -r requirements/validation.txt
@@ -315,12 +309,11 @@ kombu==5.3.7
     #   -r requirements/validation.txt
     #   celery
 lxml[html-clean]==5.2.2
-lxml[html-clean]==5.2.2
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
     #   lxml-html-clean
-lxml-html-clean==0.1.1
+lxml-html-clean==0.2.0
     # via
     #   -r requirements/validation.txt
     #   lxml
@@ -340,7 +333,7 @@ more-itertools==10.3.0
     # via inflect
 mysqlclient==2.2.4
     # via -r requirements/validation.txt
-newrelic==9.9.1
+newrelic==9.12.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -356,7 +349,7 @@ packaging==24.1
     #   build
     #   gunicorn
     #   pytest
-path==16.14.0
+path==17.0.0
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
@@ -402,7 +395,6 @@ pycparser==2.22
 pydocstyle==6.3.0
     # via -r requirements/validation.txt
 pygments==2.18.0
-pygments==2.18.0
     # via diff-cover
 pyjwt[crypto]==2.8.0
     # via
@@ -412,7 +404,7 @@ pyjwt[crypto]==2.8.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.2.0
+pylint==3.2.6
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -445,7 +437,7 @@ pyproject-hooks==1.1.0
     #   -r requirements/pip-tools.txt
     #   build
     #   pip-tools
-pytest==8.2.2
+pytest==8.3.2
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -485,7 +477,6 @@ pyyaml==6.0.1
 redis==5.0.7
     # via -r requirements/validation.txt
 referencing==0.35.1
-referencing==0.35.1
     # via
     #   -r requirements/validation.txt
     #   jsonschema
@@ -503,7 +494,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/validation.txt
     #   social-auth-core
-rpds-py==0.18.1
+rpds-py==0.19.1
     # via
     #   -r requirements/validation.txt
     #   jsonschema
@@ -546,7 +537,7 @@ social-auth-core==4.5.4
     #   -r requirements/validation.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.5.0
+sqlparse==0.5.1
     # via
     #   -r requirements/validation.txt
     #   django
@@ -561,7 +552,7 @@ text-unidecode==1.3
     # via
     #   -r requirements/validation.txt
     #   python-slugify
-tomlkit==0.12.5
+tomlkit==0.13.0
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -571,7 +562,6 @@ typing-extensions==4.12.2
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
-    #   inflect
     #   typeguard
 tzdata==2024.1
     # via
@@ -581,7 +571,7 @@ uritemplate==4.1.1
     # via
     #   -r requirements/validation.txt
     #   drf-spectacular
-urllib3==2.2.1
+urllib3==2.2.2
     # via
     #   -r requirements/validation.txt
     #   botocore
@@ -600,7 +590,7 @@ wheel==0.43.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-zipp==3.18.1
+zipp==3.19.2
     # via -r requirements/validation.txt
 
 # The following packages are considered to be unsafe in a requirements file:
