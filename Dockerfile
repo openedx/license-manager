@@ -26,23 +26,42 @@ MAINTAINER devops@edx.org
 # unzip to unzip a watchman binary archive
 
 # If you add a package here please include a comment above describing what it is used for
+
+# ENV variables for Python 3.12 support
+ARG PYTHON_VERSION=3.12
+ENV TZ=UTC
+ENV TERM=xterm-256color
+ENV DEBIAN_FRONTEND=noninteractive
+
+# software-properties-common is needed to setup Python 3.12 env
+RUN apt-get update && \
+  apt-get install -y software-properties-common && \
+  apt-add-repository -y ppa:deadsnakes/ppa
+
 RUN apt-get update && apt-get -qy install --no-install-recommends \
  language-pack-en \
  locales \
- python3.8 \
- python3-pip \
- python3.8-venv \
- python3.8-dev \
  pkg-config \
  libmysqlclient-dev \
  libssl-dev \
  build-essential \
  git \ 
  wget \
- unzip
+ unzip \
+ curl \
+ libffi-dev \
+ libsqlite3-dev \
+ python3-pip \
+ python${PYTHON_VERSION} \
+ python${PYTHON_VERSION}-dev \
+ python${PYTHON_VERSION}-distutils
+
+# need to use virtualenv pypi package with Python 3.12
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python${PYTHON_VERSION}
+RUN pip install virtualenv
 
 ENV VIRTUAL_ENV=/edx/app/license-manager/venvs/license-manager
-RUN python3.8 -m venv $VIRTUAL_ENV
+RUN virtualenv -p python${PYTHON_VERSION} $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN locale-gen en_US.UTF-8
