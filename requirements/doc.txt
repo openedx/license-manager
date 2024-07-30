@@ -43,11 +43,11 @@ billiard==4.2.0
     # via
     #   -r requirements/test.txt
     #   celery
-boto3==1.34.150
+boto3==1.34.151
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.34.150
+botocore==1.34.151
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -226,7 +226,7 @@ edx-braze-client==0.2.5
     # via -r requirements/test.txt
 edx-celeryutils==1.3.0
     # via -r requirements/test.txt
-edx-django-utils==5.14.2
+edx-django-utils==5.15.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -440,7 +440,7 @@ pyyaml==6.0.1
     #   drf-spectacular
 readme-renderer==43.0
     # via -r requirements/doc.in
-redis==5.0.7
+redis==5.0.8
     # via -r requirements/test.txt
 referencing==0.35.1
     # via

@@ -33,11 +33,11 @@ billiard==4.2.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.34.150
+boto3==1.34.151
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.34.150
+botocore==1.34.151
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -225,7 +225,7 @@ edx-braze-client==0.2.5
     # via -r requirements/validation.txt
 edx-celeryutils==1.3.0
     # via -r requirements/validation.txt
-edx-django-utils==5.14.2
+edx-django-utils==5.15.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
@@ -235,7 +235,7 @@ edx-drf-extensions==10.3.0
     # via
     #   -r requirements/validation.txt
     #   edx-rbac
-edx-i18n-tools==1.6.1
+edx-i18n-tools==1.6.2
     # via -r requirements/validation.txt
 edx-lint==5.3.7
     # via -r requirements/validation.txt
@@ -308,15 +308,10 @@ kombu==5.3.7
     # via
     #   -r requirements/validation.txt
     #   celery
-lxml[html-clean]==5.2.2
+lxml==5.2.2
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
-    #   lxml-html-clean
-lxml-html-clean==0.2.0
-    # via
-    #   -r requirements/validation.txt
-    #   lxml
 markupsafe==2.1.5
     # via
     #   -r requirements/validation.txt
@@ -475,7 +470,7 @@ pyyaml==6.0.1
     #   code-annotations
     #   drf-spectacular
     #   edx-i18n-tools
-redis==5.0.7
+redis==5.0.8
     # via -r requirements/validation.txt
 referencing==0.35.1
     # via
