@@ -18,3 +18,6 @@ diff-cover==4.0.0
 
 # For python greater than or equal to 3.9 backports.zoneinfo is causing failures
 backports.zoneinfo;python_version<"3.9"
+
+# path>16.14.0 has removed the deprecated abspath function, which is breaking the docs build
+path<16.15.0

@@ -166,6 +166,12 @@ def _batch_notify_or_remind_assigned_emails(
     if len(pending_licenses) > allowed_batch_size:
         raise Exception(f'Found more than {allowed_batch_size} licenses, no email sent to {action_type}')
 
+    if len(pending_licenses) == 0:
+        logger.warning(
+            f'{LICENSE_DEBUG_PREFIX} No pending licenses found for given emails, no email sent to {action_type}.'
+        )
+        return pending_licenses
+
     enterprise_api_client = EnterpriseApiClient()
     enterprise_customer = enterprise_api_client.get_enterprise_customer_data(
         subscription_plan.enterprise_customer_uuid,

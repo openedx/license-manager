@@ -193,7 +193,7 @@ def _original_licenses_to_copy(original_plan, license_types_to_copy):
     elif license_types_to_copy == LicenseTypesToRenew.ACTIVATED:
         license_status_kwargs = {'status': ACTIVATED}
 
-    return list(original_plan.licenses.filter(**license_status_kwargs))
+    return list(original_plan.licenses.filter(**license_status_kwargs))  # pylint: disable=possibly-used-before-assignment
 
 
 def delete_unused_licenses_post_freeze(subscription_plan):
