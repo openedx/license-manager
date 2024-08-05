@@ -25,7 +25,7 @@ astroid==3.2.4
     #   -r requirements/test.txt
     #   pylint
     #   pylint-celery
-attrs==23.2.0
+attrs==24.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -41,12 +41,12 @@ billiard==4.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.34.151
+boto3==1.34.153
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.34.151
+botocore==1.34.153
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -112,7 +112,7 @@ code-annotations==1.8.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.6.0
+coverage[toml]==7.6.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -194,7 +194,7 @@ django-extensions==3.2.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-filter==24.2
+django-filter==24.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -307,7 +307,7 @@ edx-toggles==5.2.0
     #   -r requirements/test.txt
 factory-boy==3.3.0
     # via -r requirements/test.txt
-faker==26.0.0
+faker==26.1.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -436,7 +436,7 @@ psutil==6.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pycodestyle==2.12.0
+pycodestyle==2.12.1
     # via -r requirements/quality.txt
 pycparser==2.22
     # via
@@ -445,7 +445,7 @@ pycparser==2.22
     #   cffi
 pydocstyle==6.3.0
     # via -r requirements/quality.txt
-pyjwt[crypto]==2.8.0
+pyjwt[crypto]==2.9.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
