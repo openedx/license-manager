@@ -103,3 +103,43 @@ rules.add_perm(
     constants.SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION,
     has_admin_access | has_learner_access,
 )
+
+@rules.predicate
+def has_implicit_access_to_subscription_plan_provisioning(user, enterprise_customer_uuid):  # pylint: disable=unused-argument
+    """
+    Check that if request user has implicit access as PROVISIONING_SUBSCRIPTION_ADMIN_ROLE.
+
+    Returns:
+        boolean: whether the request user has access.
+    """
+    return request_user_has_implicit_access_via_jwt(
+        get_decoded_jwt(crum.get_current_request()),
+        constants.PROVISIONING_SUBSCRIPTION_ADMIN_ROLE,
+        str(enterprise_customer_uuid),
+    )
+
+# Grants access permission if the user is a provisioning admin
+rules.add_perm(
+    constants.SUBSCRIPTIONS_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+    has_implicit_access_to_subscription_plan_provisioning,
+)
+
+@rules.predicate
+def has_implicit_access_to_customer_agreement_provisioning(user, enterprise_customer_uuid):  # pylint: disable=unused-argument
+    """
+    Check that if request user has implicit access as PROVISIONING_SUBSCRIPTION_ADMIN_ROLE.
+
+    Returns:
+        boolean: whether the request user has access.
+    """
+    return request_user_has_implicit_access_via_jwt(
+        get_decoded_jwt(crum.get_current_request()),
+        constants.PROVISIONING_CUSTOMER_AGREEMENT_ADMIN_ROLE,
+        str(enterprise_customer_uuid),
+    )
+
+# Grants access permission if the user is a provisioning admin
+rules.add_perm(
+    constants.SUBSCRIPTIONS_CUSTOMER_AGREEMENT_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+    has_implicit_access_to_customer_agreement_provisioning,
+)
