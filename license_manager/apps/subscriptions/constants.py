@@ -77,13 +77,21 @@ REVOCATION_CAP_NOTIFICATION_EMAIL_TEMPLATE = 'revocation_cap'
 # Role-based access control
 SUBSCRIPTIONS_ADMIN_ROLE = 'enterprise_subscriptions_admin'
 SUBSCRIPTIONS_LEARNER_ROLE = 'enterprise_subscriptions_learner'
+# Role-based access control - Provisioning admins
+PROVISIONING_SUBSCRIPTION_ADMIN_ROLE = 'provisioning_subscription_admin'
+PROVISIONING_CUSTOMER_AGREEMENT_ADMIN_ROLE = 'provisioning_customer_agreement_admin'
 
 SYSTEM_ENTERPRISE_ADMIN_ROLE = 'enterprise_admin'
 SYSTEM_ENTERPRISE_LEARNER_ROLE = 'enterprise_learner'
 SYSTEM_ENTERPRISE_OPERATOR_ROLE = 'enterprise_openedx_operator'
+SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE = 'enterprise_provisioning_admin'
 
 SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION = 'subscriptions.has_admin_access'
 SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION = 'subscriptions.has_learner_or_admin_access'
+
+# Provisioning admins permissions
+SUBSCRIPTIONS_PROVISIONING_ADMIN_ACCESS_PERMISSION = 'provisioning.has_subscription_admin_access'
+SUBSCRIPTIONS_CUSTOMER_AGREEMENT_PROVISIONING_ADMIN_ACCESS_PERMISSION = 'provisioning.has_customer_agreement_admin_access'
 
 # Subsidy constants
 PERCENTAGE_DISCOUNT_TYPE = 'percentage'
