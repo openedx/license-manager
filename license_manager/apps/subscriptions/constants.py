@@ -90,9 +90,9 @@ SUBSCRIPTIONS_ADMIN_ACCESS_PERMISSION = 'subscriptions.has_admin_access'
 SUBSCRIPTIONS_ADMIN_LEARNER_ACCESS_PERMISSION = 'subscriptions.has_learner_or_admin_access'
 
 # Provisioning admins permissions
-SUBSCRIPTIONS_PROVISIONING_ADMIN_ACCESS_PERMISSION = 'provisioning.has_subscription_admin_access'
+SUBSCRIPTIONS_PROVISIONING_ADMIN_ACCESS_PERMISSION = 'subscriptions.has_provisioning_admin_access'
 SUBSCRIPTIONS_CUSTOMER_AGREEMENT_PROVISIONING_ADMIN_ACCESS_PERMISSION = \
-    'provisioning.has_customer_agreement_admin_access'
+    'agreements.has_provisioning_admin_access'
 
 # Subsidy constants
 PERCENTAGE_DISCOUNT_TYPE = 'percentage'

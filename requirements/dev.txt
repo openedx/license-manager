@@ -20,7 +20,7 @@ astroid==3.2.4
     #   -r requirements/validation.txt
     #   pylint
     #   pylint-celery
-attrs==24.1.0
+attrs==24.2.0
     # via
     #   -r requirements/validation.txt
     #   jsonschema
@@ -33,11 +33,11 @@ billiard==4.2.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.34.153
+boto3==1.34.158
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.34.153
+botocore==1.34.158
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -55,7 +55,7 @@ certifi==2024.7.4
     # via
     #   -r requirements/validation.txt
     #   requests
-cffi==1.16.0
+cffi==1.17.0
     # via
     #   -r requirements/validation.txt
     #   cryptography
@@ -124,7 +124,7 @@ dill==0.3.8
     # via
     #   -r requirements/validation.txt
     #   pylint
-django==4.2.14
+django==4.2.15
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/validation.txt
@@ -251,13 +251,13 @@ edx-toggles==5.2.0
     # via -r requirements/validation.txt
 factory-boy==3.3.0
     # via -r requirements/validation.txt
-faker==26.1.0
+faker==26.3.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
 freezegun==1.5.1
     # via -r requirements/validation.txt
-gunicorn==22.0.0
+gunicorn==23.0.0
     # via -r requirements/dev.in
 idna==3.7
     # via
@@ -304,11 +304,11 @@ jsonschema-specifications==2023.12.1
     # via
     #   -r requirements/validation.txt
     #   jsonschema
-kombu==5.3.7
+kombu==5.4.0
     # via
     #   -r requirements/validation.txt
     #   celery
-lxml==5.2.2
+lxml==5.3.0
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
@@ -324,11 +324,11 @@ monotonic==1.6
     # via
     #   -r requirements/validation.txt
     #   analytics-python
-more-itertools==10.3.0
+more-itertools==10.4.0
     # via inflect
 mysqlclient==2.2.4
     # via -r requirements/validation.txt
-newrelic==9.12.0
+newrelic==9.13.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -464,7 +464,7 @@ pytz==2024.1
     #   django-ses
 pywatchman==2.0.0
     # via -r requirements/dev.in
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via
     #   -r requirements/validation.txt
     #   code-annotations
@@ -490,7 +490,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/validation.txt
     #   social-auth-core
-rpds-py==0.19.1
+rpds-py==0.20.0
     # via
     #   -r requirements/validation.txt
     #   jsonschema
@@ -586,7 +586,7 @@ wheel==0.44.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-zipp==3.19.2
+zipp==3.20.0
     # via -r requirements/validation.txt
 
 # The following packages are considered to be unsafe in a requirements file:

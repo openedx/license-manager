@@ -25,7 +25,7 @@ astroid==3.2.4
     #   -r requirements/test.txt
     #   pylint
     #   pylint-celery
-attrs==24.1.0
+attrs==24.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -41,12 +41,12 @@ billiard==4.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.34.153
+boto3==1.34.158
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.34.153
+botocore==1.34.158
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -63,7 +63,7 @@ certifi==2024.7.4
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
-cffi==1.16.0
+cffi==1.17.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -135,7 +135,7 @@ dill==0.3.8
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==4.2.14
+django==4.2.15
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -307,7 +307,7 @@ edx-toggles==5.2.0
     #   -r requirements/test.txt
 factory-boy==3.3.0
     # via -r requirements/test.txt
-faker==26.1.0
+faker==26.3.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -358,12 +358,12 @@ jsonschema-specifications==2023.12.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   jsonschema
-kombu==5.3.7
+kombu==5.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-lxml==5.2.2
+lxml==5.3.0
     # via edx-i18n-tools
 markupsafe==2.1.5
     # via
@@ -384,7 +384,7 @@ mysqlclient==2.2.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==9.12.0
+newrelic==9.13.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -521,7 +521,7 @@ pytz==2024.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -553,7 +553,7 @@ requests-oauthlib==2.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-rpds-py==0.19.1
+rpds-py==0.20.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -662,7 +662,7 @@ wcwidth==0.2.13
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   prompt-toolkit
-zipp==3.19.2
+zipp==3.20.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
