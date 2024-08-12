@@ -104,6 +104,7 @@ rules.add_perm(
     has_admin_access | has_learner_access,
 )
 
+
 @rules.predicate
 def has_implicit_access_to_subscription_plan_provisioning(user, enterprise_customer_uuid):  # pylint: disable=unused-argument
     """
@@ -118,11 +119,13 @@ def has_implicit_access_to_subscription_plan_provisioning(user, enterprise_custo
         str(enterprise_customer_uuid),
     )
 
+
 # Grants access permission if the user is a provisioning admin
 rules.add_perm(
     constants.SUBSCRIPTIONS_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     has_implicit_access_to_subscription_plan_provisioning,
 )
+
 
 @rules.predicate
 def has_implicit_access_to_customer_agreement_provisioning(user, enterprise_customer_uuid):  # pylint: disable=unused-argument
@@ -137,6 +140,7 @@ def has_implicit_access_to_customer_agreement_provisioning(user, enterprise_cust
         constants.PROVISIONING_CUSTOMER_AGREEMENT_ADMIN_ROLE,
         str(enterprise_customer_uuid),
     )
+
 
 # Grants access permission if the user is a provisioning admin
 rules.add_perm(

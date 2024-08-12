@@ -1078,7 +1078,7 @@ def test_subscription_plan_update_staff_user_403(api_client, staff_user, boolean
 
 
 @pytest.mark.django_db
-def test_subscription_plan_create_non_staff_user_201(api_client, non_staff_user, boolean_toggle):
+def test_subscription_plan_create_non_staff_user_201(api_client, non_staff_user):
     """
     Verify that the subcription update endpoint is accessible to authorised users only
     """
@@ -1379,7 +1379,6 @@ def test_subscription_plan_get_non_staff_user_failure(api_client, non_staff_user
     """
     Verify that the subscription create endpoint returns error if invalid product id is provided
     """
-    enterprise_customer_uuid = uuid4()
     invalid_subscription_id = uuid4()
 
     _assign_role_via_jwt_or_db(
