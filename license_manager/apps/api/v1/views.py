@@ -13,7 +13,10 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from edx_rbac.decorators import permission_required
-from edx_rbac.mixins import PermissionRequiredForListingMixin
+from edx_rbac.mixins import (
+    PermissionRequiredForListingMixin,
+    PermissionRequiredMixin,
+)
 from edx_rest_framework_extensions.auth.jwt.authentication import (
     JwtAuthentication,
 )
@@ -30,10 +33,7 @@ from license_manager.apps.api import serializers, utils
 from license_manager.apps.api.filters import LicenseFilter
 from license_manager.apps.api.mixins import UserDetailsFromJwtMixin
 from license_manager.apps.api.models import BulkEnrollmentJob
-from license_manager.apps.api.permissions import (
-    CanRetireUser,
-    IsInProvisioningAdminGroup,
-)
+from license_manager.apps.api.permissions import CanRetireUser
 from license_manager.apps.api.tasks import (
     create_braze_aliases_task,
     execute_post_revocation_tasks,
@@ -311,13 +311,15 @@ class CustomerAgreementViewSet(
     ),
 )
 class CustomerAgreementProvisioningAdminViewset(
+    PermissionRequiredMixin,
     viewsets.GenericViewSet,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin
 ):
     """ Viewset for Provisioning Admins write operations."""
     authentication_classes = [JwtAuthentication, SessionAuthentication]
-    permission_classes = [permissions.IsAuthenticated, IsInProvisioningAdminGroup]
+    permission_classes = [permissions.IsAuthenticated]
+    permission_required = constants.SUBSCRIPTIONS_CUSTOMER_AGREEMENT_PROVISIONING_ADMIN_ACCESS_PERMISSION
     lookup_field = 'uuid'
     lookup_url_kwarg = 'customer_agreement_uuid'
     serializer_class = serializers.CustomerAgreementSerializer
@@ -460,13 +462,15 @@ class SubscriptionViewSet(LearnerSubscriptionViewSet):
     ),
 )
 class SubscriptionPlanProvisioningAdminViewset(
+    PermissionRequiredMixin,
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     viewsets.GenericViewSet
 ):
     """ Viewset for Provisioning Admins write operations."""
     authentication_classes = [JwtAuthentication, SessionAuthentication]
-    permission_classes = [permissions.IsAuthenticated, IsInProvisioningAdminGroup]
+    permission_classes = [permissions.IsAuthenticated]
+    permission_required = constants.SUBSCRIPTIONS_PROVISIONING_ADMIN_ACCESS_PERMISSION
     lookup_field = 'uuid'
     lookup_url_kwarg = 'subscription_uuid'  # URL keyword for the lookup field
 
