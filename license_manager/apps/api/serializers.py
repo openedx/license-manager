@@ -68,7 +68,8 @@ class MinimalSubscriptionPlanSerializer(serializers.ModelSerializer):
             'days_until_expiration',
             'days_until_expiration_including_renewals',
             'is_locked_for_renewal_processing',
-            'should_auto_apply_licenses'
+            'should_auto_apply_licenses',
+            'created',
         ]
 
 
