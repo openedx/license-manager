@@ -939,6 +939,7 @@ def test_subscription_plan_create_non_staff_user_200(api_client, non_staff_user)
         "title",
         "uuid",
         "is_current",
+        "created",
     }
     assert response.json().keys() == expected_fields
 
@@ -1006,7 +1007,7 @@ def test_subscription_plan_provisioning_admins_list_non_staff_user_200(api_clien
         'is_active', 'is_revocation_cap_enabled', 'days_until_expiration',
         'days_until_expiration_including_renewals',
         'is_locked_for_renewal_processing', 'should_auto_apply_licenses',
-        'licenses', 'revocations', 'prior_renewals'
+        'licenses', 'revocations', 'prior_renewals', 'created',
     }
     for result in response.json()['results']:
         assert expected_result_keys.issubset(result.keys())
