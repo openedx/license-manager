@@ -33,11 +33,11 @@ billiard==4.2.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.34.158
+boto3==1.35.0
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.34.158
+botocore==1.35.0
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -249,9 +249,9 @@ edx-rest-api-client==5.7.1
     # via -r requirements/validation.txt
 edx-toggles==5.2.0
     # via -r requirements/validation.txt
-factory-boy==3.3.0
+factory-boy==3.3.1
     # via -r requirements/validation.txt
-faker==26.3.0
+faker==27.0.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -505,7 +505,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-simplejson==3.19.2
+simplejson==3.19.3
     # via -r requirements/validation.txt
 six==1.16.0
     # via
@@ -548,7 +548,7 @@ text-unidecode==1.3
     # via
     #   -r requirements/validation.txt
     #   python-slugify
-tomlkit==0.13.0
+tomlkit==0.13.2
     # via
     #   -r requirements/validation.txt
     #   pylint

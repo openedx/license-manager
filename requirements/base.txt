@@ -22,9 +22,9 @@ backoff==1.10.0
     #   analytics-python
 billiard==4.2.0
     # via celery
-boto3==1.34.158
+boto3==1.35.0
     # via django-ses
-botocore==1.34.158
+botocore==1.35.0
     # via
     #   boto3
     #   s3transfer
@@ -265,7 +265,7 @@ s3transfer==0.10.2
     # via boto3
 semantic-version==2.10.0
     # via edx-drf-extensions
-simplejson==3.19.2
+simplejson==3.19.3
     # via -r requirements/base.in
 six==1.16.0
     # via
