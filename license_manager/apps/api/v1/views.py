@@ -1355,25 +1355,48 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
 
         revocation_results = []
+        error_messages = []
 
         with transaction.atomic():
             for user_email in user_emails:
                 try:
-                    revocation_result = self._revoke_by_email_and_plan(user_email, subscription_plan)
+                    revocation_result = self._revoke_by_email_and_plan(
+                        user_email, subscription_plan)
+                    revocation_result['user_email'] = user_email
                     revocation_results.append(revocation_result)
                 except (LicenseNotFoundError, LicenseRevocationError) as exc:
                     error_message = f'{str(exc)}. user_email: {user_email}'
-                    error_response_status = utils.get_http_status_for_exception(exc)
-                    logger.error(f'{error_message}, error_response_status:{error_response_status}')
-                    break
+                    error_response_status = utils.get_http_status_for_exception(
+                        exc)
+                    error_object = {
+                        'error': error_message,
+                        'error_response_status': error_response_status,
+                        'user_email': user_email,
+                    }
+                    logger.error(error_object)
+                    error_messages.append(error_object)
 
-        if error_response_status:
-            return Response(error_message, status=error_response_status)
+        # Case 1: if all revocations failed; return only the error messages list
+        if error_response_status and not revocation_results:
+            return Response({
+                'error_messages': error_messages
+            }, status=error_response_status)
 
+        # Case 2: if all or few revocations succeded; return error messages list & the succeeeded revocations list
+        revocation_succeeded = []
         for revocation_result in revocation_results:
+            user_email = revocation_result.pop('user_email', None)
             execute_post_revocation_tasks(**revocation_result)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            revocation_succeeded.append({
+                'license_uuid': str(revocation_result['revoked_license'].uuid),
+                'original_status': str(revocation_result['original_status']),
+                'user_email': str(user_email)
+            })
+        results = {
+            'revocation_results': revocation_succeeded,
+            'error_messages': error_messages
+        }
+        return Response(data=results, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='revoke-all')
     def revoke_all(self, _, subscription_uuid=None):
@@ -1405,7 +1428,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                             status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         revoke_all_licenses_task.delay(subscription_uuid)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'])
     def overview(self, request, subscription_uuid=None):  # pylint: disable=unused-argument
