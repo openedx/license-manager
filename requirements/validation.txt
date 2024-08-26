@@ -41,12 +41,12 @@ billiard==4.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.35.4
+boto3==1.35.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.4
+botocore==1.35.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -284,7 +284,7 @@ edx-drf-extensions==10.3.0
     #   edx-rbac
 edx-i18n-tools==1.6.2
     # via -r requirements/validation.in
-edx-lint==5.3.7
+edx-lint==5.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -307,13 +307,13 @@ edx-toggles==5.2.0
     #   -r requirements/test.txt
 factory-boy==3.3.1
     # via -r requirements/test.txt
-faker==27.4.0
+faker==28.0.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
 freezegun==1.5.1
     # via -r requirements/test.txt
-idna==3.7
+idna==3.8
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

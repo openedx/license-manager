@@ -28,11 +28,11 @@ billiard==4.2.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.35.4
+boto3==1.35.5
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.35.4
+botocore==1.35.5
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -209,7 +209,7 @@ greenlet==3.0.3
     # via gevent
 gunicorn==23.0.0
     # via -r requirements/production.in
-idna==3.7
+idna==3.8
     # via
     #   -r requirements/base.txt
     #   requests

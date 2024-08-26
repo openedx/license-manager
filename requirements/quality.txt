@@ -32,11 +32,11 @@ billiard==4.2.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.35.4
+boto3==1.35.5
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.35.4
+botocore==1.35.5
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -204,7 +204,7 @@ edx-drf-extensions==10.3.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
-edx-lint==5.3.7
+edx-lint==5.4.0
     # via -r requirements/quality.in
 edx-opaque-keys==2.10.0
     # via
@@ -216,7 +216,7 @@ edx-rest-api-client==5.7.1
     # via -r requirements/base.txt
 edx-toggles==5.2.0
     # via -r requirements/base.txt
-idna==3.7
+idna==3.8
     # via
     #   -r requirements/base.txt
     #   requests
