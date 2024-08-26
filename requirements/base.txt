@@ -22,9 +22,9 @@ backoff==1.10.0
     #   analytics-python
 billiard==4.2.0
     # via celery
-boto3==1.35.4
+boto3==1.35.5
     # via django-ses
-botocore==1.35.4
+botocore==1.35.5
     # via
     #   boto3
     #   s3transfer
@@ -171,7 +171,7 @@ edx-rest-api-client==5.7.1
     # via -r requirements/base.in
 edx-toggles==5.2.0
     # via -r requirements/base.in
-idna==3.7
+idna==3.8
     # via requests
 inflection==0.5.1
     # via drf-spectacular
