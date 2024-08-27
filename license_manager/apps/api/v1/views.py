@@ -894,7 +894,11 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         """
         serializer_class = self.get_serializer_class()
         serializer = serializer_class(data=data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError:
+            logger.error("Received invalid input: %s", data)
+            raise
 
     def _trim_already_associated_emails(self, subscription_plan, user_emails):
         """
