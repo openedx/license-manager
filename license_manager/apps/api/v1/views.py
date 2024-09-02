@@ -1343,7 +1343,13 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             error_message = 'No SubscriptionPlan identified by {} exists'.format(
                 subscription_uuid,
             )
-            return Response(error_message, status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                'error_messages': [
+                    {'error': error_message}
+                ]
+            },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         user_emails = request.data.get('user_emails', [])
         if not user_emails:
@@ -1352,7 +1358,10 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         if len(user_emails) > subscription_plan.num_revocations_remaining:
             error_message = 'Plan does not have enough revocations remaining.'
-            return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error_messages': [
+                {'error': error_message}
+            ]
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         revocation_results = []
         error_messages = []
@@ -1396,7 +1405,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             'revocation_results': revocation_succeeded,
             'error_messages': error_messages
         }
-        return Response(data=results, status=status.HTTP_200_OK)
+        return Response(data=results, status=status.HTTP_207_MULTI_STATUS)
 
     @action(detail=False, methods=['post'], url_path='revoke-all')
     def revoke_all(self, _, subscription_uuid=None):
