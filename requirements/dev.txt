@@ -33,11 +33,11 @@ billiard==4.2.0
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.35.5
+boto3==1.35.10
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.35.5
+botocore==1.35.10
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -51,7 +51,7 @@ celery==5.4.0
     #   -r requirements/validation.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2024.7.4
+certifi==2024.8.30
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -251,7 +251,7 @@ edx-toggles==5.2.0
     # via -r requirements/validation.txt
 factory-boy==3.3.1
     # via -r requirements/validation.txt
-faker==28.0.0
+faker==28.1.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -351,7 +351,7 @@ path==16.14.0
     #   edx-i18n-tools
 pathlib2==2.3.7.post1
     # via -r requirements/validation.txt
-pbr==6.0.0
+pbr==6.1.0
     # via
     #   -r requirements/validation.txt
     #   stevedore
@@ -400,7 +400,7 @@ pyjwt[crypto]==2.9.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.2.6
+pylint==3.2.7
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -584,7 +584,7 @@ wheel==0.44.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-zipp==3.20.0
+zipp==3.20.1
     # via -r requirements/validation.txt
 
 # The following packages are considered to be unsafe in a requirements file:
