@@ -1358,9 +1358,10 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         if len(user_emails) > subscription_plan.num_revocations_remaining:
             error_message = 'Plan does not have enough revocations remaining.'
-            return Response({'error_messages': [
-                {'error': error_message}
-            ]
+            return Response({
+                'error_messages': [
+                    {'error': error_message}
+                ]
             }, status=status.HTTP_400_BAD_REQUEST)
 
         revocation_results = []
@@ -1389,7 +1390,9 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         if error_response_status and not revocation_results:
             return Response({
                 'error_messages': error_messages
-            }, status=error_response_status)
+            },
+                status=error_response_status
+            )
 
         # Case 2: if all or few revocations succeded; return error messages list & the succeeeded revocations list
         revocation_succeeded = []
@@ -1405,7 +1408,10 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             'revocation_results': revocation_succeeded,
             'error_messages': error_messages
         }
-        return Response(data=results, status=status.HTTP_207_MULTI_STATUS)
+        if not error_messages:
+            return Response(data=results, status=status.HTTP_200_OK)
+        else:
+            return Response(data=results, status=status.HTTP_207_MULTI_STATUS)
 
     @action(detail=False, methods=['post'], url_path='revoke-all')
     def revoke_all(self, _, subscription_uuid=None):
