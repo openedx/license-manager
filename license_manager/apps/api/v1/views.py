@@ -1312,19 +1312,35 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
 
         Response:
-            204 No Content - All revocations were successful.
-            400 Bad Request - Some error occurred when processing one of the revocations, no revocations
-                were committed. An error message is provided.
-            404 Not Found - No license exists in the plan for one of the given email addresses,
-                or the license is not in an assigned or activated state.
-                An error message is provided.
+            200 OK - All revocations were successful. Returns a list of successful revocations.
+            207 Multi-Status - Some revocations were successful, but others failed. Returns both successful and failed revocations.
+            400 Bad Request - An error occurred when processing the request (e.g., invalid data format).
+            404 Not Found - The subscription plan was not found.
 
-        Error Response Message:
-            "No license for email carol@example.com exists in plan {subscription_plan_uuid} "
-            "with a status in ['activated', 'assigned']"
+        Response Body:
+            {
+                "revocation_results": [
+                    {
+                        "license_uuid": "string",
+                        "original_status": "string",
+                        "user_email": "string"
+                    }
+                ],
+                "error_messages": [
+                    {
+                        "error": "string",
+                        "error_response_status": "integer",
+                        "user_email": "string"
+                    }
+                ]
+            }
 
-        The revocation of licenses is atomic: if an error occurs while processing any of the license revocations,
-        no status change is committed for any of the licenses.
+        The revocation process attempts to revoke all requested licenses. If any revocations fail, 
+        the successful revocations are still committed, and details of both successful and failed 
+        revocations are returned in the response.
+
+        If the number of requested revocations exceeds the remaining revocations for the plan, 
+        a 400 Bad Request response is returned without processing any revocations.
         """
         # to capture custom metrics
         custom_tags = {
