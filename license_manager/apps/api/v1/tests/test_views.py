@@ -3111,7 +3111,8 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(request_url, request_payload)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        expected_response_message = {'error_messages': [{'error': 'No SubscriptionPlan identified by {} exists'.format(non_existent_uuid)}]}
+        expected_response_message = {'error_messages': [
+            {'error': 'No SubscriptionPlan identified by {} exists'.format(non_existent_uuid)}]}
         self.assertEqual(expected_response_message, response.json())
         self.assertFalse(mock_revoke_license.called)
 
@@ -3178,10 +3179,10 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response_data = response.json()
         self.assertIn('revocation_results', response_data)
         self.assertIn('error_messages', response_data)
-        
+
         self.assertEqual(len(response_data['revocation_results']), 1)
         self.assertIsInstance(response_data['revocation_results'][0]['user_email'], str)
-        
+
         self.assertEqual(len(response_data['error_messages']), 1)
         self.assertIsInstance(response_data['error_messages'][0]['user_email'], str)
         self.assertEqual(response_data['error_messages'][0]['error'], expected_error_msg)

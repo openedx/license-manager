@@ -894,7 +894,11 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         """
         serializer_class = self.get_serializer_class()
         serializer = serializer_class(data=data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError:
+            logger.error("Received invalid input: %s", data)
+            raise
 
     def _trim_already_associated_emails(self, subscription_plan, user_emails):
         """
@@ -1313,7 +1317,8 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         Response:
             200 OK - All revocations were successful. Returns a list of successful revocations.
-            207 Multi-Status - Some revocations were successful, but others failed. Returns both successful and failed revocations.
+            207 Multi-Status - Some revocations were successful, but others failed.
+                Returns both successful and failed revocations.
             400 Bad Request - An error occurred when processing the request (e.g., invalid data format).
             404 Not Found - The subscription plan was not found.
 
@@ -1335,11 +1340,11 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                 ]
             }
 
-        The revocation process attempts to revoke all requested licenses. If any revocations fail, 
-        the successful revocations are still committed, and details of both successful and failed 
+        The revocation process attempts to revoke all requested licenses. If any revocations fail,
+        the successful revocations are still committed, and details of both successful and failed
         revocations are returned in the response.
 
-        If the number of requested revocations exceeds the remaining revocations for the plan, 
+        If the number of requested revocations exceeds the remaining revocations for the plan,
         a 400 Bad Request response is returned without processing any revocations.
         """
         # to capture custom metrics

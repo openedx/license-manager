@@ -91,6 +91,7 @@ class RenewalProcessingTests(TestCase):
             self.assertEqual(future_license.status, original_license.status)
             self.assertEqual(future_license.user_email, original_license.user_email)
             self.assertEqual(future_license.lms_user_id, original_license.lms_user_id)
+            self.assertEqual(future_license.activation_key, original_license.activation_key)
             if original_license.status == constants.ACTIVATED:
                 self.assertEqual(future_license.activation_date, expected_activation_datetime)
             self.assertEqual(future_license.assigned_date, NOW)
@@ -108,6 +109,7 @@ class RenewalProcessingTests(TestCase):
             LicenseFactory.create(
                 subscription_plan=prior_plan,
                 status=constants.ASSIGNED,
+                activation_key=uuid.uuid4(),
                 user_email='assigned_user_{}@example.com'.format(i)
             ) for i in range(5)
         ]
