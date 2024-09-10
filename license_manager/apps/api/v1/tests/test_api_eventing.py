@@ -159,7 +159,7 @@ class LicenseViewSetActionEventTests(LicenseViewSetActionMixin, EventTestCaseBas
         with mock.patch('license_manager.apps.subscriptions.models.track_event') as mock_revoke_track_event, \
                 mock.patch('license_manager.apps.subscriptions.event_utils.track_event') as mock_create_track_event:
             response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
-            assert response.status_code == status.HTTP_204_NO_CONTENT
+            assert response.status_code == status.HTTP_200_OK
 
             assert mock_revoke_track_event.call_count == 2
             assert mock_create_track_event.call_count == 2

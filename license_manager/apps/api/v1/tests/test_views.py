@@ -2931,7 +2931,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
 
         response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
 
-        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert response.status_code == status.HTTP_200_OK
         # Since alice has multiple licenses, we should only revoke her assigned one.
         mock_revoke_license.assert_has_calls([
             mock.call(alice_assigned_license),
@@ -2980,7 +2980,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         }
         # Verify that set_tags util was called with right arguments
         mock_set_tags_util.assert_called_with(tags_dict)
-        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert response.status_code == status.HTTP_200_OK
 
     @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
@@ -3012,7 +3012,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
 
         response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
 
-        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert response.status_code == status.HTTP_200_OK
         # Since alice has multiple licenses, we should only revoke the first one (which is arbitrarily
         # the one with the smallest uuid).
         mock_revoke_license.assert_has_calls([
@@ -3056,7 +3056,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         }
 
         response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
-        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert response.status_code == status.HTTP_200_OK
 
         revoked_emails = [call_arg[0][0].user_email for call_arg in mock_revoke_license.call_args_list]
         assert sorted(revoked_emails) == expected_revoked_emails
@@ -3111,7 +3111,8 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(request_url, request_payload)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        expected_response_message = 'No SubscriptionPlan identified by {} exists'.format(non_existent_uuid)
+        expected_response_message = {'unsuccessful_revocations': [
+            {'error': 'No SubscriptionPlan identified by {} exists'.format(non_existent_uuid)}]}
         self.assertEqual(expected_response_message, response.json())
         self.assertFalse(mock_revoke_license.called)
 
@@ -3142,12 +3143,14 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(request_url, request_payload)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        expected_response_message = 'Plan does not have enough revocations remaining.'
+        expected_response_message = {'unsuccessful_revocations': [
+            {'error': 'Plan does not have enough revocations remaining.'}]}
         self.assertEqual(expected_response_message, response.json())
         self.assertFalse(mock_revoke_license.called)
 
+    @mock.patch('license_manager.apps.api.v1.views.execute_post_revocation_tasks')
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
-    def test_bulk_revoke_license_not_found(self, mock_revoke_license):
+    def test_bulk_revoke_license_not_found(self, mock_revoke_license, mock_execute_post_revocation_tasks):  # pylint: disable=unused-argument
         """
         Test that calls to bulk_revoke fail with a 404 if the plan does not have enough
         revocations remaining.
@@ -3168,13 +3171,22 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         }
         response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
 
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_207_MULTI_STATUS
         expected_error_msg = (
             "No license for email bob@example.com exists in plan "
             "{} with a status in ['activated', 'assigned']. user_email: bob@example.com".format(
                 self.subscription_plan.uuid)
         )
-        self.assertEqual(expected_error_msg, response.json())
+        response_data = response.json()
+        self.assertIn('successful_revocations', response_data)
+        self.assertIn('unsuccessful_revocations', response_data)
+
+        self.assertEqual(len(response_data['successful_revocations']), 1)
+        self.assertIsInstance(response_data['successful_revocations'][0]['user_email'], str)
+
+        self.assertEqual(len(response_data['unsuccessful_revocations']), 1)
+        self.assertIsInstance(response_data['unsuccessful_revocations'][0]['user_email'], str)
+        self.assertEqual(response_data['unsuccessful_revocations'][0]['error'], expected_error_msg)
         mock_revoke_license.assert_called_once_with(alice_license)
 
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
@@ -3201,10 +3213,14 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        expected_error_msg = "Action: license revocation failed for license: {} because: {}".format(
-            alice_license.uuid,
-            'floor is lava. user_email: alice@example.com',
-        )
+        expected_error_msg = {'unsuccessful_revocations': [{
+            'error': "Action: license revocation failed for license: {} because: {}".format(
+                alice_license.uuid,
+                'floor is lava. user_email: alice@example.com',
+            ),
+            'error_response_status': 400,
+            'user_email': 'alice@example.com'
+        }]}
         self.assertEqual(expected_error_msg, response.json())
         mock_revoke_license.assert_called_once_with(alice_license)
 
@@ -3281,7 +3297,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         self.subscription_plan.save()
 
         response = self.api_client.post(self.bulk_revoke_license_url, {'user_emails': [self.test_email]})
-        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert response.status_code == status.HTTP_200_OK
         mock_revoke_course_enrollments_for_user_task.assert_called()
         if is_revocation_cap_enabled:
             mock_send_revocation_cap_notification_email_task.assert_called_with(
@@ -3342,7 +3358,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
 
         # Revoke the activated license and verify the counts change appropriately
         revoke_response = self.api_client.post(self.bulk_revoke_license_url, {'user_emails': [self.test_email]})
-        assert revoke_response.status_code == status.HTTP_204_NO_CONTENT
+        assert revoke_response.status_code == status.HTTP_200_OK
         mock_revoke_course_enrollments_for_user_task.assert_called()
 
         second_detail_response = _subscriptions_detail_request(

@@ -1316,19 +1316,36 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
 
         Response:
-            204 No Content - All revocations were successful.
-            400 Bad Request - Some error occurred when processing one of the revocations, no revocations
-                were committed. An error message is provided.
-            404 Not Found - No license exists in the plan for one of the given email addresses,
-                or the license is not in an assigned or activated state.
-                An error message is provided.
+            200 OK - All revocations were successful. Returns a list of successful revocations.
+            207 Multi-Status - Some revocations were successful, but others failed.
+                Returns both successful and failed revocations.
+            400 Bad Request - An error occurred when processing the request (e.g., invalid data format).
+            404 Not Found - The subscription plan was not found.
 
-        Error Response Message:
-            "No license for email carol@example.com exists in plan {subscription_plan_uuid} "
-            "with a status in ['activated', 'assigned']"
+        Response Body:
+            {
+                "successful_revocations": [
+                    {
+                        "license_uuid": "string",
+                        "original_status": "string",
+                        "user_email": "string"
+                    }
+                ],
+                "unsuccessful_revocations": [
+                    {
+                        "error": "string",
+                        "error_response_status": "integer",
+                        "user_email": "string"
+                    }
+                ]
+            }
 
-        The revocation of licenses is atomic: if an error occurs while processing any of the license revocations,
-        no status change is committed for any of the licenses.
+        The revocation process attempts to revoke all requested licenses. If any revocations fail,
+        the successful revocations are still committed, and details of both successful and failed
+        revocations are returned in the response.
+
+        If the number of requested revocations exceeds the remaining revocations for the plan,
+        a 400 Bad Request response is returned without processing any revocations.
         """
         # to capture custom metrics
         custom_tags = {
@@ -1347,7 +1364,13 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
             error_message = 'No SubscriptionPlan identified by {} exists'.format(
                 subscription_uuid,
             )
-            return Response(error_message, status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                'unsuccessful_revocations': [
+                    {'error': error_message}
+                ]
+            },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         user_emails = request.data.get('user_emails', [])
         if not user_emails:
@@ -1356,28 +1379,60 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         if len(user_emails) > subscription_plan.num_revocations_remaining:
             error_message = 'Plan does not have enough revocations remaining.'
-            return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                'unsuccessful_revocations': [
+                    {'error': error_message}
+                ]
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         revocation_results = []
+        error_messages = []
 
         with transaction.atomic():
             for user_email in user_emails:
                 try:
-                    revocation_result = self._revoke_by_email_and_plan(user_email, subscription_plan)
+                    revocation_result = self._revoke_by_email_and_plan(
+                        user_email, subscription_plan)
+                    revocation_result['user_email'] = user_email
                     revocation_results.append(revocation_result)
                 except (LicenseNotFoundError, LicenseRevocationError) as exc:
                     error_message = f'{str(exc)}. user_email: {user_email}'
-                    error_response_status = utils.get_http_status_for_exception(exc)
-                    logger.error(f'{error_message}, error_response_status:{error_response_status}')
-                    break
+                    error_response_status = utils.get_http_status_for_exception(
+                        exc)
+                    error_object = {
+                        'error': error_message,
+                        'error_response_status': error_response_status,
+                        'user_email': user_email,
+                    }
+                    logger.error(error_object)
+                    error_messages.append(error_object)
 
-        if error_response_status:
-            return Response(error_message, status=error_response_status)
+        # Case 1: if all revocations failed; return only the error messages list
+        if error_response_status and not revocation_results:
+            return Response({
+                'unsuccessful_revocations': error_messages
+            },
+                status=error_response_status
+            )
 
+        # Case 2: if all or few revocations succeded; return error messages list & the succeeeded revocations list
+        revocation_succeeded = []
         for revocation_result in revocation_results:
+            user_email = revocation_result.pop('user_email', None)
             execute_post_revocation_tasks(**revocation_result)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            revocation_succeeded.append({
+                'license_uuid': str(revocation_result['revoked_license'].uuid),
+                'original_status': str(revocation_result['original_status']),
+                'user_email': str(user_email)
+            })
+        results = {
+            'successful_revocations': revocation_succeeded,
+            'unsuccessful_revocations': error_messages
+        }
+        if not error_messages:
+            return Response(data=results, status=status.HTTP_200_OK)
+        else:
+            return Response(data=results, status=status.HTTP_207_MULTI_STATUS)
 
     @action(detail=False, methods=['post'], url_path='revoke-all')
     def revoke_all(self, _, subscription_uuid=None):
