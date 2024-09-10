@@ -3111,7 +3111,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(request_url, request_payload)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        expected_response_message = {'error_messages': [
+        expected_response_message = {'unsuccessful_revocations': [
             {'error': 'No SubscriptionPlan identified by {} exists'.format(non_existent_uuid)}]}
         self.assertEqual(expected_response_message, response.json())
         self.assertFalse(mock_revoke_license.called)
@@ -3143,7 +3143,8 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(request_url, request_payload)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        expected_response_message = {'error_messages': [{'error': 'Plan does not have enough revocations remaining.'}]}
+        expected_response_message = {'unsuccessful_revocations': [
+            {'error': 'Plan does not have enough revocations remaining.'}]}
         self.assertEqual(expected_response_message, response.json())
         self.assertFalse(mock_revoke_license.called)
 
@@ -3177,15 +3178,15 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
                 self.subscription_plan.uuid)
         )
         response_data = response.json()
-        self.assertIn('revocation_results', response_data)
-        self.assertIn('error_messages', response_data)
+        self.assertIn('successful_revocations', response_data)
+        self.assertIn('unsuccessful_revocations', response_data)
 
-        self.assertEqual(len(response_data['revocation_results']), 1)
-        self.assertIsInstance(response_data['revocation_results'][0]['user_email'], str)
+        self.assertEqual(len(response_data['successful_revocations']), 1)
+        self.assertIsInstance(response_data['successful_revocations'][0]['user_email'], str)
 
-        self.assertEqual(len(response_data['error_messages']), 1)
-        self.assertIsInstance(response_data['error_messages'][0]['user_email'], str)
-        self.assertEqual(response_data['error_messages'][0]['error'], expected_error_msg)
+        self.assertEqual(len(response_data['unsuccessful_revocations']), 1)
+        self.assertIsInstance(response_data['unsuccessful_revocations'][0]['user_email'], str)
+        self.assertEqual(response_data['unsuccessful_revocations'][0]['error'], expected_error_msg)
         mock_revoke_license.assert_called_once_with(alice_license)
 
     @mock.patch('license_manager.apps.api.v1.views.revoke_license')
@@ -3212,7 +3213,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         response = self.api_client.post(self.bulk_revoke_license_url, request_payload)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        expected_error_msg = {'error_messages': [{
+        expected_error_msg = {'unsuccessful_revocations': [{
             'error': "Action: license revocation failed for license: {} because: {}".format(
                 alice_license.uuid,
                 'floor is lava. user_email: alice@example.com',
@@ -3267,7 +3268,7 @@ class LicenseViewSetRevokeActionTests(LicenseViewSetActionMixin, TestCase):
         """
         self._setup_request_jwt(user=self.super_user)
         response = self.api_client.post(self.revoke_all_licenses_url, {})
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_204_NO_CONTENT
         mock_revoke_all_licenses_task.assert_called()
 
     @ddt.data(

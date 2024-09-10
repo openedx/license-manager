@@ -1324,14 +1324,14 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
 
         Response Body:
             {
-                "revocation_results": [
+                "successful_revocations": [
                     {
                         "license_uuid": "string",
                         "original_status": "string",
                         "user_email": "string"
                     }
                 ],
-                "error_messages": [
+                "unsuccessful_revocations": [
                     {
                         "error": "string",
                         "error_response_status": "integer",
@@ -1365,7 +1365,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                 subscription_uuid,
             )
             return Response({
-                'error_messages': [
+                'unsuccessful_revocations': [
                     {'error': error_message}
                 ]
             },
@@ -1380,7 +1380,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         if len(user_emails) > subscription_plan.num_revocations_remaining:
             error_message = 'Plan does not have enough revocations remaining.'
             return Response({
-                'error_messages': [
+                'unsuccessful_revocations': [
                     {'error': error_message}
                 ]
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -1410,7 +1410,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
         # Case 1: if all revocations failed; return only the error messages list
         if error_response_status and not revocation_results:
             return Response({
-                'error_messages': error_messages
+                'unsuccessful_revocations': error_messages
             },
                 status=error_response_status
             )
@@ -1426,8 +1426,8 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                 'user_email': str(user_email)
             })
         results = {
-            'revocation_results': revocation_succeeded,
-            'error_messages': error_messages
+            'successful_revocations': revocation_succeeded,
+            'unsuccessful_revocations': error_messages
         }
         if not error_messages:
             return Response(data=results, status=status.HTTP_200_OK)
@@ -1464,7 +1464,7 @@ class LicenseAdminViewSet(BaseLicenseViewSet):
                             status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         revoke_all_licenses_task.delay(subscription_uuid)
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
     def overview(self, request, subscription_uuid=None):  # pylint: disable=unused-argument
