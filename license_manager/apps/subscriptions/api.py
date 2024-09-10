@@ -167,7 +167,7 @@ def _renew_all_licenses(original_licenses, future_plan, is_auto_renewed):
         original_license.renewed_to = future_license
     License.bulk_update(
         future_licenses,
-        ['status', 'user_email', 'lms_user_id', 'activation_date', 'assigned_date'],
+        ['status', 'user_email', 'lms_user_id', 'activation_key', 'activation_date', 'assigned_date'],
     )
     License.bulk_update(
         original_licenses,
