@@ -22,9 +22,9 @@ backoff==1.10.0
     #   analytics-python
 billiard==4.2.0
     # via celery
-boto3==1.35.5
+boto3==1.35.19
     # via django-ses
-botocore==1.35.5
+botocore==1.35.19
     # via
     #   boto3
     #   s3transfer
@@ -33,9 +33,9 @@ celery==5.4.0
     #   -r requirements/base.in
     #   django-celery-results
     #   edx-celeryutils
-certifi==2024.7.4
+certifi==2024.8.30
     # via requests
-cffi==1.17.0
+cffi==1.17.1
     # via
     #   cryptography
     #   pynacl
@@ -57,7 +57,7 @@ click-repl==0.3.0
     # via celery
 code-annotations==1.8.0
     # via edx-toggles
-cryptography==43.0.0
+cryptography==43.0.1
     # via
     #   pyjwt
     #   social-auth-core
@@ -65,7 +65,7 @@ defusedxml==0.8.0rc2
     # via
     #   python3-openid
     #   social-auth-core
-django==4.2.15
+django==4.2.16
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.in
@@ -112,7 +112,7 @@ django-filter==24.3
     # via -r requirements/base.in
 django-log-request-id==2.1.0
     # via -r requirements/base.in
-django-model-utils==4.5.1
+django-model-utils==5.0.0
     # via
     #   -r requirements/base.in
     #   edx-celeryutils
@@ -147,7 +147,7 @@ drf-nested-routers==0.94.1
     # via -r requirements/base.in
 drf-spectacular==0.27.2
     # via -r requirements/base.in
-edx-auth-backends==4.3.0
+edx-auth-backends==4.4.0
     # via -r requirements/base.in
 edx-braze-client==0.2.5
     # via -r requirements/base.in
@@ -159,19 +159,19 @@ edx-django-utils==5.15.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==10.3.0
+edx-drf-extensions==10.4.0
     # via
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys==2.10.0
+edx-opaque-keys==2.11.0
     # via edx-drf-extensions
 edx-rbac==1.10.0
     # via -r requirements/base.in
-edx-rest-api-client==5.7.1
+edx-rest-api-client==6.0.0
     # via -r requirements/base.in
 edx-toggles==5.2.0
     # via -r requirements/base.in
-idna==3.8
+idna==3.10
     # via requests
 inflection==0.5.1
     # via drf-spectacular
@@ -187,7 +187,7 @@ jsonschema==4.23.0
     # via drf-spectacular
 jsonschema-specifications==2023.12.1
     # via jsonschema
-kombu==5.4.0
+kombu==5.4.1
     # via celery
 markupsafe==2.1.5
     # via jinja2
@@ -201,7 +201,7 @@ oauthlib==3.2.2
     # via
     #   requests-oauthlib
     #   social-auth-core
-pbr==6.0.0
+pbr==6.1.0
     # via stevedore
 ply==3.11
     # via djangoql
@@ -231,7 +231,7 @@ python-slugify==8.0.4
     # via code-annotations
 python3-openid==3.2.0
     # via social-auth-core
-pytz==2024.1
+pytz==2024.2
     # via -r requirements/base.in
 pyyaml==6.0.2
     # via
@@ -249,7 +249,6 @@ requests==2.32.3
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   requests-oauthlib
-    #   slumber
     #   social-auth-core
 requests-oauthlib==2.0.0
     # via social-auth-core
@@ -257,7 +256,7 @@ rpds-py==0.20.0
     # via
     #   jsonschema
     #   referencing
-rules==3.4
+rules==3.5
     # via -r requirements/base.in
 s3transfer==0.10.2
     # via boto3
@@ -271,8 +270,6 @@ six==1.16.0
     #   edx-auth-backends
     #   edx-rbac
     #   python-dateutil
-slumber==0.7.1
-    # via edx-rest-api-client
 social-auth-app-django==5.4.2
     # via edx-auth-backends
 social-auth-core==4.5.4
@@ -294,7 +291,7 @@ tzdata==2024.1
     # via celery
 uritemplate==4.1.1
     # via drf-spectacular
-urllib3==2.2.2
+urllib3==2.2.3
     # via
     #   botocore
     #   requests
@@ -305,7 +302,7 @@ vine==5.1.0
     #   kombu
 wcwidth==0.2.13
     # via prompt-toolkit
-zipp==3.20.0
+zipp==3.20.2
     # via -r requirements/base.in
 
 # The following packages are considered to be unsafe in a requirements file:
