@@ -28,11 +28,11 @@ billiard==4.2.0
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.35.5
+boto3==1.35.19
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.35.5
+botocore==1.35.19
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -42,11 +42,11 @@ celery==5.4.0
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2024.7.4
+certifi==2024.8.30
     # via
     #   -r requirements/base.txt
     #   requests
-cffi==1.17.0
+cffi==1.17.1
     # via
     #   -r requirements/base.txt
     #   cryptography
@@ -80,7 +80,7 @@ code-annotations==1.8.0
     # via
     #   -r requirements/base.txt
     #   edx-toggles
-cryptography==43.0.0
+cryptography==43.0.1
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -90,7 +90,7 @@ defusedxml==0.8.0rc2
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-django==4.2.15
+django==4.2.16
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -138,7 +138,7 @@ django-filter==24.3
     # via -r requirements/base.txt
 django-log-request-id==2.1.0
     # via -r requirements/base.txt
-django-model-utils==4.5.1
+django-model-utils==5.0.0
     # via
     #   -r requirements/base.txt
     #   edx-celeryutils
@@ -177,7 +177,7 @@ drf-nested-routers==0.94.1
     # via -r requirements/base.txt
 drf-spectacular==0.27.2
     # via -r requirements/base.txt
-edx-auth-backends==4.3.0
+edx-auth-backends==4.4.0
     # via -r requirements/base.txt
 edx-braze-client==0.2.5
     # via -r requirements/base.txt
@@ -189,27 +189,27 @@ edx-django-utils==5.15.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==10.3.0
+edx-drf-extensions==10.4.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
-edx-opaque-keys==2.10.0
+edx-opaque-keys==2.11.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
 edx-rbac==1.10.0
     # via -r requirements/base.txt
-edx-rest-api-client==5.7.1
+edx-rest-api-client==6.0.0
     # via -r requirements/base.txt
 edx-toggles==5.2.0
     # via -r requirements/base.txt
 gevent==24.2.1
     # via -r requirements/production.in
-greenlet==3.0.3
+greenlet==3.1.0
     # via gevent
 gunicorn==23.0.0
     # via -r requirements/production.in
-idna==3.8
+idna==3.10
     # via
     #   -r requirements/base.txt
     #   requests
@@ -238,7 +238,7 @@ jsonschema-specifications==2023.12.1
     # via
     #   -r requirements/base.txt
     #   jsonschema
-kombu==5.4.0
+kombu==5.4.1
     # via
     #   -r requirements/base.txt
     #   celery
@@ -263,7 +263,7 @@ oauthlib==3.2.2
     #   social-auth-core
 packaging==24.1
     # via gunicorn
-pbr==6.0.0
+pbr==6.1.0
     # via
     #   -r requirements/base.txt
     #   stevedore
@@ -317,7 +317,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-pytz==2024.1
+pytz==2024.2
     # via -r requirements/base.txt
 pyyaml==6.0.2
     # via
@@ -339,7 +339,6 @@ requests==2.32.3
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   requests-oauthlib
-    #   slumber
     #   social-auth-core
 requests-oauthlib==2.0.0
     # via
@@ -350,7 +349,7 @@ rpds-py==0.20.0
     #   -r requirements/base.txt
     #   jsonschema
     #   referencing
-rules==3.4
+rules==3.5
     # via -r requirements/base.txt
 s3transfer==0.10.2
     # via
@@ -369,10 +368,6 @@ six==1.16.0
     #   edx-auth-backends
     #   edx-rbac
     #   python-dateutil
-slumber==0.7.1
-    # via
-    #   -r requirements/base.txt
-    #   edx-rest-api-client
 social-auth-app-django==5.4.2
     # via
     #   -r requirements/base.txt
@@ -408,7 +403,7 @@ uritemplate==4.1.1
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
-urllib3==2.2.2
+urllib3==2.2.3
     # via
     #   -r requirements/base.txt
     #   botocore
@@ -423,11 +418,11 @@ wcwidth==0.2.13
     # via
     #   -r requirements/base.txt
     #   prompt-toolkit
-zipp==3.20.0
+zipp==3.20.2
     # via -r requirements/base.txt
 zope-event==5.0
     # via gevent
-zope-interface==7.0.1
+zope-interface==7.0.3
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
