@@ -371,6 +371,10 @@ class CustomerAgreementSerializer(MinimalCustomerAgreementSerializer):
         model = CustomerAgreement
         fields = MinimalCustomerAgreementSerializer.Meta.fields + [
             'subscriptions',
+            'has_custom_license_expiration_messaging',
+            'expired_subscription_modal_messaging',
+            'hyper_link_text_for_expired_modal',
+            'url_for_expired_modal',
         ]
 
     @property
