@@ -24,15 +24,15 @@ backoff==1.10.0
     # via
     #   -r requirements/base.txt
     #   analytics-python
-billiard==4.2.0
+billiard==4.2.1
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.35.19
+boto3==1.35.24
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.35.19
+botocore==1.35.24
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -205,7 +205,7 @@ edx-toggles==5.2.0
     # via -r requirements/base.txt
 gevent==24.2.1
     # via -r requirements/production.in
-greenlet==3.1.0
+greenlet==3.1.1
     # via gevent
 gunicorn==23.0.0
     # via -r requirements/production.in
@@ -238,7 +238,7 @@ jsonschema-specifications==2023.12.1
     # via
     #   -r requirements/base.txt
     #   jsonschema
-kombu==5.4.1
+kombu==5.4.2
     # via
     #   -r requirements/base.txt
     #   celery
@@ -293,7 +293,7 @@ pyjwt[crypto]==2.9.0
     #   social-auth-core
 pymemcache==4.0.0
     # via -r requirements/production.in
-pymongo==4.8.0
+pymongo==4.9.1
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -399,6 +399,7 @@ tzdata==2024.1
     # via
     #   -r requirements/base.txt
     #   celery
+    #   kombu
 uritemplate==4.1.1
     # via
     #   -r requirements/base.txt
