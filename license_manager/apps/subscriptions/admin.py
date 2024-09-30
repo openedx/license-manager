@@ -416,7 +416,11 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'default_enterprise_catalog_uuid',
         'disable_expiration_notifications',
         'license_duration_before_purge',
-        'disable_onboarding_notifications'
+        'disable_onboarding_notifications',
+        'has_custom_license_expiration_messaging',
+        'expired_subscription_modal_messaging',
+        'hyper_link_text_for_expired_modal',
+        'url_for_expired_modal',
     )
     custom_fields = ('subscription_for_auto_applied_licenses',)
 
