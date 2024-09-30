@@ -237,9 +237,15 @@ endpoints:
                   notify_users:
                     description: "Send license assignment email or not."
                     type: "boolean"
-        responses: *responses
+        responses:
+          <<: *responses
+          423:
+            description: "Locked"
         x-amazon-apigateway-integration:
-          responses: *apigateway_responses
+          responses:
+            <<: *apigateway_responses
+            423:
+              statusCode: "423"
           httpMethod: "POST"
           type: "http"
           requestParameters:
