@@ -15,7 +15,7 @@ asgiref==3.8.1
     #   -r requirements/validation.txt
     #   django
     #   django-cors-headers
-astroid==3.3.3
+astroid==3.3.4
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -33,11 +33,11 @@ billiard==4.2.1
     # via
     #   -r requirements/validation.txt
     #   celery
-boto3==1.35.24
+boto3==1.35.29
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.35.24
+botocore==1.35.29
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -120,7 +120,7 @@ diff-cover==4.0.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/dev.in
-dill==0.3.8
+dill==0.3.9
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -251,7 +251,7 @@ edx-toggles==5.2.0
     # via -r requirements/validation.txt
 factory-boy==3.3.1
     # via -r requirements/validation.txt
-faker==29.0.0
+faker==30.0.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -333,7 +333,7 @@ more-itertools==10.5.0
     # via inflect
 mysqlclient==2.2.4
     # via -r requirements/validation.txt
-newrelic==9.13.0
+newrelic==10.0.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -379,7 +379,7 @@ polib==1.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.48
     # via
     #   -r requirements/validation.txt
     #   click-repl
@@ -405,7 +405,7 @@ pyjwt[crypto]==2.9.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.0
+pylint==3.3.1
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -433,7 +433,7 @@ pynacl==1.5.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
-pyproject-hooks==1.1.0
+pyproject-hooks==1.2.0
     # via
     #   -r requirements/pip-tools.txt
     #   build
@@ -473,7 +473,7 @@ pyyaml==6.0.2
     #   code-annotations
     #   drf-spectacular
     #   edx-i18n-tools
-redis==5.0.8
+redis==5.1.0
     # via -r requirements/validation.txt
 referencing==0.35.1
     # via
@@ -557,7 +557,7 @@ typing-extensions==4.12.2
     #   -r requirements/validation.txt
     #   edx-opaque-keys
     #   typeguard
-tzdata==2024.1
+tzdata==2024.2
     # via
     #   -r requirements/validation.txt
     #   celery

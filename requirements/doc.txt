@@ -19,7 +19,7 @@ asgiref==3.8.1
     #   -r requirements/test.txt
     #   django
     #   django-cors-headers
-astroid==3.3.3
+astroid==3.3.4
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -43,11 +43,11 @@ billiard==4.2.1
     # via
     #   -r requirements/test.txt
     #   celery
-boto3==1.35.24
+boto3==1.35.29
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.24
+botocore==1.35.29
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -118,7 +118,7 @@ defusedxml==0.8.0rc2
     #   -r requirements/test.txt
     #   python3-openid
     #   social-auth-core
-dill==0.3.8
+dill==0.3.9
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -250,7 +250,7 @@ edx-toggles==5.2.0
     # via -r requirements/test.txt
 factory-boy==3.3.1
     # via -r requirements/test.txt
-faker==29.0.0
+faker==30.0.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -314,7 +314,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.4
     # via -r requirements/test.txt
-newrelic==9.13.0
+newrelic==10.0.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -347,7 +347,7 @@ ply==3.11
     # via
     #   -r requirements/test.txt
     #   djangoql
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.48
     # via
     #   -r requirements/test.txt
     #   click-repl
@@ -376,7 +376,7 @@ pyjwt[crypto]==2.9.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.0
+pylint==3.3.1
     # via
     #   -r requirements/test.txt
     #   edx-lint
@@ -438,7 +438,7 @@ pyyaml==6.0.2
     #   drf-spectacular
 readme-renderer==44.0
     # via -r requirements/doc.in
-redis==5.0.8
+redis==5.1.0
     # via -r requirements/test.txt
 referencing==0.35.1
     # via
@@ -541,7 +541,7 @@ typing-extensions==4.12.2
     #   -r requirements/test.txt
     #   edx-opaque-keys
     #   pydata-sphinx-theme
-tzdata==2024.1
+tzdata==2024.2
     # via
     #   -r requirements/test.txt
     #   celery
