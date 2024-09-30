@@ -15,7 +15,7 @@ asgiref==3.8.1
     #   -r requirements/base.txt
     #   django
     #   django-cors-headers
-astroid==3.3.3
+astroid==3.3.4
     # via
     #   pylint
     #   pylint-celery
@@ -32,11 +32,11 @@ billiard==4.2.1
     # via
     #   -r requirements/base.txt
     #   celery
-boto3==1.35.24
+boto3==1.35.29
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.35.24
+botocore==1.35.29
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -99,7 +99,7 @@ defusedxml==0.8.0rc2
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-dill==0.3.8
+dill==0.3.9
     # via pylint
 django==4.2.16
     # via
@@ -265,7 +265,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.4
     # via -r requirements/base.txt
-newrelic==9.13.0
+newrelic==10.0.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -284,7 +284,7 @@ ply==3.11
     # via
     #   -r requirements/base.txt
     #   djangoql
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.48
     # via
     #   -r requirements/base.txt
     #   click-repl
@@ -308,7 +308,7 @@ pyjwt[crypto]==2.9.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.0
+pylint==3.3.1
     # via
     #   edx-lint
     #   pylint-celery
@@ -351,7 +351,7 @@ pyyaml==6.0.2
     #   -r requirements/base.txt
     #   code-annotations
     #   drf-spectacular
-redis==5.0.8
+redis==5.1.0
     # via -r requirements/base.txt
 referencing==0.35.1
     # via
@@ -426,7 +426,7 @@ typing-extensions==4.12.2
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
-tzdata==2024.1
+tzdata==2024.2
     # via
     #   -r requirements/base.txt
     #   celery
