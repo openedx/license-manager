@@ -354,6 +354,10 @@ class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
             'net_days_until_expiration',
             'subscription_for_auto_applied_licenses',
             'available_subscription_catalogs',
+            'has_custom_license_expiration_messaging',
+            'expired_subscription_modal_messaging',
+            'hyper_link_text_for_expired_modal',
+            'url_for_expired_modal',
         ]
 
     def get_subscription_for_auto_applied_licenses(self, obj):
@@ -371,10 +375,6 @@ class CustomerAgreementSerializer(MinimalCustomerAgreementSerializer):
         model = CustomerAgreement
         fields = MinimalCustomerAgreementSerializer.Meta.fields + [
             'subscriptions',
-            'has_custom_license_expiration_messaging',
-            'expired_subscription_modal_messaging',
-            'hyper_link_text_for_expired_modal',
-            'url_for_expired_modal',
         ]
 
     @property
