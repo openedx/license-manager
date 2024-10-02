@@ -358,6 +358,7 @@ class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
             'expired_subscription_modal_messaging',
             'hyper_link_text_for_expired_modal',
             'url_for_expired_modal',
+            'enable_auto_applied_subscriptions_with_universal_link'
         ]
 
     def get_subscription_for_auto_applied_licenses(self, obj):

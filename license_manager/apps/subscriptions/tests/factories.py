@@ -54,6 +54,7 @@ class CustomerAgreementFactory(factory.django.DjangoModelFactory):
     default_enterprise_catalog_uuid = factory.LazyFunction(uuid4)
     enterprise_customer_name = factory.LazyAttribute(lambda x: FAKER.company())
     disable_onboarding_notifications = False
+    enable_auto_applied_subscriptions_with_universal_link = False
 
 
 class PlanTypeFactory(factory.django.DjangoModelFactory):
