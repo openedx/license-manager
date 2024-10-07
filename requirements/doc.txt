@@ -19,7 +19,7 @@ asgiref==3.8.1
     #   -r requirements/test.txt
     #   django
     #   django-cors-headers
-astroid==3.3.4
+astroid==3.3.5
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -43,11 +43,11 @@ billiard==4.2.1
     # via
     #   -r requirements/test.txt
     #   celery
-boto3==1.35.29
+boto3==1.35.34
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.29
+botocore==1.35.34
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -177,7 +177,7 @@ django-model-utils==5.0.0
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.1.1
+django-ses==4.2.0
     # via -r requirements/test.txt
 django-simple-history==3.7.0
     # via -r requirements/test.txt
@@ -199,7 +199,7 @@ djangorestframework==3.15.2
     #   edx-drf-extensions
 djangorestframework-csv==3.0.2
     # via -r requirements/test.txt
-dnspython==2.6.1
+dnspython==2.7.0
     # via
     #   -r requirements/test.txt
     #   pymongo
@@ -226,7 +226,7 @@ edx-braze-client==0.2.5
     # via -r requirements/test.txt
 edx-celeryutils==1.3.0
     # via -r requirements/test.txt
-edx-django-utils==5.15.0
+edx-django-utils==5.16.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -250,7 +250,7 @@ edx-toggles==5.2.0
     # via -r requirements/test.txt
 factory-boy==3.3.1
     # via -r requirements/test.txt
-faker==30.0.0
+faker==30.1.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -396,7 +396,7 @@ pylint-plugin-utils==0.8.2
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.9.1
+pymongo==4.10.1
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
@@ -438,7 +438,7 @@ pyyaml==6.0.2
     #   drf-spectacular
 readme-renderer==44.0
     # via -r requirements/doc.in
-redis==5.1.0
+redis==5.1.1
     # via -r requirements/test.txt
 referencing==0.35.1
     # via
@@ -540,6 +540,7 @@ typing-extensions==4.12.2
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
+    #   faker
     #   pydata-sphinx-theme
 tzdata==2024.2
     # via
