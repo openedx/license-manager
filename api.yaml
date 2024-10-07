@@ -13,6 +13,8 @@ apigateway_responses:
     statusCode: "403"
   "404":
     statusCode: "404"
+  "423":
+    statusCode: "423"
   "429":
     statusCode: "429"
   "500":
@@ -92,6 +94,8 @@ responses:
     description: Forbidden
   "404":
     description: Not Found
+  "423":
+    description: Locked
   "429":
     description: Too Many Requests
   "500":
@@ -224,6 +228,8 @@ endpoints:
             description: Forbidden
           "404":
             description: Not Found
+          "423":
+            description: Locked
           "429":
             description: Too Many Requests
           "500":
@@ -240,6 +246,8 @@ endpoints:
               statusCode: "403"
             "404":
               statusCode: "404"
+            "423":
+              statusCode: "423"
             "429":
               statusCode: "429"
             "500":
@@ -380,6 +388,8 @@ endpoints:
             description: Forbidden
           "404":
             description: Not Found
+          "423":
+            description: Locked
           "429":
             description: Too Many Requests
           "500":
@@ -396,6 +406,8 @@ endpoints:
               statusCode: "403"
             "404":
               statusCode: "404"
+            "423":
+              statusCode: "423"
             "429":
               statusCode: "429"
             "500":
