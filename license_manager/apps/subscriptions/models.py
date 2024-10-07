@@ -178,6 +178,15 @@ class CustomerAgreement(TimeStampedModel):
         )
     )
 
+    enable_auto_applied_subscriptions_with_universal_link = models.BooleanField(
+        default=False,
+        help_text=_(
+            "By default, auto-applied subscriptions are only granted when learners join their enterprise via SSO, "
+            "checking this box will enable subscription licenses to be applied when a learner joins the enterprise via "
+            "Universal link as well"
+        )
+    )
+
     history = HistoricalRecords()
 
     @property
@@ -596,6 +605,7 @@ class SubscriptionPlan(TimeStampedModel):
 
         num_revocations_allowed = ceil(self.num_licenses * (self.revoke_max_percentage / 100))
         return num_revocations_allowed - self.num_revocations_applied
+
     num_revocations_remaining.fget.short_description = "Number of Revocations Remaining"
 
     @property
@@ -1036,6 +1046,7 @@ class License(TimeStampedModel):
     .. pii_types: id,email_address
     .. pii_retirement: local_api
     """
+
     class Meta:
         indexes = [
             models.Index(fields=["subscription_plan", "status"], name="subscription_plan_status_idx"),

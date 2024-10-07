@@ -19,6 +19,7 @@ from license_manager.apps.subscriptions.constants import (
     MAX_NUM_LICENSES,
     MIN_NUM_LICENSES,
     SubscriptionPlanChangeReasonChoices,
+    SubscriptionPlanShouldAutoApplyLicensesChoices,
 )
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
@@ -40,6 +41,14 @@ class SubscriptionPlanForm(forms.ModelForm):
     """
     Form used for the SubscriptionPlan admin class.
     """
+
+    should_auto_apply_licenses = forms.ChoiceField(
+        choices=SubscriptionPlanShouldAutoApplyLicensesChoices.CHOICES,
+        required=False,
+        label="Should auto apply licenses",
+        help_text="Whether licenses from this Subscription Plan should be auto applied."
+    )
+
     # Extra form field to specify the number of licenses to be associated with the subscription plan
     num_licenses = forms.IntegerField(
         label="Number of Licenses",
@@ -276,15 +285,15 @@ class CustomerAgreementAdminForm(forms.ModelForm):
             start_date__lte=now,
             expiration_date__gte=now
         )
-
         current_plan = instance.auto_applicable_subscription
-
         empty_choice = ('', '------')
         choices = [empty_choice] + [(plan.uuid, plan.title) for plan in active_plans]
         choice_field = forms.ChoiceField(
             choices=choices,
             required=False,
-            initial=empty_choice if not current_plan else (current_plan.uuid, current_plan.title)
+            initial=empty_choice if not current_plan else (current_plan.uuid, current_plan.title),
+            help_text="The subscription plan to be associated with auto apply licenses. Selecting a license"
+            " will automatically enable the \"Should auto apply licenses\" field on the subscription plan"
         )
         self.fields['subscription_for_auto_applied_licenses'] = choice_field
 
