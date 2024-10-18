@@ -48,6 +48,7 @@ from license_manager.apps.subscriptions.event_utils import (
     track_event,
     track_license_changes,
 )
+from license_manager.apps.subscriptions.sanitize import sanitize_html
 from license_manager.apps.subscriptions.utils import (
     days_until,
     get_license_activation_link,
@@ -150,8 +151,16 @@ class CustomerAgreement(TimeStampedModel):
         )
     )
 
-    expired_subscription_modal_messaging = models.CharField(
+    modal_header_text = models.CharField(
         max_length=512,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The bold text that will appear as the header in the expiration modal."
+        )
+    )
+
+    expired_subscription_modal_messaging = models.TextField(
         blank=True,
         null=True,
         help_text=_(
@@ -175,6 +184,24 @@ class CustomerAgreement(TimeStampedModel):
         null=True,
         help_text=_(
             "The underlying url that will be embedded as a hyperlink at the end of the custom expiration modal."
+        )
+    )
+
+    button_label_in_modal = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The text that will appear as on the button in the expiration modal"
+        )
+    )
+
+    url_for_button_in_modal = models.CharField(
+        max_length=512,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The URL that should underly the sole button in the expiration modal"
         )
     )
 
@@ -237,54 +264,59 @@ class CustomerAgreement(TimeStampedModel):
         verbose_name_plural = _("Customer Agreements")
 
     def clean(self):
-        # Check if custom messaging is enabled and messaging field is blank
+        """
+        Custom clean method to validate fields based on the 'Has Custom License Expiration Messaging' flag.
+        """
+        errors = {}
+
+        # Sanitize the expired_subscription_modal_messaging field
+        if self.expired_subscription_modal_messaging:
+            self.expired_subscription_modal_messaging = sanitize_html(self.expired_subscription_modal_messaging)
+
+        error_message = "This field cannot be blank if 'Has Custom License Expiration Messaging' is checked."
+        # Validate fields when custom messaging is enabled
         if self.has_custom_license_expiration_messaging:
-            if not self.expired_subscription_modal_messaging:
-                raise ValidationError({
-                    "expired_subscription_modal_messaging": (
-                        "This field cannot be blank if 'Has Custom License Expiration Messaging' is checked."
-                    )
-                })
+            required_fields = {
+                "modal_header_text": error_message,
+                "expired_subscription_modal_messaging": error_message,
+                "button_label_in_modal": error_message,
+                "url_for_button_in_modal": error_message,
+                "hyper_link_text_for_expired_modal": error_message,
+                "url_for_expired_modal": error_message
+            }
 
-        # Validate that URL field is not blank if hyperlink text is provided
-        if self.hyper_link_text_for_expired_modal and not self.url_for_expired_modal:
-            raise ValidationError({
-                "url_for_expired_modal": (
-                    "This field cannot be blank if 'Hyper Link Text for Expired Modal' has values."
-                )
-            })
-
-        # Validate that hyperlink text is not blank if URL is provided
-        if self.url_for_expired_modal and not self.hyper_link_text_for_expired_modal:
-            raise ValidationError({
-                "hyper_link_text_for_expired_modal": (
-                    "This field cannot be blank if 'URL for Expired Modal' has values."
-                )
-            })
+            # Check if any required fields are missing
+            for field, error_message in required_fields.items():
+                if not getattr(self, field):
+                    errors[field] = error_message
 
         # Ensure all fields are blank if custom messaging is disabled
         if not self.has_custom_license_expiration_messaging:
-            if any([
-                self.expired_subscription_modal_messaging,
-                self.hyper_link_text_for_expired_modal,
-                self.url_for_expired_modal
-            ]):
+            fields_to_check = [
+                "modal_header_text",
+                "expired_subscription_modal_messaging",
+                "button_label_in_modal",
+                "url_for_button_in_modal",
+                "hyper_link_text_for_expired_modal",
+                "url_for_expired_modal",
+            ]
+            if any(getattr(self, field) for field in fields_to_check):
                 error_msg = "This field must be blank if 'Has Custom License Expiration Messaging' is unchecked."
-                raise ValidationError({
-                    "expired_subscription_modal_messaging": error_msg,
-                    "hyper_link_text_for_expired_modal": error_msg,
-                    "url_for_expired_modal": error_msg,
-                })
+                errors = {field: error_msg for field in fields_to_check}
 
-        def __str__(self):
-            """
-            Return human-readable string representation.
-            """
-            return (
-                "<CustomerAgreement: '{}'>".format(
-                    self.enterprise_customer_slug or self.enterprise_customer_name
-                )
+        # Raise ValidationError if there are any errors
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return (
+            "<CustomerAgreement: '{}'>".format(
+                self.enterprise_customer_slug or self.enterprise_customer_name
             )
+        )
 
 
 class PlanType(models.Model):

@@ -417,11 +417,14 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'disable_expiration_notifications',
         'license_duration_before_purge',
         'disable_onboarding_notifications',
+        'enable_auto_applied_subscriptions_with_universal_link',
         'has_custom_license_expiration_messaging',
+        'modal_header_text',
         'expired_subscription_modal_messaging',
+        'button_label_in_modal',
+        'url_for_button_in_modal',
         'hyper_link_text_for_expired_modal',
-        'url_for_expired_modal',
-        'enable_auto_applied_subscriptions_with_universal_link'
+        'url_for_expired_modal'
     )
     custom_fields = ('subscription_for_auto_applied_licenses',)
 
