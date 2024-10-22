@@ -423,8 +423,6 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'expired_subscription_modal_messaging',
         'button_label_in_modal',
         'url_for_button_in_modal',
-        'hyper_link_text_for_expired_modal',
-        'url_for_expired_modal'
     )
     custom_fields = ('subscription_for_auto_applied_licenses',)
 
