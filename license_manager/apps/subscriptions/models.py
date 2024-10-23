@@ -169,24 +169,6 @@ class CustomerAgreement(TimeStampedModel):
         )
     )
 
-    hyper_link_text_for_expired_modal = models.CharField(
-        max_length=255,
-        blank=True,
-        null=True,
-        help_text=_(
-            "The display text for the link that will be embedded at the end of the custom expiration modal."
-        )
-    )
-
-    url_for_expired_modal = models.CharField(
-        max_length=512,
-        blank=True,
-        null=True,
-        help_text=_(
-            "The underlying url that will be embedded as a hyperlink at the end of the custom expiration modal."
-        )
-    )
-
     button_label_in_modal = models.CharField(
         max_length=255,
         blank=True,
@@ -281,8 +263,6 @@ class CustomerAgreement(TimeStampedModel):
                 "expired_subscription_modal_messaging": error_message,
                 "button_label_in_modal": error_message,
                 "url_for_button_in_modal": error_message,
-                "hyper_link_text_for_expired_modal": error_message,
-                "url_for_expired_modal": error_message
             }
 
             # Check if any required fields are missing
@@ -297,8 +277,6 @@ class CustomerAgreement(TimeStampedModel):
                 "expired_subscription_modal_messaging",
                 "button_label_in_modal",
                 "url_for_button_in_modal",
-                "hyper_link_text_for_expired_modal",
-                "url_for_expired_modal",
             ]
             if any(getattr(self, field) for field in fields_to_check):
                 error_msg = "This field must be blank if 'Has Custom License Expiration Messaging' is unchecked."
