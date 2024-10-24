@@ -282,6 +282,12 @@ class CustomerAgreement(TimeStampedModel):
                 error_msg = "This field must be blank if 'Has Custom License Expiration Messaging' is unchecked."
                 errors = {field: error_msg for field in fields_to_check}
 
+        # Validate that url_for_button_in_modal is a complete URL
+        if self.url_for_button_in_modal and not self.url_for_button_in_modal.startswith(("http://", "https://")):
+            errors["url_for_button_in_modal"] = (
+                "The URL must start with 'http://' or 'https://'. Please provide a valid URL."
+            )
+
         # Raise ValidationError if there are any errors
         if errors:
             raise ValidationError(errors)
