@@ -8,7 +8,7 @@ def sanitize_html(html_content):
     while disallowing JavaScript and unsafe protocols.
     """
     # Define allowed tags and attributes
-    allowed_tags = set.union(bleach.ALLOWED_TAGS, set({"span"}))  # Allow all standard HTML tags
+    allowed_tags = set.union(set(bleach.ALLOWED_TAGS), {"span"})  # Allow all standard HTML tags
     allowed_attrs = {"*": ["className", "class", "style", "id"]}
     css_sanitizer = CSSSanitizer(allowed_css_properties=["color", "font-weight"])
 
