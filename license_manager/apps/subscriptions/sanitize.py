@@ -1,6 +1,7 @@
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 
+
 def sanitize_html(html_content):
     """
     Sanitize HTML content to allow only safe tags and attributes,

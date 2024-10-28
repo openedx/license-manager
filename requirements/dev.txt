@@ -33,13 +33,13 @@ billiard==4.2.1
     # via
     #   -r requirements/validation.txt
     #   celery
-bleach==6.1.0
+bleach[css]==6.1.0
     # via -r requirements/validation.txt
-boto3==1.35.48
+boto3==1.35.49
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.35.48
+botocore==1.35.49
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -240,7 +240,7 @@ edx-drf-extensions==10.5.0
     #   edx-rbac
 edx-i18n-tools==1.6.3
     # via -r requirements/validation.txt
-edx-lint==5.4.0
+edx-lint==5.4.1
     # via -r requirements/validation.txt
 edx-opaque-keys==2.11.0
     # via
@@ -550,11 +550,15 @@ text-unidecode==1.3
     # via
     #   -r requirements/validation.txt
     #   python-slugify
+tinycss2==1.2.1
+    # via
+    #   -r requirements/validation.txt
+    #   bleach
 tomlkit==0.13.2
     # via
     #   -r requirements/validation.txt
     #   pylint
-typeguard==4.3.0
+typeguard==4.4.0
     # via inflect
 typing-extensions==4.12.2
     # via
@@ -590,6 +594,7 @@ webencodings==0.5.1
     # via
     #   -r requirements/validation.txt
     #   bleach
+    #   tinycss2
 wheel==0.44.0
     # via
     #   -r requirements/pip-tools.txt

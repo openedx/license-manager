@@ -28,13 +28,13 @@ billiard==4.2.1
     # via
     #   -r requirements/base.txt
     #   celery
-bleach==6.1.0
+bleach[css]==6.1.0
     # via -r requirements/base.txt
-boto3==1.35.48
+boto3==1.35.49
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.35.48
+botocore==1.35.49
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -395,6 +395,10 @@ text-unidecode==1.3
     # via
     #   -r requirements/base.txt
     #   python-slugify
+tinycss2==1.2.1
+    # via
+    #   -r requirements/base.txt
+    #   bleach
 typing-extensions==4.12.2
     # via
     #   -r requirements/base.txt
@@ -427,6 +431,7 @@ webencodings==0.5.1
     # via
     #   -r requirements/base.txt
     #   bleach
+    #   tinycss2
 zipp==3.20.2
     # via -r requirements/base.txt
 zope-event==5.0
