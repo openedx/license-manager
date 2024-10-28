@@ -1,5 +1,5 @@
 import bleach
-
+from bleach.css_sanitizer import CSSSanitizer
 
 def sanitize_html(html_content):
     """
@@ -7,8 +7,9 @@ def sanitize_html(html_content):
     while disallowing JavaScript and unsafe protocols.
     """
     # Define allowed tags and attributes
-    allowed_tags = bleach.ALLOWED_TAGS  # Allow all standard HTML tags
+    allowed_tags = set.union(bleach.ALLOWED_TAGS, set({"span"}))  # Allow all standard HTML tags
     allowed_attrs = {"*": ["className", "class", "style", "id"]}
+    css_sanitizer = CSSSanitizer(allowed_css_properties=["color", "font-weight"])
 
     # Clean the HTML content
     sanitized_content = bleach.clean(
@@ -16,7 +17,8 @@ def sanitize_html(html_content):
         tags=allowed_tags,
         attributes=allowed_attrs,
         strip=True,  # Strip disallowed tags completely
-        protocols=["http", "https"],  # Only allow http and https URLs
+        protocols=["http", "https"],  # Only allow http and https URLs,
+        css_sanitizer=css_sanitizer,
     )
 
     # Use bleach.linkify to ensure no javascript: links in <a> tags
