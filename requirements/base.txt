@@ -24,9 +24,9 @@ billiard==4.2.1
     # via celery
 bleach==6.1.0
     # via -r requirements/base.in
-boto3==1.35.48
+boto3==1.35.49
     # via django-ses
-botocore==1.35.48
+botocore==1.35.49
     # via
     #   boto3
     #   s3transfer
@@ -69,7 +69,7 @@ defusedxml==0.8.0rc2
     #   social-auth-core
 django==4.2.16
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c /home/runner/work/license-manager/license-manager/requirements/common_constraints.txt
     #   -r requirements/base.in
     #   django-autocomplete-light
     #   django-celery-results
@@ -157,7 +157,7 @@ edx-celeryutils==1.3.0
     # via -r requirements/base.in
 edx-django-utils==6.1.0
     # via
-    #   -c requirements/constraints.txt
+    #   -c /home/runner/work/license-manager/license-manager/requirements/constraints.txt
     #   -r requirements/base.in
     #   edx-drf-extensions
     #   edx-rest-api-client
