@@ -354,6 +354,12 @@ class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
             'net_days_until_expiration',
             'subscription_for_auto_applied_licenses',
             'available_subscription_catalogs',
+            'enable_auto_applied_subscriptions_with_universal_link',
+            'has_custom_license_expiration_messaging',
+            'modal_header_text',
+            'expired_subscription_modal_messaging',
+            'button_label_in_modal',
+            'url_for_button_in_modal',
         ]
 
     def get_subscription_for_auto_applied_licenses(self, obj):

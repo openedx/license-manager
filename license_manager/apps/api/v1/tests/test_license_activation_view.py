@@ -145,8 +145,18 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         with freeze_time(self.now):
             response = self._post_request(str(self.activation_key))
 
-        assert status.HTTP_204_NO_CONTENT == response.status_code
+        # Verify that the response contains activated subscription license.
+        assert status.HTTP_200_OK == response.status_code
+        activated_license = response.json()
+        assert activated_license['uuid'] == str(license_to_be_activated.uuid)
+        assert activated_license['status'] == constants.ACTIVATED
+        expected_activation_date = self.now.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        assert activated_license['activation_date'] == expected_activation_date
+
+        # Refresh license from the database
         license_to_be_activated.refresh_from_db()
+
+        # Verify that the license has been activated in the DB
         assert constants.ACTIVATED == license_to_be_activated.status
         assert self.lms_user_id == license_to_be_activated.lms_user_id
         assert self.now == license_to_be_activated.activation_date
@@ -159,7 +169,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
                 self.user.email,
             )
 
-    def test_license_already_activated_returns_204(self):
+    def test_license_already_activated_returns_200(self):
         self._assign_learner_roles(
             jwt_payload_extra={
                 'user_id': self.lms_user_id,
@@ -174,7 +184,13 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
 
         response = self._post_request(str(self.activation_key))
 
-        assert status.HTTP_204_NO_CONTENT == response.status_code
+        assert status.HTTP_200_OK == response.status_code
+        activated_license = response.json()
+        assert activated_license['uuid'] == str(already_activated_license.uuid)
+        assert activated_license['status'] == constants.ACTIVATED
+        expected_activation_date = self.now.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        assert activated_license['activation_date'] == expected_activation_date
+
         already_activated_license.refresh_from_db()
         assert constants.ACTIVATED == already_activated_license.status
         assert self.lms_user_id == already_activated_license.lms_user_id
@@ -217,7 +233,12 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         with freeze_time(self.now):
             response = self._post_request(str(self.activation_key))
 
-        assert status.HTTP_204_NO_CONTENT == response.status_code
+        assert status.HTTP_200_OK == response.status_code
+        activated_license = response.json()
+        assert activated_license['uuid'] == str(license_b.uuid)
+        assert activated_license['status'] == constants.ACTIVATED
+        expected_activation_date = self.now.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        assert activated_license['activation_date'] == expected_activation_date
 
         license_b.refresh_from_db()
         assert constants.ACTIVATED == license_b.status
@@ -268,7 +289,12 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         with freeze_time(self.now):
             response = self._post_request(str(license_a_activation_key))
 
-        assert status.HTTP_204_NO_CONTENT == response.status_code
+        assert status.HTTP_200_OK == response.status_code
+        activated_license = response.json()
+        assert activated_license['uuid'] == str(license_b.uuid)
+        assert activated_license['status'] == constants.ACTIVATED
+        expected_activation_date = self.now.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        assert activated_license['activation_date'] == expected_activation_date
 
         license_b.refresh_from_db()
         assert constants.ACTIVATED == license_b.status
@@ -341,7 +367,13 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         with freeze_time(self.now):
             response = self._post_request(str(self.activation_key))
 
-        assert status.HTTP_204_NO_CONTENT == response.status_code
+        assert status.HTTP_200_OK == response.status_code
+        activated_license = response.json()
+        assert activated_license['uuid'] == str(current_assigned_license.uuid)
+        assert activated_license['status'] == constants.ACTIVATED
+        expected_activation_date = self.now.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        assert activated_license['activation_date'] == expected_activation_date
+
         current_assigned_license.refresh_from_db()
         prior_assigned_license.refresh_from_db()
         assert prior_assigned_license.activation_date != self.now
