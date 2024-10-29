@@ -24,6 +24,8 @@ apigateway_responses: &apigateway_responses
     statusCode: "403"
   404:
     statusCode: "404"
+  423:
+    statusCode: "423"
   429:
     statusCode: "429"
   500:
@@ -112,6 +114,8 @@ responses: &responses
     description: "Forbidden"
   404:
     description: "Not Found"
+  423:
+    description: "Locked"
   429:
     description: "Too Many Requests"
   500:

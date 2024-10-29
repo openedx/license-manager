@@ -25,6 +25,14 @@ class LicenseTypesToRenew:
     )
 
 
+class SubscriptionPlanShouldAutoApplyLicensesChoices:
+    CHOICES = (
+        (None, "----------"),
+        (True, "Yes"),
+        (False, "No")
+    )
+
+
 class SubscriptionPlanChangeReasonChoices:
     NONE = None
     NEW = "new"

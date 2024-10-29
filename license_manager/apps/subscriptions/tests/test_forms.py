@@ -241,10 +241,11 @@ class TestCustomerAgreementAdminForm(TestCase):
 
         field = form.fields['subscription_for_auto_applied_licenses']
         choices = field.choices
+        initial = field.initial
         self.assertEqual(len(choices), 2)
         self.assertEqual(choices[0], ('', '------'))
         self.assertEqual(choices[1], (active_subscription_plan.uuid, active_subscription_plan.title))
-        self.assertEqual(field.initial, ('', '------'))
+        self.assertEqual(initial, ('', '------'))
 
     def test_populate_subscription_for_auto_applied_licenses_choices_initial_choice(self):
         customer_agreement = CustomerAgreementFactory()
