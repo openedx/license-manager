@@ -1779,10 +1779,10 @@ class LicenseActivationView(LicenseBaseView):
                  license's subscription plan.
             * 404 Not Found - if the email found in the request's JWT and the provided ``activation_key``
                  do not match those of any existing license in an activate subscription plan.
-            * 204 No Content - if such a license was found, and if the license is currently ``assigned``,
+            * 200 OK - if such a license was found, and if the license is currently ``assigned``,
                  it is updated with a status of ``activated``, its ``activation_date`` is set, and its ``lms_user_id``
                  is updated to the value found in the request's JWT.  If the license is already ``activated``,
-                 no update is made to it.
+                 no update is made to it. The activated license is then returned in the response.
             * 422 Unprocessable Entity - if we find a license, but it's status is not currently ``assigned``
                  or ``activated``, we do nothing and return a 422 with a message indicating that the license
                  cannot be activated.
@@ -1801,7 +1801,8 @@ class LicenseActivationView(LicenseBaseView):
 
         # There's an implied logical branch where the license is already activated
         # in which case we also return as if the activation action was successful.
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        serialized_license = serializers.LicenseSerializer(user_license)
+        return Response(serialized_license.data, status=status.HTTP_200_OK)
 
     def _track_and_notify(self, user_license):
         """

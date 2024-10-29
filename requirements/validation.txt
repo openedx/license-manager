@@ -19,7 +19,7 @@ asgiref==3.8.1
     #   -r requirements/test.txt
     #   django
     #   django-cors-headers
-astroid==3.2.4
+astroid==3.3.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -36,17 +36,21 @@ backoff==1.10.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   analytics-python
-billiard==4.2.0
+billiard==4.2.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-boto3==1.35.19
+bleach[css]==6.1.0
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+boto3==1.35.49
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.19
+botocore==1.35.49
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -69,7 +73,7 @@ cffi==1.17.1
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -112,11 +116,11 @@ code-annotations==1.8.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.6.1
+coverage[toml]==7.6.4
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==43.0.1
+cryptography==43.0.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -130,7 +134,7 @@ defusedxml==0.8.0rc2
     #   -r requirements/test.txt
     #   python3-openid
     #   social-auth-core
-dill==0.3.8
+dill==0.3.9
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -173,7 +177,7 @@ django-celery-results==2.5.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-cors-headers==4.4.0
+django-cors-headers==4.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -208,7 +212,7 @@ django-model-utils==5.0.0
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.1.1
+django-ses==4.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -240,7 +244,7 @@ djangorestframework-csv==3.0.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-dnspython==2.6.1
+dnspython==2.7.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -270,21 +274,22 @@ edx-celeryutils==1.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-django-utils==5.15.0
+edx-django-utils==6.1.0
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==10.4.0
+edx-drf-extensions==10.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-rbac
 edx-i18n-tools==1.6.3
     # via -r requirements/validation.in
-edx-lint==5.4.0
+edx-lint==5.4.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -307,7 +312,7 @@ edx-toggles==5.2.0
     #   -r requirements/test.txt
 factory-boy==3.3.1
     # via -r requirements/test.txt
-faker==28.4.1
+faker==30.8.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -353,12 +358,12 @@ jsonschema==4.23.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   drf-spectacular
-jsonschema-specifications==2023.12.1
+jsonschema-specifications==2024.10.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   jsonschema
-kombu==5.4.1
+kombu==5.4.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -367,9 +372,9 @@ lxml[html-clean,html_clean]==5.3.0
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
-lxml-html-clean==0.2.2
+lxml-html-clean==0.3.1
     # via lxml
-markupsafe==2.1.5
+markupsafe==3.0.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -384,11 +389,11 @@ monotonic==1.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   analytics-python
-mysqlclient==2.2.4
+mysqlclient==2.2.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==9.13.0
+newrelic==10.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -414,7 +419,7 @@ pbr==6.1.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   stevedore
-platformdirs==4.3.3
+platformdirs==4.3.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -430,12 +435,12 @@ ply==3.11
     #   djangoql
 polib==1.2.0
     # via edx-i18n-tools
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.48
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   click-repl
-psutil==6.0.0
+psutil==6.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -458,7 +463,7 @@ pyjwt[crypto]==2.9.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.2.7
+pylint==3.3.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -471,7 +476,7 @@ pylint-celery==0.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-lint
-pylint-django==2.5.5
+pylint-django==2.6.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -482,7 +487,7 @@ pylint-plugin-utils==0.8.2
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.8.0
+pymongo==4.10.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -531,7 +536,7 @@ pyyaml==6.0.2
     #   code-annotations
     #   drf-spectacular
     #   edx-i18n-tools
-redis==5.0.8
+redis==5.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -565,7 +570,7 @@ rules==3.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-s3transfer==0.10.2
+s3transfer==0.10.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -584,6 +589,7 @@ six==1.16.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   analytics-python
+    #   bleach
     #   edx-auth-backends
     #   edx-lint
     #   edx-rbac
@@ -621,6 +627,11 @@ text-unidecode==1.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   python-slugify
+tinycss2==1.2.1
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   bleach
 tomlkit==0.13.2
     # via
     #   -r requirements/quality.txt
@@ -631,11 +642,13 @@ typing-extensions==4.12.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-opaque-keys
-tzdata==2024.1
+    #   faker
+tzdata==2024.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
+    #   kombu
 uritemplate==4.1.1
     # via
     #   -r requirements/quality.txt
@@ -659,6 +672,12 @@ wcwidth==0.2.13
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   prompt-toolkit
+webencodings==0.5.1
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   bleach
+    #   tinycss2
 zipp==3.20.2
     # via
     #   -r requirements/quality.txt

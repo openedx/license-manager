@@ -48,6 +48,7 @@ from license_manager.apps.subscriptions.event_utils import (
     track_event,
     track_license_changes,
 )
+from license_manager.apps.subscriptions.sanitize import sanitize_html
 from license_manager.apps.subscriptions.utils import (
     days_until,
     get_license_activation_link,
@@ -143,6 +144,58 @@ class CustomerAgreement(TimeStampedModel):
         ),
     )
 
+    has_custom_license_expiration_messaging = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Indicates if the customer has a unique license expiration experience, instead of the standard one."
+        )
+    )
+
+    modal_header_text = models.CharField(
+        max_length=512,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The bold text that will appear as the header in the expiration modal."
+        )
+    )
+
+    expired_subscription_modal_messaging = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "The content of a modal that will appear to learners upon subscription expiration. This text can be used "
+            "for custom guidance per customer."
+        )
+    )
+
+    button_label_in_modal = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The text that will appear as on the button in the expiration modal"
+        )
+    )
+
+    url_for_button_in_modal = models.CharField(
+        max_length=512,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The URL that should underly the sole button in the expiration modal"
+        )
+    )
+
+    enable_auto_applied_subscriptions_with_universal_link = models.BooleanField(
+        default=False,
+        help_text=_(
+            "By default, auto-applied subscriptions are only granted when learners join their enterprise via SSO, "
+            "checking this box will enable subscription licenses to be applied when a learner joins the enterprise via "
+            "Universal link as well"
+        )
+    )
+
     history = HistoricalRecords()
 
     @property
@@ -191,6 +244,53 @@ class CustomerAgreement(TimeStampedModel):
     class Meta:
         verbose_name = _("Customer Agreement")
         verbose_name_plural = _("Customer Agreements")
+
+    def clean(self):
+        """
+        Custom clean method to validate fields based on the 'Has Custom License Expiration Messaging' flag.
+        """
+        errors = {}
+
+        # Sanitize the expired_subscription_modal_messaging field
+        if self.expired_subscription_modal_messaging:
+            self.expired_subscription_modal_messaging = sanitize_html(self.expired_subscription_modal_messaging)
+
+        error_message = "This field cannot be blank if 'Has Custom License Expiration Messaging' is checked."
+        # Validate fields when custom messaging is enabled
+        if self.has_custom_license_expiration_messaging:
+            required_fields = {
+                "modal_header_text": error_message,
+                "expired_subscription_modal_messaging": error_message,
+                "button_label_in_modal": error_message,
+                "url_for_button_in_modal": error_message,
+            }
+
+            # Check if any required fields are missing
+            for field, error_message in required_fields.items():
+                if not getattr(self, field):
+                    errors[field] = error_message
+
+        # Ensure all fields are blank if custom messaging is disabled
+        if not self.has_custom_license_expiration_messaging:
+            fields_to_check = [
+                "modal_header_text",
+                "expired_subscription_modal_messaging",
+                "button_label_in_modal",
+                "url_for_button_in_modal",
+            ]
+            if any(getattr(self, field) for field in fields_to_check):
+                error_msg = "This field must be blank if 'Has Custom License Expiration Messaging' is unchecked."
+                errors = {field: error_msg for field in fields_to_check}
+
+        # Validate that url_for_button_in_modal is a complete URL
+        if self.url_for_button_in_modal and not self.url_for_button_in_modal.startswith(("http://", "https://")):
+            errors["url_for_button_in_modal"] = (
+                "The URL must start with 'http://' or 'https://'. Please provide a valid URL."
+            )
+
+        # Raise ValidationError if there are any errors
+        if errors:
+            raise ValidationError(errors)
 
     def __str__(self):
         """
@@ -521,6 +621,7 @@ class SubscriptionPlan(TimeStampedModel):
 
         num_revocations_allowed = ceil(self.num_licenses * (self.revoke_max_percentage / 100))
         return num_revocations_allowed - self.num_revocations_applied
+
     num_revocations_remaining.fget.short_description = "Number of Revocations Remaining"
 
     @property
@@ -961,6 +1062,7 @@ class License(TimeStampedModel):
     .. pii_types: id,email_address
     .. pii_retirement: local_api
     """
+
     class Meta:
         indexes = [
             models.Index(fields=["subscription_plan", "status"], name="subscription_plan_status_idx"),

@@ -246,7 +246,7 @@ class LicenseLearnerActionsEventTests(LicenseViewTestMixin, TestCase):
                 url = reverse('api:v1:license-activation') + '/?' + query_params.urlencode()
                 response = self.api_client.post(url)
 
-            assert status.HTTP_204_NO_CONTENT == response.status_code
+            assert status.HTTP_200_OK == response.status_code
             license_to_be_activated.refresh_from_db()
 
             assert mock_activated_track_event.call_count == 1

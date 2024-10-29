@@ -40,3 +40,5 @@ rules
 simplejson
 zipp
 django-log-request-id
+bleach
+bleach[css]

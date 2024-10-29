@@ -114,7 +114,10 @@ def test_select_subscription_for_auto_applied_licenses(mock_toggle_auto_apply_li
     request = RequestFactory()
     request.user = UserFactory()
     customer_agreement = CustomerAgreementFactory()
-    subscription_plan = SubscriptionPlanFactory(customer_agreement=customer_agreement)
+    subscription_plan = SubscriptionPlanFactory(
+        customer_agreement=customer_agreement,
+    )
+
     customer_agreement_uuid = str(customer_agreement.uuid)
     subscription_uuid = str(subscription_plan.uuid)
     request.resolver_match = mock.Mock(kwargs={'object_id': customer_agreement_uuid})
