@@ -302,6 +302,63 @@ class CustomerAgreement(TimeStampedModel):
             )
         )
 
+class CustomSubscriptionExpirationMessaging(models.Model):
+    """
+    Custom subscription expiration messaging
+    """
+
+    customer_agreement = models.OneToOneField(
+        CustomerAgreement,
+        on_delete=models.CASCADE,
+        null=False,
+        related_name='custom_subscription_expiration_messaging',
+        unique=True,
+    )
+
+    has_custom_license_expiration_messaging = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Indicates if the customer has a unique license expiration experience, instead of the standard one."
+        )
+    )
+
+    modal_header_text = models.CharField(
+        max_length=512,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The bold text that will appear as the header in the expiration modal."
+        )
+    )
+
+    expired_subscription_modal_messaging = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "The content of a modal that will appear to learners upon subscription expiration. This text can be used "
+            "for custom guidance per customer."
+        )
+    )
+
+    button_label_in_modal = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The text that will appear as on the button in the expiration modal"
+        )
+    )
+
+    url_for_button_in_modal = models.CharField(
+        max_length=512,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The URL that should underly the sole button in the expiration modal"
+        )
+    )
+
+    history = HistoricalRecords()
 
 class PlanType(models.Model):
     """
