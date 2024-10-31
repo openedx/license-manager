@@ -321,8 +321,6 @@ class CustomSubscriptionExpirationMessaging(models.Model):
     customer_agreement = models.OneToOneField(
         CustomerAgreement,
         on_delete=models.CASCADE,
-        blank=True,
-        null=True,
         related_name='_custom_subscription_expiration_messaging',
         unique=True,
     )
