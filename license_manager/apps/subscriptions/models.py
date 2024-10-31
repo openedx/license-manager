@@ -247,7 +247,7 @@ class CustomerAgreement(TimeStampedModel):
         Returns the custom subscription expiration messaging associated with this customer agreement.
         """
         try:
-            return self.custom_subscription_expiration_messaging
+            return self._custom_subscription_expiration_messaging
         except CustomSubscriptionExpirationMessaging.DoesNotExist:
             return None
 
