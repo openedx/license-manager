@@ -371,7 +371,7 @@ class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
         subscription_plan = obj.auto_applicable_subscription
         return subscription_plan.uuid if subscription_plan else None
 
-    def has_custom_license_expiration_messaging_v2(self, obj):
+    def get_has_custom_license_expiration_messaging_v2(self, obj):
         custom_subscription_expiration_messaging = obj.custom_subscription_expiration_messaging
         if custom_subscription_expiration_messaging:
             return custom_subscription_expiration_messaging.has_custom_license_expiration_messaging
@@ -383,20 +383,19 @@ class MinimalCustomerAgreementSerializer(serializers.ModelSerializer):
             return custom_subscription_expiration_messaging.modal_header_text
         return None
 
-
-    def expired_subscription_modal_messaging_v2(self, obj):
+    def get_expired_subscription_modal_messaging_v2(self, obj):
         custom_subscription_expiration_messaging = obj.custom_subscription_expiration_messaging
         if custom_subscription_expiration_messaging:
             return custom_subscription_expiration_messaging.expired_subscription_modal_messaging
         return None
 
-    def button_label_in_modal_v2(self, obj):
+    def get_button_label_in_modal_v2(self, obj):
         custom_subscription_expiration_messaging = obj.custom_subscription_expiration_messaging
         if custom_subscription_expiration_messaging:
             return custom_subscription_expiration_messaging.button_label_in_modal
         return None
 
-    def url_for_button_in_modal_v2(self, obj):
+    def get_url_for_button_in_modal_v2(self, obj):
         custom_subscription_expiration_messaging = obj.custom_subscription_expiration_messaging
         if custom_subscription_expiration_messaging:
             return custom_subscription_expiration_messaging.url_for_button_in_modal
