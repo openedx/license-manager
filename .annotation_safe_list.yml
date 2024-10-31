@@ -57,3 +57,5 @@ waffle.Switch:
   ".. no_pii:": "This model has no PII"
 subscriptions.HistoricalSubscriptionLicenseSource:
   ".. no_pii:": "This model has no PII"
+subscriptions.HistoricalCustomSubscriptionExpirationMessaging:
+  ".. no_pii:": "This model has no PII"

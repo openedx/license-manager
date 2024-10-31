@@ -316,6 +316,8 @@ class CustomerAgreement(TimeStampedModel):
 class CustomSubscriptionExpirationMessaging(models.Model):
     """
     Custom subscription expiration messaging
+
+    .. no_pii: This model has no PII
     """
 
     customer_agreement = models.OneToOneField(
