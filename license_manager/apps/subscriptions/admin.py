@@ -27,6 +27,7 @@ from license_manager.apps.subscriptions.forms import (
 )
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
+    CustomSubscriptionExpirationMessaging,
     License,
     LicenseEvent,
     LicenseTransferJob,
@@ -402,6 +403,14 @@ class SubscriptionPlanAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
             obj.provision_licenses()
 
 
+@admin.register(CustomSubscriptionExpirationMessaging)
+class CustomSubscriptionExpirationMessagingAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
+    list_display = (
+        'customer_agreement',
+        'has_custom_license_expiration_messaging',
+    )
+
+
 @admin.register(CustomerAgreement)
 class CustomerAgreementAdmin(admin.ModelAdmin):
     form = CustomerAgreementAdminForm
@@ -418,11 +427,6 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'license_duration_before_purge',
         'disable_onboarding_notifications',
         'enable_auto_applied_subscriptions_with_universal_link',
-        'has_custom_license_expiration_messaging',
-        'modal_header_text',
-        'expired_subscription_modal_messaging',
-        'button_label_in_modal',
-        'url_for_button_in_modal',
     )
     custom_fields = ('subscription_for_auto_applied_licenses',)
 
