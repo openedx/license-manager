@@ -241,6 +241,16 @@ class CustomerAgreement(TimeStampedModel):
 
         return plan
 
+    @property
+    def custom_subscription_expiration_messaging(self):
+        """
+        Returns the custom subscription expiration messaging associated with this customer agreement.
+        """
+        try:
+            return self.custom_subscription_expiration_messaging
+        except CustomSubscriptionExpirationMessaging.DoesNotExist:
+            return None
+
     class Meta:
         verbose_name = _("Customer Agreement")
         verbose_name_plural = _("Customer Agreements")
@@ -302,6 +312,7 @@ class CustomerAgreement(TimeStampedModel):
             )
         )
 
+
 class CustomSubscriptionExpirationMessaging(models.Model):
     """
     Custom subscription expiration messaging
@@ -310,8 +321,9 @@ class CustomSubscriptionExpirationMessaging(models.Model):
     customer_agreement = models.OneToOneField(
         CustomerAgreement,
         on_delete=models.CASCADE,
-        null=False,
-        related_name='custom_subscription_expiration_messaging',
+        blank=True,
+        null=True,
+        related_name='_custom_subscription_expiration_messaging',
         unique=True,
     )
 
@@ -359,6 +371,7 @@ class CustomSubscriptionExpirationMessaging(models.Model):
     )
 
     history = HistoricalRecords()
+
 
 class PlanType(models.Model):
     """

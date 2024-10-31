@@ -410,6 +410,7 @@ class CustomSubscriptionExpirationMessagingAdmin(DjangoQLSearchMixin, admin.Mode
         'has_custom_license_expiration_messaging',
     )
 
+
 @admin.register(CustomerAgreement)
 class CustomerAgreementAdmin(admin.ModelAdmin):
     form = CustomerAgreementAdminForm
