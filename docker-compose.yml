@@ -12,10 +12,7 @@ services:
       - license_manager_mysql8:/var/lib/mysql
 
   app:
-    image: openedx/license-manager
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: edxops/license-manager-dev
     container_name: license-manager.app
     volumes:
       - .:/edx/app/license_manager/
@@ -47,10 +44,7 @@ services:
     container_name: license-manager.memcache
 
   worker:
-    image: openedx/license-manager.worker
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: edxops/license-manager-dev
     command: bash -c 'cd /edx/app/license_manager/license_manager && celery -A license_manager worker -Q license_manager.default -l DEBUG'
     container_name: license-manager.worker
     depends_on:
@@ -76,10 +70,7 @@ services:
       - ../src:/edx/src:cached
 
   bulk_enrollment_worker:
-    image: openedx/license-manager.worker
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: edxops/license-manager-dev
     command: bash -c 'cd /edx/app/license_manager/license_manager && celery -A license_manager worker -Q license_manager.bulk_enrollment -l DEBUG'
     container_name: license-manager.bulk_enrollment_worker
     depends_on:

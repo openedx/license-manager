@@ -148,12 +148,6 @@ pull_translations: ## pull translations from Transifex
 push_translations: ## push source translation files (.po) from Transifex
 	tx push -s
 
-open-devstack: ## open a shell on the server started by start-devstack
-	docker exec -it license-manager /edx/app/license_manager/devstack.sh open
-
-pkg-devstack: ## build the license-manager image from the latest configuration and code
-	docker build -t license-manager:latest -f docker/build/license_manager/Dockerfile git://github.com/openedx/configuration
-
 detect_changed_source_translations: ## check if translation files are up-to-date
 	cd license_manager && i18n_tool changed
 
@@ -166,16 +160,6 @@ dev.provision:
 
 dev.up: dev.up.redis  # Starts all of the services, will bring up the devstack-defined redis container if not running.
 	docker-compose up -d
-
-dev.up.build:
-	docker-compose up -d --build
-
-dev.up.build-no-cache:
-	docker-compose build --no-cache
-	docker-compose up -d
-
-dev.up.redis:
-	docker-compose -f $(DEVSTACK_WORKSPACE)/devstack/docker-compose.yml up -d redis
 
 dev.down: # Kills containers and all of their data that isn't in volumes
 	docker-compose down
@@ -221,28 +205,3 @@ dev.restore:
 
 dev.static:
 	docker-compose exec -u 0 app python3 manage.py collectstatic --noinput
-
-docker_build:
-	docker build . -f Dockerfile --target app -t openedx/license-manager
-	docker build . -f Dockerfile --target devstack -t openedx/license-manager:latest-devstack
-
-	docker build . -f Dockerfile --target app -t openedx/license-manager.worker
-	docker build . -f Dockerfile --target devstack -t openedx/license-manager.worker:latest-devstack
-
-	docker build . -f Dockerfile --target newrelic -t openedx/license-manager:latest-newrelic
-
-docker_tag: docker_build
-	docker tag openedx/license-manager openedx/license-manager:$$GITHUB_SHA
-	docker tag openedx/license-manager:latest-devstack openedx/license-manager:$$GITHUB_SHA-devstack
-	docker tag openedx/license-manager:latest-newrelic openedx/license-manager:$$GITHUB_SHA-newrelic
-
-docker_auth:
-	echo "$$DOCKERHUB_PASSWORD" | docker login -u "$$DOCKERHUB_USERNAME" --password-stdin
-
-docker_push: docker_tag docker_auth ## push to docker hub
-	docker push 'openedx/license-manager:latest'
-	docker push "openedx/license-manager:$$GITHUB_SHA"
-	docker push 'openedx/license-manager:latest-devstack'
-	docker push "openedx/license-manager:$$GITHUB_SHA-devstack"
-	docker push 'openedx/license-manager:latest-newrelic'
-	docker push "openedx/license-manager:$$GITHUB_SHA-newrelic"
