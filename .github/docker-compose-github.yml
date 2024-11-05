@@ -11,7 +11,7 @@ services:
       - license_manager_mysql:/var/lib/mysql
 
   app:
-    image: edxops/license-manager
+    image: edxops/license-manager-dev
     container_name: license-manager.app
     volumes:
       - ..:/edx/app/license_manager
