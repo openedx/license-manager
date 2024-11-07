@@ -151,3 +151,5 @@ NOTIFICATION_CHOICE_AND_CAMPAIGN_BY_THRESHOLD = {
 }
 
 ENTERPRISE_BRAZE_ALIAS_LABEL = 'Enterprise'  # Do Not change this, this is consistent with other uses across edX repos.
+
+EXPIRED_LICENSE_UNLINKED = 'edx.server.license-manager.expired.license.unlinked'

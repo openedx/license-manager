@@ -20,6 +20,7 @@ class EnterpriseApiClient(BaseOAuthClient):
     course_enrollments_revoke_endpoint = api_base_url + 'licensed-enterprise-course-enrollment/license_revoke/'
     bulk_licensed_enrollments_expiration_endpoint = api_base_url \
         + 'licensed-enterprise-course-enrollment/bulk_licensed_enrollments_expiration/'
+    unlink_users_endpoint = api_base_url + 'enterprise-customer/'
 
     def get_enterprise_customer_data(self, enterprise_customer_uuid):
         """
@@ -189,3 +190,10 @@ class EnterpriseApiClient(BaseOAuthClient):
         """
         enrollment_url = '{}{}/enroll_learners_in_courses/'.format(self.enterprise_customer_endpoint, enterprise_id)
         return self.client.post(enrollment_url, json=options, timeout=settings.BULK_ENROLL_REQUEST_TIMEOUT_SECONDS)
+
+    def bulk_unlink_enterprise_users(self, enterprise_uuid, options):
+        """
+        Calls the Enterprise `unlink_users` API to unlink learners for an enterprise.
+        """
+        enrollment_url = '{}{}/unlink_users/'.format(self.unlink_users_endpoint, enterprise_uuid)
+        return self.client.post(enrollment_url, json=options, timeout=settings.BULK_UNLINK_REQUEST_TIMEOUT_SECONDS)
