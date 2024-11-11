@@ -132,6 +132,14 @@ class Command(BaseCommand):
             user_emails = []
 
             for license in licenses:
+                logger.info(
+                    "%s Processing. Enterprise: [%s], User: [%s]. License: [%s]",
+                    log_prefix,
+                    enterprise_customer_uuid,
+                    license.get('user_email'),
+                    license.get('uuid')
+                )
+
                 # check if the user associated with the expired license
                 # has any other active licenses with the same customer
                 other_active_licenses = License.for_user_and_customer(
@@ -142,6 +150,12 @@ class Command(BaseCommand):
                     current_plans_only=True,
                 ).exists()
                 if other_active_licenses:
+                    logger.info(
+                        '%s Can not unlink. User has other active licenses. User: [%s]. License: [%s]',
+                        log_prefix,
+                        license.get('user_email'),
+                        license.get('uuid')
+                    )
                     continue
 
                 license_uuids.append(license.get('uuid'))
