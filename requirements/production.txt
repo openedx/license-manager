@@ -30,11 +30,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.35.54
+boto3==1.35.57
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.35.54
+botocore==1.35.57
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -264,7 +264,7 @@ oauthlib==3.2.2
     #   -r requirements/base.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==24.1
+packaging==24.2
     # via gunicorn
 pbr==6.1.0
     # via
@@ -347,7 +347,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-rpds-py==0.20.1
+rpds-py==0.21.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -431,7 +431,7 @@ webencodings==0.5.1
     #   -r requirements/base.txt
     #   bleach
     #   tinycss2
-zipp==3.20.2
+zipp==3.21.0
     # via -r requirements/base.txt
 zope-event==5.0
     # via gevent
