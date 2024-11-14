@@ -24,9 +24,9 @@ billiard==4.2.1
     # via celery
 bleach[css]==6.2.0
     # via -r requirements/base.in
-boto3==1.35.54
+boto3==1.35.57
     # via django-ses
-botocore==1.35.54
+botocore==1.35.57
     # via
     #   boto3
     #   s3transfer
@@ -255,7 +255,7 @@ requests==2.32.3
     #   social-auth-core
 requests-oauthlib==2.0.0
     # via social-auth-core
-rpds-py==0.20.1
+rpds-py==0.21.0
     # via
     #   jsonschema
     #   referencing
@@ -313,7 +313,7 @@ webencodings==0.5.1
     # via
     #   bleach
     #   tinycss2
-zipp==3.20.2
+zipp==3.21.0
     # via -r requirements/base.in
 
 # The following packages are considered to be unsafe in a requirements file:

@@ -45,11 +45,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.35.54
+boto3==1.35.57
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.54
+botocore==1.35.57
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -328,7 +328,7 @@ oauthlib==3.2.2
     #   -r requirements/test.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==24.1
+packaging==24.2
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -462,7 +462,7 @@ requests-oauthlib==2.0.0
     #   social-auth-core
 restructuredtext-lint==1.4.0
     # via doc8
-rpds-py==0.20.1
+rpds-py==0.21.0
     # via
     #   -r requirements/test.txt
     #   jsonschema
@@ -577,7 +577,7 @@ webencodings==0.5.1
     #   -r requirements/test.txt
     #   bleach
     #   tinycss2
-zipp==3.20.2
+zipp==3.21.0
     # via -r requirements/test.txt
 
 # The following packages are considered to be unsafe in a requirements file:
