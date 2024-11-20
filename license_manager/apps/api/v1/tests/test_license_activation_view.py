@@ -152,6 +152,7 @@ class LicenseActivationViewTests(LicenseViewTestMixin, TestCase):
         assert activated_license['status'] == constants.ACTIVATED
         expected_activation_date = self.now.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         assert activated_license['activation_date'] == expected_activation_date
+        assert activated_license['subscription_plan']['uuid'] == str(license_to_be_activated.subscription_plan.uuid)
 
         # Refresh license from the database
         license_to_be_activated.refresh_from_db()
