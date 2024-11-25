@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.35.63
+boto3==1.35.68
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.63
+botocore==1.35.68
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -110,13 +110,13 @@ click-repl==0.3.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-code-annotations==1.8.1
+code-annotations==1.8.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.6.7
+coverage[toml]==7.6.8
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -393,7 +393,7 @@ mysqlclient==2.2.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==10.2.0
+newrelic==10.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -570,7 +570,7 @@ rules==3.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-s3transfer==0.10.3
+s3transfer==0.10.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -614,7 +614,7 @@ sqlparse==0.5.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django
-stevedore==5.3.0
+stevedore==5.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
