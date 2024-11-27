@@ -8,7 +8,7 @@ accessible-pygments==0.0.5
     # via pydata-sphinx-theme
 alabaster==1.0.0
     # via sphinx
-amqp==5.2.0
+amqp==5.3.1
     # via
     #   -r requirements/test.txt
     #   kombu
@@ -45,11 +45,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.35.54
+boto3==1.35.63
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.54
+botocore==1.35.63
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -99,12 +99,12 @@ click-repl==0.3.0
     # via
     #   -r requirements/test.txt
     #   celery
-code-annotations==1.8.0
+code-annotations==1.8.1
     # via
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.6.4
+coverage[toml]==7.6.7
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -183,7 +183,7 @@ django-ses==4.2.0
     # via -r requirements/test.txt
 django-simple-history==3.7.0
     # via -r requirements/test.txt
-django-waffle==4.1.0
+django-waffle==4.2.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -253,7 +253,7 @@ edx-toggles==5.2.0
     # via -r requirements/test.txt
 factory-boy==3.3.1
     # via -r requirements/test.txt
-faker==30.8.2
+faker==33.0.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -315,7 +315,7 @@ monotonic==1.6
     # via
     #   -r requirements/test.txt
     #   analytics-python
-mysqlclient==2.2.5
+mysqlclient==2.2.6
     # via -r requirements/test.txt
 newrelic==10.2.0
     # via
@@ -328,7 +328,7 @@ oauthlib==3.2.2
     #   -r requirements/test.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==24.1
+packaging==24.2
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -370,7 +370,7 @@ pygments==2.18.0
     #   pydata-sphinx-theme
     #   readme-renderer
     #   sphinx
-pyjwt[crypto]==2.9.0
+pyjwt[crypto]==2.10.0
     # via
     #   -r requirements/test.txt
     #   drf-jwt
@@ -462,7 +462,7 @@ requests-oauthlib==2.0.0
     #   social-auth-core
 restructuredtext-lint==1.4.0
     # via doc8
-rpds-py==0.20.1
+rpds-py==0.21.0
     # via
     #   -r requirements/test.txt
     #   jsonschema
@@ -519,7 +519,7 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-sqlparse==0.5.1
+sqlparse==0.5.2
     # via
     #   -r requirements/test.txt
     #   django
@@ -577,7 +577,7 @@ webencodings==0.5.1
     #   -r requirements/test.txt
     #   bleach
     #   tinycss2
-zipp==3.20.2
+zipp==3.21.0
     # via -r requirements/test.txt
 
 # The following packages are considered to be unsafe in a requirements file:

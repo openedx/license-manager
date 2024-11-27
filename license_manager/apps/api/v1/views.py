@@ -1801,7 +1801,7 @@ class LicenseActivationView(LicenseBaseView):
 
         # There's an implied logical branch where the license is already activated
         # in which case we also return as if the activation action was successful.
-        serialized_license = serializers.LicenseSerializer(user_license)
+        serialized_license = serializers.LearnerLicenseSerializer(user_license)
         return Response(serialized_license.data, status=status.HTTP_200_OK)
 
     def _track_and_notify(self, user_license):
