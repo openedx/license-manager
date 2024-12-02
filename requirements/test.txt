@@ -34,11 +34,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.35.63
+boto3==1.35.71
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.35.63
+botocore==1.35.71
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -86,17 +86,17 @@ click-repl==0.3.0
     # via
     #   -r requirements/base.txt
     #   celery
-code-annotations==1.8.1
+code-annotations==2.0.0
     # via
     #   -r requirements/base.txt
     #   -r requirements/test.in
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.6.7
+coverage[toml]==7.6.8
     # via
     #   -r requirements/test.in
     #   pytest-cov
-cryptography==43.0.3
+cryptography==44.0.0
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -165,7 +165,7 @@ django-model-utils==5.0.0
     #   -r requirements/base.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.2.0
+django-ses==4.3.0
     # via -r requirements/base.txt
 django-simple-history==3.7.0
     # via -r requirements/base.txt
@@ -197,7 +197,7 @@ drf-jwt==1.19.2
     #   edx-drf-extensions
 drf-nested-routers==0.94.1
     # via -r requirements/base.txt
-drf-spectacular==0.27.2
+drf-spectacular==0.28.0
     # via -r requirements/base.txt
 edx-auth-backends==4.4.0
     # via -r requirements/base.txt
@@ -230,7 +230,7 @@ edx-toggles==5.2.0
     # via -r requirements/base.txt
 factory-boy==3.3.1
     # via -r requirements/test.in
-faker==33.0.0
+faker==33.1.0
     # via factory-boy
 freezegun==1.5.1
     # via -r requirements/test.in
@@ -283,7 +283,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.6
     # via -r requirements/base.txt
-newrelic==10.2.0
+newrelic==10.3.1
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -318,7 +318,7 @@ pycparser==2.22
     # via
     #   -r requirements/base.txt
     #   cffi
-pyjwt[crypto]==2.10.0
+pyjwt[crypto]==2.10.1
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -326,7 +326,7 @@ pyjwt[crypto]==2.10.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.1
+pylint==3.3.2
     # via
     #   edx-lint
     #   pylint-celery
@@ -348,7 +348,7 @@ pynacl==1.5.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-pytest==8.3.3
+pytest==8.3.4
     # via
     #   pytest-cov
     #   pytest-django
@@ -405,7 +405,7 @@ rpds-py==0.21.0
     #   referencing
 rules==3.5
     # via -r requirements/base.txt
-s3transfer==0.10.3
+s3transfer==0.10.4
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -436,7 +436,7 @@ sqlparse==0.5.2
     # via
     #   -r requirements/base.txt
     #   django
-stevedore==5.3.0
+stevedore==5.4.0
     # via
     #   -r requirements/base.txt
     #   code-annotations
