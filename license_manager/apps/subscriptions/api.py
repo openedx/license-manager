@@ -233,20 +233,17 @@ def sync_agreement_with_enterprise_customer(customer_agreement):
 
 def toggle_auto_apply_licenses(customer_agreement_uuid, subscription_uuid):
     """
-    Turn auto apply licenses on for the subscription with the given uuid and off for the current
-    plan used for auto applied licenses. If subscription_uuid is empty or None, turn auto apply licenses
+    Turn auto apply licenses on for the subscription with the given uuid and off for all other
+    auto-applied plans in the given customer agreement. If subscription_uuid is empty or None, turn auto apply licenses
     off for the current plan.
 
     """
-    # There should only be one plan for auto-applied licenses at any given time
-    current_plan_for_auto_applied_licenses = SubscriptionPlan.objects.filter(
+    for plan in SubscriptionPlan.objects.filter(
         customer_agreement_id=customer_agreement_uuid,
         should_auto_apply_licenses=True
-    ).first()
-
-    if current_plan_for_auto_applied_licenses:
-        current_plan_for_auto_applied_licenses.should_auto_apply_licenses = False
-        current_plan_for_auto_applied_licenses.save()
+    ):
+        plan.should_auto_apply_licenses = False
+        plan.save()
 
     if not subscription_uuid:
         return
