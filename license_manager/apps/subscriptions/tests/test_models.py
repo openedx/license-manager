@@ -117,6 +117,55 @@ class SubscriptionsModelTests(TestCase):
                 renewed_subscription_plan.is_locked_for_renewal_processing, is_locked_for_renewal_processing,
             )
 
+    def test_auto_applicable_subscription(self):
+        """
+        Tests that we pick the most recent auto-applicable plan for a CustomerAgreement.
+        """
+        agreement = CustomerAgreementFactory.create()
+        SubscriptionPlanFactory.create(
+            customer_agreement=agreement,
+            start_date=localized_datetime(2020, 1, 1),
+            should_auto_apply_licenses=True,
+        )
+        SubscriptionPlanFactory.create(
+            customer_agreement=agreement,
+            start_date=localized_datetime(2020, 4, 1),
+            should_auto_apply_licenses=True,
+        )
+        plan_3 = SubscriptionPlanFactory.create(
+            customer_agreement=agreement,
+            start_date=localized_datetime(2020, 12, 1),
+            should_auto_apply_licenses=True,
+        )
+        # make one plan that hasn't started yet
+        SubscriptionPlanFactory.create(
+            customer_agreement=agreement,
+            start_date=localized_utcnow() + timedelta(days=1),
+            should_auto_apply_licenses=True,
+        )
+        self.assertEqual(agreement.auto_applicable_subscription, plan_3)
+
+    def test_auto_applicable_subscription_none_available(self):
+        """
+        Tests that when no current, auto-applicable plan is available,
+        CustomerAgreement.auto_applicable_subscription evaluates to null.
+        """
+        agreement = CustomerAgreementFactory.create()
+        # make a plan that's expired
+        SubscriptionPlanFactory.create(
+            customer_agreement=agreement,
+            start_date=localized_datetime(2020, 1, 1),
+            expiration_date=localized_utcnow() + timedelta(days=-1),
+            should_auto_apply_licenses=True,
+        )
+        # make one plan that hasn't started yet
+        SubscriptionPlanFactory.create(
+            customer_agreement=agreement,
+            start_date=localized_utcnow() + timedelta(days=1),
+            should_auto_apply_licenses=True,
+        )
+        self.assertIsNone(agreement.auto_applicable_subscription)
+
     def test_auto_apply_licenses_turned_on_at(self):
         """
         Tests that auto_apply_licenses_turned_on_at returns the correct time.

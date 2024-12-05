@@ -237,7 +237,7 @@ class CustomerAgreement(TimeStampedModel):
             is_active=True,
             start_date__lte=now,
             expiration_date__gte=now
-        ).first()
+        ).order_by('-start_date').first()
 
         return plan
 

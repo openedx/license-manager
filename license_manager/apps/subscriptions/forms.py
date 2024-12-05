@@ -46,7 +46,13 @@ class SubscriptionPlanForm(forms.ModelForm):
         choices=SubscriptionPlanShouldAutoApplyLicensesChoices.CHOICES,
         required=False,
         label="Should auto apply licenses",
-        help_text="Whether licenses from this Subscription Plan should be auto applied."
+        help_text=(
+            """
+            Whether licenses from this Subscription Plan should be auto applied.
+            It it possible and acceptable for more than one plan in a single
+            customer agreement to have this field enabled.
+            """
+        )
     )
 
     # Extra form field to specify the number of licenses to be associated with the subscription plan
@@ -292,8 +298,17 @@ class CustomerAgreementAdminForm(forms.ModelForm):
             choices=choices,
             required=False,
             initial=empty_choice if not current_plan else (current_plan.uuid, current_plan.title),
-            help_text="The subscription plan to be associated with auto apply licenses. Selecting a license"
-            " will automatically enable the \"Should auto apply licenses\" field on the subscription plan"
+            help_text=(
+                """
+                The subscription plan from which licenses will be auto-applied, if any.
+                If you do not manually modify this field, it will be automatically set, chosen as the
+                most recently started plan that is active, current, and has 'should_auto_apply_licenses'
+                set to true. Manually selecting/modifying the plan for this field will have two effects:
+                It will automatically enable the \"Should auto apply licenses\" field on the selected plan,
+                and it will automatically *disable* that field on all other plans
+                associated with this customer agreement.
+                """
+            ),
         )
         self.fields['subscription_for_auto_applied_licenses'] = choice_field
 
