@@ -19,7 +19,7 @@ asgiref==3.8.1
     #   -r requirements/test.txt
     #   django
     #   django-cors-headers
-astroid==3.3.5
+astroid==3.3.6
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -45,11 +45,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.35.71
+boto3==1.35.76
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.71
+botocore==1.35.76
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -104,7 +104,7 @@ code-annotations==2.0.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.6.8
+coverage[toml]==7.6.9
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -124,7 +124,7 @@ dill==0.3.9
     # via
     #   -r requirements/test.txt
     #   pylint
-django==4.2.16
+django==4.2.17
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
@@ -440,7 +440,7 @@ pyyaml==6.0.2
     #   drf-spectacular
 readme-renderer==44.0
     # via -r requirements/doc.in
-redis==5.2.0
+redis==5.2.1
     # via -r requirements/test.txt
 referencing==0.35.1
     # via
@@ -462,7 +462,7 @@ requests-oauthlib==2.0.0
     #   social-auth-core
 restructuredtext-lint==1.4.0
     # via doc8
-rpds-py==0.21.0
+rpds-py==0.22.3
     # via
     #   -r requirements/test.txt
     #   jsonschema
@@ -479,7 +479,7 @@ semantic-version==2.10.0
     #   edx-drf-extensions
 simplejson==3.19.3
     # via -r requirements/test.txt
-six==1.16.0
+six==1.17.0
     # via
     #   -r requirements/test.txt
     #   analytics-python
