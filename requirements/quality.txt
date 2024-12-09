@@ -15,7 +15,7 @@ asgiref==3.8.1
     #   -r requirements/base.txt
     #   django
     #   django-cors-headers
-astroid==3.3.5
+astroid==3.3.6
     # via
     #   pylint
     #   pylint-celery
@@ -34,11 +34,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.35.71
+boto3==1.35.76
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.35.71
+botocore==1.35.76
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -103,7 +103,7 @@ defusedxml==0.8.0rc2
     #   social-auth-core
 dill==0.3.9
     # via pylint
-django==4.2.16
+django==4.2.17
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -354,7 +354,7 @@ pyyaml==6.0.2
     #   -r requirements/base.txt
     #   code-annotations
     #   drf-spectacular
-redis==5.2.0
+redis==5.2.1
     # via -r requirements/base.txt
 referencing==0.35.1
     # via
@@ -373,7 +373,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-rpds-py==0.21.0
+rpds-py==0.22.3
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -390,7 +390,7 @@ semantic-version==2.10.0
     #   edx-drf-extensions
 simplejson==3.19.3
     # via -r requirements/base.txt
-six==1.16.0
+six==1.17.0
     # via
     #   -r requirements/base.txt
     #   analytics-python
