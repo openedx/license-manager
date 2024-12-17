@@ -19,7 +19,7 @@ asgiref==3.8.1
     #   -r requirements/test.txt
     #   django
     #   django-cors-headers
-astroid==3.3.5
+astroid==3.3.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.35.71
+boto3==1.35.81
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.71
+botocore==1.35.81
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -62,7 +62,7 @@ celery==5.4.0
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2024.8.30
+certifi==2024.12.14
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -110,13 +110,13 @@ click-repl==0.3.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-code-annotations==2.0.0
+code-annotations==2.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.6.8
+coverage[toml]==7.6.9
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -139,7 +139,7 @@ dill==0.3.9
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==4.2.16
+django==4.2.17
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -212,7 +212,7 @@ django-model-utils==5.0.0
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.3.0
+django-ses==4.3.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -393,7 +393,7 @@ mysqlclient==2.2.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==10.3.1
+newrelic==10.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -536,7 +536,7 @@ pyyaml==6.0.2
     #   code-annotations
     #   drf-spectacular
     #   edx-i18n-tools
-redis==5.2.0
+redis==5.2.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -560,7 +560,7 @@ requests-oauthlib==2.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-rpds-py==0.21.0
+rpds-py==0.22.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -584,7 +584,7 @@ simplejson==3.19.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-six==1.16.0
+six==1.17.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -609,7 +609,7 @@ social-auth-core==4.5.4
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.5.2
+sqlparse==0.5.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
