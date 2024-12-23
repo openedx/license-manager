@@ -15,11 +15,11 @@ asgiref==3.8.1
     #   -r requirements/base.txt
     #   django
     #   django-cors-headers
-astroid==3.3.6
+astroid==3.3.7
     # via
     #   pylint
     #   pylint-celery
-attrs==24.2.0
+attrs==24.3.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -34,11 +34,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.35.81
+boto3==1.35.86
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.35.81
+botocore==1.35.86
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -61,7 +61,7 @@ charset-normalizer==3.4.0
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.1.7
+click==8.1.8
     # via
     #   -r requirements/base.txt
     #   celery
@@ -246,7 +246,7 @@ iniconfig==2.0.0
     # via pytest
 isort==5.13.2
     # via pylint
-jinja2==3.1.4
+jinja2==3.1.5
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -310,7 +310,7 @@ prompt-toolkit==3.0.48
     # via
     #   -r requirements/base.txt
     #   click-repl
-psutil==6.1.0
+psutil==6.1.1
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -466,7 +466,7 @@ uritemplate==4.1.1
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
-urllib3==2.2.3
+urllib3==2.3.0
     # via
     #   -r requirements/base.txt
     #   botocore
