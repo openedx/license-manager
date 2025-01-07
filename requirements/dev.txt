@@ -15,12 +15,12 @@ asgiref==3.8.1
     #   -r requirements/validation.txt
     #   django
     #   django-cors-headers
-astroid==3.3.6
+astroid==3.3.8
     # via
     #   -r requirements/validation.txt
     #   pylint
     #   pylint-celery
-attrs==24.2.0
+attrs==24.3.0
     # via
     #   -r requirements/validation.txt
     #   jsonschema
@@ -35,11 +35,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.35.81
+boto3==1.35.92
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.35.81
+botocore==1.35.92
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -62,11 +62,11 @@ cffi==1.17.1
     #   -r requirements/validation.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.0
+charset-normalizer==3.4.1
     # via
     #   -r requirements/validation.txt
     #   requests
-click==8.1.7
+click==8.1.8
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/validation.txt
@@ -100,7 +100,7 @@ code-annotations==2.1.0
     #   -r requirements/validation.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.6.9
+coverage[toml]==7.6.10
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -254,7 +254,7 @@ edx-toggles==5.2.0
     # via -r requirements/validation.txt
 factory-boy==3.3.1
     # via -r requirements/validation.txt
-faker==33.1.0
+faker==33.3.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -266,7 +266,7 @@ idna==3.10
     # via
     #   -r requirements/validation.txt
     #   requests
-inflect==7.4.0
+inflect==7.5.0
     # via
     #   -r requirements/dev.in
     #   jinja2-pluralize
@@ -282,7 +282,7 @@ isort==5.13.2
     # via
     #   -r requirements/validation.txt
     #   pylint
-jinja2==3.1.4
+jinja2==3.1.5
     # via
     #   -r requirements/validation.txt
     #   code-annotations
@@ -386,7 +386,7 @@ prompt-toolkit==3.0.48
     # via
     #   -r requirements/validation.txt
     #   click-repl
-psutil==6.1.0
+psutil==6.1.1
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -398,7 +398,7 @@ pycparser==2.22
     #   cffi
 pydocstyle==6.3.0
     # via -r requirements/validation.txt
-pygments==2.18.0
+pygments==2.19.0
     # via diff-cover
 pyjwt[crypto]==2.10.1
     # via
@@ -408,7 +408,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.2
+pylint==3.3.3
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -574,7 +574,7 @@ uritemplate==4.1.1
     # via
     #   -r requirements/validation.txt
     #   drf-spectacular
-urllib3==2.2.3
+urllib3==2.3.0
     # via
     #   -r requirements/validation.txt
     #   botocore

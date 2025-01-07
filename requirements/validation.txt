@@ -19,13 +19,13 @@ asgiref==3.8.1
     #   -r requirements/test.txt
     #   django
     #   django-cors-headers
-astroid==3.3.6
+astroid==3.3.8
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
     #   pylint-celery
-attrs==24.2.0
+attrs==24.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.35.81
+boto3==1.35.92
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.81
+botocore==1.35.92
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -73,12 +73,12 @@ cffi==1.17.1
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.0
+charset-normalizer==3.4.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
-click==8.1.7
+click==8.1.8
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -116,7 +116,7 @@ code-annotations==2.1.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.6.9
+coverage[toml]==7.6.10
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -312,7 +312,7 @@ edx-toggles==5.2.0
     #   -r requirements/test.txt
 factory-boy==3.3.1
     # via -r requirements/test.txt
-faker==33.1.0
+faker==33.3.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -337,7 +337,7 @@ isort==5.13.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-jinja2==3.1.4
+jinja2==3.1.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -440,7 +440,7 @@ prompt-toolkit==3.0.48
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   click-repl
-psutil==6.1.0
+psutil==6.1.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -463,7 +463,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.2
+pylint==3.3.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -653,7 +653,7 @@ uritemplate==4.1.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   drf-spectacular
-urllib3==2.2.3
+urllib3==2.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
