@@ -3,7 +3,7 @@ License Manager  |Codecov|_
 .. |Codecov| image:: http://codecov.io/github/edx/license-manager/coverage.svg?branch=master
 .. _Codecov: http://codecov.io/github/edx/license-manager?branch=master
 
-Django backend for managing licenses and subscriptions.
+Django backend for managing licenses and subscriptions for enterprise customer.
 
 Setting up license-manager
 --------------------------
