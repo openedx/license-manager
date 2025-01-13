@@ -45,11 +45,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.35.92
+boto3==1.35.97
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.92
+botocore==1.35.97
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -253,7 +253,7 @@ edx-toggles==5.2.0
     # via -r requirements/test.txt
 factory-boy==3.3.1
     # via -r requirements/test.txt
-faker==33.3.0
+faker==33.3.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -315,7 +315,7 @@ monotonic==1.6
     # via
     #   -r requirements/test.txt
     #   analytics-python
-mysqlclient==2.2.6
+mysqlclient==2.2.7
     # via -r requirements/test.txt
 newrelic==10.4.0
     # via
@@ -363,7 +363,7 @@ pycparser==2.22
     #   cffi
 pydata-sphinx-theme==0.16.1
     # via sphinx-book-theme
-pygments==2.19.0
+pygments==2.19.1
     # via
     #   accessible-pygments
     #   doc8
@@ -557,8 +557,9 @@ uritemplate==4.1.1
     # via
     #   -r requirements/test.txt
     #   drf-spectacular
-urllib3==2.3.0
+urllib3==2.2.3
     # via
+    #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
     #   botocore
     #   requests

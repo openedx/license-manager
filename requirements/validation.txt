@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.35.92
+boto3==1.35.97
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.92
+botocore==1.35.97
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -312,7 +312,7 @@ edx-toggles==5.2.0
     #   -r requirements/test.txt
 factory-boy==3.3.1
     # via -r requirements/test.txt
-faker==33.3.0
+faker==33.3.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -389,7 +389,7 @@ monotonic==1.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   analytics-python
-mysqlclient==2.2.6
+mysqlclient==2.2.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -653,8 +653,9 @@ uritemplate==4.1.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   drf-spectacular
-urllib3==2.3.0
+urllib3==2.2.3
     # via
+    #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   botocore
