@@ -35,11 +35,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.35.97
+boto3==1.36.2
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.35.97
+botocore==1.36.2
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -95,7 +95,7 @@ click-repl==0.3.0
     # via
     #   -r requirements/validation.txt
     #   celery
-code-annotations==2.1.0
+code-annotations==2.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -126,7 +126,7 @@ dill==0.3.9
     # via
     #   -r requirements/validation.txt
     #   pylint
-django==4.2.17
+django==4.2.18
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/validation.txt
@@ -168,7 +168,7 @@ django-crum==0.7.9
     #   edx-django-utils
     #   edx-rbac
     #   edx-toggles
-django-debug-toolbar==4.4.6
+django-debug-toolbar==5.0.1
     # via -r requirements/dev.in
 django-durationwidget==1.0.5
     # via -r requirements/validation.txt
@@ -187,7 +187,7 @@ django-model-utils==5.0.0
     #   -r requirements/validation.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.3.1
+django-ses==4.3.2
     # via -r requirements/validation.txt
 django-simple-history==3.7.0
     # via -r requirements/validation.txt
@@ -332,7 +332,7 @@ monotonic==1.6
     # via
     #   -r requirements/validation.txt
     #   analytics-python
-more-itertools==10.5.0
+more-itertools==10.6.0
     # via inflect
 mysqlclient==2.2.7
     # via -r requirements/validation.txt
@@ -478,7 +478,7 @@ pyyaml==6.0.2
     #   edx-i18n-tools
 redis==5.2.1
     # via -r requirements/validation.txt
-referencing==0.35.1
+referencing==0.36.1
     # via
     #   -r requirements/validation.txt
     #   jsonschema
@@ -502,7 +502,7 @@ rpds-py==0.22.3
     #   referencing
 rules==3.5
     # via -r requirements/validation.txt
-s3transfer==0.10.4
+s3transfer==0.11.1
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -564,6 +564,7 @@ typing-extensions==4.12.2
     #   -r requirements/validation.txt
     #   edx-opaque-keys
     #   faker
+    #   referencing
     #   typeguard
 tzdata==2024.2
     # via

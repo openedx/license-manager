@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.35.97
+boto3==1.36.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.35.97
+botocore==1.36.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -110,7 +110,7 @@ click-repl==0.3.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-code-annotations==2.1.0
+code-annotations==2.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -139,7 +139,7 @@ dill==0.3.9
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==4.2.17
+django==4.2.18
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -212,7 +212,7 @@ django-model-utils==5.0.0
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.3.1
+django-ses==4.3.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -540,7 +540,7 @@ redis==5.2.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-referencing==0.35.1
+referencing==0.36.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -570,7 +570,7 @@ rules==3.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-s3transfer==0.10.4
+s3transfer==0.11.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -642,6 +642,7 @@ typing-extensions==4.12.2
     #   -r requirements/test.txt
     #   edx-opaque-keys
     #   faker
+    #   referencing
 tzdata==2024.2
     # via
     #   -r requirements/quality.txt
