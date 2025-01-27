@@ -19,7 +19,7 @@ astroid==3.3.8
     # via
     #   pylint
     #   pylint-celery
-attrs==24.3.0
+attrs==25.1.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -34,11 +34,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.35.97
+boto3==1.36.6
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.35.97
+botocore==1.36.6
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -86,7 +86,7 @@ click-repl==0.3.0
     # via
     #   -r requirements/base.txt
     #   celery
-code-annotations==2.1.0
+code-annotations==2.2.0
     # via
     #   -r requirements/base.txt
     #   -r requirements/test.in
@@ -110,7 +110,7 @@ defusedxml==0.8.0rc2
     #   social-auth-core
 dill==0.3.9
     # via pylint
-django==4.2.17
+django==4.2.18
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -165,9 +165,9 @@ django-model-utils==5.0.0
     #   -r requirements/base.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.3.1
+django-ses==4.3.2
     # via -r requirements/base.txt
-django-simple-history==3.7.0
+django-simple-history==3.8.0
     # via -r requirements/base.txt
 django-waffle==4.2.0
     # via
@@ -216,7 +216,7 @@ edx-drf-extensions==10.5.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
-edx-lint==5.4.1
+edx-lint==5.6.0
     # via -r requirements/test.in
 edx-opaque-keys==2.11.0
     # via
@@ -230,7 +230,7 @@ edx-toggles==5.2.0
     # via -r requirements/base.txt
 factory-boy==3.3.1
     # via -r requirements/test.in
-faker==33.3.1
+faker==35.0.0
     # via factory-boy
 freezegun==1.5.1
     # via -r requirements/test.in
@@ -306,7 +306,7 @@ ply==3.11
     # via
     #   -r requirements/base.txt
     #   djangoql
-prompt-toolkit==3.0.48
+prompt-toolkit==3.0.50
     # via
     #   -r requirements/base.txt
     #   click-repl
@@ -381,7 +381,7 @@ pyyaml==6.0.2
     #   drf-spectacular
 redis==5.2.1
     # via -r requirements/base.txt
-referencing==0.35.1
+referencing==0.36.2
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -405,7 +405,7 @@ rpds-py==0.22.3
     #   referencing
 rules==3.5
     # via -r requirements/base.txt
-s3transfer==0.10.4
+s3transfer==0.11.2
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -457,7 +457,8 @@ typing-extensions==4.12.2
     #   -r requirements/base.txt
     #   edx-opaque-keys
     #   faker
-tzdata==2024.2
+    #   referencing
+tzdata==2025.1
     # via
     #   -r requirements/base.txt
     #   celery
