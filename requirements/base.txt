@@ -24,9 +24,9 @@ billiard==4.2.1
     # via celery
 bleach[css]==6.2.0
     # via -r requirements/base.in
-boto3==1.36.6
+boto3==1.36.11
     # via django-ses
-botocore==1.36.6
+botocore==1.36.11
     # via
     #   boto3
     #   s3transfer
@@ -35,7 +35,7 @@ celery==5.4.0
     #   -r requirements/base.in
     #   django-celery-results
     #   edx-celeryutils
-certifi==2024.12.14
+certifi==2025.1.31
     # via requests
 cffi==1.17.1
     # via
@@ -119,7 +119,7 @@ django-model-utils==5.0.0
     #   -r requirements/base.in
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.3.2
+django-ses==4.4.0
     # via -r requirements/base.in
 django-simple-history==3.8.0
     # via -r requirements/base.in
@@ -198,7 +198,7 @@ monotonic==1.6
     # via analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.in
-newrelic==10.4.0
+newrelic==10.5.0
     # via edx-django-utils
 oauthlib==3.2.2
     # via
@@ -221,7 +221,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pymongo==4.10.1
+pymongo==4.11
     # via edx-opaque-keys
 pynacl==1.5.0
     # via edx-django-utils
@@ -234,7 +234,7 @@ python-slugify==8.0.4
     # via code-annotations
 python3-openid==3.2.0
     # via social-auth-core
-pytz==2024.2
+pytz==2025.1
     # via -r requirements/base.in
 pyyaml==6.0.2
     # via

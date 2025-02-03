@@ -35,11 +35,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.36.6
+boto3==1.36.11
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.36.6
+botocore==1.36.11
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -53,7 +53,7 @@ celery==5.4.0
     #   -r requirements/validation.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2024.12.14
+certifi==2025.1.31
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -187,7 +187,7 @@ django-model-utils==5.0.0
     #   -r requirements/validation.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.3.2
+django-ses==4.4.0
     # via -r requirements/validation.txt
 django-simple-history==3.8.0
     # via -r requirements/validation.txt
@@ -254,7 +254,7 @@ edx-toggles==5.2.0
     # via -r requirements/validation.txt
 factory-boy==3.3.1
     # via -r requirements/validation.txt
-faker==35.0.0
+faker==35.2.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -278,7 +278,7 @@ iniconfig==2.0.0
     # via
     #   -r requirements/validation.txt
     #   pytest
-isort==5.13.2
+isort==6.0.0
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -336,7 +336,7 @@ more-itertools==10.6.0
     # via inflect
 mysqlclient==2.2.7
     # via -r requirements/validation.txt
-newrelic==10.4.0
+newrelic==10.5.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -408,7 +408,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.3
+pylint==3.3.4
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -428,7 +428,7 @@ pylint-plugin-utils==0.8.2
     #   -r requirements/validation.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.10.1
+pymongo==4.11
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
@@ -466,7 +466,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/validation.txt
     #   social-auth-core
-pytz==2024.2
+pytz==2025.1
     # via -r requirements/validation.txt
 pywatchman==2.0.0
     # via -r requirements/dev.in
