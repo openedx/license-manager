@@ -29,7 +29,7 @@ attrs==25.1.0
     #   -r requirements/test.txt
     #   jsonschema
     #   referencing
-babel==2.16.0
+babel==2.17.0
     # via
     #   pydata-sphinx-theme
     #   sphinx
@@ -37,7 +37,7 @@ backoff==1.10.0
     # via
     #   -r requirements/test.txt
     #   analytics-python
-beautifulsoup4==4.12.3
+beautifulsoup4==4.13.0
     # via pydata-sphinx-theme
 billiard==4.2.1
     # via
@@ -45,11 +45,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.36.6
+boto3==1.36.11
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.36.6
+botocore==1.36.11
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -59,7 +59,7 @@ celery==5.4.0
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2024.12.14
+certifi==2025.1.31
     # via
     #   -r requirements/test.txt
     #   requests
@@ -179,7 +179,7 @@ django-model-utils==5.0.0
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.3.2
+django-ses==4.4.0
     # via -r requirements/test.txt
 django-simple-history==3.8.0
     # via -r requirements/test.txt
@@ -253,7 +253,7 @@ edx-toggles==5.2.0
     # via -r requirements/test.txt
 factory-boy==3.3.1
     # via -r requirements/test.txt
-faker==35.0.0
+faker==35.2.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -273,7 +273,7 @@ iniconfig==2.0.0
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==5.13.2
+isort==6.0.0
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -317,7 +317,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/test.txt
-newrelic==10.4.0
+newrelic==10.5.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -378,7 +378,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.3
+pylint==3.3.4
     # via
     #   -r requirements/test.txt
     #   edx-lint
@@ -398,7 +398,7 @@ pylint-plugin-utils==0.8.2
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.10.1
+pymongo==4.11
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
@@ -431,7 +431,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/test.txt
     #   social-auth-core
-pytz==2024.2
+pytz==2025.1
     # via -r requirements/test.txt
 pyyaml==6.0.2
     # via
@@ -545,6 +545,7 @@ tomlkit==0.13.2
 typing-extensions==4.12.2
     # via
     #   -r requirements/test.txt
+    #   beautifulsoup4
     #   edx-opaque-keys
     #   faker
     #   pydata-sphinx-theme
