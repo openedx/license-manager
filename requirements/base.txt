@@ -24,9 +24,9 @@ billiard==4.2.1
     # via celery
 bleach[css]==6.2.0
     # via -r requirements/base.in
-boto3==1.36.11
+boto3==1.36.16
     # via django-ses
-botocore==1.36.11
+botocore==1.36.16
     # via
     #   boto3
     #   s3transfer
@@ -67,7 +67,7 @@ defusedxml==0.8.0rc2
     # via
     #   python3-openid
     #   social-auth-core
-django==4.2.18
+django==4.2.19
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.in
@@ -99,7 +99,7 @@ django-autocomplete-light==3.11.0
     # via -r requirements/base.in
 django-celery-results==2.5.1
     # via -r requirements/base.in
-django-cors-headers==4.6.0
+django-cors-headers==4.7.0
     # via -r requirements/base.in
 django-crum==0.7.9
     # via
@@ -198,13 +198,13 @@ monotonic==1.6
     # via analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.in
-newrelic==10.5.0
+newrelic==10.6.0
     # via edx-django-utils
 oauthlib==3.2.2
     # via
     #   requests-oauthlib
     #   social-auth-core
-pbr==6.1.0
+pbr==6.1.1
     # via stevedore
 ply==3.11
     # via djangoql
