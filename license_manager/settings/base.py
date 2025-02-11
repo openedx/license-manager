@@ -163,6 +163,9 @@ REST_FRAMEWORK = {
     }
 }
 
+# Maintain a list of user ids to opt-out of API throttle limits
+PRIVELEGED_USER_IDS = []
+
 # Internationalization
 # https://docs.djangoproject.com/en/dev/topics/i18n/
 
