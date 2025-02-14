@@ -544,7 +544,6 @@ class AdminLicenseSerializer(serializers.ModelSerializer):
             'last_remind_date',
             'subscription_plan_title',
             'subscription_plan_expiration_date',
-            'activation_link',
             'subscription_plan',
         ]
 

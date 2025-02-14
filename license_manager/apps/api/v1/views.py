@@ -1994,14 +1994,14 @@ class AdminLicenseLookupViewSet(LicenseBaseView):
                     "title": "Seed Generated Plan from <CustomerAgreement: 'the-whinery-spirits-company'> 2022-11-14 21:24:40.986155+00:00",
                     "uuid": "cea5c7ea-1ac0-4493-96d6-085ed89e63d7",
                     "start_date": "2022-11-14T21:24:40.986155Z",
-                    "expiration_date": "2023-11-14T21:24:40.986155Z",
+                    "expiration_date": "2026-11-14T21:24:40.986155Z",
                     "enterprise_customer_uuid": "7dbf461e-8d3d-4a4a-9b20-9c9121f04806",
                     "enterprise_catalog_uuid": "5f65d912-2f7c-418a-8555-584f23ec9b28",
                     "is_active": true,
                     "is_current": false,
                     "is_revocation_cap_enabled": false,
-                    "days_until_expiration": -458,
-                    "days_until_expiration_including_renewals": -458,
+                    "days_until_expiration": 458,
+                    "days_until_expiration_including_renewals": 458,
                     "is_locked_for_renewal_processing": false,
                     "should_auto_apply_licenses": null,
                     "created": "2022-11-14T21:24:40.986677Z",
@@ -2022,9 +2022,15 @@ class AdminLicenseLookupViewSet(LicenseBaseView):
         user_email = request.query_params.get('user_email')
         enterprise_customer_uuid = request.query_params.get('enterprise_customer_uuid')
 
-        if not user_email or not enterprise_customer_uuid:
+        if not user_email:
             return Response(
                 'A ``user_email`` is required in the request data',
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not enterprise_customer_uuid:
+            return Response(
+                'An ``enterprise_customer_uuid`` is required in the request data',
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

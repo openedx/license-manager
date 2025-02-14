@@ -41,7 +41,6 @@ from license_manager.apps.api.v1.views import (
     ESTIMATED_COUNT_PAGINATOR_THRESHOLD,
 )
 from license_manager.apps.core.models import User
-from license_manager.apps.api.serializers import AdminLicenseSerializer
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
@@ -4664,9 +4663,18 @@ class AdminLicenseLookupViewSetTestCase(LicenseViewTestMixin, TestCase):
     def test_missing_user_email_returns_400(self):
         self.api_client.force_authenticate(user=self.admin_user)
         url = reverse('api:v1:admin-license-view')
-        response = self.api_client.get(url, {"enterprise_customer_uuid": self.enterprise_customer_uuid})
+        response = self.api_client.get(url, {
+            "enterprise_customer_uuid": self.enterprise_customer_uuid})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, 'A ``user_email`` is required in the request data')
+
+    def test_missing_enterprise_customer_uuid_returns_400(self):
+        self.api_client.force_authenticate(user=self.admin_user)
+        url = reverse('api:v1:admin-license-view')
+        response = self.api_client.get(url, {"user_email": self.user_email})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, 'An ``enterprise_customer-uuid`` is required in the request data')
 
     @mock.patch("license_manager.apps.api.models.License.for_user_and_customer")
     def test_valid_request_returns_licenses(self, mock_license_query):
@@ -4680,7 +4688,9 @@ class AdminLicenseLookupViewSetTestCase(LicenseViewTestMixin, TestCase):
         mock_license_query.return_value = [mock_license]
         url = reverse('api:v1:admin-license-view')
         self.api_client.force_authenticate(user=self.admin_user)
-        response = self.api_client.get(url, {"user_email": self.user_email, "enterprise_customer_uuid": self.enterprise_customer_uuid})
+        response = self.api_client.get(url, {
+            "user_email": self.user_email,
+            "enterprise_customer_uuid": self.enterprise_customer_uuid})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("count", response.data)
         self.assertIn("results", response.data)

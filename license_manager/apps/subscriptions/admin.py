@@ -427,6 +427,10 @@ class CustomerAgreementAdmin(admin.ModelAdmin):
         'license_duration_before_purge',
         'disable_onboarding_notifications',
         'enable_auto_applied_subscriptions_with_universal_link',
+        'enable_auto_scaling_of_current_plan',
+        'auto_scaling_max_licenses',
+        'auto_scaling_threshold_percentage',
+        'auto_scaling_increment_percentage',
     )
     custom_fields = ('subscription_for_auto_applied_licenses',)
 
