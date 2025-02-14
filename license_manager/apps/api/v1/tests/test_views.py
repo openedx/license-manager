@@ -41,6 +41,7 @@ from license_manager.apps.api.v1.views import (
     ESTIMATED_COUNT_PAGINATOR_THRESHOLD,
 )
 from license_manager.apps.core.models import User
+from license_manager.apps.api.serializers import AdminLicenseSerializer
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
@@ -940,6 +941,7 @@ def test_subscription_plan_create_non_staff_user_200(api_client, non_staff_user)
         "uuid",
         "is_current",
         "created",
+        "plan_type",
     }
     assert response.json().keys() == expected_fields
 
@@ -4639,3 +4641,48 @@ class StaffLicenseLookupViewTests(LicenseViewTestMixin, TestCase):
                 'subscription_plan_title': self.active_subscription_for_customer.title,
             },
         ], response.json())  # pylint: disable=no-member
+
+
+class AdminLicenseLookupViewSetTestCase(LicenseViewTestMixin, TestCase):
+    """
+    Tests for the ``AdminLicenseLookupViewSet``.
+    """
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.admin_user = UserFactory(is_staff=True)
+
+        cls.other_subscription = SubscriptionPlanFactory.create(
+            customer_agreement=cls.customer_agreement,
+            enterprise_catalog_uuid=cls.enterprise_catalog_uuid,
+            is_active=True,
+            title='Other Subscription Plan',
+        )
+        cls.user_email = "testuser@example.com"
+
+    def test_missing_user_email_returns_400(self):
+        self.api_client.force_authenticate(user=self.admin_user)
+        url = reverse('api:v1:admin-license-view')
+        response = self.api_client.get(url, {"enterprise_customer_uuid": self.enterprise_customer_uuid})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, 'A ``user_email`` is required in the request data')
+
+    @mock.patch("license_manager.apps.api.models.License.for_user_and_customer")
+    def test_valid_request_returns_licenses(self, mock_license_query):
+        mock_license = License(
+            status="assigned",
+            assigned_date="2025-02-12T18:44:50Z",
+            activation_date="2025-02-12T18:44:52Z",
+            revoked_date=None,
+            last_remind_date=None,
+        )
+        mock_license_query.return_value = [mock_license]
+        url = reverse('api:v1:admin-license-view')
+        self.api_client.force_authenticate(user=self.admin_user)
+        response = self.api_client.get(url, {"user_email": self.user_email, "enterprise_customer_uuid": self.enterprise_customer_uuid})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("count", response.data)
+        self.assertIn("results", response.data)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["status"], "assigned")

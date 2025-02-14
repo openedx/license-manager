@@ -124,5 +124,10 @@ urlpatterns = [
         views.StaffLicenseLookupView.as_view(),
         name='staff-lookup-licenses',
     ),
+    re_path(
+        r'admin-license-view',
+        views.AdminLicenseLookupViewSet.as_view(),
+        name='admin-license-view',
+    ),
 ]
 urlpatterns += router.urls + subscription_router.urls
