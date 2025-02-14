@@ -53,6 +53,8 @@ class MinimalSubscriptionPlanSerializer(serializers.ModelSerializer):
         read_only=True,
     )
 
+    plan_type = serializers.CharField(source='product.plan_type', read_only=True)
+
     class Meta:
         model = SubscriptionPlan
         fields = [
@@ -70,6 +72,7 @@ class MinimalSubscriptionPlanSerializer(serializers.ModelSerializer):
             'is_locked_for_renewal_processing',
             'should_auto_apply_licenses',
             'created',
+            'plan_type'
         ]
 
 
@@ -516,7 +519,33 @@ class StaffLicenseSerializer(serializers.ModelSerializer):
             'last_remind_date',
             'subscription_plan_title',
             'subscription_plan_expiration_date',
+            'activation_link'
+        ]
+
+
+class AdminLicenseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the ``License`` model that is usable by views for an enterprise admin.
+    """
+
+    subscription_plan_title = serializers.CharField(source='subscription_plan.title')
+    subscription_plan_expiration_date = serializers.DateTimeField(source='subscription_plan.expiration_date')
+    subscription_plan = MinimalSubscriptionPlanSerializer()
+
+    class Meta:
+        model = License
+        fields = [
+            'uuid',
+            'status',
+            'user_email',
+            'assigned_date',
+            'activation_date',
+            'revoked_date',
+            'last_remind_date',
+            'subscription_plan_title',
+            'subscription_plan_expiration_date',
             'activation_link',
+            'subscription_plan',
         ]
 
 
