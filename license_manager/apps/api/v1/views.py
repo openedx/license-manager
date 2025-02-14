@@ -25,6 +25,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError, ValidationError
 from rest_framework.mixins import ListModelMixin
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_csv.renderers import CSVRenderer
@@ -1961,3 +1962,83 @@ class StaffLicenseLookupView(LicenseBaseView):
             serialized_licenses.data,
             status=status.HTTP_200_OK,
         )
+
+
+class AdminLicenseLookupViewSet(LicenseBaseView):
+    """
+    A class that allows admins to lookup all licenses for a user with the provided
+    user's email address and enterprise customer uuid.
+
+    GET /api/v1/admin-license-view
+
+    Expected params:
+    - user_email (string): The email address for a learner within an enterprise
+    - enterprise_customer_uuid (string): the uuid of an enterprise customer
+    
+    Expected Return:
+    {
+        "count": 1,
+        "next": null,
+        "previous": null,
+        "results": [
+            {
+                "status": "assigned",
+                "assigned_date": "2025-02-12T18:44:50Z",
+                "activation_date": "2025-02-12T18:44:52Z",
+                "revoked_date": null,
+                "last_remind_date": null,
+                "subscription_plan_title": "Seed Generated Plan from <CustomerAgreement: 'the-whinery-spirits-company'> 2022-11-14 21:24:40.986155+00:00",
+                "subscription_plan_expiration_date": "2023-11-14T21:24:40.986155Z",
+                "activation_link": "http://localhost:8734/the-whinery-spirits-company/licenses/None/activate",
+                "subscription_plan": {
+                    "title": "Seed Generated Plan from <CustomerAgreement: 'the-whinery-spirits-company'> 2022-11-14 21:24:40.986155+00:00",
+                    "uuid": "cea5c7ea-1ac0-4493-96d6-085ed89e63d7",
+                    "start_date": "2022-11-14T21:24:40.986155Z",
+                    "expiration_date": "2023-11-14T21:24:40.986155Z",
+                    "enterprise_customer_uuid": "7dbf461e-8d3d-4a4a-9b20-9c9121f04806",
+                    "enterprise_catalog_uuid": "5f65d912-2f7c-418a-8555-584f23ec9b28",
+                    "is_active": true,
+                    "is_current": false,
+                    "is_revocation_cap_enabled": false,
+                    "days_until_expiration": -458,
+                    "days_until_expiration_including_renewals": -458,
+                    "is_locked_for_renewal_processing": false,
+                    "should_auto_apply_licenses": null,
+                    "created": "2022-11-14T21:24:40.986677Z",
+                    "plan_type": "Standard Paid"
+                }
+            }
+        ]
+    }
+
+    """
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        """
+        Returns all licenses and associated subscription data
+        associated with an learner's email address and enterprise.
+        """
+        user_email = request.query_params.get('user_email')
+        enterprise_customer_uuid = request.query_params.get('enterprise_customer_uuid')
+
+        if not user_email or not enterprise_customer_uuid:
+            return Response(
+                'A ``user_email`` is required in the request data',
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user_licenses = License.for_user_and_customer(
+            user_email=user_email,
+            lms_user_id=None,
+            enterprise_customer_uuid=enterprise_customer_uuid
+        )
+        if not user_licenses:
+            return Response(
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        paginator = PageNumberPagination()
+        licenses_page = paginator.paginate_queryset(user_licenses, request, view=self)
+
+        serialized_licenses = serializers.AdminLicenseSerializer(licenses_page, many=True)
+        return paginator.get_paginated_response(serialized_licenses.data)
