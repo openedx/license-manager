@@ -41,6 +41,7 @@ from license_manager.apps.api.v1.views import (
     ESTIMATED_COUNT_PAGINATOR_THRESHOLD,
 )
 from license_manager.apps.core.models import User
+from license_manager.apps.api.serializers import AdminLicenseSerializer
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
@@ -4684,4 +4685,4 @@ class AdminLicenseLookupViewSetTestCase(LicenseViewTestMixin, TestCase):
         self.assertIn("count", response.data)
         self.assertIn("results", response.data)
         self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["status"], "assigned") 
+        self.assertEqual(response.data["results"][0]["status"], "assigned")
