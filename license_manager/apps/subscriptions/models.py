@@ -9,7 +9,11 @@ from uuid import uuid4
 from django.conf import settings
 from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
-from django.core.validators import MinLengthValidator
+from django.core.validators import (
+    MaxValueValidator,
+    MinLengthValidator,
+    MinValueValidator,
+)
 from django.db import models, transaction
 from django.db.models import Q
 from django.db.models.signals import post_delete, post_save
@@ -194,6 +198,54 @@ class CustomerAgreement(TimeStampedModel):
             "checking this box will enable subscription licenses to be applied when a learner joins the enterprise via "
             "Universal link as well"
         )
+    )
+
+    enable_auto_scaling_of_current_plan = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text=_(
+            "Enables the most current, active plan for this customer "
+            "to automatically have licenses added to it when the count of allocated "
+            "licenses hits some threshold. The number of licenses is allowed to "
+            "scale up to a hard limit, specified by `auto_scaling_max_licenses`."
+        ),
+    )
+    auto_scaling_max_licenses = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "The maximum number of licenses a plan for this customer "
+            "is allowed to automatically scale to. Consider setting this to a "
+            "factor of 3 or 4 of the desired number of licenses for the current plan. "
+            "For example, if the plan in question has 10,000 desired licenses, set "
+            "the value of this field to 40,000."
+        ),
+    )
+    auto_scaling_threshold_percentage = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[
+            MaxValueValidator(100),
+            MinValueValidator(1),
+        ],
+        help_text=_(
+            "Percentage of allocated (i.e. activated or assigned) licenses in the current plan "
+            "above which auto-scaling will be executed."
+        ),
+    )
+    auto_scaling_increment_percentage = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[
+            MaxValueValidator(100),
+            MinValueValidator(1),
+        ],
+        help_text=_(
+            "Percentage of total licenses in the current plan that will be created "
+            "when auto-scaling will be executed. For instance, if the number of licenses "
+            "in the plan is 50,000, and we set this field to 10 percent, an auto-scale execution "
+            "would result in adding 5,000 licenses to the plan."
+        ),
     )
 
     history = HistoricalRecords()

@@ -41,7 +41,6 @@ from license_manager.apps.api.v1.views import (
     ESTIMATED_COUNT_PAGINATOR_THRESHOLD,
 )
 from license_manager.apps.core.models import User
-from license_manager.apps.api.serializers import AdminLicenseSerializer
 from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.exceptions import LicenseRevocationError
 from license_manager.apps.subscriptions.models import (
