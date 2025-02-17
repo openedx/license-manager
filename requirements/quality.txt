@@ -34,11 +34,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.36.16
+boto3==1.36.21
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.36.16
+botocore==1.36.21
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -91,12 +91,12 @@ code-annotations==2.2.0
     #   -r requirements/base.txt
     #   edx-lint
     #   edx-toggles
-cryptography==44.0.0
+cryptography==44.0.1
     # via
     #   -r requirements/base.txt
     #   pyjwt
     #   social-auth-core
-defusedxml==0.8.0rc2
+defusedxml==0.7.1
     # via
     #   -r requirements/base.txt
     #   python3-openid
@@ -147,7 +147,7 @@ django-durationwidget==1.0.5
     # via -r requirements/base.txt
 django-extensions==3.2.3
     # via -r requirements/base.txt
-django-filter==24.3
+django-filter==25.1
     # via -r requirements/base.txt
 django-log-request-id==2.1.0
     # via -r requirements/base.txt
@@ -215,9 +215,9 @@ edx-opaque-keys==2.11.0
     #   edx-drf-extensions
 edx-rbac==1.10.0
     # via -r requirements/base.txt
-edx-rest-api-client==6.0.0
+edx-rest-api-client==6.1.0
     # via -r requirements/base.txt
-edx-toggles==5.2.0
+edx-toggles==5.3.0
     # via -r requirements/base.txt
 idna==3.10
     # via
@@ -291,7 +291,7 @@ prompt-toolkit==3.0.50
     # via
     #   -r requirements/base.txt
     #   click-repl
-psutil==6.1.1
+psutil==7.0.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -325,7 +325,7 @@ pylint-plugin-utils==0.8.2
     # via
     #   pylint-celery
     #   pylint-django
-pymongo==4.11
+pymongo==4.11.1
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -388,7 +388,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-simplejson==3.19.3
+simplejson==3.20.1
     # via -r requirements/base.txt
 six==1.17.0
     # via
@@ -400,11 +400,11 @@ six==1.17.0
     #   python-dateutil
 snowballstemmer==2.2.0
     # via pydocstyle
-social-auth-app-django==5.4.2
+social-auth-app-django==5.4.3
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.5.4
+social-auth-core==4.5.6
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
