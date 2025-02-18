@@ -4674,7 +4674,7 @@ class AdminLicenseLookupViewSetTestCase(LicenseViewTestMixin, TestCase):
         response = self.api_client.get(url, {"user_email": self.user_email})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data, 'An ``enterprise_customer-uuid`` is required in the request data')
+            response.data, 'An ``enterprise_customer_uuid`` is required in the request data')
 
     @mock.patch("license_manager.apps.api.models.License.for_user_and_customer")
     def test_valid_request_returns_licenses(self, mock_license_query):

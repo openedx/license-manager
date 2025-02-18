@@ -24,9 +24,9 @@ billiard==4.2.1
     # via celery
 bleach[css]==6.2.0
     # via -r requirements/base.in
-boto3==1.36.16
+boto3==1.36.21
     # via django-ses
-botocore==1.36.16
+botocore==1.36.21
     # via
     #   boto3
     #   s3transfer
@@ -59,11 +59,11 @@ click-repl==0.3.0
     # via celery
 code-annotations==2.2.0
     # via edx-toggles
-cryptography==44.0.0
+cryptography==44.0.1
     # via
     #   pyjwt
     #   social-auth-core
-defusedxml==0.8.0rc2
+defusedxml==0.7.1
     # via
     #   python3-openid
     #   social-auth-core
@@ -110,7 +110,7 @@ django-durationwidget==1.0.5
     # via -r requirements/base.in
 django-extensions==3.2.3
     # via -r requirements/base.in
-django-filter==24.3
+django-filter==25.1
     # via -r requirements/base.in
 django-log-request-id==2.1.0
     # via -r requirements/base.in
@@ -170,9 +170,9 @@ edx-opaque-keys==2.11.0
     # via edx-drf-extensions
 edx-rbac==1.10.0
     # via -r requirements/base.in
-edx-rest-api-client==6.0.0
+edx-rest-api-client==6.1.0
     # via -r requirements/base.in
-edx-toggles==5.2.0
+edx-toggles==5.3.0
     # via -r requirements/base.in
 idna==3.10
     # via requests
@@ -210,7 +210,7 @@ ply==3.11
     # via djangoql
 prompt-toolkit==3.0.50
     # via click-repl
-psutil==6.1.1
+psutil==7.0.0
     # via edx-django-utils
 pycparser==2.22
     # via cffi
@@ -221,7 +221,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pymongo==4.11
+pymongo==4.11.1
     # via edx-opaque-keys
 pynacl==1.5.0
     # via edx-django-utils
@@ -265,7 +265,7 @@ s3transfer==0.11.2
     # via boto3
 semantic-version==2.10.0
     # via edx-drf-extensions
-simplejson==3.19.3
+simplejson==3.20.1
     # via -r requirements/base.in
 six==1.17.0
     # via
@@ -273,9 +273,9 @@ six==1.17.0
     #   edx-auth-backends
     #   edx-rbac
     #   python-dateutil
-social-auth-app-django==5.4.2
+social-auth-app-django==5.4.3
     # via edx-auth-backends
-social-auth-core==4.5.4
+social-auth-core==4.5.6
     # via
     #   edx-auth-backends
     #   social-auth-app-django

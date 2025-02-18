@@ -1974,7 +1974,7 @@ class AdminLicenseLookupViewSet(LicenseBaseView):
     Expected params:
     - user_email (string): The email address for a learner within an enterprise
     - enterprise_customer_uuid (string): the uuid of an enterprise customer
-    
+
     Expected Return:
     {
         "count": 1,
@@ -1987,11 +1987,10 @@ class AdminLicenseLookupViewSet(LicenseBaseView):
                 "activation_date": "2025-02-12T18:44:52Z",
                 "revoked_date": null,
                 "last_remind_date": null,
-                "subscription_plan_title": "Seed Generated Plan from <CustomerAgreement: 'the-whinery-spirits-company'> 2022-11-14 21:24:40.986155+00:00",
+                "subscription_plan_title": "Seed Generated Plan",
                 "subscription_plan_expiration_date": "2023-11-14T21:24:40.986155Z",
-                "activation_link": "http://localhost:8734/the-whinery-spirits-company/licenses/None/activate",
                 "subscription_plan": {
-                    "title": "Seed Generated Plan from <CustomerAgreement: 'the-whinery-spirits-company'> 2022-11-14 21:24:40.986155+00:00",
+                    "title": "Seed Generated Plan",
                     "uuid": "cea5c7ea-1ac0-4493-96d6-085ed89e63d7",
                     "start_date": "2022-11-14T21:24:40.986155Z",
                     "expiration_date": "2026-11-14T21:24:40.986155Z",
