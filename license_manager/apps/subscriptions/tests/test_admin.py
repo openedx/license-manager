@@ -4,7 +4,7 @@ from unittest import mock
 import pytest
 from django.contrib import messages
 from django.contrib.admin.sites import AdminSite
-from django.test import RequestFactory
+from django.test import RequestFactory, TestCase
 
 from license_manager.apps.subscriptions.admin import (
     CustomerAgreementAdmin,
@@ -29,78 +29,82 @@ from license_manager.apps.subscriptions.utils import localized_utcnow
 from ..constants import REVOKED
 
 
-@pytest.mark.django_db
-def test_licenses_subscription_creation():
+class SubscriptionCreationTests(TestCase):
     """
-    Verify that creating a SubscriptionPlan creates its associated Licenses after it is created.
+    Tests cases for creating new plans/licenses.
     """
-    subscription_admin = SubscriptionPlanAdmin(SubscriptionPlan, AdminSite())
-    request = RequestFactory()
-    request.user = UserFactory()
-    num_licenses = 5
-    form = make_bound_subscription_form(num_licenses=num_licenses)
-    obj = form.save()  # Get the object returned from saving the form to save to the database
-    assert obj.licenses.count() == 0  # Verify no Licenses have been created yet
-    change = False
-    subscription_admin.save_model(request, obj, form, change)
-    assert obj.licenses.count() == num_licenses
+    def test_licenses_subscription_creation(self):
+        """
+        Verify that creating a SubscriptionPlan creates its associated Licenses after it is created.
+        """
+        subscription_admin = SubscriptionPlanAdmin(SubscriptionPlan, AdminSite())
+        request = RequestFactory()
+        request.user = UserFactory()
+        num_licenses = 5
+        form = make_bound_subscription_form(num_licenses=num_licenses)
+        obj = form.save()  # Get the object returned from saving the form to save to the database
+        assert obj.licenses.count() == 0  # Verify no Licenses have been created yet
+        change = False
 
+        with self.captureOnCommitCallbacks(execute=True):
+            subscription_admin.save_model(request, obj, form, change)
 
-@pytest.mark.django_db
-@mock.patch('license_manager.apps.subscriptions.admin.messages.add_message')
-def test_subscription_licenses_create_action(mock_add_message):
-    """
-    Verify that running the create licenses action will create licenses.
-    """
-    # Setup an existing plan
-    customer_agreement = CustomerAgreementFactory()
-    subscription_plan = SubscriptionPlanFactory.create(
-        customer_agreement=customer_agreement,
-        desired_num_licenses=10,
-    )
-    assert subscription_plan.licenses.count() == 0  # Verify no Licenses have been created yet
+        assert obj.licenses.count() == num_licenses
 
-    # setup the admin form
-    subscription_admin = SubscriptionPlanAdmin(SubscriptionPlan, AdminSite())
-    request = RequestFactory()
-    request.user = UserFactory()
+    @mock.patch('license_manager.apps.subscriptions.admin.messages.add_message')
+    def test_subscription_licenses_create_action(self, mock_add_message):
+        """
+        Verify that running the create licenses action will create licenses.
+        """
+        # Setup an existing plan
+        customer_agreement = CustomerAgreementFactory()
+        subscription_plan = SubscriptionPlanFactory.create(
+            customer_agreement=customer_agreement,
+            desired_num_licenses=10,
+        )
+        assert subscription_plan.licenses.count() == 0  # Verify no Licenses have been created yet
 
-    # doesn't really matter what we put for num_licenses in here, save_model
-    # will read the desired number of license from the existing object on save.
-    form = make_bound_subscription_form(num_licenses=10)
-    form.save()
+        # setup the admin form
+        subscription_admin = SubscriptionPlanAdmin(SubscriptionPlan, AdminSite())
+        request = RequestFactory()
+        request.user = UserFactory()
 
-    # save the form as a modify instead of create
-    subscription_admin.save_model(request, subscription_plan, form, True)
-    subscription_plan.refresh_from_db()
-    # Desired number of licenses won't actually be created until we run the action
-    assert subscription_plan.licenses.count() == 0
+        # doesn't really matter what we put for num_licenses in here, save_model
+        # will read the desired number of license from the existing object on save.
+        form = make_bound_subscription_form(num_licenses=10)
+        form.save()
 
-    # Now run the action...
-    subscription_admin.create_actual_licenses_action(
-        request,
-        SubscriptionPlan.objects.filter(uuid=subscription_plan.uuid),
-    )
-    subscription_plan.refresh_from_db()
-    # Actual number of licenses should now equal the desired number (ten)
-    assert subscription_plan.licenses.count() == 10
+        # save the form as a modify instead of create
+        subscription_admin.save_model(request, subscription_plan, form, True)
+        subscription_plan.refresh_from_db()
+        # Desired number of licenses won't actually be created until we run the action
+        assert subscription_plan.licenses.count() == 0
 
-    mock_add_message.assert_called_once_with(
-        request, messages.SUCCESS, 'Successfully created license records for selected Subscription Plans.',
-    )
+        # Now run the action...
+        subscription_admin.create_actual_licenses_action(
+            request,
+            SubscriptionPlan.objects.filter(uuid=subscription_plan.uuid),
+        )
+        subscription_plan.refresh_from_db()
+        # Actual number of licenses should now equal the desired number (ten)
+        assert subscription_plan.licenses.count() == 10
 
-    # check that freezing the plan means running the create licenses action has no effect
-    subscription_plan.last_freeze_timestamp = localized_utcnow()
-    subscription_plan.desired_num_licenses = 5000
-    subscription_plan.save()
+        mock_add_message.assert_called_once_with(
+            request, messages.SUCCESS, 'Successfully created license records for selected Subscription Plans.',
+        )
 
-    subscription_admin.create_actual_licenses_action(
-        request,
-        SubscriptionPlan.objects.filter(uuid=subscription_plan.uuid),
-    )
-    subscription_plan.refresh_from_db()
-    # Actual number of licenses should STILL equal 10, because the plan is frozen
-    assert subscription_plan.licenses.count() == 10
+        # check that freezing the plan means running the create licenses action has no effect
+        subscription_plan.last_freeze_timestamp = localized_utcnow()
+        subscription_plan.desired_num_licenses = 5000
+        subscription_plan.save()
+
+        subscription_admin.create_actual_licenses_action(
+            request,
+            SubscriptionPlan.objects.filter(uuid=subscription_plan.uuid),
+        )
+        subscription_plan.refresh_from_db()
+        # Actual number of licenses should STILL equal 10, because the plan is frozen
+        assert subscription_plan.licenses.count() == 10
 
 
 @pytest.mark.django_db
