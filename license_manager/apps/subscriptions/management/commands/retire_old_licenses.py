@@ -77,6 +77,7 @@ class Command(BaseCommand):
         assigned_licenses_for_retirement = License.get_licenses_exceeding_purge_duration(
             'assigned_date',
             status=ASSIGNED,
+            subscription_plan__for_internal_use_only=False,
         )
         # We place previously assigned licenses that are now retired back into the unassigned license pool, so we scrub
         # all data on them.
