@@ -57,6 +57,7 @@ class Command(BaseCommand):
         revoked_licenses_for_retirement = License.get_licenses_exceeding_purge_duration(
             'revoked_date',
             status=REVOKED,
+            subscription_plan__for_internal_use_only=False,
         )
         # Scrub all pii on the revoked licenses, but they should stay revoked and keep their other info as we currently
         # add an unassigned license to the subscription's license pool whenever one is revoked.
