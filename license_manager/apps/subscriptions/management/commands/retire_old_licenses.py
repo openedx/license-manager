@@ -30,9 +30,8 @@ class Command(BaseCommand):
         expired_licenses_for_retirement = License.get_licenses_exceeding_purge_duration(
             'subscription_plan__expiration_date',
         )
-        # Scrub all piii on licenses whose subscription expired over 90 days ago, and mark the licenses as revoked
+        # Scrub all pii on licenses whose subscription expired over 90 days ago, and mark the licenses as revoked
         for expired_license in expired_licenses_for_retirement:
-            original_lms_user_id = expired_license.lms_user_id
             # record event data BEFORE we clear the license data:
             event_properties = get_license_tracking_properties(expired_license)
 
@@ -42,7 +41,7 @@ class Command(BaseCommand):
             expired_license.save()
 
             event_properties = get_license_tracking_properties(expired_license)
-            track_event(original_lms_user_id,
+            track_event(expired_license.lms_user_id,
                         SegmentEvents.LICENSE_REVOKED,
                         event_properties)
 
