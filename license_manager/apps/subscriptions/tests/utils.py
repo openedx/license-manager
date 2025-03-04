@@ -190,7 +190,6 @@ def assert_pii_cleared(license_obj):
     Helper to verify that pii on a license has been cleared.
     """
     assert license_obj.user_email is None
-    assert license_obj.lms_user_id is None
 
 
 def assert_historical_pii_cleared(license_obj):
@@ -199,4 +198,3 @@ def assert_historical_pii_cleared(license_obj):
     """
     for history_record in license_obj.history.all():
         assert history_record.user_email is None
-        assert history_record.lms_user_id is None

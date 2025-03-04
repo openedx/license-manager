@@ -1344,13 +1344,12 @@ class License(TimeStampedModel):
         the license after calling this, or use something like bulk_update which saves each object as part of its updates
         """
         self.user_email = None
-        self.lms_user_id = None
 
     def clear_historical_pii(self):
         """
         Helper function to remove pii (user_email & lms_user_id) from the license's historical records.
         """
-        self.history.update(user_email=None, lms_user_id=None)  # pylint: disable=no-member
+        self.history.update(user_email=None)  # pylint: disable=no-member
 
     def reset_to_unassigned(self):
         """
