@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.36.26
+boto3==1.37.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.36.26
+botocore==1.37.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -120,7 +120,7 @@ coverage[toml]==7.6.12
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==44.0.1
+cryptography==44.0.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -169,7 +169,7 @@ django==4.2.19
     #   edx-toggles
     #   jsonfield
     #   social-auth-app-django
-django-autocomplete-light==3.11.0
+django-autocomplete-light==3.12.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -332,7 +332,7 @@ iniconfig==2.0.0
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==6.0.0
+isort==6.0.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -497,7 +497,7 @@ pynacl==1.5.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==8.3.4
+pytest==8.3.5
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -569,7 +569,7 @@ rules==3.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-s3transfer==0.11.2
+s3transfer==0.11.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
