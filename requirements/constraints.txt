@@ -26,3 +26,8 @@ path<16.15.0
 # when i include that new version (7.0.0) in the requirements upgrade, most of the jobs start failing
 # so i have to pin this version to 6.1.0
 edx-django-utils==6.1.0
+
+# pinning braze-client below version 1, which will likely introduce a breaking-change
+# as the package is converted to an openedx plugin.
+# https://github.com/edx/braze-client/pull/30
+edx-braze-client<1
