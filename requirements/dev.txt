@@ -35,11 +35,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.37.18
+boto3==1.37.23
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.37.18
+botocore==1.37.23
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -100,7 +100,7 @@ code-annotations==2.2.0
     #   -r requirements/validation.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.7.1
+coverage[toml]==7.8.0
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -199,7 +199,7 @@ django-waffle==4.2.0
     #   edx-toggles
 djangoql==0.18.1
     # via -r requirements/validation.txt
-djangorestframework==3.15.2
+djangorestframework==3.16.0
     # via
     #   -r requirements/validation.txt
     #   djangorestframework-csv
@@ -256,7 +256,7 @@ edx-toggles==5.3.0
     # via -r requirements/validation.txt
 factory-boy==3.3.3
     # via -r requirements/validation.txt
-faker==37.0.2
+faker==37.1.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -309,7 +309,7 @@ jsonschema-specifications==2024.10.1
     # via
     #   -r requirements/validation.txt
     #   jsonschema
-kombu==5.5.0
+kombu==5.5.2
     # via
     #   -r requirements/validation.txt
     #   celery
@@ -338,7 +338,7 @@ more-itertools==10.6.0
     # via inflect
 mysqlclient==2.2.7
     # via -r requirements/validation.txt
-newrelic==10.7.0
+newrelic==10.8.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -392,7 +392,7 @@ psutil==7.0.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
-pycodestyle==2.12.1
+pycodestyle==2.13.0
     # via -r requirements/validation.txt
 pycparser==2.22
     # via
@@ -467,7 +467,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/validation.txt
     #   social-auth-core
-pytz==2025.1
+pytz==2025.2
     # via -r requirements/validation.txt
 pywatchman==2.0.0
     # via -r requirements/dev.in
@@ -496,7 +496,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/validation.txt
     #   social-auth-core
-rpds-py==0.23.1
+rpds-py==0.24.0
     # via
     #   -r requirements/validation.txt
     #   jsonschema
@@ -560,13 +560,13 @@ tomlkit==0.13.2
     #   pylint
 typeguard==4.4.2
     # via inflect
-typing-extensions==4.12.2
+typing-extensions==4.13.0
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
     #   referencing
     #   typeguard
-tzdata==2025.1
+tzdata==2025.2
     # via
     #   -r requirements/validation.txt
     #   celery
