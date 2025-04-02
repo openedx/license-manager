@@ -2038,10 +2038,6 @@ class AdminLicenseLookupViewSet(LicenseBaseView):
             lms_user_id=None,
             enterprise_customer_uuid=enterprise_customer_uuid
         )
-        if not user_licenses:
-            return Response(
-                status=status.HTTP_404_NOT_FOUND,
-            )
         paginator = PageNumberPagination()
         licenses_page = paginator.paginate_queryset(user_licenses, request, view=self)
 
