@@ -4696,3 +4696,21 @@ class AdminLicenseLookupViewSetTestCase(LicenseViewTestMixin, TestCase):
         self.assertIn("results", response.data)
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["status"], "assigned")
+
+    @mock.patch("license_manager.apps.api.models.License.for_user_and_customer")
+    def test_no_licenses_returns_empty_results(self, mock_license_query):
+        """
+        Test that when no licenses are found, the endpoint returns empty results instead of 404.
+        """
+        mock_license_query.return_value = []
+        url = reverse('api:v1:admin-license-view')
+        self.api_client.force_authenticate(user=self.admin_user)
+        response = self.api_client.get(url, {
+            "user_email": self.user_email,
+            "enterprise_customer_uuid": self.enterprise_customer_uuid})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("count", response.data)
+        self.assertIn("results", response.data)
+        self.assertEqual(response.data["count"], 0)
+        self.assertEqual(response.data["results"], [])
