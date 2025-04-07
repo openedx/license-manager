@@ -30,16 +30,16 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.37.18
+boto3==1.37.28
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.37.18
+botocore==1.37.28
     # via
     #   -r requirements/base.txt
     #   boto3
     #   s3transfer
-celery==5.4.0
+celery==5.5.0
     # via
     #   -r requirements/base.txt
     #   django-celery-results
@@ -157,7 +157,7 @@ django-waffle==4.2.0
     #   edx-toggles
 djangoql==0.18.1
     # via -r requirements/base.txt
-djangorestframework==3.15.2
+djangorestframework==3.16.0
     # via
     #   -r requirements/base.txt
     #   djangorestframework-csv
@@ -194,7 +194,7 @@ edx-django-utils==6.1.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==10.5.0
+edx-drf-extensions==10.6.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -243,7 +243,7 @@ jsonschema-specifications==2024.10.1
     # via
     #   -r requirements/base.txt
     #   jsonschema
-kombu==5.5.0
+kombu==5.5.2
     # via
     #   -r requirements/base.txt
     #   celery
@@ -257,7 +257,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.txt
-newrelic==10.7.0
+newrelic==10.8.1
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -322,7 +322,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-pytz==2025.1
+pytz==2025.2
     # via -r requirements/base.txt
 pyyaml==6.0.2
     # via
@@ -349,7 +349,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-rpds-py==0.23.1
+rpds-py==0.24.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -400,15 +400,14 @@ tinycss2==1.4.0
     # via
     #   -r requirements/base.txt
     #   bleach
-typing-extensions==4.12.2
+typing-extensions==4.13.1
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
     #   referencing
-tzdata==2025.1
+tzdata==2025.2
     # via
     #   -r requirements/base.txt
-    #   celery
     #   kombu
 uritemplate==4.1.1
     # via
