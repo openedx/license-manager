@@ -45,18 +45,18 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.37.28
+boto3==1.37.33
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.37.28
+botocore==1.37.33
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   boto3
     #   s3transfer
-celery==5.5.0
+celery==5.5.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -110,7 +110,7 @@ click-repl==0.3.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-code-annotations==2.2.0
+code-annotations==2.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -173,7 +173,7 @@ django-autocomplete-light==3.12.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-celery-results==2.5.1
+django-celery-results==2.6.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -194,7 +194,7 @@ django-durationwidget==1.0.5
     #   -r requirements/test.txt
 django-dynamic-fixture==4.0.1
     # via -r requirements/test.txt
-django-extensions==3.2.3
+django-extensions==4.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -262,7 +262,7 @@ drf-spectacular==0.28.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-auth-backends==4.4.0
+edx-auth-backends==4.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -303,7 +303,7 @@ edx-rbac==1.10.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-rest-api-client==6.1.0
+edx-rest-api-client==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -373,7 +373,7 @@ lxml[html-clean,html_clean]==5.3.2
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
-lxml-html-clean==0.4.1
+lxml-html-clean==0.4.2
     # via lxml
 markupsafe==3.0.2
     # via
@@ -394,7 +394,7 @@ mysqlclient==2.2.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==10.8.1
+newrelic==10.9.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -488,7 +488,7 @@ pylint-plugin-utils==0.8.2
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.11.3
+pymongo==4.12.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -636,7 +636,7 @@ tomlkit==0.13.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-typing-extensions==4.13.1
+typing-extensions==4.13.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
