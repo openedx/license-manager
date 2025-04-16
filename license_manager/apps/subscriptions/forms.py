@@ -471,3 +471,12 @@ class LicenseTransferJobAdminForm(forms.ModelForm):
         js = (
             'filtered_subscription_admin.js',
         )
+
+
+class BulkDeleteLicensesForm(forms.Form):
+    """
+    Confirmation page form for the bulk license deletion action.
+    """
+    _selected_action = forms.CharField(widget=forms.HiddenInput())
+    cache_key = forms.CharField()
+    record_count = forms.IntegerField()
