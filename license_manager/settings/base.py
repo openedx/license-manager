@@ -311,8 +311,11 @@ LOGIN_REDIRECT_URL = '/admin/'
 PLATFORM_NAME = 'Your Platform Name Here'
 # END OPENEDX-SPECIFIC CONFIGURATION
 
+# Override the default logging format string (default defined within utils.py).
+LOGGING_FORMAT_STRING = os.environ.get("LOGGING_FORMAT_STRING", None)
+
 # Set up logging for development use (logging to stdout)
-LOGGING = get_logger_config(debug=DEBUG, dev_env=True)
+LOGGING = get_logger_config(debug=DEBUG, format_string=LOGGING_FORMAT_STRING)
 
 """############################# BEGIN CELERY CONFIG ##################################"""
 
