@@ -1,9 +1,13 @@
+import uuid
 from datetime import datetime
 
 from django.conf import settings
 from django.contrib import admin, messages
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import connection, transaction
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from djangoql.admin import DjangoQLSearchMixin
@@ -19,6 +23,7 @@ from license_manager.apps.subscriptions.api import (
 )
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.forms import (
+    BulkDeleteLicensesForm,
     CustomerAgreementAdminForm,
     LicenseTransferJobAdminForm,
     ProductForm,
@@ -81,7 +86,7 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
         'subscription_plan__customer_agreement__enterprise_customer_slug__startswith'
     )
 
-    actions = ['revert_licenses_to_snapshot_time']
+    actions = ['revert_licenses_to_snapshot_time', 'delete_bulk_licenses']
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
@@ -179,6 +184,70 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
                 )
         except Exception as exc:  # pylint: disable=broad-except
             messages.add_message(request, messages.ERROR, exc)
+
+    @admin.action(
+        description='Delete bulk licenses'
+    )
+    def delete_bulk_licenses(self, request, queryset):
+        """
+        Delete a large number of licenses, without listing each license on the confirmation page.
+        A confirmation page is still presented to the user.
+        We achieve this as follows:
+        * On the first POST (when the user selects the action and clicks "Go"), we take
+          the SQL from the queryset, with its parameters, and store it in the django cache.
+        * Our Form stores the cache key, which we'll need later.
+        * We put the count of records into the rendered template.
+        * In the template rendered to the user, they'll see a count and click "Confirm". The input
+          name of the submit element routes the request back to here, with "confirm_deletion" as a key
+          in the POST body.  The POST body will also have our cache key inside it.
+        * Using the cache key, the ``if 'confirm_deletion'`` branch below will load the query
+          and params from the cache, then we'll execute it as a raw queryset.
+
+        We do all this because deleting in bulk means we might want to delete more records than
+        can be transferred back and forth via HTTP headers and query params.
+        """
+        if 'confirm_deletion' not in request.POST:
+            cache_key = f'bulk-delete-admin:{uuid.uuid4()}'
+            record_count = queryset.count()
+            cache.set(cache_key, queryset.query.sql_with_params(), 600)
+
+            form = BulkDeleteLicensesForm(
+                # _selected_action needs some license identifiers just for the routing to work,
+                # so we simply pass along the first one.
+                initial={
+                    '_selected_action': queryset.values_list("uuid", flat=True).first(),
+                    'cache_key': cache_key,
+                    'record_count': record_count
+                }
+            )
+            return render(
+                request,
+                "admin/bulk_delete.html",
+                {'record_count': record_count, 'form': form}
+            )
+        elif 'confirm_deletion' in request.POST:
+            # process the confirmation of deletion of these licenses
+            cached_sql, params = cache.get(request.POST['cache_key'])
+            cache.delete(request.POST['cache_key'])
+
+            # grab everything after the FROM of our SELECT query,
+            # and turn it into a DELETE query. Strip the ORDER BY out of it.
+            delete_sql = f"DELETE `subscriptions_license` FROM {cached_sql.partition('FROM')[2]}"
+            delete_sql = delete_sql.partition('ORDER BY')[0]
+
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(delete_sql, params)
+            except Exception as exc:  # pylint: disable=broad-except
+                messages.add_message(request, messages.ERROR, exc)
+            else:
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    f"Successfully deleted {request.POST['record_count']} licenses",
+                )
+
+            return HttpResponseRedirect(request.get_full_path())
 
 
 @admin.register(SubscriptionPlan)

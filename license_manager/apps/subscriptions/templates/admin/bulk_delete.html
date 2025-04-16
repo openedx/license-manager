@@ -1,0 +1,14 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<form action="" method="post">{% csrf_token %}
+    {{ form }}
+    <p>The count of licenses to be deleted: {{ record_count }}</p>
+    <p>Really delete all of these licenses?</p>
+    <!--  Link the action name in hidden params -->
+    <div class="submit-row">
+      <input type="hidden" name="action" value="delete_bulk_licenses" />
+      <input type="submit" class="button" name="confirm_deletion" value="Confirm Deletion" />
+    </div>
+</form>
+{% endblock %}
