@@ -24,9 +24,9 @@ billiard==4.2.1
     # via celery
 bleach[css]==6.2.0
     # via -r requirements/base.in
-boto3==1.37.33
+boto3==1.37.37
     # via django-ses
-botocore==1.37.33
+botocore==1.37.37
     # via
     #   boto3
     #   s3transfer
@@ -192,7 +192,7 @@ jsonschema==4.23.0
     # via drf-spectacular
 jsonschema-specifications==2024.10.1
     # via jsonschema
-kombu==5.5.2
+kombu==5.5.3
     # via celery
 markupsafe==3.0.2
     # via jinja2
@@ -210,7 +210,7 @@ pbr==6.1.1
     # via stevedore
 ply==3.11
     # via djangoql
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via click-repl
 psutil==7.0.0
     # via edx-django-utils
@@ -263,7 +263,7 @@ rpds-py==0.24.0
     #   referencing
 rules==3.5
     # via -r requirements/base.in
-s3transfer==0.11.4
+s3transfer==0.11.5
     # via boto3
 semantic-version==2.10.0
     # via edx-drf-extensions
