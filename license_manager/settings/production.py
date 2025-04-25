@@ -19,6 +19,10 @@ DICT_UPDATE_KEYS = ('JWT_AUTH', 'REST_FRAMEWORK')
 MEDIA_STORAGE_BACKEND = {}
 FILE_STORAGE_BACKEND = {}
 
+# Allow extra headers for your specicfic production environment.
+# Set this variable in the config yaml, and the values will be appended to CORS_ALLOW_HEADERS.
+CORS_ALLOW_HEADERS_EXTRA = ()
+
 CONFIG_FILE = get_env_setting('LICENSE_MANAGER_CFG')
 with open(CONFIG_FILE, encoding='utf-8') as f:
     config_from_yaml = yaml.safe_load(f)
@@ -61,6 +65,14 @@ CELERY_BROKER_URL = "{}://{}:{}@{}/{}".format(
     CELERY_BROKER_VHOST
 )
 # END CELERY
+
+# BEGIN CORS
+# Inject extra allowed headers specific to a production environment.
+CORS_ALLOW_HEADERS = (
+    *CORS_ALLOW_HEADERS,
+    *CORS_ALLOW_HEADERS_EXTRA,
+)
+# END CORS
 
 # Email configuration settings
 EMAIL_BACKEND = 'django_ses.SESBackend'  # Using Amazon AWS SES as an email backend
