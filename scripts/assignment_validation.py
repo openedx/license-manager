@@ -14,9 +14,9 @@ python assignment_validation.py print_plan_counts --input-file=your-input-file.c
 """
 import csv
 from collections import defaultdict, Counter
-from email.utils import parseaddr
-
 import click
+
+from utils import is_valid_email
 
 INPUT_FIELDNAMES = ['university_name', 'email']
 
@@ -59,26 +59,29 @@ def print_plan_counts(input_file):
         print(plan, count)
 
 
-def is_valid_email(email):
-    _, address = parseaddr(email)
-    if not address:
-        return False
-    return True
-
-
 @click.command()
 @click.option(
     '--input-file',
     help='Path of local file containing email addresses to assign.',
 )
-def validate_emails(input_file):
+@click.option(
+    '--output-file',
+    help='Path of local file containing invalid email addresses store in a CSV.',
+)
+def validate_emails(input_file, output_file):
     invalid_emails = Counter()
-    for row in _iterate_csv(input_file):
-        if not is_valid_email(row['email']):
-            invalid_emails[row['email']] += 1
+    for index, row in enumerate(_iterate_csv(input_file)):
+        email = row['email']
+        uni_name = row['university_name']
+        if not is_valid_email(email):
+            invalid_emails[(uni_name, email)] += 1
 
-    print(f'There were {sum(invalid_emails.values())} invalid emails')
-    print(invalid_emails)
+    print(f'There were a total of {sum(invalid_emails.values())} invalid emails for input of size {index + 1}')
+
+    with open(output_file, 'a+', encoding='latin-1') as f_out:
+        writer = csv.writer(f_out, delimiter=',')
+        for (uni_name, email), occurrences in invalid_emails.items():
+            writer.writerow([uni_name, email, occurrences])
 
 
 @click.group()
