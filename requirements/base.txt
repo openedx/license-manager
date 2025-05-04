@@ -24,18 +24,18 @@ billiard==4.2.1
     # via celery
 bleach[css]==6.2.0
     # via -r requirements/base.in
-boto3==1.37.33
+boto3==1.38.3
     # via django-ses
-botocore==1.37.33
+botocore==1.38.3
     # via
     #   boto3
     #   s3transfer
-celery==5.5.1
+celery==5.5.2
     # via
     #   -r requirements/base.in
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.1.31
+certifi==2025.4.26
     # via requests
 cffi==1.17.1
     # via
@@ -168,7 +168,7 @@ edx-drf-extensions==10.6.0
     # via
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys==2.12.0
+edx-opaque-keys==3.0.0
     # via edx-drf-extensions
 edx-rbac==1.10.0
     # via -r requirements/base.in
@@ -190,9 +190,9 @@ jsonfield==3.1.0
     # via edx-celeryutils
 jsonschema==4.23.0
     # via drf-spectacular
-jsonschema-specifications==2024.10.1
+jsonschema-specifications==2025.4.1
     # via jsonschema
-kombu==5.5.2
+kombu==5.5.3
     # via celery
 markupsafe==3.0.2
     # via jinja2
@@ -200,7 +200,7 @@ monotonic==1.6
     # via analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.in
-newrelic==10.9.0
+newrelic==10.10.0
     # via edx-django-utils
 oauthlib==3.2.2
     # via
@@ -210,7 +210,7 @@ pbr==6.1.1
     # via stevedore
 ply==3.11
     # via djangoql
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via click-repl
 psutil==7.0.0
     # via edx-django-utils
@@ -263,7 +263,7 @@ rpds-py==0.24.0
     #   referencing
 rules==3.5
     # via -r requirements/base.in
-s3transfer==0.11.4
+s3transfer==0.12.0
     # via boto3
 semantic-version==2.10.0
     # via edx-drf-extensions
@@ -277,7 +277,7 @@ six==1.17.0
     #   python-dateutil
 social-auth-app-django==5.4.3
     # via edx-auth-backends
-social-auth-core==4.5.6
+social-auth-core==4.6.0
     # via
     #   edx-auth-backends
     #   social-auth-app-django

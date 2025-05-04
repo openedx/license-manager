@@ -37,7 +37,7 @@ backoff==1.10.0
     # via
     #   -r requirements/test.txt
     #   analytics-python
-beautifulsoup4==4.13.3
+beautifulsoup4==4.13.4
     # via pydata-sphinx-theme
 billiard==4.2.1
     # via
@@ -45,21 +45,21 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.37.33
+boto3==1.38.3
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.37.33
+botocore==1.38.3
     # via
     #   -r requirements/test.txt
     #   boto3
     #   s3transfer
-celery==5.5.1
+celery==5.5.2
     # via
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.1.31
+certifi==2025.4.26
     # via
     #   -r requirements/test.txt
     #   requests
@@ -120,7 +120,7 @@ defusedxml==0.7.1
     #   -r requirements/test.txt
     #   python3-openid
     #   social-auth-core
-dill==0.3.9
+dill==0.4.0
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -243,7 +243,7 @@ edx-drf-extensions==10.6.0
     #   edx-rbac
 edx-lint==5.6.0
     # via -r requirements/test.txt
-edx-opaque-keys==2.12.0
+edx-opaque-keys==3.0.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -297,11 +297,11 @@ jsonschema==4.23.0
     # via
     #   -r requirements/test.txt
     #   drf-spectacular
-jsonschema-specifications==2024.10.1
+jsonschema-specifications==2025.4.1
     # via
     #   -r requirements/test.txt
     #   jsonschema
-kombu==5.5.2
+kombu==5.5.3
     # via
     #   -r requirements/test.txt
     #   celery
@@ -319,7 +319,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/test.txt
-newrelic==10.9.0
+newrelic==10.10.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -330,7 +330,7 @@ oauthlib==3.2.2
     #   -r requirements/test.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==24.2
+packaging==25.0
     # via
     #   -r requirements/test.txt
     #   pydata-sphinx-theme
@@ -352,7 +352,7 @@ ply==3.11
     # via
     #   -r requirements/test.txt
     #   djangoql
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via
     #   -r requirements/test.txt
     #   click-repl
@@ -473,7 +473,7 @@ rpds-py==0.24.0
     #   referencing
 rules==3.5
     # via -r requirements/test.txt
-s3transfer==0.11.4
+s3transfer==0.12.0
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -497,12 +497,12 @@ social-auth-app-django==5.4.3
     # via
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.5.6
+social-auth-core==4.6.0
     # via
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-soupsieve==2.6
+soupsieve==2.7
     # via beautifulsoup4
 sphinx==8.2.3
     # via

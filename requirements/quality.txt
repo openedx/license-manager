@@ -34,21 +34,21 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.37.33
+boto3==1.38.3
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.37.33
+botocore==1.38.3
     # via
     #   -r requirements/base.txt
     #   boto3
     #   s3transfer
-celery==5.5.1
+celery==5.5.2
     # via
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.1.31
+certifi==2025.4.26
     # via
     #   -r requirements/base.txt
     #   requests
@@ -101,7 +101,7 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-dill==0.3.9
+dill==0.4.0
     # via pylint
 django==4.2.20
     # via
@@ -211,7 +211,7 @@ edx-drf-extensions==10.6.0
     #   edx-rbac
 edx-lint==5.6.0
     # via -r requirements/quality.in
-edx-opaque-keys==2.12.0
+edx-opaque-keys==3.0.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -250,11 +250,11 @@ jsonschema==4.23.0
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
-jsonschema-specifications==2024.10.1
+jsonschema-specifications==2025.4.1
     # via
     #   -r requirements/base.txt
     #   jsonschema
-kombu==5.5.2
+kombu==5.5.3
     # via
     #   -r requirements/base.txt
     #   celery
@@ -270,7 +270,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.txt
-newrelic==10.9.0
+newrelic==10.10.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -289,7 +289,7 @@ ply==3.11
     # via
     #   -r requirements/base.txt
     #   djangoql
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via
     #   -r requirements/base.txt
     #   click-repl
@@ -382,7 +382,7 @@ rpds-py==0.24.0
     #   referencing
 rules==3.5
     # via -r requirements/base.txt
-s3transfer==0.11.4
+s3transfer==0.12.0
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -406,7 +406,7 @@ social-auth-app-django==5.4.3
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.5.6
+social-auth-core==4.6.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
