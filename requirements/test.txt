@@ -34,11 +34,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.38.3
+boto3==1.38.8
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.38.3
+botocore==1.38.8
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -57,7 +57,7 @@ cffi==1.17.1
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via
     #   -r requirements/base.txt
     #   requests
@@ -96,7 +96,7 @@ coverage[toml]==7.8.0
     # via
     #   -r requirements/test.in
     #   pytest-cov
-cryptography==44.0.2
+cryptography==44.0.3
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -285,7 +285,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.txt
-newrelic==10.10.0
+newrelic==10.11.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -328,7 +328,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.6
+pylint==3.3.7
     # via
     #   edx-lint
     #   pylint-celery
@@ -342,7 +342,7 @@ pylint-plugin-utils==0.8.2
     # via
     #   pylint-celery
     #   pylint-django
-pymongo==4.12.0
+pymongo==4.12.1
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -380,7 +380,7 @@ pyyaml==6.0.2
     #   -r requirements/base.txt
     #   code-annotations
     #   drf-spectacular
-redis==5.2.1
+redis==6.0.0
     # via -r requirements/base.txt
 referencing==0.36.2
     # via
@@ -428,7 +428,7 @@ social-auth-app-django==5.4.3
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.6.0
+social-auth-core==4.6.1
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
