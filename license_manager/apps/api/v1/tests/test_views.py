@@ -442,6 +442,7 @@ def _assert_subscription_response_correct(response, subscription, expected_days_
         expected_days_until_renewal_expiration or days_until_expiration)
     assert response['prior_renewals'] == subscription.prior_renewals
     assert response['is_locked_for_renewal_processing'] == subscription.is_locked_for_renewal_processing
+    assert response['salesforce_opportunity_line_item'] == subscription.salesforce_opportunity_line_item
 
 
 def _assert_license_response_correct(response, subscription_license):

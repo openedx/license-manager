@@ -72,7 +72,8 @@ class MinimalSubscriptionPlanSerializer(serializers.ModelSerializer):
             'is_locked_for_renewal_processing',
             'should_auto_apply_licenses',
             'created',
-            'plan_type'
+            'plan_type',
+            'salesforce_opportunity_line_item',
         ]
 
 
