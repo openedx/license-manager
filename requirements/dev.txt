@@ -35,11 +35,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.38.13
+boto3==1.38.18
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.38.13
+botocore==1.38.18
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -104,7 +104,7 @@ coverage[toml]==7.8.0
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==44.0.3
+cryptography==45.0.2
     # via
     #   -r requirements/validation.txt
     #   pyjwt
@@ -217,7 +217,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-drf-nested-routers==0.94.1
+drf-nested-routers==0.94.2
     # via -r requirements/validation.txt
 drf-spectacular==0.28.0
     # via -r requirements/validation.txt
@@ -256,7 +256,7 @@ edx-toggles==5.3.0
     # via -r requirements/validation.txt
 factory-boy==3.3.3
     # via -r requirements/validation.txt
-faker==37.1.0
+faker==37.3.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -338,7 +338,7 @@ more-itertools==10.7.0
     # via inflect
 mysqlclient==2.2.7
     # via -r requirements/validation.txt
-newrelic==10.11.0
+newrelic==10.12.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -371,7 +371,7 @@ platformdirs==4.3.8
     # via
     #   -r requirements/validation.txt
     #   pylint
-pluggy==1.5.0
+pluggy==1.6.0
     # via
     #   -r requirements/validation.txt
     #   diff-cover
@@ -430,7 +430,7 @@ pylint-plugin-utils==0.8.2
     #   -r requirements/validation.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.12.1
+pymongo==4.13.0
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
@@ -477,7 +477,7 @@ pyyaml==6.0.2
     #   code-annotations
     #   drf-spectacular
     #   edx-i18n-tools
-redis==6.0.0
+redis==6.1.0
     # via -r requirements/validation.txt
 referencing==0.36.2
     # via
@@ -496,7 +496,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/validation.txt
     #   social-auth-core
-rpds-py==0.24.0
+rpds-py==0.25.0
     # via
     #   -r requirements/validation.txt
     #   jsonschema
