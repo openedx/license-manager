@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.38.18
+boto3==1.38.23
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.38.18
+botocore==1.38.23
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -78,7 +78,7 @@ charset-normalizer==3.4.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
-click==8.2.0
+click==8.2.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -116,11 +116,11 @@ code-annotations==2.3.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.8.0
+coverage[toml]==7.8.2
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==45.0.2
+cryptography==45.0.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -317,7 +317,7 @@ faker==37.3.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
-freezegun==1.5.1
+freezegun==1.5.2
     # via -r requirements/test.txt
 idna==3.10
     # via
@@ -560,7 +560,7 @@ requests-oauthlib==2.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-rpds-py==0.25.0
+rpds-py==0.25.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -570,7 +570,7 @@ rules==3.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-s3transfer==0.12.0
+s3transfer==0.13.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
