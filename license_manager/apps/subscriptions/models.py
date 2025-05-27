@@ -1486,7 +1486,7 @@ class License(TimeStampedModel):
         return queryset.filter(**kwargs)
 
     @classmethod
-    def get_licenses_exceeding_purge_duration(cls, date_field_to_compare, **kwargs):
+    def get_licenses_exceeding_purge_duration(cls, date_field_to_compare, batch_size=1000, **kwargs):
         """
         Returns all licenses with non-null ``user_email`` values
         that have exceeded the purge duration specified by the related
@@ -1512,10 +1512,21 @@ class License(TimeStampedModel):
             date_field: localized_utcnow() - models.F(duration_before_purge_field),
         })
 
-        return License.objects.filter(**kwargs).select_related(
+        # ordered by primary key for stable pagination, which we'll rely on
+        # below to generate batches of result sets.
+        base_queryset = License.objects.filter(**kwargs).select_related(
             'subscription_plan',
             'subscription_plan__customer_agreement',
-        )
+        ).order_by('pk')
+
+        queryset = base_queryset[:batch_size]
+        offset = 0
+        while queryset.exists():
+            yield queryset
+            # queryset.last() doesn't work here because we've already sliced it above.
+            # We have to loop through (by list-ing) it in order to grab the last one.
+            offset = list(queryset)[-1].pk
+            queryset = base_queryset.filter(pk__gt=offset)[:batch_size]
 
     @classmethod
     def get_licenses_by_email(cls, user_email):

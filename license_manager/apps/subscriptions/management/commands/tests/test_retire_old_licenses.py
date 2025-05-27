@@ -141,7 +141,7 @@ class RetireOldLicensesCommandTests(TestCase):
         Verify that the command retires the correct licenses appropriately and logs messages about the retirement.
         """
         with freeze_time(localized_utcnow()), self.assertLogs(level='INFO') as log:
-            call_command(self.command_name)
+            call_command(self.command_name, '--batch-size=2')
 
             # Verify all expired licenses that were ready for retirement have been retired correctly
             expired_licenses = self.expired_subscription_plan.licenses.all()
