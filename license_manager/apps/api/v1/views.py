@@ -709,8 +709,8 @@ class LearnerLicensesViewSet(
         # Update user_email on licenses if the user has changed their email.
         # Ideally we would receive an event when a user changes their info from the lms and update
         # licenses that way, but this will work for now.
-        license_with_oudated_email = next((lcs for lcs in licenses if lcs.user_email != self.user_email), None)
-        if license_with_oudated_email:
+        license_with_outdated_email = next((lcs for lcs in licenses if lcs.user_email != self.user_email), None)
+        if license_with_outdated_email:
             # This should be a very infrequent operation
             update_user_email_for_licenses_task(self.lms_user_id, self.user_email)
 
