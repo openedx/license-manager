@@ -1,7 +1,6 @@
 """
 Defines custom paginators used by subscription viewsets.
 """
-
 from django.core.paginator import Paginator as DjangoPaginator
 from django.utils.functional import cached_property
 from edx_rest_framework_extensions.paginators import DefaultPagination
