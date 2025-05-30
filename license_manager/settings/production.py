@@ -8,6 +8,14 @@ from license_manager.settings.utils import get_env_setting, get_logger_config
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
+# IMPORTANT: With this enabled, the server must always be behind a proxy that
+# strips the header HTTP_X_FORWARDED_PROTO from client requests. Otherwise,
+# a user can fool our server into thinking it was an https connection.
+# See
+# https://docs.djangoproject.com/en/dev/ref/settings/#secure-proxy-ssl-header
+# for other warnings.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 ALLOWED_HOSTS = ['*']
 
 # Keep track of the names of settings that represent dicts. Instead of overriding the values in base.py,
