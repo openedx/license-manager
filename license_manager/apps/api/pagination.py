@@ -1,6 +1,7 @@
 """
 Defines custom paginators used by subscription viewsets.
 """
+from django.conf import settings
 from django.core.paginator import Paginator as DjangoPaginator
 from django.utils.functional import cached_property
 from edx_rest_framework_extensions.paginators import DefaultPagination
@@ -87,6 +88,8 @@ class LearnerLicensesPaginationCustomerAgreement(DefaultPagination):
     corresponding subscription_plan. In order to reduce the number of calls to the client,
     we incorporate the customer_agreement accessible within a single call.
     """
+
+    page_size = PageNumberPagination.page_size
 
     def get_paginated_response(self, data):
         """
