@@ -893,7 +893,7 @@ class LicenseTransferJobAdmin(admin.ModelAdmin):
 
 
 @admin.register(LicenseEvent)
-class LicenseEventAdmin(admin.ModelAdmin):
+class LicenseEventAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     list_display = (
         'event_name',
         'enterprise',
@@ -901,6 +901,8 @@ class LicenseEventAdmin(admin.ModelAdmin):
         'lms_user_id',
         'plan_uuid',
     )
+
+    list_select_related = ['license']
 
     search_fields = (
         'event_name',
@@ -965,6 +967,8 @@ class SubscriptionLicenseSourceAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
         'source_id',
         'source_type',
     ]
+
+    list_select_related = ['license']
 
     autocomplete_fields = ['license']
 
