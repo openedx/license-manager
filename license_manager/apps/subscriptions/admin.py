@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.paginator import Paginator
 from django.db import connection, transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -157,9 +158,23 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     actions = ['revert_licenses_to_snapshot_time', 'delete_bulk_licenses']
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
+        return License.objects.select_related(
             'subscription_plan',
-            'source'
+            'source',
+        ).order_by('subscription_plan__title')
+
+    def get_paginator(self, request, queryset, per_page, orphans=0, allow_empty_first_page=True):
+        """
+        Return a paginator that does *not* order by license uuid, which
+        helps avoid an expensive and slow filesort in environments with many License
+        records. Note that the resulting order of licenses is ordered only by
+        subscription plan title, and is otherwise non-deterministic.
+        """
+        return Paginator(
+            self.get_queryset(request),
+            self.list_per_page,
+            orphans,
+            allow_empty_first_page,
         )
 
     @admin.display(description='Source ID')
