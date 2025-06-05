@@ -34,16 +34,16 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.38.23
+boto3==1.38.27
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.38.23
+botocore==1.38.27
     # via
     #   -r requirements/base.txt
     #   boto3
     #   s3transfer
-celery==5.5.2
+celery==5.5.3
     # via
     #   -r requirements/base.txt
     #   django-celery-results
@@ -246,7 +246,7 @@ jsonfield==3.1.0
     # via
     #   -r requirements/base.txt
     #   edx-celeryutils
-jsonschema==4.23.0
+jsonschema==4.24.0
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
@@ -254,7 +254,7 @@ jsonschema-specifications==2025.4.1
     # via
     #   -r requirements/base.txt
     #   jsonschema
-kombu==5.5.3
+kombu==5.5.4
     # via
     #   -r requirements/base.txt
     #   celery
@@ -279,6 +279,10 @@ oauthlib==3.2.2
     #   -r requirements/base.txt
     #   requests-oauthlib
     #   social-auth-core
+packaging==25.0
+    # via
+    #   -r requirements/base.txt
+    #   kombu
 pbr==6.1.1
     # via
     #   -r requirements/base.txt
@@ -356,7 +360,7 @@ pyyaml==6.0.2
     #   -r requirements/base.txt
     #   code-annotations
     #   drf-spectacular
-redis==6.1.0
+redis==6.2.0
     # via -r requirements/base.txt
 referencing==0.36.2
     # via
@@ -465,7 +469,7 @@ webencodings==0.5.1
     #   -r requirements/base.txt
     #   bleach
     #   tinycss2
-zipp==3.21.0
+zipp==3.22.0
     # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:
