@@ -157,9 +157,20 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     actions = ['revert_licenses_to_snapshot_time', 'delete_bulk_licenses']
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
+        """
+        We use a prefetch_related instead of select_related below very intentionally.
+        In environments with a large number of license records, using a select_related() -
+        which is implemented with a JOIN - on a queryset ultimately ordered by *license* uuid,
+        can cause the SQL query planner to utilize a filesort to join to the subscription_plan.
+        With a large number of records, that is very slow.
+        A prefetch_related() makes separate queries for subscription plans
+        and sources, but each is filtered to include in the results only the records corresponding
+        to the licenses on the current page of results. Those are very efficient queries,
+        which utilize a PK index and a simple index, respectively.
+        """
+        return super().get_queryset(request).prefetch_related(
             'subscription_plan',
-            'source'
+            'source',
         )
 
     @admin.display(description='Source ID')
@@ -893,7 +904,7 @@ class LicenseTransferJobAdmin(admin.ModelAdmin):
 
 
 @admin.register(LicenseEvent)
-class LicenseEventAdmin(admin.ModelAdmin):
+class LicenseEventAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     list_display = (
         'event_name',
         'enterprise',
@@ -901,6 +912,8 @@ class LicenseEventAdmin(admin.ModelAdmin):
         'lms_user_id',
         'plan_uuid',
     )
+
+    list_select_related = ['license']
 
     search_fields = (
         'event_name',
@@ -965,6 +978,8 @@ class SubscriptionLicenseSourceAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
         'source_id',
         'source_type',
     ]
+
+    list_select_related = ['license']
 
     autocomplete_fields = ['license']
 
