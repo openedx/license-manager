@@ -473,9 +473,9 @@ class LicenseTransferJobAdminForm(forms.ModelForm):
         )
 
 
-class BulkDeleteLicensesForm(forms.Form):
+class BulkDeleteForm(forms.Form):
     """
-    Confirmation page form for the bulk license deletion action.
+    Confirmation page form for the bulk model deletion action.
     """
     _selected_action = forms.CharField(widget=forms.HiddenInput())
     cache_key = forms.CharField()

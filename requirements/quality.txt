@@ -34,16 +34,16 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.38.13
+boto3==1.38.27
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.38.13
+botocore==1.38.27
     # via
     #   -r requirements/base.txt
     #   boto3
     #   s3transfer
-celery==5.5.2
+celery==5.5.3
     # via
     #   -r requirements/base.txt
     #   django-celery-results
@@ -61,7 +61,7 @@ charset-normalizer==3.4.2
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.2.0
+click==8.2.1
     # via
     #   -r requirements/base.txt
     #   celery
@@ -91,7 +91,7 @@ code-annotations==2.3.0
     #   -r requirements/base.txt
     #   edx-lint
     #   edx-toggles
-cryptography==44.0.3
+cryptography==45.0.3
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -186,7 +186,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-drf-nested-routers==0.94.1
+drf-nested-routers==0.94.2
     # via -r requirements/base.txt
 drf-spectacular==0.28.0
     # via -r requirements/base.txt
@@ -246,7 +246,7 @@ jsonfield==3.1.0
     # via
     #   -r requirements/base.txt
     #   edx-celeryutils
-jsonschema==4.23.0
+jsonschema==4.24.0
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
@@ -254,7 +254,7 @@ jsonschema-specifications==2025.4.1
     # via
     #   -r requirements/base.txt
     #   jsonschema
-kombu==5.5.3
+kombu==5.5.4
     # via
     #   -r requirements/base.txt
     #   celery
@@ -270,7 +270,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.txt
-newrelic==10.11.0
+newrelic==10.12.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -279,6 +279,10 @@ oauthlib==3.2.2
     #   -r requirements/base.txt
     #   requests-oauthlib
     #   social-auth-core
+packaging==25.0
+    # via
+    #   -r requirements/base.txt
+    #   kombu
 pbr==6.1.1
     # via
     #   -r requirements/base.txt
@@ -327,7 +331,7 @@ pylint-plugin-utils==0.8.2
     # via
     #   pylint-celery
     #   pylint-django
-pymongo==4.12.1
+pymongo==4.13.0
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -356,7 +360,7 @@ pyyaml==6.0.2
     #   -r requirements/base.txt
     #   code-annotations
     #   drf-spectacular
-redis==6.0.0
+redis==6.2.0
     # via -r requirements/base.txt
 referencing==0.36.2
     # via
@@ -375,14 +379,14 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-rpds-py==0.24.0
+rpds-py==0.25.1
     # via
     #   -r requirements/base.txt
     #   jsonschema
     #   referencing
 rules==3.5
     # via -r requirements/base.txt
-s3transfer==0.12.0
+s3transfer==0.13.0
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -465,7 +469,7 @@ webencodings==0.5.1
     #   -r requirements/base.txt
     #   bleach
     #   tinycss2
-zipp==3.21.0
+zipp==3.22.0
     # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:

@@ -88,6 +88,8 @@ class LearnerLicensesPaginationCustomerAgreement(DefaultPagination):
     we incorporate the customer_agreement accessible within a single call.
     """
 
+    page_size = PageNumberPagination.page_size
+
     def get_paginated_response(self, data):
         """
         Modifies the DefaultPagination response to include ``customer_agreement`` dict.

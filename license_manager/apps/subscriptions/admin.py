@@ -23,7 +23,7 @@ from license_manager.apps.subscriptions.api import (
 )
 from license_manager.apps.subscriptions.exceptions import CustomerAgreementError
 from license_manager.apps.subscriptions.forms import (
-    BulkDeleteLicensesForm,
+    BulkDeleteForm,
     CustomerAgreementAdminForm,
     LicenseTransferJobAdminForm,
     ProductForm,
@@ -39,6 +39,7 @@ from license_manager.apps.subscriptions.models import (
     Notification,
     PlanType,
     Product,
+    SubscriptionLicenseSource,
     SubscriptionPlan,
     SubscriptionPlanRenewal,
 )
@@ -49,6 +50,73 @@ def get_related_object_link(admin_viewname, object_pk, object_str):
         href=reverse(admin_viewname, args=(object_pk,)),
         object_string=object_str,
     ))
+
+
+def _bulk_delete_request_handler(request, queryset, model_name, table_name, delete_action_method):
+    """
+    Delete a large number of model instances, without listing each instance on the confirmation page.
+    A confirmation page is still presented to the user.
+    We achieve this as follows:
+    * On the first POST (when the user selects the action and clicks "Go"), we take
+      the SQL from the queryset, with its parameters, and store it in the django cache.
+    * Our Form stores the cache key, which we'll need later.
+    * We put the count of records into the rendered template.
+    * In the template rendered to the user, they'll see a count and click "Confirm". The input
+      name of the submit element routes the request back to here, with "confirm_deletion" as a key
+      in the POST body.  The POST body will also have our cache key inside it.
+    * Using the cache key, the ``if 'confirm_deletion'`` branch below will load the query
+      and params from the cache, then we'll execute it as a raw queryset.
+
+    We do all this because deleting in bulk means we might want to delete more records than
+    can be transferred back and forth via HTTP headers and query params.
+    """
+    if 'confirm_deletion' not in request.POST:
+        cache_key = f'bulk-delete-admin-{model_name}:{uuid.uuid4()}'
+        record_count = queryset.count()
+        cache.set(cache_key, queryset.query.sql_with_params(), 600)
+
+        form = BulkDeleteForm(
+            # _selected_action needs some model instance identifiers just for the routing to work,
+            # so we simply pass along the first one.
+            initial={
+                '_selected_action': queryset.values_list("pk", flat=True).first(),
+                'cache_key': cache_key,
+                'record_count': record_count,
+            }
+        )
+        return render(
+            request,
+            "admin/bulk_delete.html",
+            {
+                'record_count': record_count,
+                'form': form,
+                'model_name': model_name,
+                'delete_action_method': delete_action_method,
+            }
+        )
+    elif 'confirm_deletion' in request.POST:
+        # process the confirmation of deletion of these records
+        cached_sql, params = cache.get(request.POST['cache_key'])
+        cache.delete(request.POST['cache_key'])
+
+        # grab everything after the FROM of our SELECT query,
+        # and turn it into a DELETE query. Strip the ORDER BY out of it.
+        delete_sql = f"DELETE `{table_name}` FROM {cached_sql.partition('FROM')[2]}"
+        delete_sql = delete_sql.partition('ORDER BY')[0]
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(delete_sql, params)
+        except Exception as exc:  # pylint: disable=broad-except
+            messages.add_message(request, messages.ERROR, exc)
+        else:
+            messages.add_message(
+                request,
+                messages.SUCCESS,
+                f"Successfully deleted {request.POST['record_count']} {model_name} records",
+            )
+
+        return HttpResponseRedirect(request.get_full_path())
 
 
 @admin.register(License)
@@ -89,9 +157,20 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     actions = ['revert_licenses_to_snapshot_time', 'delete_bulk_licenses']
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
+        """
+        We use a prefetch_related instead of select_related below very intentionally.
+        In environments with a large number of license records, using a select_related() -
+        which is implemented with a JOIN - on a queryset ultimately ordered by *license* uuid,
+        can cause the SQL query planner to utilize a filesort to join to the subscription_plan.
+        With a large number of records, that is very slow.
+        A prefetch_related() makes separate queries for subscription plans
+        and sources, but each is filtered to include in the results only the records corresponding
+        to the licenses on the current page of results. Those are very efficient queries,
+        which utilize a PK index and a simple index, respectively.
+        """
+        return super().get_queryset(request).prefetch_related(
             'subscription_plan',
-            'source'
+            'source',
         )
 
     @admin.display(description='Source ID')
@@ -192,62 +271,14 @@ class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
         """
         Delete a large number of licenses, without listing each license on the confirmation page.
         A confirmation page is still presented to the user.
-        We achieve this as follows:
-        * On the first POST (when the user selects the action and clicks "Go"), we take
-          the SQL from the queryset, with its parameters, and store it in the django cache.
-        * Our Form stores the cache key, which we'll need later.
-        * We put the count of records into the rendered template.
-        * In the template rendered to the user, they'll see a count and click "Confirm". The input
-          name of the submit element routes the request back to here, with "confirm_deletion" as a key
-          in the POST body.  The POST body will also have our cache key inside it.
-        * Using the cache key, the ``if 'confirm_deletion'`` branch below will load the query
-          and params from the cache, then we'll execute it as a raw queryset.
-
-        We do all this because deleting in bulk means we might want to delete more records than
-        can be transferred back and forth via HTTP headers and query params.
         """
-        if 'confirm_deletion' not in request.POST:
-            cache_key = f'bulk-delete-admin:{uuid.uuid4()}'
-            record_count = queryset.count()
-            cache.set(cache_key, queryset.query.sql_with_params(), 600)
-
-            form = BulkDeleteLicensesForm(
-                # _selected_action needs some license identifiers just for the routing to work,
-                # so we simply pass along the first one.
-                initial={
-                    '_selected_action': queryset.values_list("uuid", flat=True).first(),
-                    'cache_key': cache_key,
-                    'record_count': record_count
-                }
-            )
-            return render(
-                request,
-                "admin/bulk_delete.html",
-                {'record_count': record_count, 'form': form}
-            )
-        elif 'confirm_deletion' in request.POST:
-            # process the confirmation of deletion of these licenses
-            cached_sql, params = cache.get(request.POST['cache_key'])
-            cache.delete(request.POST['cache_key'])
-
-            # grab everything after the FROM of our SELECT query,
-            # and turn it into a DELETE query. Strip the ORDER BY out of it.
-            delete_sql = f"DELETE `subscriptions_license` FROM {cached_sql.partition('FROM')[2]}"
-            delete_sql = delete_sql.partition('ORDER BY')[0]
-
-            try:
-                with connection.cursor() as cursor:
-                    cursor.execute(delete_sql, params)
-            except Exception as exc:  # pylint: disable=broad-except
-                messages.add_message(request, messages.ERROR, exc)
-            else:
-                messages.add_message(
-                    request,
-                    messages.SUCCESS,
-                    f"Successfully deleted {request.POST['record_count']} licenses",
-                )
-
-            return HttpResponseRedirect(request.get_full_path())
+        return _bulk_delete_request_handler(
+            request=request,
+            queryset=queryset,
+            model_name='License',
+            table_name='subscriptions_license',
+            delete_action_method='delete_bulk_licenses',
+        )
 
 
 @admin.register(SubscriptionPlan)
@@ -873,7 +904,7 @@ class LicenseTransferJobAdmin(admin.ModelAdmin):
 
 
 @admin.register(LicenseEvent)
-class LicenseEventAdmin(admin.ModelAdmin):
+class LicenseEventAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     list_display = (
         'event_name',
         'enterprise',
@@ -881,6 +912,8 @@ class LicenseEventAdmin(admin.ModelAdmin):
         'lms_user_id',
         'plan_uuid',
     )
+
+    list_select_related = ['license']
 
     search_fields = (
         'event_name',
@@ -890,6 +923,10 @@ class LicenseEventAdmin(admin.ModelAdmin):
         'license__subscription_plan__customer_agreement__enterprise_customer_uuid__startswith',
         'license__subscription_plan__customer_agreement__enterprise_customer_slug__startswith'
     )
+
+    autocomplete_fields = ['license']
+
+    actions = ['delete_bulk_license_events']
 
     @admin.display(description='Enterprise')
     def enterprise(self, instance):
@@ -915,3 +952,52 @@ class LicenseEventAdmin(admin.ModelAdmin):
     def plan_uuid(self, instance):
         """Return license plan uuid"""
         return instance.license.subscription_plan.uuid
+
+    @admin.action(
+        description='Delete bulk license events'
+    )
+    def delete_bulk_license_events(self, request, queryset):
+        """
+        Delete a large number of license event records, without listing each
+        record on the confirmation page.
+        A confirmation page is still presented to the user.
+        """
+        return _bulk_delete_request_handler(
+            request=request,
+            queryset=queryset,
+            model_name='LicenseEvent',
+            table_name='subscriptions_licenseevent',
+            delete_action_method='delete_bulk_license_events',
+        )
+
+
+@admin.register(SubscriptionLicenseSource)
+class SubscriptionLicenseSourceAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
+    list_display = [
+        'license',
+        'source_id',
+        'source_type',
+    ]
+
+    list_select_related = ['license']
+
+    autocomplete_fields = ['license']
+
+    actions = ['delete_bulk_license_sources']
+
+    @admin.action(
+        description='Delete bulk license sources'
+    )
+    def delete_bulk_license_sources(self, request, queryset):
+        """
+        Delete a large number of license source records, without listing each
+        record on the confirmation page.
+        A confirmation page is still presented to the user.
+        """
+        return _bulk_delete_request_handler(
+            request=request,
+            queryset=queryset,
+            model_name='SubscriptionLicenseSource',
+            table_name='subscriptions_subscriptionlicensesource',
+            delete_action_method='delete_bulk_license_sources',
+        )
