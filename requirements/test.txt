@@ -34,11 +34,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.38.27
+boto3==1.38.32
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.38.27
+botocore==1.38.32
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -110,7 +110,7 @@ defusedxml==0.7.1
     #   social-auth-core
 dill==0.4.0
     # via pylint
-django==4.2.21
+django==4.2.22
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -323,6 +323,8 @@ pycparser==2.22
     # via
     #   -r requirements/base.txt
     #   cffi
+pygments==2.19.1
+    # via pytest
 pyjwt[crypto]==2.10.1
     # via
     #   -r requirements/base.txt
@@ -353,7 +355,7 @@ pynacl==1.5.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-pytest==8.3.5
+pytest==8.4.0
     # via
     #   pytest-cov
     #   pytest-django
@@ -454,9 +456,9 @@ tinycss2==1.4.0
     # via
     #   -r requirements/base.txt
     #   bleach
-tomlkit==0.13.2
+tomlkit==0.13.3
     # via pylint
-typing-extensions==4.13.2
+typing-extensions==4.14.0
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -466,7 +468,7 @@ tzdata==2025.2
     #   -r requirements/base.txt
     #   faker
     #   kombu
-uritemplate==4.1.1
+uritemplate==4.2.0
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
@@ -491,7 +493,7 @@ webencodings==0.5.1
     #   -r requirements/base.txt
     #   bleach
     #   tinycss2
-zipp==3.22.0
+zipp==3.23.0
     # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:

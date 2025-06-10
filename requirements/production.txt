@@ -30,11 +30,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.38.27
+boto3==1.38.32
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.38.27
+botocore==1.38.32
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -92,7 +92,7 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-django==4.2.21
+django==4.2.22
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -210,7 +210,7 @@ edx-toggles==5.3.0
     # via -r requirements/base.txt
 gevent==25.5.1
     # via -r requirements/production.in
-greenlet==3.2.2
+greenlet==3.2.3
     # via gevent
 gunicorn==23.0.0
     # via -r requirements/production.in
@@ -403,7 +403,7 @@ tinycss2==1.4.0
     # via
     #   -r requirements/base.txt
     #   bleach
-typing-extensions==4.13.2
+typing-extensions==4.14.0
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -412,7 +412,7 @@ tzdata==2025.2
     # via
     #   -r requirements/base.txt
     #   kombu
-uritemplate==4.1.1
+uritemplate==4.2.0
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
@@ -437,7 +437,7 @@ webencodings==0.5.1
     #   -r requirements/base.txt
     #   bleach
     #   tinycss2
-zipp==3.22.0
+zipp==3.23.0
     # via -r requirements/base.txt
 zope-event==5.0
     # via gevent

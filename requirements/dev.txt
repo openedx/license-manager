@@ -35,11 +35,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.38.27
+boto3==1.38.32
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.38.27
+botocore==1.38.32
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -126,7 +126,7 @@ dill==0.4.0
     # via
     #   -r requirements/validation.txt
     #   pylint
-django==4.2.21
+django==4.2.22
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/validation.txt
@@ -402,7 +402,10 @@ pycparser==2.22
 pydocstyle==6.3.0
     # via -r requirements/validation.txt
 pygments==2.19.1
-    # via diff-cover
+    # via
+    #   -r requirements/validation.txt
+    #   diff-cover
+    #   pytest
 pyjwt[crypto]==2.10.1
     # via
     #   -r requirements/validation.txt
@@ -444,7 +447,7 @@ pyproject-hooks==1.2.0
     #   -r requirements/pip-tools.txt
     #   build
     #   pip-tools
-pytest==8.3.5
+pytest==8.4.0
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -555,13 +558,13 @@ tinycss2==1.4.0
     # via
     #   -r requirements/validation.txt
     #   bleach
-tomlkit==0.13.2
+tomlkit==0.13.3
     # via
     #   -r requirements/validation.txt
     #   pylint
-typeguard==4.4.2
+typeguard==4.4.3
     # via inflect
-typing-extensions==4.13.2
+typing-extensions==4.14.0
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
@@ -572,7 +575,7 @@ tzdata==2025.2
     #   -r requirements/validation.txt
     #   faker
     #   kombu
-uritemplate==4.1.1
+uritemplate==4.2.0
     # via
     #   -r requirements/validation.txt
     #   drf-spectacular
@@ -601,7 +604,7 @@ wheel==0.45.1
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-zipp==3.22.0
+zipp==3.23.0
     # via -r requirements/validation.txt
 
 # The following packages are considered to be unsafe in a requirements file:
