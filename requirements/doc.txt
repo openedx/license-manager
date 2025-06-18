@@ -45,11 +45,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.38.32
+boto3==1.38.36
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.38.32
+botocore==1.38.36
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -59,7 +59,7 @@ celery==5.5.3
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.4.26
+certifi==2025.6.15
     # via
     #   -r requirements/test.txt
     #   requests
@@ -104,11 +104,11 @@ code-annotations==2.3.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.8.2
+coverage[toml]==7.9.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==45.0.3
+cryptography==45.0.4
     # via
     #   -r requirements/test.txt
     #   pyjwt
@@ -124,7 +124,7 @@ dill==0.4.0
     # via
     #   -r requirements/test.txt
     #   pylint
-django==4.2.22
+django==4.2.23
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
@@ -183,7 +183,7 @@ django-ses==4.4.0
     # via -r requirements/test.txt
 django-simple-history==3.8.0
     # via -r requirements/test.txt
-django-waffle==4.2.0
+django-waffle==5.0.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -205,7 +205,7 @@ dnspython==2.7.0
     # via
     #   -r requirements/test.txt
     #   pymongo
-doc8==1.1.2
+doc8==2.0.0
     # via -r requirements/doc.in
 docutils==0.21.2
     # via
@@ -255,7 +255,7 @@ edx-toggles==5.3.0
     # via -r requirements/test.txt
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==37.3.0
+faker==37.4.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -319,7 +319,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/test.txt
-newrelic==10.12.0
+newrelic==10.13.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -349,6 +349,7 @@ pluggy==1.6.0
     # via
     #   -r requirements/test.txt
     #   pytest
+    #   pytest-cov
 ply==3.11
     # via
     #   -r requirements/test.txt
@@ -404,7 +405,7 @@ pylint-plugin-utils==0.8.2
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.13.0
+pymongo==4.13.1
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
@@ -417,7 +418,7 @@ pytest==8.4.0
     #   -r requirements/test.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==6.1.1
+pytest-cov==6.2.1
     # via -r requirements/test.txt
 pytest-django==4.11.1
     # via -r requirements/test.txt
@@ -452,7 +453,7 @@ referencing==0.36.2
     #   -r requirements/test.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.3
+requests==2.32.4
     # via
     #   -r requirements/test.txt
     #   analytics-python
