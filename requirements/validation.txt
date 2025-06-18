@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.38.27
+boto3==1.38.36
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.38.27
+botocore==1.38.36
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -62,7 +62,7 @@ celery==5.5.3
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.4.26
+certifi==2025.6.15
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -116,11 +116,11 @@ code-annotations==2.3.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.8.2
+coverage[toml]==7.9.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==45.0.3
+cryptography==45.0.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -139,7 +139,7 @@ dill==0.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==4.2.21
+django==4.2.23
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -220,7 +220,7 @@ django-simple-history==3.8.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-waffle==4.2.0
+django-waffle==5.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -313,7 +313,7 @@ edx-toggles==5.3.0
     #   -r requirements/test.txt
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==37.3.0
+faker==37.4.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -394,7 +394,7 @@ mysqlclient==2.2.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==10.12.0
+newrelic==10.13.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -431,6 +431,7 @@ pluggy==1.6.0
     # via
     #   -r requirements/test.txt
     #   pytest
+    #   pytest-cov
 ply==3.11
     # via
     #   -r requirements/quality.txt
@@ -457,6 +458,10 @@ pycparser==2.22
     #   cffi
 pydocstyle==6.3.0
     # via -r requirements/quality.txt
+pygments==2.19.1
+    # via
+    #   -r requirements/test.txt
+    #   pytest
 pyjwt[crypto]==2.10.1
     # via
     #   -r requirements/quality.txt
@@ -490,7 +495,7 @@ pylint-plugin-utils==0.8.2
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.13.0
+pymongo==4.13.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -500,12 +505,12 @@ pynacl==1.5.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==8.3.5
+pytest==8.4.0
     # via
     #   -r requirements/test.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==6.1.1
+pytest-cov==6.2.1
     # via -r requirements/test.txt
 pytest-django==4.11.1
     # via -r requirements/test.txt
@@ -548,7 +553,7 @@ referencing==0.36.2
     #   -r requirements/test.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.3
+requests==2.32.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -633,12 +638,12 @@ tinycss2==1.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   bleach
-tomlkit==0.13.2
+tomlkit==0.13.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-typing-extensions==4.13.2
+typing-extensions==4.14.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -650,7 +655,7 @@ tzdata==2025.2
     #   -r requirements/test.txt
     #   faker
     #   kombu
-uritemplate==4.1.1
+uritemplate==4.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -680,7 +685,7 @@ webencodings==0.5.1
     #   -r requirements/test.txt
     #   bleach
     #   tinycss2
-zipp==3.22.0
+zipp==3.23.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
