@@ -45,11 +45,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.38.36
+boto3==1.38.46
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.38.36
+botocore==1.38.46
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -91,7 +91,7 @@ click-log==0.4.0
     # via
     #   -r requirements/test.txt
     #   edx-lint
-click-plugins==1.1.1
+click-plugins==1.1.1.2
     # via
     #   -r requirements/test.txt
     #   celery
@@ -181,7 +181,7 @@ django-model-utils==5.0.0
     #   edx-rbac
 django-ses==4.4.0
     # via -r requirements/test.txt
-django-simple-history==3.8.0
+django-simple-history==3.10.1
     # via -r requirements/test.txt
 django-waffle==5.0.0
     # via
@@ -222,7 +222,7 @@ drf-nested-routers==0.94.2
     # via -r requirements/test.txt
 drf-spectacular==0.28.0
     # via -r requirements/test.txt
-edx-auth-backends==4.5.0
+edx-auth-backends==4.6.0
     # via -r requirements/test.txt
 edx-braze-client==0.2.5
     # via
@@ -234,6 +234,7 @@ edx-django-utils==6.1.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
+    #   edx-auth-backends
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
@@ -252,7 +253,9 @@ edx-rbac==2.1.0
 edx-rest-api-client==6.2.0
     # via -r requirements/test.txt
 edx-toggles==5.3.0
-    # via -r requirements/test.txt
+    # via
+    #   -r requirements/test.txt
+    #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
 faker==37.4.0
@@ -319,13 +322,13 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/test.txt
-newrelic==10.13.0
+newrelic==10.14.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
 nh3==0.2.21
     # via readme-renderer
-oauthlib==3.2.2
+oauthlib==3.3.1
     # via
     #   -r requirements/test.txt
     #   requests-oauthlib
@@ -368,7 +371,7 @@ pycparser==2.22
     #   cffi
 pydata-sphinx-theme==0.15.4
     # via sphinx-book-theme
-pygments==2.19.1
+pygments==2.19.2
     # via
     #   -r requirements/test.txt
     #   accessible-pygments
@@ -400,12 +403,12 @@ pylint-django==2.6.1
     # via
     #   -r requirements/test.txt
     #   edx-lint
-pylint-plugin-utils==0.8.2
+pylint-plugin-utils==0.9.0
     # via
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.13.1
+pymongo==4.13.2
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
@@ -413,7 +416,7 @@ pynacl==1.5.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==8.4.0
+pytest==8.4.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -501,7 +504,7 @@ social-auth-app-django==5.4.3
     # via
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.6.1
+social-auth-core==4.7.0
     # via
     #   -r requirements/test.txt
     #   edx-auth-backends
