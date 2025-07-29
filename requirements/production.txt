@@ -30,11 +30,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.39.9
+boto3==1.39.14
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.39.9
+botocore==1.39.14
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -260,7 +260,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.txt
-newrelic==10.14.0
+newrelic==10.15.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -442,7 +442,7 @@ webencodings==0.5.1
     #   tinycss2
 zipp==3.23.0
     # via -r requirements/base.txt
-zope-event==5.1
+zope-event==5.1.1
     # via gevent
 zope-interface==7.2
     # via gevent
