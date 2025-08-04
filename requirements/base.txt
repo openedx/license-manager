@@ -24,9 +24,9 @@ billiard==4.2.1
     # via celery
 bleach[css]==6.2.0
     # via -r requirements/base.in
-boto3==1.39.14
+boto3==1.40.1
     # via django-ses
-botocore==1.39.14
+botocore==1.40.1
     # via
     #   boto3
     #   s3transfer
@@ -35,7 +35,7 @@ celery==5.5.3
     #   -r requirements/base.in
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.7.14
+certifi==2025.8.3
     # via requests
 cffi==1.17.1
     # via
@@ -175,7 +175,7 @@ edx-rbac==2.1.0
     # via -r requirements/base.in
 edx-rest-api-client==6.2.0
     # via -r requirements/base.in
-edx-toggles==5.3.0
+edx-toggles==5.4.1
     # via
     #   -r requirements/base.in
     #   edx-auth-backends
@@ -305,9 +305,8 @@ tzdata==2025.2
     # via kombu
 uritemplate==4.2.0
     # via drf-spectacular
-urllib3==2.2.3
+urllib3==2.5.0
     # via
-    #   -c requirements/common_constraints.txt
     #   botocore
     #   requests
 vine==5.1.0
