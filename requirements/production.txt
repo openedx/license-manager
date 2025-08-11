@@ -30,11 +30,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.40.1
+boto3==1.40.6
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.40.1
+botocore==1.40.6
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -53,7 +53,7 @@ cffi==1.17.1
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.2
+charset-normalizer==3.4.3
     # via
     #   -r requirements/base.txt
     #   requests
@@ -82,7 +82,7 @@ code-annotations==2.3.0
     # via
     #   -r requirements/base.txt
     #   edx-toggles
-cryptography==45.0.5
+cryptography==45.0.6
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -157,7 +157,7 @@ django-waffle==5.0.0
     #   edx-toggles
 djangoql==0.18.1
     # via -r requirements/base.txt
-djangorestframework==3.16.0
+djangorestframework==3.16.1
     # via
     #   -r requirements/base.txt
     #   djangorestframework-csv
@@ -213,7 +213,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 gevent==25.5.1
     # via -r requirements/production.in
-greenlet==3.2.3
+greenlet==3.2.4
     # via gevent
 gunicorn==23.0.0
     # via -r requirements/production.in
@@ -304,7 +304,7 @@ pyjwt[crypto]==2.10.1
     #   social-auth-core
 pymemcache==4.0.0
     # via -r requirements/production.in
-pymongo==4.13.2
+pymongo==4.14.0
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -336,7 +336,7 @@ pyyaml==6.0.2
     #   -r requirements/production.in
     #   code-annotations
     #   drf-spectacular
-redis==6.2.0
+redis==6.4.0
     # via -r requirements/base.txt
 referencing==0.36.2
     # via
@@ -355,7 +355,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-rpds-py==0.26.0
+rpds-py==0.27.0
     # via
     #   -r requirements/base.txt
     #   jsonschema

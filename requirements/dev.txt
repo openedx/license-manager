@@ -35,11 +35,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.40.1
+boto3==1.40.6
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.40.1
+botocore==1.40.6
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -62,7 +62,7 @@ cffi==1.17.1
     #   -r requirements/validation.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.2
+charset-normalizer==3.4.3
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -100,11 +100,11 @@ code-annotations==2.3.0
     #   -r requirements/validation.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.10.2
+coverage[toml]==7.10.3
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==45.0.5
+cryptography==45.0.6
     # via
     #   -r requirements/validation.txt
     #   pyjwt
@@ -199,7 +199,7 @@ django-waffle==5.0.0
     #   edx-toggles
 djangoql==0.18.1
     # via -r requirements/validation.txt
-djangorestframework==3.16.0
+djangorestframework==3.16.1
     # via
     #   -r requirements/validation.txt
     #   djangorestframework-csv
@@ -263,7 +263,7 @@ faker==37.5.3
     # via
     #   -r requirements/validation.txt
     #   factory-boy
-freezegun==1.5.4
+freezegun==1.5.5
     # via -r requirements/validation.txt
 gunicorn==23.0.0
     # via -r requirements/dev.in
@@ -418,7 +418,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.7
+pylint==3.3.8
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -438,7 +438,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/validation.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.13.2
+pymongo==4.14.0
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
@@ -485,7 +485,7 @@ pyyaml==6.0.2
     #   code-annotations
     #   drf-spectacular
     #   edx-i18n-tools
-redis==6.2.0
+redis==6.4.0
     # via -r requirements/validation.txt
 referencing==0.36.2
     # via
@@ -504,7 +504,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/validation.txt
     #   social-auth-core
-rpds-py==0.26.0
+rpds-py==0.27.0
     # via
     #   -r requirements/validation.txt
     #   jsonschema
