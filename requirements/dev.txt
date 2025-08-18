@@ -35,11 +35,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.40.6
+boto3==1.40.11
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.40.6
+botocore==1.40.11
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -100,7 +100,7 @@ code-annotations==2.3.0
     #   -r requirements/validation.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.10.3
+coverage[toml]==7.10.4
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -341,7 +341,7 @@ more-itertools==10.7.0
     # via inflect
 mysqlclient==2.2.7
     # via -r requirements/validation.txt
-newrelic==10.15.0
+newrelic==10.16.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -365,7 +365,7 @@ path==16.14.0
     #   edx-i18n-tools
 pathlib2==2.3.7.post1
     # via -r requirements/validation.txt
-pbr==6.1.1
+pbr==7.0.0
     # via
     #   -r requirements/validation.txt
     #   stevedore
