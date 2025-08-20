@@ -120,7 +120,7 @@ def _bulk_delete_request_handler(request, queryset, model_name, table_name, dele
 
 
 @admin.register(License)
-class LicenseAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
+class LicenseAdmin(DjangoQLSearchMixin, SimpleHistoryAdmin):
     readonly_fields = [
         'activation_key',
         'get_renewed_to',
@@ -513,7 +513,7 @@ class CustomSubscriptionExpirationMessagingAdmin(DjangoQLSearchMixin, admin.Mode
 
 
 @admin.register(CustomerAgreement)
-class CustomerAgreementAdmin(admin.ModelAdmin):
+class CustomerAgreementAdmin(SimpleHistoryAdmin):
     form = CustomerAgreementAdminForm
 
     read_only_fields = (
