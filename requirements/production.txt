@@ -30,11 +30,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.40.6
+boto3==1.40.16
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.40.6
+botocore==1.40.16
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -238,7 +238,7 @@ jsonfield==3.2.0
     # via
     #   -r requirements/base.txt
     #   edx-celeryutils
-jsonschema==4.25.0
+jsonschema==4.25.1
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
@@ -260,7 +260,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.txt
-newrelic==10.15.0
+newrelic==10.16.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -274,7 +274,7 @@ packaging==25.0
     #   -r requirements/base.txt
     #   gunicorn
     #   kombu
-pbr==6.1.1
+pbr==7.0.1
     # via
     #   -r requirements/base.txt
     #   stevedore
@@ -304,7 +304,7 @@ pyjwt[crypto]==2.10.1
     #   social-auth-core
 pymemcache==4.0.0
     # via -r requirements/production.in
-pymongo==4.14.0
+pymongo==4.14.1
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -343,7 +343,7 @@ referencing==0.36.2
     #   -r requirements/base.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.4
+requests==2.32.5
     # via
     #   -r requirements/base.txt
     #   analytics-python

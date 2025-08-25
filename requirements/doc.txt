@@ -37,7 +37,7 @@ backoff==1.10.0
     # via
     #   -r requirements/test.txt
     #   analytics-python
-beautifulsoup4==4.13.4
+beautifulsoup4==4.13.5
     # via pydata-sphinx-theme
 billiard==4.2.1
     # via
@@ -45,11 +45,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.40.6
+boto3==1.40.16
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.40.6
+botocore==1.40.16
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -104,7 +104,7 @@ code-annotations==2.3.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.10.3
+coverage[toml]==7.10.5
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -296,7 +296,7 @@ jsonfield==3.2.0
     # via
     #   -r requirements/test.txt
     #   edx-celeryutils
-jsonschema==4.25.0
+jsonschema==4.25.1
     # via
     #   -r requirements/test.txt
     #   drf-spectacular
@@ -322,7 +322,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/test.txt
-newrelic==10.15.0
+newrelic==10.16.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -340,7 +340,7 @@ packaging==25.0
     #   pydata-sphinx-theme
     #   pytest
     #   sphinx
-pbr==6.1.1
+pbr==7.0.1
     # via
     #   -r requirements/test.txt
     #   stevedore
@@ -408,7 +408,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.14.0
+pymongo==4.14.1
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
@@ -456,7 +456,7 @@ referencing==0.36.2
     #   -r requirements/test.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.4
+requests==2.32.5
     # via
     #   -r requirements/test.txt
     #   analytics-python
