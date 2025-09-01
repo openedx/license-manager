@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.40.6
+boto3==1.40.21
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.40.6
+botocore==1.40.21
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -116,7 +116,7 @@ code-annotations==2.3.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.10.3
+coverage[toml]==7.10.6
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -315,7 +315,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==37.5.3
+faker==37.6.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -356,7 +356,7 @@ jsonfield==3.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-celeryutils
-jsonschema==4.25.0
+jsonschema==4.25.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -371,7 +371,7 @@ kombu==5.5.4
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-lxml[html-clean]==6.0.0
+lxml[html-clean]==6.0.1
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
@@ -396,7 +396,7 @@ mysqlclient==2.2.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==10.15.0
+newrelic==10.16.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -419,12 +419,7 @@ path==16.14.0
     #   edx-i18n-tools
 pathlib2==2.3.7.post1
     # via -r requirements/validation.in
-pbr==6.1.1
-    # via
-    #   -r requirements/quality.txt
-    #   -r requirements/test.txt
-    #   stevedore
-platformdirs==4.3.8
+platformdirs==4.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -441,7 +436,7 @@ ply==3.11
     #   djangoql
 polib==1.2.0
     # via edx-i18n-tools
-prompt-toolkit==3.0.51
+prompt-toolkit==3.0.52
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -497,7 +492,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.14.0
+pymongo==4.14.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -555,7 +550,7 @@ referencing==0.36.2
     #   -r requirements/test.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.4
+requests==2.32.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -569,7 +564,7 @@ requests-oauthlib==2.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-rpds-py==0.27.0
+rpds-py==0.27.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -623,7 +618,7 @@ sqlparse==0.5.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django
-stevedore==5.4.1
+stevedore==5.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -645,7 +640,7 @@ tomlkit==0.13.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-typing-extensions==4.14.1
+typing-extensions==4.15.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
