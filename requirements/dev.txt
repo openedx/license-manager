@@ -35,11 +35,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.40.21
+boto3==1.40.25
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.40.21
+botocore==1.40.25
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -104,7 +104,7 @@ coverage[toml]==7.10.6
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==45.0.6
+cryptography==45.0.7
     # via
     #   -r requirements/validation.txt
     #   pyjwt
@@ -126,7 +126,7 @@ dill==0.4.0
     # via
     #   -r requirements/validation.txt
     #   pylint
-django==4.2.23
+django==4.2.24
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/validation.txt
@@ -209,7 +209,7 @@ djangorestframework==3.16.1
     #   edx-drf-extensions
 djangorestframework-csv==3.0.2
     # via -r requirements/validation.txt
-dnspython==2.7.0
+dnspython==2.8.0
     # via
     #   -r requirements/validation.txt
     #   pymongo
@@ -308,7 +308,7 @@ jsonschema==4.25.1
     # via
     #   -r requirements/validation.txt
     #   drf-spectacular
-jsonschema-specifications==2025.4.1
+jsonschema-specifications==2025.9.1
     # via
     #   -r requirements/validation.txt
     #   jsonschema
@@ -337,11 +337,11 @@ monotonic==1.6
     # via
     #   -r requirements/validation.txt
     #   analytics-python
-more-itertools==10.7.0
+more-itertools==10.8.0
     # via inflect
 mysqlclient==2.2.7
     # via -r requirements/validation.txt
-newrelic==10.16.0
+newrelic==10.17.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -447,12 +447,12 @@ pyproject-hooks==1.2.0
     #   -r requirements/pip-tools.txt
     #   build
     #   pip-tools
-pytest==8.4.1
+pytest==8.4.2
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==6.2.1
+pytest-cov==6.3.0
     # via -r requirements/validation.txt
 pytest-django==4.11.1
     # via -r requirements/validation.txt
