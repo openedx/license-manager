@@ -30,11 +30,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.40.21
+boto3==1.40.25
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.40.21
+botocore==1.40.25
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -82,7 +82,7 @@ code-annotations==2.3.0
     # via
     #   -r requirements/base.txt
     #   edx-toggles
-cryptography==45.0.6
+cryptography==45.0.7
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -92,7 +92,7 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-django==4.2.23
+django==4.2.24
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -167,7 +167,7 @@ djangorestframework==3.16.1
     #   edx-drf-extensions
 djangorestframework-csv==3.0.2
     # via -r requirements/base.txt
-dnspython==2.7.0
+dnspython==2.8.0
     # via
     #   -r requirements/base.txt
     #   pymongo
@@ -242,7 +242,7 @@ jsonschema==4.25.1
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
-jsonschema-specifications==2025.4.1
+jsonschema-specifications==2025.9.1
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -260,7 +260,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.txt
-newrelic==10.16.0
+newrelic==10.17.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
