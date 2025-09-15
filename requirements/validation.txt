@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.40.25
+boto3==1.40.30
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.40.25
+botocore==1.40.30
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -67,7 +67,7 @@ certifi==2025.8.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
-cffi==1.17.1
+cffi==2.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -177,7 +177,7 @@ django-celery-results==2.6.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-cors-headers==4.7.0
+django-cors-headers==4.8.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -254,7 +254,7 @@ drf-jwt==1.19.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-drf-nested-routers==0.94.2
+drf-nested-routers==0.95.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -448,7 +448,7 @@ psutil==7.0.0
     #   edx-django-utils
 pycodestyle==2.14.0
     # via -r requirements/quality.txt
-pycparser==2.22
+pycparser==2.23
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -492,12 +492,12 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.14.1
+pymongo==4.15.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-opaque-keys
-pynacl==1.5.0
+pynacl==1.6.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -507,7 +507,7 @@ pytest==8.4.2
     #   -r requirements/test.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==6.3.0
+pytest-cov==7.0.0
     # via -r requirements/test.txt
 pytest-django==4.11.1
     # via -r requirements/test.txt
@@ -574,7 +574,7 @@ rules==3.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-s3transfer==0.13.1
+s3transfer==0.14.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
