@@ -24,9 +24,9 @@ billiard==4.2.1
     # via celery
 bleach[css]==6.2.0
     # via -r requirements/base.in
-boto3==1.40.25
+boto3==1.40.30
     # via django-ses
-botocore==1.40.25
+botocore==1.40.30
     # via
     #   boto3
     #   s3transfer
@@ -37,7 +37,7 @@ celery==5.5.3
     #   edx-celeryutils
 certifi==2025.8.3
     # via requests
-cffi==1.17.1
+cffi==2.0.0
     # via
     #   cryptography
     #   pynacl
@@ -99,7 +99,7 @@ django-autocomplete-light==3.12.1
     # via -r requirements/base.in
 django-celery-results==2.6.0
     # via -r requirements/base.in
-django-cors-headers==4.7.0
+django-cors-headers==4.8.0
     # via -r requirements/base.in
 django-crum==0.7.9
     # via
@@ -145,7 +145,7 @@ dnspython==2.8.0
     # via pymongo
 drf-jwt==1.19.2
     # via edx-drf-extensions
-drf-nested-routers==0.94.2
+drf-nested-routers==0.95.0
     # via -r requirements/base.in
 drf-spectacular==0.28.0
     # via -r requirements/base.in
@@ -217,7 +217,7 @@ prompt-toolkit==3.0.52
     # via click-repl
 psutil==7.0.0
     # via edx-django-utils
-pycparser==2.22
+pycparser==2.23
     # via cffi
 pyjwt[crypto]==2.10.1
     # via
@@ -226,9 +226,9 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pymongo==4.14.1
+pymongo==4.15.0
     # via edx-opaque-keys
-pynacl==1.5.0
+pynacl==1.6.0
     # via edx-django-utils
 python-dateutil==2.9.0.post0
     # via
@@ -266,7 +266,7 @@ rpds-py==0.27.1
     #   referencing
 rules==3.5
     # via -r requirements/base.in
-s3transfer==0.13.1
+s3transfer==0.14.0
     # via boto3
 semantic-version==2.10.0
     # via edx-drf-extensions

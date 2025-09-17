@@ -35,11 +35,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.40.25
+boto3==1.40.30
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.40.25
+botocore==1.40.30
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -57,7 +57,7 @@ certifi==2025.8.3
     # via
     #   -r requirements/validation.txt
     #   requests
-cffi==1.17.1
+cffi==2.0.0
     # via
     #   -r requirements/validation.txt
     #   cryptography
@@ -160,7 +160,7 @@ django-autocomplete-light==3.12.1
     # via -r requirements/validation.txt
 django-celery-results==2.6.0
     # via -r requirements/validation.txt
-django-cors-headers==4.7.0
+django-cors-headers==4.8.0
     # via -r requirements/validation.txt
 django-crum==0.7.9
     # via
@@ -217,7 +217,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-drf-nested-routers==0.94.2
+drf-nested-routers==0.95.0
     # via -r requirements/validation.txt
 drf-spectacular==0.28.0
     # via -r requirements/validation.txt
@@ -395,7 +395,7 @@ psutil==7.0.0
     #   edx-django-utils
 pycodestyle==2.14.0
     # via -r requirements/validation.txt
-pycparser==2.22
+pycparser==2.23
     # via
     #   -r requirements/validation.txt
     #   cffi
@@ -434,11 +434,11 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/validation.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.14.1
+pymongo==4.15.0
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
-pynacl==1.5.0
+pynacl==1.6.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -452,7 +452,7 @@ pytest==8.4.2
     #   -r requirements/validation.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==6.3.0
+pytest-cov==7.0.0
     # via -r requirements/validation.txt
 pytest-django==4.11.1
     # via -r requirements/validation.txt
@@ -507,7 +507,7 @@ rpds-py==0.27.1
     #   referencing
 rules==3.5
     # via -r requirements/validation.txt
-s3transfer==0.13.1
+s3transfer==0.14.0
     # via
     #   -r requirements/validation.txt
     #   boto3
