@@ -194,14 +194,6 @@ class SubscriptionPlanRenewalForm(forms.ModelForm):
     """
     Form for the renewal Django admin class.
     """
-    # Using a HiddenInput widget here allows us to hide the property
-    # on the creation form while still displaying the property
-    # as read-only on the SubscriptionPlanRenewalForm update form.
-    renewed_subscription_plan = forms.IntegerField(
-        required=False,
-        widget=forms.HiddenInput()
-    )
-
     salesforce_opportunity_id = forms.CharField(
         help_text=(
             "Locate the appropriate Salesforce Opportunity record and copy the Opportunity ID field "
