@@ -35,11 +35,11 @@ billiard==4.2.1
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.40.30
+boto3==1.40.34
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.40.30
+botocore==1.40.34
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -66,7 +66,7 @@ charset-normalizer==3.4.3
     # via
     #   -r requirements/validation.txt
     #   requests
-click==8.2.1
+click==8.3.0
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/validation.txt
@@ -104,7 +104,7 @@ coverage[toml]==7.10.6
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==45.0.7
+cryptography==46.0.1
     # via
     #   -r requirements/validation.txt
     #   pyjwt
@@ -160,7 +160,7 @@ django-autocomplete-light==3.12.1
     # via -r requirements/validation.txt
 django-celery-results==2.6.0
     # via -r requirements/validation.txt
-django-cors-headers==4.8.0
+django-cors-headers==4.9.0
     # via -r requirements/validation.txt
 django-crum==0.7.9
     # via
@@ -259,7 +259,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/validation.txt
-faker==37.6.0
+faker==37.8.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -389,7 +389,7 @@ prompt-toolkit==3.0.52
     # via
     #   -r requirements/validation.txt
     #   click-repl
-psutil==7.0.0
+psutil==7.1.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -434,7 +434,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/validation.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.15.0
+pymongo==4.15.1
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
