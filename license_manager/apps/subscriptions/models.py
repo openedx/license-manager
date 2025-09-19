@@ -1064,13 +1064,22 @@ class SubscriptionPlanRenewal(TimeStampedModel):
         null=False,
         related_name='renewal',
         unique=True,
+        help_text=(
+            "This is the old/current plan. If you're trying to setup a renewal for Plan A into -> Plan B, "
+            "then set this field to the uuid for Plan A."
+        )
     )
 
     renewed_subscription_plan = models.OneToOneField(
         SubscriptionPlan,
         on_delete=models.CASCADE,
         null=True,
+        blank=True,
         related_name='origin_renewal',
+        help_text=(
+            "This is the new/future plan. If you're trying to setup a renewal for Plan A into -> Plan B, "
+            "then set this field to the uuid for Plan B."
+        )
     )
 
     salesforce_opportunity_id = models.CharField(

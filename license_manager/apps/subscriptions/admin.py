@@ -637,8 +637,7 @@ class CustomerAgreementAdmin(SimpleHistoryAdmin):
 @admin.register(SubscriptionPlanRenewal)
 class SubscriptionPlanRenewalAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     form = SubscriptionPlanRenewalForm
-    readonly_fields = ['renewed_subscription_plan', 'processed', 'processed_datetime']
-    raw_id_fields = ['prior_subscription_plan']
+    readonly_fields = ['processed', 'processed_datetime']
     list_display = (
         'get_prior_subscription_plan_title',
         'effective_date',
@@ -660,6 +659,7 @@ class SubscriptionPlanRenewalAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
         'prior_subscription_plan__enterprise_catalog_uuid__startswith',
     )
     actions = ['process_renewal']
+    autocomplete_fields = ['prior_subscription_plan', 'renewed_subscription_plan']
 
     @admin.action(
         description='Process selected renewal records'
