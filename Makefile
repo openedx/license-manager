@@ -116,8 +116,10 @@ upgrade: piptools $(COMMON_CONSTRAINTS_TXT) ## update the requirements/*.txt fil
 	# This is a temporary solution to override the real common_constraints.txt
 	# In edx-lint, until the pyjwt constraint in edx-lint has been removed.
 	# See BOM-271 for more details.
-	sed -i 's/django-simple-history==3.0.0//g' requirements/common_constraints.txt
+	sed '/^django-simple-history==/d' requirements/common_constraints.txt > requirements/common_constraints.tmp
 	# Make sure to compile files after any other files they include!
+	sed 's/Django<5.0//g' requirements/common_constraints.txt > requirements/common_constraints.tmp
+	mv requirements/common_constraints.tmp requirements/common_constraints.txt
 	pip-compile --upgrade --rebuild --allow-unsafe -o requirements/pip.txt requirements/pip.in
 	pip-compile --upgrade -o requirements/pip-tools.txt requirements/pip-tools.in
 	pip install -qr requirements/pip.txt
