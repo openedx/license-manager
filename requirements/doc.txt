@@ -39,17 +39,17 @@ backoff==1.10.0
     #   analytics-python
 beautifulsoup4==4.13.5
     # via pydata-sphinx-theme
-billiard==4.2.1
+billiard==4.2.2
     # via
     #   -r requirements/test.txt
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.40.30
+boto3==1.40.35
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.40.30
+botocore==1.40.35
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -72,7 +72,7 @@ charset-normalizer==3.4.3
     # via
     #   -r requirements/test.txt
     #   requests
-click==8.2.1
+click==8.3.0
     # via
     #   -r requirements/test.txt
     #   celery
@@ -104,11 +104,11 @@ code-annotations==2.3.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.10.6
+coverage[toml]==7.10.7
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==45.0.7
+cryptography==46.0.1
     # via
     #   -r requirements/test.txt
     #   pyjwt
@@ -156,7 +156,7 @@ django-autocomplete-light==3.12.1
     # via -r requirements/test.txt
 django-celery-results==2.6.0
     # via -r requirements/test.txt
-django-cors-headers==4.8.0
+django-cors-headers==4.9.0
     # via -r requirements/test.txt
 django-crum==0.7.9
     # via
@@ -258,7 +258,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==37.6.0
+faker==37.8.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -357,7 +357,7 @@ prompt-toolkit==3.0.52
     # via
     #   -r requirements/test.txt
     #   click-repl
-psutil==7.0.0
+psutil==7.1.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -404,7 +404,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.15.0
+pymongo==4.15.1
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys

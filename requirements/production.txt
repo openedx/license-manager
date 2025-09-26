@@ -24,17 +24,17 @@ backoff==1.10.0
     # via
     #   -r requirements/base.txt
     #   analytics-python
-billiard==4.2.1
+billiard==4.2.2
     # via
     #   -r requirements/base.txt
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.40.30
+boto3==1.40.35
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.40.30
+botocore==1.40.35
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -57,7 +57,7 @@ charset-normalizer==3.4.3
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.2.1
+click==8.3.0
     # via
     #   -r requirements/base.txt
     #   celery
@@ -82,7 +82,7 @@ code-annotations==2.3.0
     # via
     #   -r requirements/base.txt
     #   edx-toggles
-cryptography==45.0.7
+cryptography==46.0.1
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -124,7 +124,7 @@ django-autocomplete-light==3.12.1
     # via -r requirements/base.txt
 django-celery-results==2.6.0
     # via -r requirements/base.txt
-django-cors-headers==4.8.0
+django-cors-headers==4.9.0
     # via -r requirements/base.txt
 django-crum==0.7.9
     # via
@@ -211,7 +211,7 @@ edx-toggles==5.4.1
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-gevent==25.8.2
+gevent==25.9.1
     # via -r requirements/production.in
 greenlet==3.2.4
     # via gevent
@@ -282,7 +282,7 @@ prompt-toolkit==3.0.52
     # via
     #   -r requirements/base.txt
     #   click-repl
-psutil==7.0.0
+psutil==7.1.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -300,7 +300,7 @@ pyjwt[crypto]==2.10.1
     #   social-auth-core
 pymemcache==4.0.0
     # via -r requirements/production.in
-pymongo==4.15.0
+pymongo==4.15.1
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
