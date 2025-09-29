@@ -14,7 +14,7 @@ amqp==5.3.1
     #   kombu
 analytics-python==1.4.post1
     # via -r requirements/test.txt
-asgiref==3.9.1
+asgiref==3.9.2
     # via
     #   -r requirements/test.txt
     #   django
@@ -37,7 +37,7 @@ backoff==1.10.0
     # via
     #   -r requirements/test.txt
     #   analytics-python
-beautifulsoup4==4.13.5
+beautifulsoup4==4.14.0
     # via pydata-sphinx-theme
 billiard==4.2.2
     # via
@@ -45,11 +45,11 @@ billiard==4.2.2
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.40.35
+boto3==1.40.40
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.40.35
+botocore==1.40.40
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -308,7 +308,7 @@ kombu==5.5.4
     # via
     #   -r requirements/test.txt
     #   celery
-markupsafe==3.0.2
+markupsafe==3.0.3
     # via
     #   -r requirements/test.txt
     #   jinja2
@@ -322,7 +322,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/test.txt
-newrelic==10.17.0
+newrelic==11.0.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -438,7 +438,7 @@ python3-openid==3.2.0
     #   social-auth-core
 pytz==2025.2
     # via -r requirements/test.txt
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   -r requirements/test.txt
     #   code-annotations
@@ -484,7 +484,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-simplejson==3.20.1
+simplejson==3.20.2
     # via -r requirements/test.txt
 six==1.17.0
     # via
@@ -576,7 +576,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.13
+wcwidth==0.2.14
     # via
     #   -r requirements/test.txt
     #   prompt-toolkit

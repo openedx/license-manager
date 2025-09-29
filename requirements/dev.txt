@@ -10,7 +10,7 @@ amqp==5.3.1
     #   kombu
 analytics-python==1.4.post1
     # via -r requirements/validation.txt
-asgiref==3.9.1
+asgiref==3.9.2
     # via
     #   -r requirements/validation.txt
     #   django
@@ -35,11 +35,11 @@ billiard==4.2.2
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.40.35
+boto3==1.40.40
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.40.35
+botocore==1.40.40
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -316,7 +316,7 @@ kombu==5.5.4
     # via
     #   -r requirements/validation.txt
     #   celery
-lxml[html-clean]==6.0.1
+lxml[html-clean]==6.0.2
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
@@ -325,7 +325,7 @@ lxml-html-clean==0.4.2
     # via
     #   -r requirements/validation.txt
     #   lxml
-markupsafe==3.0.2
+markupsafe==3.0.3
     # via
     #   -r requirements/validation.txt
     #   jinja2
@@ -341,7 +341,7 @@ more-itertools==10.8.0
     # via inflect
 mysqlclient==2.2.7
     # via -r requirements/validation.txt
-newrelic==10.17.0
+newrelic==11.0.0
     # via
     #   -r requirements/validation.txt
     #   edx-django-utils
@@ -475,7 +475,7 @@ pytz==2025.2
     # via -r requirements/validation.txt
 pywatchman==3.0.0
     # via -r requirements/dev.in
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   -r requirements/validation.txt
     #   code-annotations
@@ -515,7 +515,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-simplejson==3.20.1
+simplejson==3.20.2
     # via -r requirements/validation.txt
 six==1.17.0
     # via
@@ -590,7 +590,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.13
+wcwidth==0.2.14
     # via
     #   -r requirements/validation.txt
     #   prompt-toolkit
