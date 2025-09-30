@@ -22,6 +22,15 @@ ALLOWED_HOSTS = ['*']
 # the values read from disk should UPDATE the pre-configured dicts.
 DICT_UPDATE_KEYS = ('JWT_AUTH', 'REST_FRAMEWORK')
 
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+    },
+}
+
 # This may be overridden by the YAML in license_manager_CFG,
 # but it should be here as a default.
 MEDIA_STORAGE_BACKEND = {}
@@ -44,6 +53,21 @@ with open(CONFIG_FILE, encoding='utf-8') as f:
             vars()[key].update(value)
 
     vars().update(config_from_yaml)
+
+    # Fallback for DEFAULT_FILE_STORAGE and STATICFILES_STORAGE settings.
+    # If these keys are present in the YAML config, use them to override the default storage backends.
+    media_default_backend = MEDIA_STORAGE_BACKEND.pop("DEFAULT_FILE_STORAGE", None)
+    file_default_backend = FILE_STORAGE_BACKEND.pop("DEFAULT_FILE_STORAGE", None)
+    media_static_backend = MEDIA_STORAGE_BACKEND.pop("STATICFILES_STORAGE", None)
+    file_static_backend = FILE_STORAGE_BACKEND.pop("STATICFILES_STORAGE", None)
+
+    default_backend = media_default_backend or file_default_backend
+    static_backend = media_static_backend or file_static_backend
+
+    if default_backend:
+        STORAGES['default']['BACKEND'] = default_backend
+    if static_backend:
+        STORAGES['staticfiles']['BACKEND'] = static_backend
 
     # Unpack the media and files storage backend settings for django storages.
     # These dicts are not Django settings themselves, but they contain a mapping
