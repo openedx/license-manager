@@ -101,10 +101,6 @@ dev.migrate: app-migrate
 html_coverage: ## generate and view HTML coverage report
 	coverage html && open htmlcov/index.html
 
-define COMMON_CONSTRAINTS_TEMP_COMMENT
-# This is a temporary solution to override the real common_constraints.txt\n# In edx-lint, until the pyjwt constraint in edx-lint has been removed.\n# See BOM-2721 for more details.\n# Below is the copied and edited version of common_constraints\n
-endef
-
 COMMON_CONSTRAINTS_TXT=requirements/common_constraints.txt
 .PHONY: $(COMMON_CONSTRAINTS_TXT)
 $(COMMON_CONSTRAINTS_TXT):
@@ -112,13 +108,12 @@ $(COMMON_CONSTRAINTS_TXT):
 	echo "$(COMMON_CONSTRAINTS_TEMP_COMMENT)" | cat - $(@) > temp && mv temp $(@)
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
-upgrade: piptools $(COMMON_CONSTRAINTS_TXT) ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
-	# This is a temporary solution to override the real common_constraints.txt
-	# In edx-lint, until the pyjwt constraint in edx-lint has been removed.
-	# See BOM-271 for more details.
-	sed -i 's/django-simple-history==3.0.0//g' requirements/common_constraints.txt
+upgrade: piptools $(COMMON_CONSTRAINTS_TXT)  ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
+	sed 's/django-simple-history==3.0.0//g' requirements/common_constraints.txt > requirements/common_constraints.tmp
+	mv requirements/common_constraints.tmp requirements/common_constraints.txt
 	# Make sure to compile files after any other files they include!
-	pip-compile --upgrade --rebuild --allow-unsafe -o requirements/pip.txt requirements/pip.in
+	sed 's/Django<4.0//g' requirements/common_constraints.txt > tmp_con; cat tmp_con > requirements/common_constraints.txt; rm tmp_con
+	pip-compile --allow-unsafe --rebuild --upgrade -o requirements/pip.txt requirements/pip.in
 	pip-compile --upgrade -o requirements/pip-tools.txt requirements/pip-tools.in
 	pip install -qr requirements/pip.txt
 	pip install -qr requirements/pip-tools.txt
@@ -129,6 +124,10 @@ upgrade: piptools $(COMMON_CONSTRAINTS_TXT) ## update the requirements/*.txt fil
 	pip-compile --upgrade -o requirements/validation.txt requirements/validation.in
 	pip-compile --upgrade -o requirements/dev.txt requirements/dev.in
 	pip-compile --upgrade -o requirements/production.txt requirements/production.in
+	# Let tox control the Django version for tests
+	grep -e "^django==" requirements/base.txt > requirements/django.txt
+	sed '/^[dD]jango==/d' requirements/test.txt > requirements/test.tmp
+	mv requirements/test.tmp requirements/test.txt
 
 extract_translations: ## extract strings to be translated, outputting .mo files
 	python manage.py makemessages -l en -v1 -d django

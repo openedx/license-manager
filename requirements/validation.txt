@@ -13,7 +13,7 @@ analytics-python==1.4.post1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-asgiref==3.9.1
+asgiref==3.9.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.40.35
+boto3==1.40.44
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.40.35
+botocore==1.40.44
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -120,7 +120,7 @@ coverage[toml]==7.10.7
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==46.0.1
+cryptography==46.0.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -139,7 +139,7 @@ dill==0.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==4.2.24
+django==4.2.25
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -262,7 +262,7 @@ drf-spectacular==0.28.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-auth-backends==4.6.0
+edx-auth-backends==4.6.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -275,9 +275,8 @@ edx-celeryutils==1.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-django-utils==6.1.0
+edx-django-utils==8.0.1
     # via
-    #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
@@ -335,7 +334,7 @@ iniconfig==2.1.0
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==6.0.1
+isort==6.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -371,13 +370,13 @@ kombu==5.5.4
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-lxml[html-clean]==6.0.1
+lxml[html-clean]==6.0.2
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
-lxml-html-clean==0.4.2
+lxml-html-clean==0.4.3
     # via lxml
-markupsafe==3.0.2
+markupsafe==3.0.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -396,11 +395,6 @@ mysqlclient==2.2.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==10.17.0
-    # via
-    #   -r requirements/quality.txt
-    #   -r requirements/test.txt
-    #   edx-django-utils
 oauthlib==3.3.1
     # via
     #   -r requirements/quality.txt
@@ -492,7 +486,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.15.1
+pymongo==4.15.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -533,7 +527,7 @@ pytz==2025.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -584,7 +578,7 @@ semantic-version==2.10.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-simplejson==3.20.1
+simplejson==3.20.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -670,7 +664,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.13
+wcwidth==0.2.14
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

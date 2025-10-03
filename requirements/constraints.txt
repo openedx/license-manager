@@ -22,11 +22,6 @@ backports.zoneinfo;python_version<"3.9"
 # path>16.14.0 has removed the deprecated abspath function, which is breaking the docs build
 path<16.15.0
 
-# The newer version if this package has drop support for background tasks so that why
-# when i include that new version (7.0.0) in the requirements upgrade, most of the jobs start failing
-# so i have to pin this version to 6.1.0
-edx-django-utils==6.1.0
-
 # pinning braze-client below version 1, which will likely introduce a breaking-change
 # as the package is converted to an openedx plugin.
 # https://github.com/edx/braze-client/pull/30
