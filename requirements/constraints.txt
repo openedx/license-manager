@@ -10,6 +10,13 @@
 
 -c common_constraints.txt
 
+# Upgrade to django 5.2
+Django<5.3
+
+# Breaking changes in newrelic 11.0.0
+# https://docs.newrelic.com/docs/release-notes/agent-release-notes/python-release-notes/python-agent-110000/
+newrelic>=10.17.0,<11
+
 # diff-cover latest requires (pluggy>=0.13.1,<0.14.0)
 # which conflicts with pytest(pluggy>=0.12,<2.0.0) and tox(pluggy>0.12) both of these fetch pluggy==1.0.0
 # but diff-cover latest has a pin (pluggy<1.0.0a1)

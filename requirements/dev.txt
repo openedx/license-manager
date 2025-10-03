@@ -10,7 +10,7 @@ amqp==5.3.1
     #   kombu
 analytics-python==1.4.post1
     # via -r requirements/validation.txt
-asgiref==3.9.1
+asgiref==3.9.2
     # via
     #   -r requirements/validation.txt
     #   django
@@ -35,11 +35,11 @@ billiard==4.2.2
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/validation.txt
-boto3==1.40.35
+boto3==1.40.44
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.40.35
+botocore==1.40.44
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -104,7 +104,7 @@ coverage[toml]==7.10.7
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==46.0.1
+cryptography==46.0.2
     # via
     #   -r requirements/validation.txt
     #   pyjwt
@@ -126,9 +126,9 @@ dill==0.4.0
     # via
     #   -r requirements/validation.txt
     #   pylint
-django==4.2.24
+django==5.2.7
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/validation.txt
     #   django-autocomplete-light
     #   django-celery-results
@@ -221,7 +221,7 @@ drf-nested-routers==0.95.0
     # via -r requirements/validation.txt
 drf-spectacular==0.28.0
     # via -r requirements/validation.txt
-edx-auth-backends==4.6.0
+edx-auth-backends==4.6.1
     # via -r requirements/validation.txt
 edx-braze-client==0.2.5
     # via
@@ -283,7 +283,7 @@ iniconfig==2.1.0
     # via
     #   -r requirements/validation.txt
     #   pytest
-isort==6.0.1
+isort==6.1.0
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -316,16 +316,16 @@ kombu==5.5.4
     # via
     #   -r requirements/validation.txt
     #   celery
-lxml[html-clean]==6.0.1
+lxml[html-clean]==6.0.2
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
     #   lxml-html-clean
-lxml-html-clean==0.4.2
+lxml-html-clean==0.4.3
     # via
     #   -r requirements/validation.txt
     #   lxml
-markupsafe==3.0.2
+markupsafe==3.0.3
     # via
     #   -r requirements/validation.txt
     #   jinja2
@@ -343,6 +343,7 @@ mysqlclient==2.2.7
     # via -r requirements/validation.txt
 newrelic==10.17.0
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/validation.txt
     #   edx-django-utils
 oauthlib==3.3.1
@@ -365,7 +366,7 @@ path==16.14.0
     #   edx-i18n-tools
 pathlib2==2.3.7.post1
     # via -r requirements/validation.txt
-pip-tools==7.5.0
+pip-tools==7.5.1
     # via -r requirements/pip-tools.txt
 platformdirs==4.4.0
     # via
@@ -434,7 +435,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/validation.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.15.1
+pymongo==4.15.2
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
@@ -475,7 +476,7 @@ pytz==2025.2
     # via -r requirements/validation.txt
 pywatchman==3.0.0
     # via -r requirements/dev.in
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   -r requirements/validation.txt
     #   code-annotations
@@ -515,7 +516,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-simplejson==3.20.1
+simplejson==3.20.2
     # via -r requirements/validation.txt
 six==1.17.0
     # via
@@ -530,7 +531,7 @@ snowballstemmer==3.0.1
     # via
     #   -r requirements/validation.txt
     #   pydocstyle
-social-auth-app-django==5.4.3
+social-auth-app-django==5.5.1
     # via
     #   -r requirements/validation.txt
     #   edx-auth-backends
@@ -590,7 +591,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.13
+wcwidth==0.2.14
     # via
     #   -r requirements/validation.txt
     #   prompt-toolkit
