@@ -10,7 +10,7 @@ amqp==5.3.1
     #   kombu
 analytics-python==1.4.post1
     # via -r requirements/base.txt
-asgiref==3.9.1
+asgiref==3.9.2
     # via
     #   -r requirements/base.txt
     #   django
@@ -34,11 +34,11 @@ billiard==4.2.2
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.40.35
+boto3==1.40.44
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.40.35
+botocore==1.40.44
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -91,7 +91,7 @@ code-annotations==2.3.0
     #   -r requirements/base.txt
     #   edx-lint
     #   edx-toggles
-cryptography==46.0.1
+cryptography==46.0.2
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -103,7 +103,7 @@ defusedxml==0.7.1
     #   social-auth-core
 dill==0.4.0
     # via pylint
-django==4.2.24
+django==4.2.25
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -190,7 +190,7 @@ drf-nested-routers==0.95.0
     # via -r requirements/base.txt
 drf-spectacular==0.28.0
     # via -r requirements/base.txt
-edx-auth-backends==4.6.0
+edx-auth-backends==4.6.1
     # via -r requirements/base.txt
 edx-braze-client==0.2.5
     # via
@@ -198,9 +198,8 @@ edx-braze-client==0.2.5
     #   -r requirements/base.txt
 edx-celeryutils==1.4.0
     # via -r requirements/base.txt
-edx-django-utils==6.1.0
+edx-django-utils==8.0.1
     # via
-    #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   edx-auth-backends
     #   edx-drf-extensions
@@ -232,7 +231,7 @@ inflection==0.5.1
     # via
     #   -r requirements/base.txt
     #   drf-spectacular
-isort==6.0.1
+isort==6.1.0
     # via
     #   -r requirements/quality.in
     #   pylint
@@ -261,7 +260,7 @@ kombu==5.5.4
     # via
     #   -r requirements/base.txt
     #   celery
-markupsafe==3.0.2
+markupsafe==3.0.3
     # via
     #   -r requirements/base.txt
     #   jinja2
@@ -273,10 +272,6 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.txt
-newrelic==10.17.0
-    # via
-    #   -r requirements/base.txt
-    #   edx-django-utils
 oauthlib==3.3.1
     # via
     #   -r requirements/base.txt
@@ -330,7 +325,7 @@ pylint-plugin-utils==0.9.0
     # via
     #   pylint-celery
     #   pylint-django
-pymongo==4.15.1
+pymongo==4.15.2
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -354,7 +349,7 @@ python3-openid==3.2.0
     #   social-auth-core
 pytz==2025.2
     # via -r requirements/base.txt
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -393,7 +388,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-simplejson==3.20.1
+simplejson==3.20.2
     # via -r requirements/base.txt
 six==1.17.0
     # via
@@ -458,7 +453,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.13
+wcwidth==0.2.14
     # via
     #   -r requirements/base.txt
     #   prompt-toolkit
