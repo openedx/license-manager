@@ -103,9 +103,9 @@ defusedxml==0.7.1
     #   social-auth-core
 dill==0.4.0
     # via pylint
-django==4.2.25
+django==5.2.7
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   django-autocomplete-light
     #   django-celery-results
@@ -272,6 +272,11 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.txt
+newrelic==10.17.0
+    # via
+    #   -c requirements/constraints.txt
+    #   -r requirements/base.txt
+    #   edx-django-utils
 oauthlib==3.3.1
     # via
     #   -r requirements/base.txt
@@ -400,7 +405,7 @@ six==1.17.0
     #   python-dateutil
 snowballstemmer==3.0.1
     # via pydocstyle
-social-auth-app-django==5.4.3
+social-auth-app-django==5.5.1
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends

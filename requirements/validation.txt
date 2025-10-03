@@ -139,9 +139,9 @@ dill==0.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==4.2.25
+django==5.2.7
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-autocomplete-light
@@ -395,6 +395,12 @@ mysqlclient==2.2.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
+newrelic==10.17.0
+    # via
+    #   -c requirements/constraints.txt
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   edx-django-utils
 oauthlib==3.3.1
     # via
     #   -r requirements/quality.txt
@@ -596,7 +602,7 @@ snowballstemmer==3.0.1
     # via
     #   -r requirements/quality.txt
     #   pydocstyle
-social-auth-app-django==5.4.3
+social-auth-app-django==5.5.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

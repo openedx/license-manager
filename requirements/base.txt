@@ -67,9 +67,9 @@ defusedxml==0.7.1
     # via
     #   python3-openid
     #   social-auth-core
-django==4.2.25
+django==5.2.7
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/base.in
     #   django-autocomplete-light
     #   django-celery-results
@@ -202,6 +202,10 @@ monotonic==1.6
     # via analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.in
+newrelic==10.17.0
+    # via
+    #   -c requirements/constraints.txt
+    #   edx-django-utils
 oauthlib==3.3.1
     # via
     #   requests-oauthlib
@@ -275,7 +279,7 @@ six==1.17.0
     #   edx-auth-backends
     #   edx-rbac
     #   python-dateutil
-social-auth-app-django==5.4.3
+social-auth-app-django==5.5.1
     # via edx-auth-backends
 social-auth-core==4.7.0
     # via
