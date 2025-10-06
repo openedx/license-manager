@@ -5,7 +5,6 @@ Next, run the following commands:
 
 .. code-block:: bash
 
-    $ make docker_build
     $ make dev.up
     $ make dev.provision
     $ make app-shell
