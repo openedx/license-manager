@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='historicalsubscriptionplanrenewal',
             name='exempt_from_batch_processing',
-            field=models.BooleanField(default=False, help_text='Whether auto-applied licenses should be disabled for the future plan. If the original plan was not auto applying licenses, modifying this field will have no effect.'),
+            field=models.BooleanField(default=False, help_text='We do not want the cron to process SSP renewals linking the trial plan to the paid plan. It will instead be kicked off by the subscription state change. '),
         ),
         migrations.AddField(
             model_name='subscriptionplanrenewal',
             name='exempt_from_batch_processing',
-            field=models.BooleanField(default=False, help_text='Whether auto-applied licenses should be disabled for the future plan. If the original plan was not auto applying licenses, modifying this field will have no effect.'),
+            field=models.BooleanField(default=False, help_text='We do not want the cron to process SSP renewals linking the trial plan to the paid plan. It will instead be kicked off by the subscription state change. '),
         ),
     ]

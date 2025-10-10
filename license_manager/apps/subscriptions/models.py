@@ -1152,12 +1152,12 @@ class SubscriptionPlanRenewal(TimeStampedModel):
     )
 
     exempt_from_batch_processing = models.BooleanField(
-        default=False, 
+        default=False,
         null=False,
         help_text=_(
-            "Whether auto-applied licenses should be disabled for the future plan. "
-            "If the original plan was not auto applying licenses, modifying this field will have no effect."
-        )   
+            "We do not want the cron to process SSP renewals linking the trial plan to the paid plan. "
+            "It will instead be kicked off by the subscription state change. "
+        )
     )
 
     history = HistoricalRecords()
