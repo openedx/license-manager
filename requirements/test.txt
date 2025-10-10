@@ -10,7 +10,7 @@ amqp==5.3.1
     #   kombu
 analytics-python==1.4.post1
     # via -r requirements/base.txt
-asgiref==3.9.2
+asgiref==3.10.0
     # via
     #   -r requirements/base.txt
     #   django
@@ -19,7 +19,7 @@ astroid==3.3.11
     # via
     #   pylint
     #   pylint-celery
-attrs==25.3.0
+attrs==25.4.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
@@ -34,11 +34,11 @@ billiard==4.2.2
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/base.txt
-boto3==1.40.44
+boto3==1.40.49
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.40.44
+botocore==1.40.49
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -48,7 +48,7 @@ celery==5.5.3
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.8.3
+certifi==2025.10.5
     # via
     #   -r requirements/base.txt
     #   requests
@@ -100,7 +100,6 @@ cryptography==46.0.2
     # via
     #   -r requirements/base.txt
     #   pyjwt
-    #   social-auth-core
 ddt==1.7.2
     # via -r requirements/test.in
 defusedxml==0.7.1
@@ -110,7 +109,6 @@ defusedxml==0.7.1
     #   social-auth-core
 dill==0.4.0
     # via pylint
-django==5.2.7
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/base.txt
@@ -156,7 +154,7 @@ django-dynamic-fixture==4.0.1
     # via -r requirements/test.in
 django-extensions==4.1
     # via -r requirements/base.txt
-django-filter==25.1
+django-filter==25.2
     # via -r requirements/base.txt
 django-log-request-id==2.1.0
     # via -r requirements/base.txt
@@ -234,7 +232,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.in
-faker==37.8.0
+faker==37.11.0
     # via factory-boy
 freezegun==1.5.5
     # via -r requirements/test.in
@@ -287,11 +285,6 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/base.txt
-newrelic==10.17.0
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/base.txt
-    #   edx-django-utils
 oauthlib==3.3.1
     # via
     #   -r requirements/base.txt
@@ -302,7 +295,7 @@ packaging==25.0
     #   -r requirements/base.txt
     #   kombu
     #   pytest
-platformdirs==4.4.0
+platformdirs==4.5.0
     # via pylint
 pluggy==1.6.0
     # via
@@ -334,7 +327,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.8
+pylint==3.3.9
     # via
     #   edx-lint
     #   pylint-celery
@@ -348,7 +341,7 @@ pylint-plugin-utils==0.9.0
     # via
     #   pylint-celery
     #   pylint-django
-pymongo==4.15.2
+pymongo==4.15.3
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -430,11 +423,11 @@ six==1.17.0
     #   edx-lint
     #   edx-rbac
     #   python-dateutil
-social-auth-app-django==5.5.1
+social-auth-app-django==5.6.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.7.0
+social-auth-core==4.8.1
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends

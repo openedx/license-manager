@@ -13,7 +13,7 @@ analytics-python==1.4.post1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-asgiref==3.9.2
+asgiref==3.10.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -25,7 +25,7 @@ astroid==3.3.11
     #   -r requirements/test.txt
     #   pylint
     #   pylint-celery
-attrs==25.3.0
+attrs==25.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -45,12 +45,12 @@ bleach[css]==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.40.44
+boto3==1.40.49
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.40.44
+botocore==1.40.49
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -62,7 +62,7 @@ celery==5.5.3
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.8.3
+certifi==2025.10.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -125,7 +125,6 @@ cryptography==46.0.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pyjwt
-    #   social-auth-core
 ddt==1.7.2
     # via -r requirements/test.txt
 defusedxml==0.7.1
@@ -198,7 +197,7 @@ django-extensions==4.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-filter==25.1
+django-filter==25.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -314,7 +313,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==37.8.0
+faker==37.11.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -395,12 +394,6 @@ mysqlclient==2.2.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-newrelic==10.17.0
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/quality.txt
-    #   -r requirements/test.txt
-    #   edx-django-utils
 oauthlib==3.3.1
     # via
     #   -r requirements/quality.txt
@@ -419,7 +412,7 @@ path==16.14.0
     #   edx-i18n-tools
 pathlib2==2.3.7.post1
     # via -r requirements/validation.in
-platformdirs==4.4.0
+platformdirs==4.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -468,7 +461,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.8
+pylint==3.3.9
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -492,7 +485,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.15.2
+pymongo==4.15.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -602,12 +595,12 @@ snowballstemmer==3.0.1
     # via
     #   -r requirements/quality.txt
     #   pydocstyle
-social-auth-app-django==5.5.1
+social-auth-app-django==5.6.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.7.0
+social-auth-core==4.8.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
