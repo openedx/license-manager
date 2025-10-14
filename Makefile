@@ -112,7 +112,7 @@ upgrade: piptools $(COMMON_CONSTRAINTS_TXT)  ## update the requirements/*.txt fi
 	sed 's/django-simple-history==3.0.0//g' requirements/common_constraints.txt > requirements/common_constraints.tmp
 	mv requirements/common_constraints.tmp requirements/common_constraints.txt
 	# Make sure to compile files after any other files they include!
-	sed 's/Django<4.0//g' requirements/common_constraints.txt > tmp_con; cat tmp_con > requirements/common_constraints.txt; rm tmp_con
+	sed 's/Django<5.0//g' requirements/common_constraints.txt > tmp_con; cat tmp_con > requirements/common_constraints.txt; rm tmp_con
 	pip-compile --allow-unsafe --rebuild --upgrade -o requirements/pip.txt requirements/pip.in
 	pip-compile --upgrade -o requirements/pip-tools.txt requirements/pip-tools.in
 	pip install -qr requirements/pip.txt
