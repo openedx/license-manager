@@ -44,7 +44,7 @@ class Command(BaseCommand):
         renewal_processing_window_cutoff = now + timedelta(hours=int(options['processing_window_length_hours']))
 
         renewals_to_be_processed = SubscriptionPlanRenewal.objects.filter(
-            effective_date__gte=now, effective_date__lte=renewal_processing_window_cutoff, processed=False
+            effective_date__gte=now, effective_date__lte=renewal_processing_window_cutoff, processed=False, exempt_from_batch_processing=False,
         ).select_related(
             'prior_subscription_plan',
             'prior_subscription_plan__customer_agreement',
