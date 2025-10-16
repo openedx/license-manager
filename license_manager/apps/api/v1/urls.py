@@ -81,6 +81,11 @@ router.register(
     viewset=views.SubscriptionPlanProvisioningAdminViewset,
     basename='provisioning-admins',
 )
+router.register(
+    prefix='provisioning-admins/subscription-plan-renewals',
+    viewset=views.SubscriptionPlanRenewalProvisioningAdminViewset,
+    basename='provisioning-admins-subscription-plan-renewals',
+)
 
 subscription_router = NestedSimpleRouter(
     parent_router=router,
