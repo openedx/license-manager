@@ -14,7 +14,7 @@ amqp==5.3.1
     #   kombu
 analytics-python==1.4.post1
     # via -r requirements/test.txt
-asgiref==3.9.2
+asgiref==3.10.0
     # via
     #   -r requirements/test.txt
     #   django
@@ -24,7 +24,7 @@ astroid==3.3.11
     #   -r requirements/test.txt
     #   pylint
     #   pylint-celery
-attrs==25.3.0
+attrs==25.4.0
     # via
     #   -r requirements/test.txt
     #   jsonschema
@@ -45,11 +45,11 @@ billiard==4.2.2
     #   celery
 bleach[css]==6.2.0
     # via -r requirements/test.txt
-boto3==1.40.44
+boto3==1.40.50
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.40.44
+botocore==1.40.50
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -59,7 +59,7 @@ celery==5.5.3
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.8.3
+certifi==2025.10.5
     # via
     #   -r requirements/test.txt
     #   requests
@@ -112,7 +112,6 @@ cryptography==46.0.2
     # via
     #   -r requirements/test.txt
     #   pyjwt
-    #   social-auth-core
 ddt==1.7.2
     # via -r requirements/test.txt
 defusedxml==0.7.1
@@ -257,13 +256,13 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==37.8.0
+faker==37.11.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
 freezegun==1.5.5
     # via -r requirements/test.txt
-idna==3.10
+idna==3.11
     # via
     #   -r requirements/test.txt
     #   requests
@@ -321,7 +320,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.7
     # via -r requirements/test.txt
-nh3==0.3.0
+nh3==0.3.1
     # via readme-renderer
 oauthlib==3.3.1
     # via
@@ -335,7 +334,7 @@ packaging==25.0
     #   pydata-sphinx-theme
     #   pytest
     #   sphinx
-platformdirs==4.4.0
+platformdirs==4.5.0
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -379,7 +378,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.8
+pylint==3.3.9
     # via
     #   -r requirements/test.txt
     #   edx-lint
@@ -399,7 +398,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.15.2
+pymongo==4.15.3
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
@@ -495,7 +494,7 @@ social-auth-app-django==5.4.3
     # via
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.7.0
+social-auth-core==4.8.1
     # via
     #   -r requirements/test.txt
     #   edx-auth-backends

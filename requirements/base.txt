@@ -8,11 +8,11 @@ amqp==5.3.1
     # via kombu
 analytics-python==1.4.post1
     # via -r requirements/base.in
-asgiref==3.9.2
+asgiref==3.10.0
     # via
     #   django
     #   django-cors-headers
-attrs==25.3.0
+attrs==25.4.0
     # via
     #   jsonschema
     #   referencing
@@ -24,9 +24,9 @@ billiard==4.2.2
     # via celery
 bleach[css]==6.2.0
     # via -r requirements/base.in
-boto3==1.40.44
+boto3==1.40.50
     # via django-ses
-botocore==1.40.44
+botocore==1.40.50
     # via
     #   boto3
     #   s3transfer
@@ -35,7 +35,7 @@ celery==5.5.3
     #   -r requirements/base.in
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.8.3
+certifi==2025.10.5
     # via requests
 cffi==2.0.0
     # via
@@ -60,9 +60,7 @@ click-repl==0.3.0
 code-annotations==2.3.0
     # via edx-toggles
 cryptography==46.0.2
-    # via
-    #   pyjwt
-    #   social-auth-core
+    # via pyjwt
 defusedxml==0.7.1
     # via
     #   python3-openid
@@ -178,7 +176,7 @@ edx-toggles==5.4.1
     # via
     #   -r requirements/base.in
     #   edx-auth-backends
-idna==3.10
+idna==3.11
     # via requests
 inflection==0.5.1
     # via drf-spectacular
@@ -223,7 +221,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pymongo==4.15.2
+pymongo==4.15.3
     # via edx-opaque-keys
 pynacl==1.6.0
     # via edx-django-utils
@@ -277,7 +275,7 @@ six==1.17.0
     #   python-dateutil
 social-auth-app-django==5.4.3
     # via edx-auth-backends
-social-auth-core==4.7.0
+social-auth-core==4.8.1
     # via
     #   edx-auth-backends
     #   social-auth-app-django
