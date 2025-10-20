@@ -24,9 +24,9 @@ billiard==4.2.2
     # via celery
 bleach[css]==6.2.0
     # via -r requirements/base.in
-boto3==1.40.50
+boto3==1.40.55
     # via django-ses
-botocore==1.40.50
+botocore==1.40.55
     # via
     #   boto3
     #   s3transfer
@@ -41,7 +41,7 @@ cffi==2.0.0
     # via
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.3
+charset-normalizer==3.4.4
     # via requests
 click==8.3.0
     # via
@@ -59,7 +59,7 @@ click-repl==0.3.0
     # via celery
 code-annotations==2.3.0
     # via edx-toggles
-cryptography==46.0.2
+cryptography==46.0.3
     # via pyjwt
 defusedxml==0.7.1
     # via
@@ -210,7 +210,7 @@ ply==3.11
     # via djangoql
 prompt-toolkit==3.0.52
     # via click-repl
-psutil==7.1.0
+psutil==7.1.1
     # via edx-django-utils
 pycparser==2.23
     # via cffi
@@ -242,7 +242,7 @@ pyyaml==6.0.3
     #   drf-spectacular
 redis==6.4.0
     # via -r requirements/base.in
-referencing==0.36.2
+referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
