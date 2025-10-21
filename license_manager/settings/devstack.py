@@ -74,7 +74,7 @@ CSRF_TRUSTED_ORIGINS = [
 # END CSRF CONFIG
 
 ENTERPRISE_LEARNER_PORTAL_BASE_URL = 'http://localhost:8734'
-ENTERPRISE_CATALOG_URL = 'http://enterprise.catalog.app:18160'
+ENTERPRISE_CATALOG_URL = 'http://edx.devstack.enterprise-catalog:18160'
 LMS_URL = 'http://edx.devstack.lms:18000'
 SUPPORT_SITE_URL = 'https://support.edx.org'
 
