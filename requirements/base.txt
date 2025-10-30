@@ -22,11 +22,11 @@ backoff==1.10.0
     #   analytics-python
 billiard==4.2.2
     # via celery
-bleach[css]==6.2.0
+bleach[css]==6.3.0
     # via -r requirements/base.in
-boto3==1.40.55
+boto3==1.40.62
     # via django-ses
-botocore==1.40.55
+botocore==1.40.62
     # via
     #   boto3
     #   s3transfer
@@ -147,7 +147,7 @@ drf-nested-routers==0.95.0
     # via -r requirements/base.in
 drf-spectacular==0.28.0
     # via -r requirements/base.in
-edx-auth-backends==4.6.1
+edx-auth-backends==4.6.2
     # via -r requirements/base.in
 edx-braze-client==0.2.5
     # via
@@ -210,7 +210,7 @@ ply==3.11
     # via djangoql
 prompt-toolkit==3.0.52
     # via click-repl
-psutil==7.1.1
+psutil==7.1.2
     # via edx-django-utils
 pycparser==2.23
     # via cffi
@@ -240,7 +240,7 @@ pyyaml==6.0.3
     # via
     #   code-annotations
     #   drf-spectacular
-redis==6.4.0
+redis==7.0.1
     # via -r requirements/base.in
 referencing==0.37.0
     # via
@@ -255,7 +255,7 @@ requests==2.32.5
     #   social-auth-core
 requests-oauthlib==2.0.0
     # via social-auth-core
-rpds-py==0.27.1
+rpds-py==0.28.0
     # via
     #   jsonschema
     #   referencing
