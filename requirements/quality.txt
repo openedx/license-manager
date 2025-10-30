@@ -32,13 +32,13 @@ billiard==4.2.2
     # via
     #   -r requirements/base.txt
     #   celery
-bleach[css]==6.2.0
+bleach[css]==6.3.0
     # via -r requirements/base.txt
-boto3==1.40.55
+boto3==1.40.62
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.40.55
+botocore==1.40.62
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -189,7 +189,7 @@ drf-nested-routers==0.95.0
     # via -r requirements/base.txt
 drf-spectacular==0.28.0
     # via -r requirements/base.txt
-edx-auth-backends==4.6.1
+edx-auth-backends==4.6.2
     # via -r requirements/base.txt
 edx-braze-client==0.2.5
     # via
@@ -290,7 +290,7 @@ prompt-toolkit==3.0.52
     # via
     #   -r requirements/base.txt
     #   click-repl
-psutil==7.1.1
+psutil==7.1.2
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -353,7 +353,7 @@ pyyaml==6.0.3
     #   -r requirements/base.txt
     #   code-annotations
     #   drf-spectacular
-redis==6.4.0
+redis==7.0.1
     # via -r requirements/base.txt
 referencing==0.37.0
     # via
@@ -372,7 +372,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-rpds-py==0.27.1
+rpds-py==0.28.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
