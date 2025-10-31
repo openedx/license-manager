@@ -1,6 +1,7 @@
 import logging
 from collections import OrderedDict
 from contextlib import suppress
+from typing import Literal
 from uuid import uuid4
 
 from celery import chain
@@ -63,6 +64,7 @@ from license_manager.apps.subscriptions.models import (
     SubscriptionLicenseSource,
     SubscriptionLicenseSourceType,
     SubscriptionPlan,
+    SubscriptionPlanRenewal,
     SubscriptionsRoleAssignment,
 )
 from license_manager.apps.subscriptions.utils import (
@@ -84,6 +86,10 @@ logger = logging.getLogger(__name__)
 ASSIGNMENT_LOCK_TIMEOUT_SECONDS = 300
 
 ESTIMATED_COUNT_PAGINATOR_THRESHOLD = 10000
+
+SUBSCRIPTION_PLAN_RENEWAL_PROVISIONING_ADMIN_CRUD_API_TAG = "Subscription Plan Renewal CRUD (for Provisioning Admins)"
+SUBSCRIPTION_PLAN_PROVISIONING_ADMIN_CRUD_API_TAG = "Subscription Plan CRUD (for Provisioning Admins)"
+CUSTOMER_AGREEMENT_PROVISIONING_ADMIN_CRUD_API_TAG = "Customer Agreement CRUD (for Provisioning Admins)"
 
 
 @extend_schema_view(
@@ -313,9 +319,10 @@ class CustomerAgreementViewSet(
 )
 class CustomerAgreementProvisioningAdminViewset(
     PermissionRequiredMixin,
-    viewsets.GenericViewSet,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet
 ):
     """ Viewset for Provisioning Admins write operations."""
     authentication_classes = [JwtAuthentication, SessionAuthentication]
@@ -328,6 +335,30 @@ class CustomerAgreementProvisioningAdminViewset(
     def get_queryset(self):
         return CustomerAgreement.objects.all()
 
+    @extend_schema(
+        tags=[CUSTOMER_AGREEMENT_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Retrieve a customer agreement by UUID.',
+    )
+    def create(self, request, *args, **kwargs):
+        """
+        Create a new `CustomerAgreement` record.
+        """
+        return super().create(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=[CUSTOMER_AGREEMENT_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Retrieve a customer agreement by UUID.',
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve a single `CustomerAgreement` record by UUID.
+        """
+        return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=[CUSTOMER_AGREEMENT_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Partially update (with a PATCH) a customer agreement by UUID.',
+    )
     def partial_update(self, request, *args, **kwargs):
         """
         Partial update a CustomerAgreement against given UUID.
@@ -500,6 +531,10 @@ class SubscriptionPlanProvisioningAdminViewset(
     def requested_enterprise_uuid(self):
         return utils.get_requested_enterprise_uuid(self.request)
 
+    @extend_schema(
+        tags=[SUBSCRIPTION_PLAN_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Create a subscription plan.',
+    )
     def create(self, request, *args, **kwargs):
         """
         Creates a new SubscriptionPlan record
@@ -526,6 +561,10 @@ class SubscriptionPlanProvisioningAdminViewset(
             logger.exception(error)
             return Response({'error': 'Unknown error.'}, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        tags=[SUBSCRIPTION_PLAN_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Partially update (with a PATCH) a subscription plan by UUID.',
+    )
     def partial_update(self, request, *args, **kwargs):
         """
         Updates SubscriptionPlan record against given uuid
@@ -555,6 +594,10 @@ class SubscriptionPlanProvisioningAdminViewset(
             logger.exception(error)
             return Response({'error': 'Unknown error.'}, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        tags=[SUBSCRIPTION_PLAN_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Retrieve subscription plan renewal by UUID.',
+    )
     def retrieve(self, request, *args, **kwargs):
         """
         Returns a single SubscriptionPlan object against given uuid
@@ -2043,3 +2086,160 @@ class AdminLicenseLookupViewSet(LicenseBaseView):
 
         serialized_licenses = serializers.AdminLicenseSerializer(licenses_page, many=True)
         return paginator.get_paginated_response(serialized_licenses.data)
+
+
+class SubscriptionPlanRenewalProvisioningAdminViewset(
+    PermissionRequiredMixin,
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """
+    ProvisioningAdmin Viewset supporting all CRUD operations on all ``SubscriptionPlanRenewal`` records.
+
+    Endpoint overview:
+        GET /provisioning-admins/subscription-plan-renewals/
+        POST /provisioning-admins/subscription-plan-renewals/
+        GET /provisioning-admins/subscription-plan-renewals/{id}
+        PUT /provisioning-admins/subscription-plan-renewals/{id}
+        PATCH /provisioning-admins/subscription-plan-renewals/{id}
+    """
+    authentication_classes = (JwtAuthentication, SessionAuthentication)
+    permission_classes = (permissions.IsAuthenticated,)
+    permission_required = constants.SUBSCRIPTIONS_PROVISIONING_ADMIN_ACCESS_PERMISSION
+    serializer_class = serializers.SubscriptionPlanRenewalProvisioningAdminResponseSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = (
+        'salesforce_opportunity_id',
+        'prior_subscription_plan',
+        'renewed_subscription_plan',
+    )
+    queryset = SubscriptionPlanRenewal.objects.all()
+
+    def __init__(self, *args, **kwargs):
+        # Primary purpose of extra_context is to pass creation metadata from the create serializer
+        # into this view.
+        self.extra_context = {}
+        super().__init__(*args, **kwargs)
+
+    def set_created(self, created_state: Literal["created", "found", "conflicted"]):
+        """
+        Used by the Create serializer to signal what happened during the creation attempt.
+
+        Args:
+            created_state (str): Either "created", "found", or "conflicted":
+                * "created" - A new record was created.
+                * "found" - An existing record was found with all 3 fields matching:
+                  [prior_subscription_plan, renewed_subscription_plan, salesforce_opportunity_id].
+                * "conflicted" - An existing record was found with some, but not all 3 fields matching.
+        """
+        self.extra_context['created'] = created_state
+
+    def get_serializer_class(self):
+        """
+        Return different REQUEST serializers depending on the request action.
+        """
+        if self.action == 'create':
+            return serializers.SubscriptionPlanRenewalProvisioningAdminCreateRequestSerializer
+        if self.action in ('update', 'partial_update'):
+            return serializers.SubscriptionPlanRenewalProvisioningAdminUpdateRequestSerializer
+        return self.serializer_class
+
+    @extend_schema(
+        tags=[SUBSCRIPTION_PLAN_RENEWAL_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Retrieve subscription plan renewal by id.',
+    )
+    def retrieve(self, request, *args, uuid=None, **kwargs):
+        """
+        Retrieves a single `SubscriptionPlanRenewal` record by uuid.
+        """
+        return super().retrieve(request, *args, uuid=uuid, **kwargs)
+
+    @extend_schema(
+        tags=[SUBSCRIPTION_PLAN_RENEWAL_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='List subscription plan renewals.',
+    )
+    def list(self, request, *args, **kwargs):
+        """
+        Lists `SubscriptionPlanRenewal` records, filtered by the
+        given query parameters.
+        """
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=[SUBSCRIPTION_PLAN_RENEWAL_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Create or retrieve a subscription plan renewal.',
+        request=serializers.SubscriptionPlanRenewalProvisioningAdminCreateRequestSerializer,
+        responses={
+            status.HTTP_200_OK: serializers.SubscriptionPlanRenewalProvisioningAdminResponseSerializer,
+            status.HTTP_201_CREATED: serializers.SubscriptionPlanRenewalProvisioningAdminResponseSerializer,
+            status.HTTP_422_UNPROCESSABLE_ENTITY: (
+                serializers.SubscriptionPlanRenewalProvisioningAdminResponseSerializer
+            ),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        """
+        Creates a single `SubscriptionPlanRenewal` record, or returns an existing one if found with
+        the same prior_subscription_plan, renewed_subscription_plan, and salesforce_opportunity_id
+        values. If an existing renewal exists with some, but not all matching of those 3 values,
+        return 422 Unprocessible Entity to signal to the caller that we need to re-evaluate the
+        situation because something went wrong and we don't want to make things worse.
+        """
+        response = super().create(request, *args, **kwargs)
+        if self.extra_context.get('created') == 'found':
+            response.status_code = status.HTTP_200_OK
+        elif self.extra_context.get('created') == 'conflicted':
+            response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+        return response  # If new record created, default is to return HTTP_201_CREATED.
+
+    @extend_schema(
+        tags=[SUBSCRIPTION_PLAN_RENEWAL_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Partially update (with a PUT) a subscription plan renewal by id.',
+        request=serializers.SubscriptionPlanRenewalProvisioningAdminUpdateRequestSerializer,
+        responses={
+            status.HTTP_200_OK: serializers.SubscriptionPlanRenewalProvisioningAdminResponseSerializer,
+            status.HTTP_404_NOT_FOUND: None,
+        },
+    )
+    def update(self, request, *args, uuid=None, **kwargs):
+        """
+        Updates a single `SubscriptionPlanRenewal` record by id.  All fields for the update are optional
+        (which is different from a standard PUT request).
+        """
+        kwargs['partial'] = True
+        return super().update(request, *args, uuid=uuid, **kwargs)
+
+    @extend_schema(
+        tags=[SUBSCRIPTION_PLAN_RENEWAL_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Partially update (with a PATCH) a subscription plan renewal by id.',
+        request=serializers.SubscriptionPlanRenewalProvisioningAdminUpdateRequestSerializer,
+        responses={
+            status.HTTP_200_OK: serializers.SubscriptionPlanRenewalProvisioningAdminResponseSerializer,
+            status.HTTP_404_NOT_FOUND: None,
+        },
+    )
+    def partial_update(self, request, *args, uuid=None, **kwargs):
+        """
+        Updates a single `SubscriptionPlanRenewal` record by id.  All fields for the update are optional.
+        """
+        return super().partial_update(request, *args, uuid=uuid, **kwargs)
+
+    @extend_schema(
+        tags=[SUBSCRIPTION_PLAN_RENEWAL_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Hard-delete a subscription plan renewal by id.',
+        responses={
+            status.HTTP_204_NO_CONTENT: None,
+            status.HTTP_404_NOT_FOUND: None,
+        },
+    )
+    def destroy(self, request, *args, uuid=None, **kwargs):
+        """
+        Delete a single `SubscriptionPlanRenewal` record by id.
+
+        Note: hard-delete is acceptable because the model is backed by django-simple-history.
+        """
+        return super().destroy(request, *args, uuid=uuid, **kwargs)

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.validators import MinLengthValidator
+from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
@@ -848,3 +849,308 @@ class SubscriptionPlanQueryParamsSerializer(serializers.Serializer):  # pylint: 
         fields = [
             'enterprise_customer_uuid',
         ]
+
+
+class SubscriptionPlanRenewalProvisioningAdminResponseSerializer(serializers.ModelSerializer):
+    """
+    A read-only Serializer for responding to requests for ``SubscriptionPlanRenewal`` records.
+    """
+    prior_subscription_plan_title = serializers.CharField(
+        source='prior_subscription_plan.title',
+        read_only=True,
+        help_text='Title of the prior subscription plan.',
+    )
+    renewed_subscription_plan_title = serializers.CharField(
+        source='renewed_subscription_plan.title',
+        read_only=True,
+        allow_null=True,
+        help_text='Title of the renewed subscription plan.',
+    )
+    enterprise_customer_uuid = serializers.UUIDField(
+        source='prior_subscription_plan.customer_agreement.enterprise_customer_uuid',
+        read_only=True,
+        help_text='UUID of the enterprise customer associated with this renewal.',
+    )
+
+    class Meta:
+        model = SubscriptionPlanRenewal
+        fields = [
+            'id',
+            'created',
+            'modified',
+            'prior_subscription_plan',
+            'prior_subscription_plan_title',
+            'renewed_subscription_plan',
+            'renewed_subscription_plan_title',
+            'salesforce_opportunity_id',
+            'number_of_licenses',
+            'effective_date',
+            'renewed_expiration_date',
+            'processed',
+            'processed_datetime',
+            'renewed_plan_title',
+            'license_types_to_copy',
+            'disable_auto_apply_licenses',
+            'exempt_from_batch_processing',
+            'enterprise_customer_uuid',
+        ]
+        read_only_fields = fields
+
+
+class SubscriptionPlanRenewalProvisioningAdminCreateRequestSerializer(serializers.ModelSerializer):
+    """
+    Serializer for SubscriptionPlanRenewal model to validate and create new records via API.
+    """
+    # Since the upstream model field has editable=False for some fields, we must redefine them here
+    # because editable fields are automatically skipped by validation, but we do actually want them validated.
+    prior_subscription_plan = serializers.PrimaryKeyRelatedField(
+        queryset=SubscriptionPlan.objects.all(),
+        required=True,
+        help_text="UUID of the subscription plan being renewed.",
+    )
+    renewed_subscription_plan = serializers.PrimaryKeyRelatedField(
+        queryset=SubscriptionPlan.objects.all(),
+        required=False,
+        allow_null=True,
+        help_text="UUID of the new/future subscription plan (optional).",
+    )
+
+    class Meta:
+        model = SubscriptionPlanRenewal
+        fields = [
+            'prior_subscription_plan',
+            'renewed_subscription_plan',
+            'salesforce_opportunity_id',
+            'number_of_licenses',
+            'effective_date',
+            'renewed_expiration_date',
+            'renewed_plan_title',
+            'license_types_to_copy',
+            'disable_auto_apply_licenses',
+            'exempt_from_batch_processing',
+        ]
+        extra_kwargs = {
+            'salesforce_opportunity_id': {
+                'required': True,
+                'allow_null': False,
+            },
+            'number_of_licenses': {
+                'required': True,
+                'min_value': 1,
+            },
+            'effective_date': {
+                'required': True,
+                'allow_null': False,
+            },
+            'renewed_expiration_date': {
+                'required': True,
+                'allow_null': False,
+            },
+            'renewed_plan_title': {
+                'required': False,
+                'allow_null': True,
+                'allow_blank': True,
+            },
+            'license_types_to_copy': {
+                'required': False,
+            },
+            'disable_auto_apply_licenses': {
+                'required': False,
+            },
+            'exempt_from_batch_processing': {
+                'required': False,
+            },
+        }
+
+    @property
+    def calling_view(self):
+        """
+        Return the view that called this serializer.
+        """
+        return self.context['view']
+
+    def create(self, validated_data):
+        """
+        Creates a new SubscriptionPlanRenewal record, or returns an existing one based on matching logic.
+
+        Logic:
+        - If all 3 key fields match an existing record: return it and signal 'found'
+        - If some (but not all) key fields match: return conflicting record and signal 'conflicted'
+        - Otherwise: create new record and signal 'created'
+        """
+        prior_plan = validated_data['prior_subscription_plan']
+        renewed_plan = validated_data.get('renewed_subscription_plan')
+        sf_opp_id = validated_data['salesforce_opportunity_id']
+
+        # Check for exact match on all 3 key fields
+        exact_match = SubscriptionPlanRenewal.objects.filter(
+            prior_subscription_plan=prior_plan,
+            renewed_subscription_plan=renewed_plan,
+            salesforce_opportunity_id=sf_opp_id,
+        ).first()
+
+        if exact_match:
+            self.calling_view.set_created('found')
+            return exact_match
+
+        # Check for partial matches (conflicts)
+        # A conflict exists if any subset of the 3 key fields match, but not all 3
+        partial_match = SubscriptionPlanRenewal.objects.filter(
+            # First, construct a partial OR full match:
+            Q(prior_subscription_plan=prior_plan)
+            | Q(renewed_subscription_plan=renewed_plan)
+            | Q(salesforce_opportunity_id=sf_opp_id)
+        ).exclude(
+            # Then, exclude a full match (only partial matches remain):
+            prior_subscription_plan=prior_plan,
+            renewed_subscription_plan=renewed_plan,
+            salesforce_opportunity_id=sf_opp_id,
+        ).first()
+
+        if partial_match:
+            self.calling_view.set_created('conflicted')
+            return partial_match
+
+        # No conflicts, create new record
+        self.calling_view.set_created('created')
+        renewal = SubscriptionPlanRenewal.objects.create(**validated_data)
+        return renewal
+
+    def validate(self, attrs):
+        """
+        Custom validation for SubscriptionPlanRenewal creation.
+        """
+        # Validate that prior and renewed plans belong to the same customer agreement
+        prior_plan = attrs.get('prior_subscription_plan')
+        renewed_plan = attrs.get('renewed_subscription_plan')
+
+        if renewed_plan and prior_plan.customer_agreement != renewed_plan.customer_agreement:
+            raise serializers.ValidationError(
+                'Prior and renewed subscription plans must belong to the same customer agreement.'
+            )
+
+        # Validate effective_date is after prior plan's start_date
+        effective_date = attrs.get('effective_date')
+        if effective_date and effective_date < prior_plan.start_date:
+            raise serializers.ValidationError(
+                'Effective date must be on or after the prior subscription plan start date.'
+            )
+
+        # Validate renewed_expiration_date is after effective_date
+        renewed_expiration_date = attrs.get('renewed_expiration_date')
+        if renewed_expiration_date and effective_date and renewed_expiration_date <= effective_date:
+            raise serializers.ValidationError(
+                'Renewed expiration date must be after the effective date.'
+            )
+
+        return attrs
+
+    def to_representation(self, instance):
+        """
+        Use the response serializer for output representation.
+        """
+        return SubscriptionPlanRenewalProvisioningAdminResponseSerializer(instance).data
+
+
+class SubscriptionPlanRenewalProvisioningAdminUpdateRequestSerializer(serializers.ModelSerializer):
+    """
+    Request Serializer for PUT or PATCH requests to update a SubscriptionPlanRenewal record.
+    """
+    renewed_subscription_plan = serializers.PrimaryKeyRelatedField(
+        queryset=SubscriptionPlan.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+
+    class Meta:
+        model = SubscriptionPlanRenewal
+        fields = [
+            'renewed_subscription_plan',
+            'salesforce_opportunity_id',
+            'number_of_licenses',
+            'effective_date',
+            'renewed_expiration_date',
+            'renewed_plan_title',
+            'license_types_to_copy',
+            'disable_auto_apply_licenses',
+            'exempt_from_batch_processing',
+        ]
+        extra_kwargs = {
+            'renewed_subscription_plan': {
+                'required': False,
+                'allow_null': True,
+            },
+            'salesforce_opportunity_id': {
+                'required': False,
+                'allow_null': False,
+            },
+            'number_of_licenses': {
+                'required': False,
+                'min_value': 1,
+            },
+            'effective_date': {
+                'required': False,
+                'allow_null': False,
+            },
+            'renewed_expiration_date': {
+                'required': False,
+                'allow_null': False,
+            },
+            'renewed_plan_title': {
+                'required': False,
+                'allow_null': True,
+                'allow_blank': True,
+            },
+            'license_types_to_copy': {
+                'required': False,
+            },
+            'disable_auto_apply_licenses': {
+                'required': False,
+            },
+            'exempt_from_batch_processing': {
+                'required': False,
+            },
+        }
+
+    def validate(self, attrs):
+        """
+        Raises a ValidationError if any field not explicitly declared
+        as a field in this serializer definition is provided as input.
+        """
+        unknown = sorted(set(self.initial_data) - set(self.fields))
+        if unknown:
+            raise serializers.ValidationError(
+                f"Field(s) are not updatable: {', '.join(unknown)}"
+            )
+
+        # Get the instance being updated
+        instance = self.instance
+
+        # Validate renewed_subscription_plan belongs to same customer agreement
+        renewed_plan = attrs.get('renewed_subscription_plan')
+        if renewed_plan and instance.prior_subscription_plan.customer_agreement != renewed_plan.customer_agreement:
+            raise serializers.ValidationError(
+                'Renewed subscription plan must belong to the same customer agreement as the prior plan.'
+            )
+
+        # Validate effective_date
+        effective_date = attrs.get('effective_date', instance.effective_date)
+        if effective_date < instance.prior_subscription_plan.start_date:
+            raise serializers.ValidationError(
+                'Effective date must be on or after the prior subscription plan start date.'
+            )
+
+        # Validate renewed_expiration_date
+        renewed_expiration_date = attrs.get('renewed_expiration_date', instance.renewed_expiration_date)
+        if renewed_expiration_date <= effective_date:
+            raise serializers.ValidationError(
+                'Renewed expiration date must be after the effective date.'
+            )
+
+        return attrs
+
+    def to_representation(self, instance):
+        """
+        Use the response serializer for output representation.
+        """
+        return SubscriptionPlanRenewalProvisioningAdminResponseSerializer(instance).data
