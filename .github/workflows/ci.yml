@@ -23,7 +23,7 @@ jobs:
       run: make requirements
     - name: Upgrade packages
       run: |
-        pip install -U pip wheel codecov
+        pip install -U pip wheel codecov -c requirements/constraints.txt
         if [[ "${{ matrix.django-version }}" != "pinned" ]]; then
           pip install "django~=${{ matrix.django-version }}.0"
           pip check # fail if this test-reqs/Django combination is broken
