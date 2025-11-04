@@ -45,12 +45,12 @@ bleach[css]==6.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.40.64
+boto3==1.40.66
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.40.64
+botocore==1.40.66
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
