@@ -1086,11 +1086,10 @@ class SubscriptionPlanRenewal(TimeStampedModel):
         max_length=SALESFORCE_ID_LENGTH,
         validators=[MinLengthValidator(SALESFORCE_ID_LENGTH)],
         verbose_name=_("Salesforce Opportunity Line Item"),
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
         help_text=_(
-            "Locate the appropriate Salesforce Opportunity record and copy the Opportunity ID field (18 characters)."
-            " Note that this is not the same Salesforce Opportunity ID associated with the linked subscription."
+            "Copy of the Opportunity Line Item ID field (18 characters) pertaining to the renewed subscription plan."
         )
     )
 

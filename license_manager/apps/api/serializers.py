@@ -932,7 +932,7 @@ class SubscriptionPlanRenewalProvisioningAdminCreateRequestSerializer(serializer
         extra_kwargs = {
             'salesforce_opportunity_id': {
                 'required': True,
-                'allow_null': False,
+                'allow_null': True,
             },
             'number_of_licenses': {
                 'required': True,

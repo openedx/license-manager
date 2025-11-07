@@ -262,6 +262,28 @@ class SubscriptionPlanRenewalProvisioningAdminViewsetTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('expiration date', str(response.data).lower())
 
+    def test_create_renewal_with_null_salesforce_opportunity_id(self):
+        """
+        Verify that creating a renewal with null salesforce_opportunity_id is allowed.
+        """
+        self._setup_request_jwt()
+
+        payload = self._prepare_renewal_payload(renewed_plan=self.renewed_plan)
+        payload['salesforce_opportunity_id'] = None  # This is what we are testing is allowed.
+
+        response = self.client.post(self._get_list_url(), payload, format='json')
+
+        # This is the main thing we are testing: we are allowed to create a renewal with a null opp id.
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(response.data['salesforce_opportunity_id'])
+
+        # Basic DB-level verification just to make sure it went through.
+        renewal_id = response.data['id']
+        created_renewal = SubscriptionPlanRenewal.objects.get(id=renewal_id)
+        self.assertIsNone(created_renewal.salesforce_opportunity_id)
+        self.assertEqual(created_renewal.prior_subscription_plan, self.prior_plan)
+        self.assertEqual(created_renewal.renewed_subscription_plan, self.renewed_plan)
+
     ##############
     # List Tests #
     ##############
