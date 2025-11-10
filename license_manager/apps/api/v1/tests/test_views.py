@@ -53,6 +53,7 @@ from license_manager.apps.subscriptions.models import (
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
+    PlanTypeFactory,
     ProductFactory,
     SubscriptionLicenseSourceFactory,
     SubscriptionPlanFactory,
@@ -900,7 +901,7 @@ def test_subscription_plan_list_bad_enterprise_uuid_400(api_client, superuser):
 @pytest.mark.django_db
 def test_subscription_plan_create_non_staff_user_200(api_client, non_staff_user):
     """
-    Verify that the subcription POST endpoint creates new record and response includes all expected fields
+    Verify that the subscription POST endpoint creates new record and response includes all expected fields
     """
     enterprise_customer_uuid = uuid4()
     customer_agreement = CustomerAgreementFactory.create(
@@ -944,6 +945,30 @@ def test_subscription_plan_create_non_staff_user_200(api_client, non_staff_user)
         "plan_type",
     }
     assert response.json().keys() == expected_fields
+
+
+@pytest.mark.django_db
+def test_subscription_plan_create_null_sf_oli(api_client, non_staff_user):
+    """
+    subcription creation for provisioning admins works even with a null SF opportunity line item.
+    """
+    enterprise_customer_uuid = uuid4()
+    customer_agreement = CustomerAgreementFactory.create(
+        enterprise_customer_uuid=enterprise_customer_uuid)
+    # Make sure to create a PlanType that does not require salesforce IDs.
+    plan_type = PlanTypeFactory.create(sf_id_required=False)
+    ProductFactory(plan_type=plan_type)
+    params = _prepare_subscription_plan_payload(customer_agreement)
+    params['salesforce_opportunity_line_item'] = None
+    _assign_role_via_jwt_or_db(
+        api_client, non_staff_user, enterprise_customer_uuid='*', assign_via_jwt=True,
+        system_role=constants.SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
+    )
+    response = _provision_license_create_request(
+        api_client, non_staff_user, params=params)
+
+    assert status.HTTP_201_CREATED == response.status_code
+    assert response.json()['salesforce_opportunity_line_item'] is None
 
 
 @pytest.mark.django_db
@@ -1169,7 +1194,7 @@ def test_subscription_plan_create_non_staff_user_salesforce_lineitem_400(api_cli
 
     assert status.HTTP_400_BAD_REQUEST == response.status_code
     assert response.json() == \
-        {'error': "An error occurred: You must specify Salesforce ID for selected product. It must start with '00k'."}
+        {'error': "An error occurred: Invalid Salesforce ID format. It must start with '00k'."}
 
 
 @pytest.mark.django_db

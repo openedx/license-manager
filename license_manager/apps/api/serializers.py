@@ -153,7 +153,7 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
     change_reason = serializers.ChoiceField(
         write_only=True, choices=SubscriptionPlanChangeReasonChoices.CHOICES)
 
-    salesforce_opportunity_line_item = serializers.CharField(required=True)
+    salesforce_opportunity_line_item = serializers.CharField(required=True, allow_null=True)
 
     class Meta:
         model = SubscriptionPlan
@@ -229,15 +229,13 @@ class SubscriptionPlanCreateSerializer(SubscriptionPlanSerializer):
                 f'Non-test subscriptions may not have more than {MAX_NUM_LICENSES} licenses',
             )
 
-        if (
-            product.plan_type.sf_id_required
-            and attrs.get('salesforce_opportunity_line_item') is None
-            or not verify_sf_opportunity_product_line_item(attrs.get(
-                'salesforce_opportunity_line_item'))
-        ):
-            raise InvalidSubscriptionPlanPayloadError(
-                'You must specify Salesforce ID for selected product. It must start with \'00k\'.',
-            )
+        if attrs.get('salesforce_opportunity_line_item') is None:
+            if product.plan_type.sf_id_required:
+                raise InvalidSubscriptionPlanPayloadError('You must specify Salesforce ID for selected product.')
+        else:
+            if not verify_sf_opportunity_product_line_item(attrs.get('salesforce_opportunity_line_item')):
+                raise InvalidSubscriptionPlanPayloadError("Invalid Salesforce ID format. It must start with '00k'.")
+
         if settings.VALIDATE_FORM_EXTERNAL_FIELDS and attrs.get('enterprise_catalog_uuid') and \
             not validate_enterprise_catalog_uuid(
             enterprise_catalog_uuid=attrs.get(
