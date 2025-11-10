@@ -30,11 +30,11 @@ billiard==4.2.2
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/base.txt
-boto3==1.40.64
+boto3==1.40.69
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.40.64
+botocore==1.40.69
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -91,7 +91,7 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-django==5.2.7
+django==5.2.8
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -431,7 +431,7 @@ webencodings==0.5.1
     #   tinycss2
 zipp==3.23.0
     # via -r requirements/base.txt
-zope-event==6.0
+zope-event==6.1
     # via gevent
 zope-interface==8.0.1
     # via gevent

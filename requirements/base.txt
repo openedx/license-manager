@@ -24,9 +24,9 @@ billiard==4.2.2
     # via celery
 bleach[css]==6.3.0
     # via -r requirements/base.in
-boto3==1.40.64
+boto3==1.40.69
     # via django-ses
-botocore==1.40.64
+botocore==1.40.69
     # via
     #   boto3
     #   s3transfer
@@ -65,7 +65,7 @@ defusedxml==0.7.1
     # via
     #   python3-openid
     #   social-auth-core
-django==5.2.7
+django==5.2.8
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.in
