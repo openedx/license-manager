@@ -16,6 +16,7 @@ from license_manager.apps.subscriptions import constants
 from license_manager.apps.subscriptions.models import SubscriptionPlanRenewal
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
+    LicenseFactory,
     SubscriptionPlanFactory,
     SubscriptionPlanRenewalFactory,
     UserFactory,
@@ -557,3 +558,131 @@ class SubscriptionPlanRenewalProvisioningAdminViewsetTests(APITestCase):
 
         response = self.client.delete(self._get_detail_url(99999))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    ##################
+    # Process Tests #
+    ##################
+
+    def test_process_renewal_success(self):
+        """
+        Verify that processing a renewal succeeds and marks it as processed.
+        """
+        self._setup_request_jwt()
+
+        renewal = SubscriptionPlanRenewalFactory.create(
+            prior_subscription_plan=self.prior_plan,
+            number_of_licenses=50,
+            processed=False,
+        )
+
+        # Create some licenses in the prior plan to be copied
+        LicenseFactory.create_batch(
+            3,
+            subscription_plan=self.prior_plan,
+            status=constants.ACTIVATED
+        )
+
+        response = self.client.post(
+            self._get_process_url(renewal.id),
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Verify renewal is now processed
+        renewal.refresh_from_db()
+        self.assertTrue(renewal.processed)
+        self.assertIsNotNone(renewal.processed_datetime)
+
+        # Verify renewed subscription plan was created
+        self.assertIsNotNone(renewal.renewed_subscription_plan)
+
+    def test_process_already_processed_renewal_returns_200(self):
+        """
+        Verify that processing an already processed renewal returns 200.
+        """
+        self._setup_request_jwt()
+
+        renewal = SubscriptionPlanRenewalFactory.create(
+            prior_subscription_plan=self.prior_plan,
+            processed=True,
+        )
+
+        response = self.client.post(
+            self._get_process_url(renewal.id),
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(renewal.processed)
+
+    def test_process_renewal_without_permission_returns_403(self):
+        """
+        Verify that staff users without provisioning admin role cannot process renewals.
+        """
+        renewal = SubscriptionPlanRenewalFactory.create(
+            prior_subscription_plan=self.prior_plan,
+            processed=False,
+        )
+
+        _assign_role_via_jwt_or_db(
+            self.client,
+            self.staff_user,
+            enterprise_customer_uuid=self.enterprise_customer_uuid,
+            assign_via_jwt=False,
+        )
+
+        response = self.client.post(
+            self._get_process_url(renewal.id),
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_process_non_existent_renewal_returns_404(self):
+        """
+        Verify that processing a non-existent renewal returns 404.
+        """
+        self._setup_request_jwt()
+
+        response = self.client.post(
+            self._get_process_url(99999),
+            format='json'
+        )
+
+        self.assertIn('No SubscriptionPlanRenewal matches the given query.', str(response.data['detail']))
+
+    def test_process_renewal_processing_error_returns_500(self):
+        """
+        Verify that RenewalProcessingError returns 500.
+        """
+        self._setup_request_jwt()
+
+        renewal = SubscriptionPlanRenewalFactory.create(
+            prior_subscription_plan=self.prior_plan,
+            number_of_licenses=0,  # This will cause a processing error
+            processed=False,
+        )
+
+        LicenseFactory.create_batch(
+            5,
+            subscription_plan=self.prior_plan,
+            status=constants.ACTIVATED
+        )
+
+        response = self.client.post(
+            self._get_process_url(renewal.id),
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertIn('Cannot renew for fewer than the number of original activated licenses', response.data['error'])
+
+    def _get_process_url(self, renewal_id):
+        """
+        Helper method to get the process URL for a renewal.
+        """
+        return reverse(
+            'api:v1:provisioning-admins-subscription-plan-renewals-process',
+            kwargs={'pk': renewal_id}
+        )
