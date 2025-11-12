@@ -50,13 +50,17 @@ from license_manager.apps.api.tasks import (
     update_user_email_for_licenses_task,
 )
 from license_manager.apps.subscriptions import constants, event_utils
-from license_manager.apps.subscriptions.api import revoke_license
+from license_manager.apps.subscriptions.api import (
+    renew_subscription,
+    revoke_license,
+)
 from license_manager.apps.subscriptions.exceptions import (
     InvalidSubscriptionPlanPayloadError,
     LicenseActivationMissingError,
     LicenseNotFoundError,
     LicenseRevocationError,
     LicenseToActivateIsRevokedError,
+    RenewalProcessingError,
 )
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
@@ -2243,3 +2247,47 @@ class SubscriptionPlanRenewalProvisioningAdminViewset(
         Note: hard-delete is acceptable because the model is backed by django-simple-history.
         """
         return super().destroy(request, *args, uuid=uuid, **kwargs)
+
+    @extend_schema(
+        tags=[SUBSCRIPTION_PLAN_RENEWAL_PROVISIONING_ADMIN_CRUD_API_TAG],
+        summary='Process a subscription plan renewal by UUID.',
+        responses={
+            status.HTTP_200_OK: serializers.SubscriptionPlanRenewalProvisioningAdminResponseSerializer,
+            status.HTTP_201_CREATED: serializers.SubscriptionPlanRenewalProvisioningAdminResponseSerializer,
+            status.HTTP_404_NOT_FOUND: None,
+            status.HTTP_500_INTERNAL_SERVER_ERROR: None,
+        },
+    )
+    @action(detail=True, methods=['post'])
+    def process(self, request, uuid=None, **kwargs):  # pylint: disable=unused-argument
+        """
+        Process a subscription plan renewal, creating the renewed subscription and copying licenses.
+
+        This endpoint processes a SubscriptionPlanRenewal record identified by its UUID,
+        creating the renewed subscription plan and copying the appropriate licenses from
+        the original subscription to the renewed one.
+        """
+        try:
+            renewal = self.get_object()
+
+            if renewal.processed:
+                return Response(
+                    self.get_serializer(renewal).data,
+                    status=status.HTTP_200_OK,
+                )
+
+            renew_subscription(renewal, is_auto_renewed=False)
+
+            serializer = self.get_serializer(renewal)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except RenewalProcessingError as exc:
+            return Response(
+                {'error': str(exc)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        except ObjectDoesNotExist:
+            return Response(
+                {'error': 'Renewal not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
