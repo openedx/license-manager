@@ -2196,9 +2196,21 @@ class SubscriptionPlanRenewalProvisioningAdminViewset(
         response = super().create(request, *args, **kwargs)
         if self.extra_context.get('created') == 'found':
             response.status_code = status.HTTP_200_OK
+            return response
         elif self.extra_context.get('created') == 'conflicted':
             response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-        return response  # If new record created, default is to return HTTP_201_CREATED.
+            logger.warning(
+                (
+                    "Conflicting renewal encountered: Requested to create a SubscriptionPlanRenewal with "
+                    "prior_subscription_plan=%s and renewed_subscription_plan=%s, "
+                    "but found conflicting renewal: %s"
+                ),
+                request.data['prior_subscription_plan'],
+                request.data['renewed_subscription_plan'],
+                response.data,
+            )
+
+        return response
 
     @extend_schema(
         tags=[SUBSCRIPTION_PLAN_RENEWAL_PROVISIONING_ADMIN_CRUD_API_TAG],
