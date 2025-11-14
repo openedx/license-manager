@@ -972,19 +972,17 @@ class SubscriptionPlanRenewalProvisioningAdminCreateRequestSerializer(serializer
         Creates a new SubscriptionPlanRenewal record, or returns an existing one based on matching logic.
 
         Logic:
-        - If all 3 key fields match an existing record: return it and signal 'found'
-        - If some (but not all) key fields match: return conflicting record and signal 'conflicted'
+        - If both plans match an existing record: return it and signal 'found'
+        - If some (but not all) plans match: return conflicting record and signal 'conflicted'
         - Otherwise: create new record and signal 'created'
         """
         prior_plan = validated_data['prior_subscription_plan']
         renewed_plan = validated_data.get('renewed_subscription_plan')
-        sf_opp_id = validated_data['salesforce_opportunity_id']
 
-        # Check for exact match on all 3 key fields
+        # Check for exact match on both plans.
         exact_match = SubscriptionPlanRenewal.objects.filter(
             prior_subscription_plan=prior_plan,
             renewed_subscription_plan=renewed_plan,
-            salesforce_opportunity_id=sf_opp_id,
         ).first()
 
         if exact_match:
@@ -992,17 +990,18 @@ class SubscriptionPlanRenewalProvisioningAdminCreateRequestSerializer(serializer
             return exact_match
 
         # Check for partial matches (conflicts)
-        # A conflict exists if any subset of the 3 key fields match, but not all 3
+        # A conflict exists if any subset of the two plans match, but not both.
+        #
+        partial_match_query = Q(prior_subscription_plan=prior_plan)
+        # Note: Only include renewed_subscription_plan partial match if renewed_plan is not None
+        if renewed_plan:
+            partial_match_query |= Q(renewed_subscription_plan=renewed_plan)
         partial_match = SubscriptionPlanRenewal.objects.filter(
-            # First, construct a partial OR full match:
-            Q(prior_subscription_plan=prior_plan)
-            | Q(renewed_subscription_plan=renewed_plan)
-            | Q(salesforce_opportunity_id=sf_opp_id)
+            partial_match_query
         ).exclude(
             # Then, exclude a full match (only partial matches remain):
             prior_subscription_plan=prior_plan,
             renewed_subscription_plan=renewed_plan,
-            salesforce_opportunity_id=sf_opp_id,
         ).first()
 
         if partial_match:

@@ -2,8 +2,9 @@
 Unit tests for SubscriptionPlanRenewalProvisioningAdminViewset.
 """
 from datetime import timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
+import ddt
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -13,7 +14,10 @@ from license_manager.apps.api.v1.tests.test_views import (
     _assign_role_via_jwt_or_db,
 )
 from license_manager.apps.subscriptions import constants
-from license_manager.apps.subscriptions.models import SubscriptionPlanRenewal
+from license_manager.apps.subscriptions.models import (
+    SubscriptionPlan,
+    SubscriptionPlanRenewal,
+)
 from license_manager.apps.subscriptions.tests.factories import (
     CustomerAgreementFactory,
     LicenseFactory,
@@ -23,10 +27,14 @@ from license_manager.apps.subscriptions.tests.factories import (
 )
 
 
+@ddt.ddt
 class SubscriptionPlanRenewalProvisioningAdminViewsetTests(APITestCase):
     """
     Tests for SubscriptionPlanRenewalProvisioningAdminViewset.
     """
+    prior_plan_uuid = uuid4()
+    renewed_plan_uuid = uuid4()
+    unrelated_plan_uuid = uuid4()
 
     def setUp(self):
         """
@@ -40,9 +48,15 @@ class SubscriptionPlanRenewalProvisioningAdminViewsetTests(APITestCase):
             enterprise_customer_uuid=self.enterprise_customer_uuid
         )
         self.prior_plan = SubscriptionPlanFactory.create(
+            uuid=self.prior_plan_uuid,
             customer_agreement=self.customer_agreement
         )
         self.renewed_plan = SubscriptionPlanFactory.create(
+            uuid=self.renewed_plan_uuid,
+            customer_agreement=self.customer_agreement
+        )
+        self.unrelated_plan = SubscriptionPlanFactory.create(
+            uuid=self.unrelated_plan_uuid,
             customer_agreement=self.customer_agreement
         )
 
@@ -164,32 +178,76 @@ class SubscriptionPlanRenewalProvisioningAdminViewsetTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['id'], existing_renewal.id)
 
-    def test_create_renewal_conflict_returns_422(self):
+    @ddt.data(
+        # Only the prior plan matches, but not the renewed plan. x1
+        {
+            'existing_renewal_prior_plan': prior_plan_uuid,
+            'existing_renewal_renewed_plan': renewed_plan_uuid,
+            'request_renewal_prior_plan': prior_plan_uuid,
+            'request_renewal_renewed_plan': None,
+        },
+        # Only the prior plan matches, but not the renewed plan. x2
+        {
+            'existing_renewal_prior_plan': prior_plan_uuid,
+            'existing_renewal_renewed_plan': None,
+            'request_renewal_prior_plan': prior_plan_uuid,
+            'request_renewal_renewed_plan': renewed_plan_uuid,
+        },
+        # Only the prior plan matches, but not the renewed plan. x3
+        {
+            'existing_renewal_prior_plan': prior_plan_uuid,
+            'existing_renewal_renewed_plan': unrelated_plan_uuid,
+            'request_renewal_prior_plan': prior_plan_uuid,
+            'request_renewal_renewed_plan': renewed_plan_uuid,
+        },
+        # Only the renewed plan matches, but not the prior plan.
+        {
+            'existing_renewal_prior_plan': unrelated_plan_uuid,
+            'existing_renewal_renewed_plan': renewed_plan_uuid,
+            'request_renewal_prior_plan': prior_plan_uuid,
+            'request_renewal_renewed_plan': renewed_plan_uuid,
+        },
+    )
+    @ddt.unpack
+    def test_create_renewal_conflict_returns_422(
+        self,
+        existing_renewal_prior_plan: UUID,
+        existing_renewal_renewed_plan: UUID | None,
+        request_renewal_prior_plan: UUID,
+        request_renewal_renewed_plan: UUID | None,
+    ):
         """
         Verify that creating a renewal with partial matching fields returns 422.
         """
         self._setup_request_jwt()
 
-        # Create an existing renewal with matching prior_plan and SF ID
+        # Create an existing renewal according to the test case.
         existing_renewal = SubscriptionPlanRenewalFactory.create(
-            prior_subscription_plan=self.prior_plan,
-            salesforce_opportunity_id='0061234567890ABCDE',
+            prior_subscription_plan=SubscriptionPlan.objects.get(
+                uuid=existing_renewal_prior_plan,
+            ) if existing_renewal_prior_plan else None,
+            renewed_subscription_plan=SubscriptionPlan.objects.get(
+                uuid=existing_renewal_renewed_plan,
+            ) if existing_renewal_renewed_plan else None,
         )
 
-        # Try to create with same prior_plan and SF ID but different renewed_plan
+        # Try to create a renewal with partially matching fields.
         payload = {
-            'prior_subscription_plan': str(self.prior_plan.uuid),
-            'renewed_subscription_plan': str(self.renewed_plan.uuid),
-            'salesforce_opportunity_id': '0061234567890ABCDE',
+            'prior_subscription_plan': str(request_renewal_prior_plan),
+            'renewed_subscription_plan': str(request_renewal_renewed_plan) if request_renewal_renewed_plan else None,
+            'salesforce_opportunity_id': None,
             'number_of_licenses': 100,
             'effective_date': (timezone.now() + timedelta(days=30)).isoformat(),
             'renewed_expiration_date': (timezone.now() + timedelta(days=395)).isoformat(),
         }
 
-        response = self.client.post(self._get_list_url(), payload, format='json')
+        with self.assertLogs(level='INFO') as log_capture:
+            response = self.client.post(self._get_list_url(), payload, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
-        self.assertEqual(response.data['id'], existing_renewal.id)
+
+        assert any('Conflicting renewal encountered' in log_line for log_line in log_capture.output)
+        assert response.data['id'] == existing_renewal.id
 
     def test_create_renewal_without_permission_returns_403(self):
         """
