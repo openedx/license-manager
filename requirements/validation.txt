@@ -36,7 +36,7 @@ backoff==1.10.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   analytics-python
-billiard==4.2.2
+billiard==4.2.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -45,12 +45,12 @@ bleach[css]==6.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.40.64
+boto3==1.40.74
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.40.64
+botocore==1.40.74
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -62,7 +62,7 @@ celery==5.5.3
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.10.5
+certifi==2025.11.12
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -78,7 +78,7 @@ charset-normalizer==3.4.4
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
-click==8.3.0
+click==8.3.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -116,7 +116,7 @@ code-annotations==2.3.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.11.0
+coverage[toml]==7.11.3
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -138,7 +138,7 @@ dill==0.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==5.2.7
+django==5.2.8
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -313,7 +313,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==37.12.0
+faker==38.0.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -485,17 +485,17 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.15.3
+pymongo==4.15.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-opaque-keys
-pynacl==1.6.0
+pynacl==1.6.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==8.4.2
+pytest==9.0.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -557,7 +557,7 @@ requests-oauthlib==2.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-rpds-py==0.28.0
+rpds-py==0.29.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
