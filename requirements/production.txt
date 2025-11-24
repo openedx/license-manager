@@ -10,7 +10,7 @@ amqp==5.3.1
     #   kombu
 analytics-python==1.4.post1
     # via -r requirements/base.txt
-asgiref==3.10.0
+asgiref==3.11.0
     # via
     #   -r requirements/base.txt
     #   django
@@ -24,17 +24,17 @@ backoff==1.10.0
     # via
     #   -r requirements/base.txt
     #   analytics-python
-billiard==4.2.2
+billiard==4.2.3
     # via
     #   -r requirements/base.txt
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/base.txt
-boto3==1.40.64
+boto3==1.41.2
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.40.64
+botocore==1.41.2
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -44,7 +44,7 @@ celery==5.5.3
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.10.5
+certifi==2025.11.12
     # via
     #   -r requirements/base.txt
     #   requests
@@ -57,7 +57,7 @@ charset-normalizer==3.4.4
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.3.0
+click==8.3.1
     # via
     #   -r requirements/base.txt
     #   celery
@@ -91,7 +91,7 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-django==5.2.7
+django==5.2.8
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.txt
@@ -294,11 +294,11 @@ pyjwt[crypto]==2.10.1
     #   social-auth-core
 pymemcache==4.0.0
     # via -r requirements/production.in
-pymongo==4.15.3
+pymongo==4.15.4
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
-pynacl==1.6.0
+pynacl==1.6.1
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -326,7 +326,7 @@ pyyaml==6.0.3
     #   -r requirements/production.in
     #   code-annotations
     #   drf-spectacular
-redis==7.0.1
+redis==7.1.0
     # via -r requirements/base.txt
 referencing==0.37.0
     # via
@@ -345,14 +345,14 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-rpds-py==0.28.0
+rpds-py==0.29.0
     # via
     #   -r requirements/base.txt
     #   jsonschema
     #   referencing
 rules==3.5
     # via -r requirements/base.txt
-s3transfer==0.14.0
+s3transfer==0.15.0
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -382,7 +382,7 @@ sqlparse==0.5.3
     # via
     #   -r requirements/base.txt
     #   django
-stevedore==5.5.0
+stevedore==5.6.0
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -431,9 +431,9 @@ webencodings==0.5.1
     #   tinycss2
 zipp==3.23.0
     # via -r requirements/base.txt
-zope-event==6.0
+zope-event==6.1
     # via gevent
-zope-interface==8.0.1
+zope-interface==8.1.1
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
