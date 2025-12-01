@@ -36,7 +36,7 @@ backoff==1.10.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   analytics-python
-billiard==4.2.3
+billiard==4.2.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -45,18 +45,18 @@ bleach[css]==6.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.41.2
+boto3==1.42.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.41.2
+botocore==1.41.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   boto3
     #   s3transfer
-celery==5.5.3
+celery==5.6.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -311,6 +311,11 @@ edx-toggles==5.4.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
+exceptiongroup==1.3.1
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   celery
 factory-boy==3.3.3
     # via -r requirements/test.txt
 faker==38.2.0
@@ -364,7 +369,7 @@ jsonschema-specifications==2025.9.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   jsonschema
-kombu==5.5.4
+kombu==5.6.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -557,7 +562,7 @@ requests-oauthlib==2.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-rpds-py==0.29.0
+rpds-py==0.30.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -567,7 +572,7 @@ rules==3.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-s3transfer==0.15.0
+s3transfer==0.16.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -606,7 +611,7 @@ social-auth-core==4.8.1
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.5.3
+sqlparse==0.5.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -638,6 +643,7 @@ typing-extensions==4.15.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-opaque-keys
+    #   exceptiongroup
     #   referencing
 tzdata==2025.2
     # via
@@ -645,6 +651,11 @@ tzdata==2025.2
     #   -r requirements/test.txt
     #   faker
     #   kombu
+tzlocal==5.3.1
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   celery
 uritemplate==4.2.0
     # via
     #   -r requirements/quality.txt
