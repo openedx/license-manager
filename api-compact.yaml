@@ -52,6 +52,10 @@ apigateway_get_responses: &apigateway_get_responses
 bulk_revoke_apigateway_responses: &bulk_revoke_apigateway_responses
   default:
     statusCode: "400"
+  200:
+    statusCode: "200"
+  207:
+    statusCode: "207"
   204:
     statusCode: "204"
   401:
@@ -140,8 +144,10 @@ get_responses: &get_responses
     description: "Internal Server Error"
 
 bulk_revoke_responses: &bulk_revoke_responses
-  204:
-    description: "No Content - All revocations were successful"
+  200:
+    description: "OK - All revocations were successful"
+  207:
+    description: "Multi-Status - Some revocations were successful, others failed"
   400:
     description: "Bad Request"
   401:
