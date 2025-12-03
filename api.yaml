@@ -39,8 +39,12 @@ apigateway_get_responses:
   default:
     statusCode: "400"
 bulk_revoke_apigateway_responses:
+  "200":
+    statusCode: "200"
   "204":
     statusCode: "204"
+  "207":
+    statusCode: "207"
   "401":
     statusCode: "401"
   "403":
@@ -118,8 +122,10 @@ get_responses:
   "500":
     description: Internal Server Error
 bulk_revoke_responses:
-  "204":
-    description: No Content - All revocations were successful
+  "200":
+    description: OK - All revocations were successful
+  "207":
+    description: Multi-Status - Some revocations were successful, others failed
   "400":
     description: Bad Request
   "401":
@@ -286,8 +292,10 @@ endpoints:
               items:
                 $ref: "#/definitions/RequestPayload"
         responses:
-          "204":
-            description: No Content - All revocations were successful
+          "200":
+            description: OK - All revocations were successful
+          "207":
+            description: Multi-Status - Some revocations were successful, others failed
           "400":
             description: Bad Request
           "401":
@@ -302,8 +310,12 @@ endpoints:
             description: Internal Server Error
         x-amazon-apigateway-integration:
           responses:
+            "200":
+              statusCode: "200"
             "204":
               statusCode: "204"
+            "207":
+              statusCode: "207"
             "401":
               statusCode: "401"
             "403":
