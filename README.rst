@@ -1,3 +1,15 @@
+⚠️ **DEPRECATION NOTICE**
+##########################
+
+This repository is **deprecated** and no longer actively developed.
+
+- 2U maintains a fork located at `edx/license-manager <https://github.com/edx/license-manager>`_.
+- If you or your organization wants to adop maintenance of openedx/license-manager,
+  please reach out to OpenEdx via `Slack <https://openedx.org/slack>`_.
+
+Original README
+################
+
 License Manager  |Codecov|_
 ===================================================
 .. |Codecov| image:: http://codecov.io/github/edx/license-manager/coverage.svg?branch=master
