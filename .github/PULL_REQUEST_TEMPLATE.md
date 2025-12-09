@@ -1,17 +1,8 @@
-## Description
+⚠️ **DEPRECATION NOTICE**
+-------------------------
 
-Description of changes made
+This repository is **deprecated** and no longer actively developed.
 
-Link to the associated ticket: https://openedx.atlassian.net/browse/ENT-XXXX
-
-## Testing considerations
-
-- Include instructions for any required manual tests, and any manual testing that has
-already been performed.
-- Include unit and a11y tests as appropriate
-- Consider performance issues.
-- Check that Database migrations are backwards-compatible
-
-## Post-review
-
-Squash commits into discrete sets of changes
+- 2U maintains a fork located at [edx/license-manager](https://github.com/edx/license-manager).
+- If you or your organization wants to adopt maintenance of openedx/license-manager,
+  please reach out to OpenEdx via [Slack](https://openedx.org/slack).
