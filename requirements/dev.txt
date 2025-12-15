@@ -29,17 +29,17 @@ backoff==1.10.0
     # via
     #   -r requirements/validation.txt
     #   analytics-python
-billiard==4.2.3
+billiard==4.2.4
     # via
     #   -r requirements/validation.txt
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/validation.txt
-boto3==1.41.2
+boto3==1.42.9
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.41.2
+botocore==1.42.9
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -48,7 +48,7 @@ build==1.3.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-celery==5.5.3
+celery==5.6.0
     # via
     #   -r requirements/validation.txt
     #   django-celery-results
@@ -100,7 +100,7 @@ code-annotations==2.3.0
     #   -r requirements/validation.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.12.0
+coverage[toml]==7.13.0
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -125,7 +125,7 @@ dill==0.4.0
     # via
     #   -r requirements/validation.txt
     #   pylint
-django==5.2.8
+django==5.2.9
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/validation.txt
@@ -188,7 +188,7 @@ django-model-utils==5.0.0
     #   edx-rbac
 django-ses==4.4.0
     # via -r requirements/validation.txt
-django-simple-history==3.10.1
+django-simple-history==3.11.0
     # via -r requirements/validation.txt
 django-waffle==5.0.0
     # via
@@ -255,6 +255,10 @@ edx-toggles==5.4.1
     # via
     #   -r requirements/validation.txt
     #   edx-auth-backends
+exceptiongroup==1.3.1
+    # via
+    #   -r requirements/validation.txt
+    #   celery
 factory-boy==3.3.3
     # via -r requirements/validation.txt
 faker==38.2.0
@@ -310,7 +314,7 @@ jsonschema-specifications==2025.9.1
     # via
     #   -r requirements/validation.txt
     #   jsonschema
-kombu==5.5.4
+kombu==5.6.1
     # via
     #   -r requirements/validation.txt
     #   celery
@@ -361,7 +365,7 @@ pathlib2==2.3.7.post1
     # via -r requirements/validation.txt
 pip-tools==7.5.2
     # via -r requirements/pip-tools.txt
-platformdirs==4.5.0
+platformdirs==4.5.1
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -428,7 +432,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/validation.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.15.4
+pymongo==4.15.5
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
@@ -441,7 +445,7 @@ pyproject-hooks==1.2.0
     #   -r requirements/pip-tools.txt
     #   build
     #   pip-tools
-pytest==9.0.1
+pytest==9.0.2
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -494,14 +498,14 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/validation.txt
     #   social-auth-core
-rpds-py==0.29.0
+rpds-py==0.30.0
     # via
     #   -r requirements/validation.txt
     #   jsonschema
     #   referencing
 rules==3.5
     # via -r requirements/validation.txt
-s3transfer==0.15.0
+s3transfer==0.16.0
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -533,7 +537,7 @@ social-auth-core==4.8.1
     #   -r requirements/validation.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.5.3
+sqlparse==0.5.4
     # via
     #   -r requirements/validation.txt
     #   django
@@ -562,18 +566,23 @@ typing-extensions==4.15.0
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
+    #   exceptiongroup
     #   referencing
     #   typeguard
-tzdata==2025.2
+tzdata==2025.3
     # via
     #   -r requirements/validation.txt
     #   faker
     #   kombu
+tzlocal==5.3.1
+    # via
+    #   -r requirements/validation.txt
+    #   celery
 uritemplate==4.2.0
     # via
     #   -r requirements/validation.txt
     #   drf-spectacular
-urllib3==2.5.0
+urllib3==2.6.2
     # via
     #   -r requirements/validation.txt
     #   botocore
