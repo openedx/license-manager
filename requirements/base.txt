@@ -7,7 +7,7 @@
 amqp==5.3.1
     # via kombu
 analytics-python==1.4.post1
-    # via -r requirements/base.in
+    # via -r base.in
 asgiref==3.11.0
     # via
     #   django
@@ -18,12 +18,12 @@ attrs==25.4.0
     #   referencing
 backoff==1.10.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   analytics-python
 billiard==4.2.3
     # via celery
 bleach[css]==6.3.0
-    # via -r requirements/base.in
+    # via -r base.in
 boto3==1.41.2
     # via django-ses
 botocore==1.41.2
@@ -32,7 +32,7 @@ botocore==1.41.2
     #   s3transfer
 celery==5.5.3
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   django-celery-results
     #   edx-celeryutils
 certifi==2025.11.12
@@ -67,8 +67,8 @@ defusedxml==0.7.1
     #   social-auth-core
 django==5.2.8
     # via
-    #   -c requirements/common_constraints.txt
-    #   -r requirements/base.in
+    #   -c common_constraints.txt
+    #   -r base.in
     #   django-autocomplete-light
     #   django-celery-results
     #   django-cors-headers
@@ -94,87 +94,87 @@ django==5.2.8
     #   jsonfield
     #   social-auth-app-django
 django-autocomplete-light==3.12.1
-    # via -r requirements/base.in
+    # via -r base.in
 django-celery-results==2.6.0
-    # via -r requirements/base.in
+    # via -r base.in
 django-cors-headers==4.9.0
-    # via -r requirements/base.in
+    # via -r base.in
 django-crum==0.7.9
     # via
     #   edx-django-utils
     #   edx-rbac
     #   edx-toggles
 django-durationwidget==1.0.5
-    # via -r requirements/base.in
+    # via -r base.in
 django-extensions==4.1
-    # via -r requirements/base.in
+    # via -r base.in
 django-filter==25.2
-    # via -r requirements/base.in
+    # via -r base.in
 django-log-request-id==2.1.0
-    # via -r requirements/base.in
+    # via -r base.in
 django-model-utils==5.0.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   edx-celeryutils
     #   edx-rbac
 django-ses==4.4.0
-    # via -r requirements/base.in
+    # via -r base.in
 django-simple-history==3.10.1
-    # via -r requirements/base.in
+    # via -r base.in
 django-waffle==5.0.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
 djangoql==0.18.1
-    # via -r requirements/base.in
+    # via -r base.in
 djangorestframework==3.16.1
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   djangorestframework-csv
     #   drf-jwt
     #   drf-nested-routers
     #   drf-spectacular
     #   edx-drf-extensions
 djangorestframework-csv==3.0.2
-    # via -r requirements/base.in
+    # via -r base.in
 dnspython==2.8.0
     # via pymongo
 drf-jwt==1.19.2
     # via edx-drf-extensions
 drf-nested-routers==0.95.0
-    # via -r requirements/base.in
+    # via -r base.in
 drf-spectacular==0.29.0
-    # via -r requirements/base.in
+    # via -r base.in
 edx-auth-backends==4.6.2
-    # via -r requirements/base.in
+    # via -r base.in
 edx-braze-client==0.2.5
     # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/base.in
+    #   -c constraints.txt
+    #   -r base.in
 edx-celeryutils==1.4.0
-    # via -r requirements/base.in
+    # via -r base.in
 edx-django-utils==8.0.1
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   edx-auth-backends
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
 edx-drf-extensions==10.6.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   edx-rbac
 edx-opaque-keys==3.0.0
     # via edx-drf-extensions
 edx-rbac==2.1.0
-    # via -r requirements/base.in
+    # via -r base.in
 edx-rest-api-client==6.2.0
-    # via -r requirements/base.in
+    # via -r base.in
 edx-toggles==5.4.1
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   edx-auth-backends
 idna==3.11
     # via requests
@@ -199,7 +199,7 @@ markupsafe==3.0.3
 monotonic==1.6
     # via analytics-python
 mysqlclient==2.2.7
-    # via -r requirements/base.in
+    # via -r base.in
 oauthlib==3.3.1
     # via
     #   requests-oauthlib
@@ -235,13 +235,13 @@ python-slugify==8.0.4
 python3-openid==3.2.0
     # via social-auth-core
 pytz==2025.2
-    # via -r requirements/base.in
+    # via -r base.in
 pyyaml==6.0.3
     # via
     #   code-annotations
     #   drf-spectacular
 redis==7.1.0
-    # via -r requirements/base.in
+    # via -r base.in
 referencing==0.37.0
     # via
     #   jsonschema
@@ -260,13 +260,13 @@ rpds-py==0.29.0
     #   jsonschema
     #   referencing
 rules==3.5
-    # via -r requirements/base.in
+    # via -r base.in
 s3transfer==0.15.0
     # via boto3
 semantic-version==2.10.0
     # via edx-drf-extensions
 simplejson==3.20.2
-    # via -r requirements/base.in
+    # via -r base.in
 six==1.17.0
     # via
     #   analytics-python
@@ -298,7 +298,7 @@ tzdata==2025.2
     # via kombu
 uritemplate==4.2.0
     # via drf-spectacular
-urllib3==2.5.0
+urllib3==2.6.0
     # via
     #   botocore
     #   requests
@@ -314,7 +314,7 @@ webencodings==0.5.1
     #   bleach
     #   tinycss2
 zipp==3.23.0
-    # via -r requirements/base.in
+    # via -r base.in
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
