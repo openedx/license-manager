@@ -5,11 +5,6 @@ License Manager  |Codecov|_
 
 Django backend for managing licenses and subscriptions for enterprise customer.
 
-**NOTICE**
-----------
-
-2U maintains a fork located at `edx/license-manager <https://github.com/edx/license-manager>`_.
-
 Setting up license-manager
 --------------------------
 
