@@ -19,7 +19,7 @@ asgiref==3.11.0
     #   -r requirements/test.txt
     #   django
     #   django-cors-headers
-astroid==3.3.11
+astroid==4.0.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -36,7 +36,7 @@ backoff==1.10.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   analytics-python
-billiard==4.2.3
+billiard==4.2.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -45,24 +45,24 @@ bleach[css]==6.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.41.2
+boto3==1.42.30
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.41.2
+botocore==1.42.30
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   boto3
     #   s3transfer
-celery==5.5.3
+celery==5.6.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2025.11.12
+certifi==2026.1.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -116,7 +116,7 @@ code-annotations==2.3.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.12.0
+coverage[toml]==7.13.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -133,12 +133,12 @@ defusedxml==0.7.1
     #   -r requirements/test.txt
     #   python3-openid
     #   social-auth-core
-dill==0.4.0
+dill==0.4.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==5.2.8
+django==5.2.10
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -211,11 +211,11 @@ django-model-utils==5.0.0
     #   -r requirements/test.txt
     #   edx-celeryutils
     #   edx-rbac
-django-ses==4.4.0
+django-ses==4.6.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-django-simple-history==3.10.1
+django-simple-history==3.11.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -313,7 +313,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==38.2.0
+faker==40.1.2
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -333,7 +333,7 @@ iniconfig==2.3.0
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==6.1.0
+isort==7.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -354,7 +354,7 @@ jsonfield==3.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-celeryutils
-jsonschema==4.25.1
+jsonschema==4.26.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -364,7 +364,7 @@ jsonschema-specifications==2025.9.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   jsonschema
-kombu==5.5.4
+kombu==5.6.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -412,7 +412,7 @@ path==16.14.0
     #   edx-i18n-tools
 pathlib2==2.3.7.post1
     # via -r requirements/validation.in
-platformdirs==4.5.0
+platformdirs==4.5.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -434,7 +434,7 @@ prompt-toolkit==3.0.52
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   click-repl
-psutil==7.1.3
+psutil==7.2.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -461,7 +461,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==3.3.9
+pylint==4.0.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -474,7 +474,7 @@ pylint-celery==0.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-lint
-pylint-django==2.6.1
+pylint-django==2.7.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -485,17 +485,17 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.15.4
+pymongo==4.16.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-opaque-keys
-pynacl==1.6.1
+pynacl==1.6.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==9.0.1
+pytest==9.0.2
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -557,7 +557,7 @@ requests-oauthlib==2.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-rpds-py==0.29.0
+rpds-py==0.30.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -567,7 +567,7 @@ rules==3.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-s3transfer==0.15.0
+s3transfer==0.16.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -595,18 +595,18 @@ snowballstemmer==3.0.1
     # via
     #   -r requirements/quality.txt
     #   pydocstyle
-social-auth-app-django==5.6.0
+social-auth-app-django==5.7.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.8.1
+social-auth-core==4.8.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.5.3
+sqlparse==0.5.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -628,7 +628,7 @@ tinycss2==1.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   bleach
-tomlkit==0.13.3
+tomlkit==0.14.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -639,18 +639,22 @@ typing-extensions==4.15.0
     #   -r requirements/test.txt
     #   edx-opaque-keys
     #   referencing
-tzdata==2025.2
+tzdata==2025.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-    #   faker
     #   kombu
+tzlocal==5.3.1
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   celery
 uritemplate==4.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   drf-spectacular
-urllib3==2.5.0
+urllib3==2.6.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
