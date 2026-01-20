@@ -6,60 +6,60 @@
 #
 amqp==5.3.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   kombu
 analytics-python==1.4.post1
-    # via -r requirements/base.txt
+    # via -r base.txt
 asgiref==3.11.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   django
     #   django-cors-headers
 attrs==25.4.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   jsonschema
     #   referencing
 backoff==1.10.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   analytics-python
 billiard==4.2.3
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   celery
 bleach[css]==6.3.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 boto3==1.41.2
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   django-ses
 botocore==1.41.2
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   boto3
     #   s3transfer
 celery==5.5.3
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   django-celery-results
     #   edx-celeryutils
 certifi==2025.11.12
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   requests
 cffi==2.0.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   cryptography
     #   pynacl
 charset-normalizer==3.4.4
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   requests
 click==8.3.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   celery
     #   click-didyoumean
     #   click-plugins
@@ -68,33 +68,33 @@ click==8.3.1
     #   edx-django-utils
 click-didyoumean==0.3.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   celery
 click-plugins==1.1.1.2
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   celery
 click-repl==0.3.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   celery
 code-annotations==2.3.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-toggles
 cryptography==46.0.3
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   pyjwt
 defusedxml==0.7.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   python3-openid
     #   social-auth-core
 django==5.2.8
     # via
-    #   -c requirements/common_constraints.txt
-    #   -r requirements/base.txt
+    #   -c common_constraints.txt
+    #   -r base.txt
     #   django-autocomplete-light
     #   django-celery-results
     #   django-cors-headers
@@ -120,222 +120,222 @@ django==5.2.8
     #   jsonfield
     #   social-auth-app-django
 django-autocomplete-light==3.12.1
-    # via -r requirements/base.txt
+    # via -r base.txt
 django-celery-results==2.6.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 django-cors-headers==4.9.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 django-crum==0.7.9
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-django-utils
     #   edx-rbac
     #   edx-toggles
 django-durationwidget==1.0.5
-    # via -r requirements/base.txt
+    # via -r base.txt
 django-extensions==4.1
-    # via -r requirements/base.txt
+    # via -r base.txt
 django-filter==25.2
-    # via -r requirements/base.txt
+    # via -r base.txt
 django-log-request-id==2.1.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 django-model-utils==5.0.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-celeryutils
     #   edx-rbac
 django-ses==4.4.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 django-simple-history==3.10.1
-    # via -r requirements/base.txt
+    # via -r base.txt
 django-waffle==5.0.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
 djangoql==0.18.1
-    # via -r requirements/base.txt
+    # via -r base.txt
 djangorestframework==3.16.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   djangorestframework-csv
     #   drf-jwt
     #   drf-nested-routers
     #   drf-spectacular
     #   edx-drf-extensions
 djangorestframework-csv==3.0.2
-    # via -r requirements/base.txt
+    # via -r base.txt
 dnspython==2.8.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   pymongo
 drf-jwt==1.19.2
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-drf-extensions
 drf-nested-routers==0.95.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 drf-spectacular==0.29.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 edx-auth-backends==4.6.2
-    # via -r requirements/base.txt
+    # via -r base.txt
 edx-braze-client==0.2.5
     # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/base.txt
+    #   -c constraints.txt
+    #   -r base.txt
 edx-celeryutils==1.4.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 edx-django-utils==8.0.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-auth-backends
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
 edx-drf-extensions==10.6.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-rbac
 edx-opaque-keys==3.0.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-drf-extensions
 edx-rbac==2.1.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 edx-rest-api-client==6.2.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 edx-toggles==5.4.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-auth-backends
 gevent==25.9.1
-    # via -r requirements/production.in
+    # via -r production.in
 greenlet==3.2.4
     # via gevent
 gunicorn==23.0.0
-    # via -r requirements/production.in
+    # via -r production.in
 idna==3.11
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   requests
 inflection==0.5.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   drf-spectacular
 jinja2==3.1.6
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   code-annotations
 jmespath==1.0.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   boto3
     #   botocore
 jsonfield==3.2.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-celeryutils
 jsonschema==4.25.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   drf-spectacular
 jsonschema-specifications==2025.9.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   jsonschema
 kombu==5.5.4
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   celery
 markupsafe==3.0.3
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   jinja2
 monotonic==1.6
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   analytics-python
 mysqlclient==2.2.7
-    # via -r requirements/base.txt
+    # via -r base.txt
 oauthlib==3.3.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   requests-oauthlib
     #   social-auth-core
 packaging==25.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   gunicorn
     #   kombu
 ply==3.11
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   djangoql
 prompt-toolkit==3.0.52
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   click-repl
 psutil==7.1.3
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-django-utils
 pycparser==2.23
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   cffi
 pyjwt[crypto]==2.10.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   drf-jwt
     #   edx-auth-backends
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
 pymemcache==4.0.0
-    # via -r requirements/production.in
+    # via -r production.in
 pymongo==4.15.4
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-opaque-keys
 pynacl==1.6.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-django-utils
 python-dateutil==2.9.0.post0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   analytics-python
     #   botocore
     #   celery
 python-memcached==1.62
-    # via -r requirements/production.in
+    # via -r production.in
 python-slugify==8.0.4
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   code-annotations
 python3-openid==3.2.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   social-auth-core
 pytz==2025.2
-    # via -r requirements/base.txt
+    # via -r base.txt
 pyyaml==6.0.3
     # via
-    #   -r requirements/base.txt
-    #   -r requirements/production.in
+    #   -r base.txt
+    #   -r production.in
     #   code-annotations
     #   drf-spectacular
 redis==7.1.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 referencing==0.37.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   jsonschema
     #   jsonschema-specifications
 requests==2.32.5
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   analytics-python
     #   edx-drf-extensions
     #   edx-rest-api-client
@@ -343,94 +343,94 @@ requests==2.32.5
     #   social-auth-core
 requests-oauthlib==2.0.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   social-auth-core
 rpds-py==0.29.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   jsonschema
     #   referencing
 rules==3.5
-    # via -r requirements/base.txt
+    # via -r base.txt
 s3transfer==0.15.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   boto3
 semantic-version==2.10.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-drf-extensions
 simplejson==3.20.2
-    # via -r requirements/base.txt
+    # via -r base.txt
 six==1.17.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   analytics-python
     #   edx-auth-backends
     #   edx-rbac
     #   python-dateutil
 social-auth-app-django==5.6.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-auth-backends
 social-auth-core==4.8.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-auth-backends
     #   social-auth-app-django
 sqlparse==0.5.3
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   django
 stevedore==5.6.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
 text-unidecode==1.3
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   python-slugify
 tinycss2==1.4.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   bleach
 typing-extensions==4.15.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   edx-opaque-keys
     #   referencing
 tzdata==2025.2
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   kombu
 uritemplate==4.2.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   drf-spectacular
-urllib3==2.5.0
+urllib3==2.6.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   botocore
     #   requests
 vine==5.1.0
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   amqp
     #   celery
     #   kombu
 wcwidth==0.2.14
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   prompt-toolkit
 webencodings==0.5.1
     # via
-    #   -r requirements/base.txt
+    #   -r base.txt
     #   bleach
     #   tinycss2
 zipp==3.23.0
-    # via -r requirements/base.txt
+    # via -r base.txt
 zope-event==6.1
     # via gevent
 zope-interface==8.1.1
