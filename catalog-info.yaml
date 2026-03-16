@@ -26,7 +26,7 @@ spec:
   #
   # If you need a new team created, create an issue with Axim engineering:
   # https://github.com/openedx/axim-engineering/issues/new/choose
-  owner: group:2u-enterprise
+  owner: sameeramin
 
   # (Required) Acceptable Type Values: service, website, library
   type: 'service'
