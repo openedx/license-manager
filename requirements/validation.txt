@@ -45,18 +45,18 @@ bleach[css]==6.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.42.73
+boto3==1.42.78
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.42.73
+botocore==1.42.78
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   boto3
     #   s3transfer
-celery==5.6.2
+celery==5.6.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -120,7 +120,7 @@ coverage[toml]==7.13.5
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==46.0.5
+cryptography==46.0.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -230,7 +230,7 @@ djangoql==0.19.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-djangorestframework==3.17.0
+djangorestframework==3.17.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -313,7 +313,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==40.11.0
+faker==40.11.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -448,7 +448,7 @@ pycparser==3.0
     #   cffi
 pydocstyle==6.3.0
     # via -r requirements/quality.txt
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -533,7 +533,7 @@ pyyaml==6.0.3
     #   code-annotations
     #   drf-spectacular
     #   edx-i18n-tools
-redis==7.3.0
+redis==7.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -543,7 +543,7 @@ referencing==0.37.0
     #   -r requirements/test.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.5
+requests==2.33.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

@@ -45,16 +45,16 @@ billiard==4.2.4
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/test.txt
-boto3==1.42.73
+boto3==1.42.78
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.42.73
+botocore==1.42.78
     # via
     #   -r requirements/test.txt
     #   boto3
     #   s3transfer
-celery==5.6.2
+celery==5.6.3
     # via
     #   -r requirements/test.txt
     #   django-celery-results
@@ -108,7 +108,7 @@ coverage[toml]==7.13.5
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==46.0.5
+cryptography==46.0.6
     # via
     #   -r requirements/test.txt
     #   pyjwt
@@ -190,7 +190,7 @@ django-waffle==5.0.0
     #   edx-toggles
 djangoql==0.19.1
     # via -r requirements/test.txt
-djangorestframework==3.17.0
+djangorestframework==3.17.1
     # via
     #   -r requirements/test.txt
     #   djangorestframework-csv
@@ -256,7 +256,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==40.11.0
+faker==40.11.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -320,7 +320,7 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.8
     # via -r requirements/test.txt
-nh3==0.3.3
+nh3==0.3.4
     # via readme-renderer
 oauthlib==3.3.1
     # via
@@ -360,7 +360,7 @@ pycparser==3.0
     #   cffi
 pydata-sphinx-theme==0.16.1
     # via sphinx-book-theme
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   -r requirements/test.txt
     #   accessible-pygments
@@ -438,14 +438,14 @@ pyyaml==6.0.3
     #   drf-spectacular
 readme-renderer==44.0
     # via -r requirements/doc.in
-redis==7.3.0
+redis==7.4.0
     # via -r requirements/test.txt
 referencing==0.37.0
     # via
     #   -r requirements/test.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.5
+requests==2.33.0
     # via
     #   -r requirements/test.txt
     #   analytics-python

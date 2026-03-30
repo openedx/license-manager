@@ -24,13 +24,13 @@ billiard==4.2.4
     # via celery
 bleach[css]==6.3.0
     # via -r requirements/base.in
-boto3==1.42.73
+boto3==1.42.78
     # via django-ses
-botocore==1.42.73
+botocore==1.42.78
     # via
     #   boto3
     #   s3transfer
-celery==5.6.2
+celery==5.6.3
     # via
     #   -r requirements/base.in
     #   django-celery-results
@@ -59,7 +59,7 @@ click-repl==0.3.0
     # via celery
 code-annotations==3.0.0
     # via edx-toggles
-cryptography==46.0.5
+cryptography==46.0.6
     # via pyjwt
 defusedxml==0.7.1
     # via
@@ -129,7 +129,7 @@ django-waffle==5.0.0
     #   edx-toggles
 djangoql==0.19.1
     # via -r requirements/base.in
-djangorestframework==3.17.0
+djangorestframework==3.17.1
     # via
     #   -r requirements/base.in
     #   djangorestframework-csv
@@ -240,13 +240,13 @@ pyyaml==6.0.3
     # via
     #   code-annotations
     #   drf-spectacular
-redis==7.3.0
+redis==7.4.0
     # via -r requirements/base.in
 referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.5
+requests==2.33.0
     # via
     #   analytics-python
     #   edx-drf-extensions
