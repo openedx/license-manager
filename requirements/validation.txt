@@ -45,12 +45,12 @@ bleach[css]==6.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.42.78
+boto3==1.42.83
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.42.78
+botocore==1.42.83
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -73,12 +73,12 @@ cffi==2.0.0
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.6
+charset-normalizer==3.4.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
-click==8.3.1
+click==8.3.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -293,7 +293,7 @@ edx-lint==6.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-opaque-keys==3.1.0
+edx-opaque-keys==4.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -313,7 +313,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==40.11.1
+faker==40.12.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -543,7 +543,7 @@ referencing==0.37.0
     #   -r requirements/test.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.0
+requests==2.33.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -639,7 +639,7 @@ typing-extensions==4.15.0
     #   -r requirements/test.txt
     #   edx-opaque-keys
     #   referencing
-tzdata==2025.3
+tzdata==2026.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

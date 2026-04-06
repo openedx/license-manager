@@ -35,11 +35,11 @@ billiard==4.2.4
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/validation.txt
-boto3==1.42.78
+boto3==1.42.83
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.42.78
+botocore==1.42.83
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -62,11 +62,11 @@ cffi==2.0.0
     #   -r requirements/validation.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.6
+charset-normalizer==3.4.7
     # via
     #   -r requirements/validation.txt
     #   requests
-click==8.3.1
+click==8.3.2
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/validation.txt
@@ -167,7 +167,7 @@ django-crum==0.7.9
     #   edx-django-utils
     #   edx-rbac
     #   edx-toggles
-django-debug-toolbar==6.2.0
+django-debug-toolbar==6.3.0
     # via -r requirements/dev.in
 django-durationwidget==1.0.5
     # via -r requirements/validation.txt
@@ -243,7 +243,7 @@ edx-i18n-tools==2.0.0
     # via -r requirements/validation.txt
 edx-lint==6.0.0
     # via -r requirements/validation.txt
-edx-opaque-keys==3.1.0
+edx-opaque-keys==4.0.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
@@ -257,7 +257,7 @@ edx-toggles==5.4.1
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/validation.txt
-faker==40.11.1
+faker==40.12.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -335,7 +335,7 @@ monotonic==1.6
     # via
     #   -r requirements/validation.txt
     #   analytics-python
-more-itertools==10.8.0
+more-itertools==11.0.1
     # via inflect
 mysqlclient==2.2.8
     # via -r requirements/validation.txt
@@ -483,7 +483,7 @@ referencing==0.37.0
     #   -r requirements/validation.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.0
+requests==2.33.1
     # via
     #   -r requirements/validation.txt
     #   analytics-python
@@ -565,7 +565,7 @@ typing-extensions==4.15.0
     #   edx-opaque-keys
     #   referencing
     #   typeguard
-tzdata==2025.3
+tzdata==2026.1
     # via
     #   -r requirements/validation.txt
     #   kombu
