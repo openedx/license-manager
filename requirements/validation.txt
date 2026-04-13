@@ -45,12 +45,12 @@ bleach[css]==6.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.42.78
+boto3==1.42.88
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.42.78
+botocore==1.42.88
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -73,12 +73,12 @@ cffi==2.0.0
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.6
+charset-normalizer==3.4.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
-click==8.3.1
+click==8.3.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -120,7 +120,7 @@ coverage[toml]==7.13.5
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==46.0.6
+cryptography==46.0.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -138,7 +138,7 @@ dill==0.4.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-django==5.2.12
+django==5.2.13
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -270,7 +270,7 @@ edx-braze-client==0.2.5
     #   -c requirements/constraints.txt
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-celeryutils==1.4.0
+edx-celeryutils==2.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -293,7 +293,7 @@ edx-lint==6.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-opaque-keys==3.1.0
+edx-opaque-keys==4.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -302,18 +302,18 @@ edx-rbac==3.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-rest-api-client==6.2.0
+edx-rest-api-client==7.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-toggles==5.4.1
+edx-toggles==6.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==40.11.1
+faker==40.13.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -369,7 +369,7 @@ kombu==5.6.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-lxml[html-clean]==6.0.2
+lxml[html-clean]==6.0.4
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
@@ -412,7 +412,7 @@ path==16.14.0
     #   edx-i18n-tools
 pathlib2==2.3.7.post1
     # via -r requirements/validation.in
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -495,7 +495,7 @@ pynacl==1.6.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -543,7 +543,7 @@ referencing==0.37.0
     #   -r requirements/test.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.0
+requests==2.33.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -639,7 +639,7 @@ typing-extensions==4.15.0
     #   -r requirements/test.txt
     #   edx-opaque-keys
     #   referencing
-tzdata==2025.3
+tzdata==2026.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
