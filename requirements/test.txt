@@ -34,11 +34,11 @@ billiard==4.2.4
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/base.txt
-boto3==1.42.78
+boto3==1.42.91
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.42.78
+botocore==1.42.91
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -57,11 +57,11 @@ cffi==2.0.0
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.6
+charset-normalizer==3.4.7
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.3.1
+click==8.3.2
     # via
     #   -r requirements/base.txt
     #   celery
@@ -96,7 +96,7 @@ coverage[toml]==7.13.5
     # via
     #   -r requirements/test.in
     #   pytest-cov
-cryptography==46.0.6
+cryptography==46.0.7
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -203,7 +203,7 @@ edx-braze-client==0.2.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/base.txt
-edx-celeryutils==1.4.0
+edx-celeryutils==2.0.0
     # via -r requirements/base.txt
 edx-django-utils==8.0.1
     # via
@@ -218,21 +218,21 @@ edx-drf-extensions==10.6.0
     #   edx-rbac
 edx-lint==6.0.0
     # via -r requirements/test.in
-edx-opaque-keys==3.1.0
+edx-opaque-keys==4.0.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
 edx-rbac==3.0.0
     # via -r requirements/base.txt
-edx-rest-api-client==6.2.0
+edx-rest-api-client==7.0.0
     # via -r requirements/base.txt
-edx-toggles==5.4.1
+edx-toggles==6.0.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.in
-faker==40.11.1
+faker==40.15.0
     # via factory-boy
 freezegun==1.5.5
     # via -r requirements/test.in
@@ -290,12 +290,12 @@ oauthlib==3.3.1
     #   -r requirements/base.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==26.0
+packaging==26.1
     # via
     #   -r requirements/base.txt
     #   kombu
     #   pytest
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via pylint
 pluggy==1.6.0
     # via
@@ -349,7 +349,7 @@ pynacl==1.6.2
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   pytest-cov
     #   pytest-django
@@ -386,7 +386,7 @@ referencing==0.37.0
     #   -r requirements/base.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.0
+requests==2.33.1
     # via
     #   -r requirements/base.txt
     #   analytics-python
@@ -413,7 +413,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-simplejson==3.20.2
+simplejson==4.0.1
     # via -r requirements/base.txt
 six==1.17.0
     # via
@@ -457,7 +457,7 @@ typing-extensions==4.15.0
     #   -r requirements/base.txt
     #   edx-opaque-keys
     #   referencing
-tzdata==2025.3
+tzdata==2026.1
     # via
     #   -r requirements/base.txt
     #   kombu
@@ -489,7 +489,7 @@ webencodings==0.5.1
     #   -r requirements/base.txt
     #   bleach
     #   tinycss2
-zipp==3.23.0
+zipp==3.23.1
     # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:
