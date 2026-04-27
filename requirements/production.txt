@@ -30,11 +30,11 @@ billiard==4.2.4
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/base.txt
-boto3==1.42.91
+boto3==1.42.96
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.42.91
+botocore==1.42.96
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -44,7 +44,7 @@ celery==5.6.3
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   -r requirements/base.txt
     #   requests
@@ -57,7 +57,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.3.2
+click==8.3.3
     # via
     #   -r requirements/base.txt
     #   celery
@@ -82,7 +82,7 @@ code-annotations==3.0.0
     # via
     #   -r requirements/base.txt
     #   edx-toggles
-cryptography==46.0.7
+cryptography==47.0.0
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -119,7 +119,7 @@ django==5.2.13
     #   edx-toggles
     #   jsonfield
     #   social-auth-app-django
-django-autocomplete-light==3.12.1
+django-autocomplete-light==4.0.0
     # via -r requirements/base.txt
 django-celery-results==2.6.0
     # via -r requirements/base.txt
@@ -215,7 +215,7 @@ greenlet==3.4.0
     # via gevent
 gunicorn==25.3.0
     # via -r requirements/production.in
-idna==3.11
+idna==3.13
     # via
     #   -r requirements/base.txt
     #   requests
@@ -263,7 +263,7 @@ oauthlib==3.3.1
     #   -r requirements/base.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==26.1
+packaging==26.2
     # via
     #   -r requirements/base.txt
     #   gunicorn
@@ -294,7 +294,7 @@ pyjwt[crypto]==2.12.1
     #   social-auth-core
 pymemcache==4.0.0
     # via -r requirements/production.in
-pymongo==4.16.0
+pymongo==4.17.0
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -352,7 +352,7 @@ rpds-py==0.30.0
     #   referencing
 rules==3.5
     # via -r requirements/base.txt
-s3transfer==0.16.0
+s3transfer==0.16.1
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -360,7 +360,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-simplejson==4.0.1
+simplejson==4.1.1
     # via -r requirements/base.txt
 six==1.17.0
     # via
@@ -369,11 +369,11 @@ six==1.17.0
     #   edx-auth-backends
     #   edx-rbac
     #   python-dateutil
-social-auth-app-django==5.7.0
+social-auth-app-django==5.8.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.8.5
+social-auth-core==4.8.7
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
@@ -401,7 +401,7 @@ typing-extensions==4.15.0
     #   -r requirements/base.txt
     #   edx-opaque-keys
     #   referencing
-tzdata==2026.1
+tzdata==2026.2
     # via
     #   -r requirements/base.txt
     #   kombu
@@ -437,7 +437,7 @@ zipp==3.23.1
     # via -r requirements/base.txt
 zope-event==6.1
     # via gevent
-zope-interface==8.3
+zope-interface==8.4
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
