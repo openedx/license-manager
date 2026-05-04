@@ -19,6 +19,7 @@ asgiref==3.11.1
     #   -r requirements/test.txt
     #   django
     #   django-cors-headers
+    #   social-auth-app-django
 astroid==4.0.4
     # via
     #   -r requirements/test.txt
@@ -45,11 +46,11 @@ billiard==4.2.4
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/test.txt
-boto3==1.42.91
+boto3==1.43.2
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.42.91
+botocore==1.43.2
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -59,7 +60,7 @@ celery==5.6.3
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   -r requirements/test.txt
     #   requests
@@ -72,7 +73,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/test.txt
     #   requests
-click==8.3.2
+click==8.3.3
     # via
     #   -r requirements/test.txt
     #   celery
@@ -108,10 +109,11 @@ coverage[toml]==7.13.5
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==46.0.7
+cryptography==47.0.0
     # via
     #   -r requirements/test.txt
     #   pyjwt
+    #   social-auth-core
 ddt==1.7.2
     # via -r requirements/test.txt
 defusedxml==0.7.1
@@ -151,7 +153,7 @@ django==5.2.13
     #   edx-toggles
     #   jsonfield
     #   social-auth-app-django
-django-autocomplete-light==3.12.1
+django-autocomplete-light==4.0.0
     # via -r requirements/test.txt
 django-celery-results==2.6.0
     # via -r requirements/test.txt
@@ -240,7 +242,7 @@ edx-drf-extensions==10.6.0
     # via
     #   -r requirements/test.txt
     #   edx-rbac
-edx-lint==6.0.0
+edx-lint==6.1.0
     # via -r requirements/test.txt
 edx-opaque-keys==4.0.0
     # via
@@ -262,7 +264,7 @@ faker==40.15.0
     #   factory-boy
 freezegun==1.5.5
     # via -r requirements/test.txt
-idna==3.11
+idna==3.13
     # via
     #   -r requirements/test.txt
     #   requests
@@ -320,14 +322,14 @@ monotonic==1.6
     #   analytics-python
 mysqlclient==2.2.8
     # via -r requirements/test.txt
-nh3==0.3.4
+nh3==0.3.5
     # via readme-renderer
 oauthlib==3.3.1
     # via
     #   -r requirements/test.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==26.1
+packaging==26.2
     # via
     #   -r requirements/test.txt
     #   kombu
@@ -397,7 +399,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/test.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.16.0
+pymongo==4.17.0
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
@@ -429,7 +431,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/test.txt
     #   social-auth-core
-pytz==2026.1.post1
+pytz==2026.2
     # via -r requirements/test.txt
 pyyaml==6.0.3
     # via
@@ -469,7 +471,7 @@ rpds-py==0.30.0
     #   referencing
 rules==3.5
     # via -r requirements/test.txt
-s3transfer==0.16.0
+s3transfer==0.17.0
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -477,7 +479,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-simplejson==4.0.1
+simplejson==4.1.1
     # via -r requirements/test.txt
 six==1.17.0
     # via
@@ -489,11 +491,11 @@ six==1.17.0
     #   python-dateutil
 snowballstemmer==3.0.1
     # via sphinx
-social-auth-app-django==5.7.0
+social-auth-app-django==5.9.0
     # via
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.8.5
+social-auth-core==4.9.1
     # via
     #   -r requirements/test.txt
     #   edx-auth-backends
@@ -541,6 +543,7 @@ tinycss2==1.4.0
 tomlkit==0.14.0
     # via
     #   -r requirements/test.txt
+    #   edx-lint
     #   pylint
 typing-extensions==4.15.0
     # via
@@ -549,7 +552,7 @@ typing-extensions==4.15.0
     #   edx-opaque-keys
     #   pydata-sphinx-theme
     #   referencing
-tzdata==2026.1
+tzdata==2026.2
     # via
     #   -r requirements/test.txt
     #   kombu
@@ -572,7 +575,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.6.0
+wcwidth==0.7.0
     # via
     #   -r requirements/test.txt
     #   prompt-toolkit

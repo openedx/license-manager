@@ -15,6 +15,7 @@ asgiref==3.11.1
     #   -r requirements/validation.txt
     #   django
     #   django-cors-headers
+    #   social-auth-app-django
 astroid==4.0.4
     # via
     #   -r requirements/validation.txt
@@ -35,16 +36,16 @@ billiard==4.2.4
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/validation.txt
-boto3==1.42.91
+boto3==1.43.2
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.42.91
+botocore==1.43.2
     # via
     #   -r requirements/validation.txt
     #   boto3
     #   s3transfer
-build==1.4.3
+build==1.5.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
@@ -53,7 +54,7 @@ celery==5.6.3
     #   -r requirements/validation.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -66,7 +67,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/validation.txt
     #   requests
-click==8.3.2
+click==8.3.3
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/validation.txt
@@ -104,10 +105,11 @@ coverage[toml]==7.13.5
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==46.0.7
+cryptography==47.0.0
     # via
     #   -r requirements/validation.txt
     #   pyjwt
+    #   social-auth-core
 ddt==1.7.2
     # via
     #   -r requirements/dev.in
@@ -155,7 +157,7 @@ django==5.2.13
     #   edx-toggles
     #   jsonfield
     #   social-auth-app-django
-django-autocomplete-light==3.12.1
+django-autocomplete-light==4.0.0
     # via -r requirements/validation.txt
 django-celery-results==2.6.0
     # via -r requirements/validation.txt
@@ -241,7 +243,7 @@ edx-drf-extensions==10.6.0
     #   edx-rbac
 edx-i18n-tools==2.0.0
     # via -r requirements/validation.txt
-edx-lint==6.0.0
+edx-lint==6.1.0
     # via -r requirements/validation.txt
 edx-opaque-keys==4.0.0
     # via
@@ -265,7 +267,7 @@ freezegun==1.5.5
     # via -r requirements/validation.txt
 gunicorn==25.3.0
     # via -r requirements/dev.in
-idna==3.11
+idna==3.13
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -344,7 +346,7 @@ oauthlib==3.3.1
     #   -r requirements/validation.txt
     #   requests-oauthlib
     #   social-auth-core
-packaging==26.1
+packaging==26.2
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/validation.txt
@@ -429,7 +431,7 @@ pylint-plugin-utils==0.9.0
     #   -r requirements/validation.txt
     #   pylint-celery
     #   pylint-django
-pymongo==4.16.0
+pymongo==4.17.0
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
@@ -466,7 +468,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/validation.txt
     #   social-auth-core
-pytz==2026.1.post1
+pytz==2026.2
     # via -r requirements/validation.txt
 pywatchman==3.0.0
     # via -r requirements/dev.in
@@ -502,7 +504,7 @@ rpds-py==0.30.0
     #   referencing
 rules==3.5
     # via -r requirements/validation.txt
-s3transfer==0.16.0
+s3transfer==0.17.0
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -510,7 +512,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-simplejson==4.0.1
+simplejson==4.1.1
     # via -r requirements/validation.txt
 six==1.17.0
     # via
@@ -525,11 +527,11 @@ snowballstemmer==3.0.1
     # via
     #   -r requirements/validation.txt
     #   pydocstyle
-social-auth-app-django==5.7.0
+social-auth-app-django==5.9.0
     # via
     #   -r requirements/validation.txt
     #   edx-auth-backends
-social-auth-core==4.8.5
+social-auth-core==4.9.1
     # via
     #   -r requirements/validation.txt
     #   edx-auth-backends
@@ -556,6 +558,7 @@ tinycss2==1.4.0
 tomlkit==0.14.0
     # via
     #   -r requirements/validation.txt
+    #   edx-lint
     #   pylint
 typeguard==4.5.1
     # via inflect
@@ -565,7 +568,7 @@ typing-extensions==4.15.0
     #   edx-opaque-keys
     #   referencing
     #   typeguard
-tzdata==2026.1
+tzdata==2026.2
     # via
     #   -r requirements/validation.txt
     #   kombu
@@ -588,7 +591,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.6.0
+wcwidth==0.7.0
     # via
     #   -r requirements/validation.txt
     #   prompt-toolkit
@@ -597,7 +600,7 @@ webencodings==0.5.1
     #   -r requirements/validation.txt
     #   bleach
     #   tinycss2
-wheel==0.46.3
+wheel==0.47.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
