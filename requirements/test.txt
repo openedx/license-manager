@@ -35,11 +35,11 @@ billiard==4.2.4
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/base.txt
-boto3==1.43.9
+boto3==1.43.14
     # via
     #   -r requirements/base.txt
     #   django-ses
-botocore==1.43.9
+botocore==1.43.14
     # via
     #   -r requirements/base.txt
     #   boto3
@@ -49,7 +49,7 @@ celery==5.6.3
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2026.4.22
+certifi==2026.5.20
     # via
     #   -r requirements/base.txt
     #   requests
@@ -62,7 +62,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.4.0
+click==8.4.1
     # via
     #   -r requirements/base.txt
     #   celery
@@ -234,11 +234,11 @@ edx-toggles==6.0.0
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.in
-faker==40.18.0
+faker==40.19.1
     # via factory-boy
 freezegun==1.5.5
     # via -r requirements/test.in
-idna==3.15
+idna==3.16
     # via
     #   -r requirements/base.txt
     #   requests
@@ -321,7 +321,7 @@ pycparser==3.0
     #   cffi
 pygments==2.20.0
     # via pytest
-pyjwt[crypto]==2.12.1
+pyjwt[crypto]==2.13.0
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -438,7 +438,7 @@ sqlparse==0.5.5
     # via
     #   -r requirements/base.txt
     #   django
-stevedore==5.7.0
+stevedore==5.8.0
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -493,7 +493,7 @@ webencodings==0.5.1
     #   -r requirements/base.txt
     #   bleach
     #   tinycss2
-zipp==3.23.1
+zipp==4.1.0
     # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:

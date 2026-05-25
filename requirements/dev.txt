@@ -36,11 +36,11 @@ billiard==4.2.4
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/validation.txt
-boto3==1.43.9
+boto3==1.43.14
     # via
     #   -r requirements/validation.txt
     #   django-ses
-botocore==1.43.9
+botocore==1.43.14
     # via
     #   -r requirements/validation.txt
     #   boto3
@@ -54,7 +54,7 @@ celery==5.6.3
     #   -r requirements/validation.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2026.4.22
+certifi==2026.5.20
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -67,7 +67,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/validation.txt
     #   requests
-click==8.4.0
+click==8.4.1
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/validation.txt
@@ -259,7 +259,7 @@ edx-toggles==6.0.0
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/validation.txt
-faker==40.18.0
+faker==40.19.1
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -267,7 +267,7 @@ freezegun==1.5.5
     # via -r requirements/validation.txt
 gunicorn==26.0.0
     # via -r requirements/dev.in
-idna==3.15
+idna==3.16
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -316,12 +316,12 @@ kombu==5.6.2
     # via
     #   -r requirements/validation.txt
     #   celery
-lxml[html-clean]==6.1.0
+lxml[html-clean]==6.1.1
     # via
     #   -r requirements/validation.txt
     #   edx-i18n-tools
     #   lxml-html-clean
-lxml-html-clean==0.4.4
+lxml-html-clean==0.4.5
     # via
     #   -r requirements/validation.txt
     #   lxml
@@ -337,7 +337,7 @@ monotonic==1.6
     # via
     #   -r requirements/validation.txt
     #   analytics-python
-more-itertools==11.0.2
+more-itertools==11.1.0
     # via inflect
 mysqlclient==2.2.8
     # via -r requirements/validation.txt
@@ -403,7 +403,7 @@ pygments==2.20.0
     #   -r requirements/validation.txt
     #   diff-cover
     #   pytest
-pyjwt[crypto]==2.12.1
+pyjwt[crypto]==2.13.0
     # via
     #   -r requirements/validation.txt
     #   drf-jwt
@@ -523,7 +523,7 @@ six==1.17.0
     #   edx-rbac
     #   pathlib2
     #   python-dateutil
-snowballstemmer==3.0.1
+snowballstemmer==3.1.0
     # via
     #   -r requirements/validation.txt
     #   pydocstyle
@@ -541,7 +541,7 @@ sqlparse==0.5.5
     #   -r requirements/validation.txt
     #   django
     #   django-debug-toolbar
-stevedore==5.7.0
+stevedore==5.8.0
     # via
     #   -r requirements/validation.txt
     #   code-annotations
@@ -604,7 +604,7 @@ wheel==0.47.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-zipp==3.23.1
+zipp==4.1.0
     # via -r requirements/validation.txt
 
 # The following packages are considered to be unsafe in a requirements file:
