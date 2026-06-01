@@ -46,11 +46,11 @@ billiard==4.2.4
     #   celery
 bleach[css]==6.3.0
     # via -r requirements/test.txt
-boto3==1.43.9
+boto3==1.43.18
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.43.9
+botocore==1.43.18
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -60,7 +60,7 @@ celery==5.6.3
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2026.4.22
+certifi==2026.5.20
     # via
     #   -r requirements/test.txt
     #   requests
@@ -73,7 +73,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/test.txt
     #   requests
-click==8.4.0
+click==8.4.1
     # via
     #   -r requirements/test.txt
     #   celery
@@ -105,7 +105,7 @@ code-annotations==3.0.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.14.0
+coverage[toml]==7.14.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -153,7 +153,7 @@ django==5.2.14
     #   edx-toggles
     #   jsonfield
     #   social-auth-app-django
-django-autocomplete-light==4.0.0
+django-autocomplete-light==4.0.1
     # via -r requirements/test.txt
 django-celery-results==2.6.0
     # via -r requirements/test.txt
@@ -258,13 +258,13 @@ edx-toggles==6.0.0
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==40.18.0
+faker==40.19.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
 freezegun==1.5.5
     # via -r requirements/test.txt
-idna==3.15
+idna==3.17
     # via
     #   -r requirements/test.txt
     #   requests
@@ -335,7 +335,7 @@ packaging==26.2
     #   kombu
     #   pytest
     #   sphinx
-platformdirs==4.9.6
+platformdirs==4.10.0
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -371,7 +371,7 @@ pygments==2.20.0
     #   pytest
     #   readme-renderer
     #   sphinx
-pyjwt[crypto]==2.12.1
+pyjwt[crypto]==2.13.0
     # via
     #   -r requirements/test.txt
     #   drf-jwt
@@ -440,7 +440,7 @@ pyyaml==6.0.3
     #   drf-spectacular
 readme-renderer==44.0
     # via -r requirements/doc.in
-redis==7.4.0
+redis==8.0.0
     # via -r requirements/test.txt
 referencing==0.37.0
     # via
@@ -464,14 +464,14 @@ restructuredtext-lint==2.0.2
     # via doc8
 roman-numerals==4.1.0
     # via sphinx
-rpds-py==0.30.0
+rpds-py==2026.5.1
     # via
     #   -r requirements/test.txt
     #   jsonschema
     #   referencing
 rules==3.5
     # via -r requirements/test.txt
-s3transfer==0.17.0
+s3transfer==0.18.0
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -489,7 +489,7 @@ six==1.17.0
     #   edx-lint
     #   edx-rbac
     #   python-dateutil
-snowballstemmer==3.0.1
+snowballstemmer==3.1.0
     # via sphinx
 social-auth-app-django==5.9.0
     # via
@@ -500,7 +500,7 @@ social-auth-core==4.9.1
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-soupsieve==2.8.3
+soupsieve==2.8.4
     # via beautifulsoup4
 sphinx==9.1.0
     # via
@@ -525,7 +525,7 @@ sqlparse==0.5.5
     # via
     #   -r requirements/test.txt
     #   django
-stevedore==5.7.0
+stevedore==5.8.0
     # via
     #   -r requirements/test.txt
     #   code-annotations
@@ -584,7 +584,7 @@ webencodings==0.5.1
     #   -r requirements/test.txt
     #   bleach
     #   tinycss2
-zipp==3.23.1
+zipp==4.1.0
     # via -r requirements/test.txt
 
 # The following packages are considered to be unsafe in a requirements file:
