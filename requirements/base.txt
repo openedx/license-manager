@@ -25,9 +25,9 @@ billiard==4.2.4
     # via celery
 bleach[css]==6.3.0
     # via -r requirements/base.in
-boto3==1.43.9
+boto3==1.43.18
     # via django-ses
-botocore==1.43.9
+botocore==1.43.18
     # via
     #   boto3
     #   s3transfer
@@ -36,7 +36,7 @@ celery==5.6.3
     #   -r requirements/base.in
     #   django-celery-results
     #   edx-celeryutils
-certifi==2026.4.22
+certifi==2026.5.20
     # via requests
 cffi==2.0.0
     # via
@@ -44,7 +44,7 @@ cffi==2.0.0
     #   pynacl
 charset-normalizer==3.4.7
     # via requests
-click==8.4.0
+click==8.4.1
     # via
     #   celery
     #   click-didyoumean
@@ -96,7 +96,7 @@ django==5.2.14
     #   edx-toggles
     #   jsonfield
     #   social-auth-app-django
-django-autocomplete-light==4.0.0
+django-autocomplete-light==4.0.1
     # via -r requirements/base.in
 django-celery-results==2.6.0
     # via -r requirements/base.in
@@ -179,7 +179,7 @@ edx-toggles==6.0.0
     # via
     #   -r requirements/base.in
     #   edx-auth-backends
-idna==3.15
+idna==3.17
     # via requests
 inflection==0.5.1
     # via drf-spectacular
@@ -217,7 +217,7 @@ psutil==7.2.2
     # via edx-django-utils
 pycparser==3.0
     # via cffi
-pyjwt[crypto]==2.12.1
+pyjwt[crypto]==2.13.0
     # via
     #   drf-jwt
     #   edx-auth-backends
@@ -243,7 +243,7 @@ pyyaml==6.0.3
     # via
     #   code-annotations
     #   drf-spectacular
-redis==7.4.0
+redis==8.0.0
     # via -r requirements/base.in
 referencing==0.37.0
     # via
@@ -258,13 +258,13 @@ requests==2.34.2
     #   social-auth-core
 requests-oauthlib==2.0.0
     # via social-auth-core
-rpds-py==0.30.0
+rpds-py==2026.5.1
     # via
     #   jsonschema
     #   referencing
 rules==3.5
     # via -r requirements/base.in
-s3transfer==0.17.0
+s3transfer==0.18.0
     # via boto3
 semantic-version==2.10.0
     # via edx-drf-extensions
@@ -284,7 +284,7 @@ social-auth-core==4.9.1
     #   social-auth-app-django
 sqlparse==0.5.5
     # via django
-stevedore==5.7.0
+stevedore==5.8.0
     # via
     #   code-annotations
     #   edx-django-utils
@@ -318,7 +318,7 @@ webencodings==0.5.1
     # via
     #   bleach
     #   tinycss2
-zipp==3.23.1
+zipp==4.1.0
     # via -r requirements/base.in
 
 # The following packages are considered to be unsafe in a requirements file:

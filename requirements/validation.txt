@@ -46,12 +46,12 @@ bleach[css]==6.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-boto3==1.43.9
+boto3==1.43.18
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.43.9
+botocore==1.43.18
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -63,7 +63,7 @@ celery==5.6.3
     #   -r requirements/test.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2026.4.22
+certifi==2026.5.20
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -79,7 +79,7 @@ charset-normalizer==3.4.7
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
-click==8.4.0
+click==8.4.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -117,7 +117,7 @@ code-annotations==3.0.0
     #   -r requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.14.0
+coverage[toml]==7.14.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -170,7 +170,7 @@ django==5.2.14
     #   edx-toggles
     #   jsonfield
     #   social-auth-app-django
-django-autocomplete-light==4.0.0
+django-autocomplete-light==4.0.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -315,13 +315,13 @@ edx-toggles==6.0.0
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==40.18.0
+faker==40.19.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
 freezegun==1.5.5
     # via -r requirements/test.txt
-idna==3.15
+idna==3.17
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -371,11 +371,11 @@ kombu==5.6.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   celery
-lxml[html-clean]==6.1.0
+lxml[html-clean]==6.1.1
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
-lxml-html-clean==0.4.4
+lxml-html-clean==0.4.5
     # via lxml
 markupsafe==3.0.3
     # via
@@ -414,7 +414,7 @@ path==16.14.0
     #   edx-i18n-tools
 pathlib2==2.3.7.post1
     # via -r requirements/validation.in
-platformdirs==4.9.6
+platformdirs==4.10.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -454,7 +454,7 @@ pygments==2.20.0
     # via
     #   -r requirements/test.txt
     #   pytest
-pyjwt[crypto]==2.12.1
+pyjwt[crypto]==2.13.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -535,7 +535,7 @@ pyyaml==6.0.3
     #   code-annotations
     #   drf-spectacular
     #   edx-i18n-tools
-redis==7.4.0
+redis==8.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -559,7 +559,7 @@ requests-oauthlib==2.0.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-rpds-py==0.30.0
+rpds-py==2026.5.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -569,7 +569,7 @@ rules==3.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-s3transfer==0.17.0
+s3transfer==0.18.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -593,7 +593,7 @@ six==1.17.0
     #   edx-rbac
     #   pathlib2
     #   python-dateutil
-snowballstemmer==3.0.1
+snowballstemmer==3.1.0
     # via
     #   -r requirements/quality.txt
     #   pydocstyle
@@ -613,7 +613,7 @@ sqlparse==0.5.5
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django
-stevedore==5.7.0
+stevedore==5.8.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -681,7 +681,7 @@ webencodings==0.5.1
     #   -r requirements/test.txt
     #   bleach
     #   tinycss2
-zipp==3.23.1
+zipp==4.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
