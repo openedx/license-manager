@@ -38,19 +38,19 @@ backoff==1.10.0
     # via
     #   -r requirements/test.txt
     #   analytics-python
-beautifulsoup4==4.14.3
+beautifulsoup4==4.15.0
     # via pydata-sphinx-theme
 billiard==4.2.4
     # via
     #   -r requirements/test.txt
     #   celery
-bleach[css]==6.3.0
+bleach[css]==6.4.0
     # via -r requirements/test.txt
-boto3==1.43.18
+boto3==1.43.24
     # via
     #   -r requirements/test.txt
     #   django-ses
-botocore==1.43.18
+botocore==1.43.24
     # via
     #   -r requirements/test.txt
     #   boto3
@@ -125,7 +125,7 @@ dill==0.4.1
     # via
     #   -r requirements/test.txt
     #   pylint
-django==5.2.14
+django==5.2.15
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
@@ -258,13 +258,13 @@ edx-toggles==6.0.0
     #   edx-auth-backends
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==40.19.1
+faker==40.21.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
 freezegun==1.5.5
     # via -r requirements/test.txt
-idna==3.17
+idna==3.18
     # via
     #   -r requirements/test.txt
     #   requests
@@ -489,7 +489,7 @@ six==1.17.0
     #   edx-lint
     #   edx-rbac
     #   python-dateutil
-snowballstemmer==3.1.0
+snowballstemmer==3.1.1
     # via sphinx
 social-auth-app-django==5.9.0
     # via
@@ -536,7 +536,7 @@ text-unidecode==1.3
     # via
     #   -r requirements/test.txt
     #   python-slugify
-tinycss2==1.4.0
+tinycss2==1.5.1
     # via
     #   -r requirements/test.txt
     #   bleach
@@ -575,7 +575,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.7.0
+wcwidth==0.8.0
     # via
     #   -r requirements/test.txt
     #   prompt-toolkit
