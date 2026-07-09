@@ -3,8 +3,121 @@ name = "license-manager"
 version = "0.1.0"
 requires-python = ">=3.12"
 
+[dependency-groups]
+base = [
+    "analytics-python",
+    "backoff",
+    "celery",
+    "Django",
+    "django-autocomplete-light",
+    "django-celery-results",
+    "django-cors-headers",
+    "django-durationwidget",
+    "django-extensions",
+    "django-filter",
+    "django-model-utils",
+    "djangoql",
+    "drf-spectacular",
+    "django-ses",
+    "rules",
+    "django-simple-history",
+    "django-waffle",
+    "djangorestframework",
+    "djangorestframework-csv",
+    "drf-nested-routers",
+    "edx-auth-backends",
+    "edx-braze-client",
+    "edx-celeryutils",
+    "edx-django-utils",
+    "edx-drf-extensions",
+    "edx-toggles",
+    "edx-rbac",
+    "edx-rest-api-client",
+    "mysqlclient",
+    "pytz",
+    "redis",
+    "simplejson",
+    "zipp",
+    "django-log-request-id",
+    "bleach[css]",
+]
+test-base = [
+    "code-annotations",
+    "coverage",
+    "ddt",
+    "django-dynamic-fixture",
+    "edx-lint",
+    "factory-boy",
+    "freezegun",
+    "pytest-cov",
+    "pytest-django",
+]
+test = [
+    {include-group = "base"},
+    {include-group = "test-base"},
+]
+quality = [
+    {include-group = "base"},
+    "edx-lint",
+    "isort",
+    "pycodestyle",
+    "pydocstyle",
+]
+doc = [
+    {include-group = "test"},
+    "doc8",
+    "sphinx-book-theme",
+    "readme_renderer",
+    "Sphinx",
+]
+production = [
+    {include-group = "base"},
+    "gevent",
+    "gunicorn",
+    "PyYAML",
+    "python-memcached",
+    "pymemcache",
+]
+ci = [
+    "tox",
+    "tox-uv",
+]
+dev = [
+    {include-group = "test"},
+    {include-group = "quality"},
+    {include-group = "ci"},
+    "diff-cover==4.0.0",
+    "edx-i18n-tools",
+    "django-debug-toolbar",
+    "gunicorn",
+    "inflect",
+    "pywatchman",
+    "pathlib2",
+]
+
 [tool.uv]
 package = false
+#  DO NOT EDIT constraint-dependencies DIRECTLY.
+#  This list is managed by `edx_lint write_uv_constraints`
+#  and will be overwritten the next time `make upgrade` is run.
+#  - GLOBAL constraints: edit edx_lint/files/common_constraints.txt
+#  - REPO-SPECIFIC constraints: edit [tool.edx_lint].uv_constraints in this file
+constraint-dependencies = [
+    "Django<6.0",
+    "elasticsearch<7.14.0",
+    "path<16.15.0",
+    "edx-braze-client<1",
+]
+
+[tool.edx_lint]
+uv_constraints = [
+    # path>16.14.0 has removed the deprecated abspath function, which is breaking the docs build
+    "path<16.15.0",
+    # pinning braze-client below version 1, which will likely introduce a breaking-change
+    # as the package is converted to an openedx plugin.
+    # https://github.com/edx/braze-client/pull/30
+    "edx-braze-client<1",
+]
 
 [tool.isort]
 indent = '    '

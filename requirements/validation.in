@@ -1,9 +1,0 @@
-# Requirements for validation (testing, code quality).
-
--c constraints.txt
-
--r quality.txt
--r test.txt
-
-edx-i18n-tools            # For i18n_tool dummy
-pathlib2
