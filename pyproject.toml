@@ -97,6 +97,12 @@ dev = [
 
 [tool.uv]
 package = false
+# This repo has no "default" install: every `uv sync`/`uv run` invocation
+# names an explicit --group. Without this, uv's implicit default group
+# (named "dev") would be synced *in addition* to whatever --group is passed,
+# silently pulling the entire dev/test/quality/ci superset (and mysqlclient)
+# into every target, defeating the point of having separate groups.
+default-groups = []
 #  DO NOT EDIT constraint-dependencies DIRECTLY.
 #  This list is managed by `edx_lint write_uv_constraints`
 #  and will be overwritten the next time `make upgrade` is run.
