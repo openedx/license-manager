@@ -142,3 +142,16 @@ filterwarnings = [
     "ignore:.*invalid escape sequence.*:DeprecationWarning:.*(newrelic|uritemplate|psutil).*",
     "ignore:.*the imp module is deprecated in favour of importlib.*:DeprecationWarning:.*distutils.*",
 ]
+
+[tool.coverage.run]
+branch = true
+source = ["license_manager"]
+omit = [
+    "license_manager/settings*",
+    "license_manager/conf*",
+    "*wsgi.py",
+    "*migrations*",
+    "*admin.py",
+    "*static*",
+    "*templates*",
+]

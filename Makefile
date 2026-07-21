@@ -59,26 +59,26 @@ django_shell: ## run Django shell
 test: clean ## run tests and generate coverage report
 	## ``--ds`` Has the highest settings precedence:
 	## https://pytest-django.readthedocs.io/en/latest/configuring_django.html#order-of-choosing-settings
-	pytest --ds=license_manager.settings.test
+	uv run pytest --ds=license_manager.settings.test
 
 # To be run from CI context
 coverage: clean
-	pytest --cov-report html
+	uv run pytest --cov-report html
 	$(BROWSER) htmlcov/index.html
 
 isort_check: ## check that isort has been run
-	isort --check-only --diff -rc license_manager/
+	uv run isort --check-only --diff -rc license_manager/
 
 isort: ## run isort to sort imports in all Python files
-	isort --recursive --atomic license_manager/
+	uv run isort --recursive --atomic license_manager/
 
 style: ## run Python style checker
-	pycodestyle license_manager *.py
+	uv run pycodestyle license_manager *.py
 
 lint: ## run Python code linting
-	edx_lint write pylintrc  # first, write pylintrc in case tweaks have changed
+	uv run edx_lint write pylintrc  # first, write pylintrc in case tweaks have changed
 	DJANGO_SETTINGS_MODULE=license_manager.settings.test \
-	pylint --rcfile=pylintrc license_manager *.py
+	uv run pylint --rcfile=pylintrc license_manager *.py
 
 quality: style isort_check lint ## check code style and import sorting, then lint
 
@@ -86,7 +86,7 @@ quality_fix: style isort lint ## Check code style, FIX any imports, then lint
 
 pii_check: ## check for PII annotations on all Django models
 	DJANGO_SETTINGS_MODULE=license_manager.settings.test \
-	code_annotations django_find_annotations --config_file .pii_annotations.yml --lint --report --coverage
+	uv run code_annotations django_find_annotations --config_file .pii_annotations.yml --lint --report --coverage
 
 validate: test quality pii_check ## run tests, quality, and PII annotation checks
 
