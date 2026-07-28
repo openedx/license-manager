@@ -155,3 +155,13 @@ omit = [
     "*static*",
     "*templates*",
 ]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
