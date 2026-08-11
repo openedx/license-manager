@@ -91,6 +91,13 @@ ci = [
     "tox",
     "tox-uv",
 ]
+# Only needed by mysql8-migrations-check.yml, which rebuilds mysqlclient/
+# xmlsec from source (--no-binary) to test against a specific
+# libmysqlclient/libxmlsec1. xmlsec isn't a real project dependency
+# otherwise (mysqlclient itself already is, in [project.dependencies]).
+mysql8 = [
+    "xmlsec==1.3.13",
+]
 dev = [
     {include-group = "test"},
     {include-group = "quality"},
