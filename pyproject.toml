@@ -1,0 +1,204 @@
+[project]
+name = "license-manager"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[dependency-groups]
+base = [
+    "analytics-python",
+    "backoff",
+    "celery",
+    "Django",
+    "django-autocomplete-light",
+    "django-celery-results",
+    "django-cors-headers",
+    "django-durationwidget",
+    "django-extensions",
+    "django-filter",
+    "django-model-utils",
+    "djangoql",
+    "drf-spectacular",
+    "django-ses",
+    "rules",
+    "django-simple-history",
+    "django-waffle",
+    "djangorestframework",
+    "djangorestframework-csv",
+    "drf-nested-routers",
+    "edx-auth-backends",
+    "edx-braze-client",
+    "edx-celeryutils",
+    "edx-django-utils",
+    "edx-drf-extensions",
+    "edx-toggles",
+    "edx-rbac",
+    "edx-rest-api-client",
+    "mysqlclient",
+    "pytz",
+    "redis",
+    "simplejson",
+    "zipp",
+    "django-log-request-id",
+    "bleach[css]",
+]
+# Base test packages, no Django version pinned - shared by `test` and `django42`.
+test-base = [
+    {include-group = "base"},
+    "code-annotations",
+    "coverage",
+    "ddt",
+    "django-dynamic-fixture",
+    "edx-lint",
+    "factory-boy",
+    "freezegun",
+    "pytest-cov",
+    "pytest-django",
+]
+# Default test group: current supported Django version.
+test = [
+    {include-group = "test-base"},
+    "Django>=5.2,<6.0",
+]
+# Legacy Django 4.2 support - kept independent from `test` via [tool.uv].conflicts
+# below so `uv.lock` carries two separate, correct resolutions.
+django42 = [
+    {include-group = "test-base"},
+    "Django>=4.2,<5.0",
+]
+quality = [
+    {include-group = "test"},
+    "edx-lint",
+    "isort",
+    "pycodestyle",
+    "pydocstyle",
+]
+doc = [
+    {include-group = "test"},
+    "doc8",
+    "sphinx-book-theme",
+    "readme_renderer",
+    "Sphinx",
+]
+production = [
+    {include-group = "base"},
+    "gevent",
+    "gunicorn",
+    "PyYAML",
+    "python-memcached",
+    "pymemcache",
+]
+ci = [
+    "tox",
+    "tox-uv",
+]
+# Only needed by mysql8-migrations-check.yml, which rebuilds mysqlclient/
+# xmlsec from source (--no-binary) to test against a specific
+# libmysqlclient/libxmlsec1. xmlsec isn't a real project dependency
+# otherwise (mysqlclient itself already is, in [project.dependencies]).
+mysql8 = [
+    "xmlsec==1.3.13",
+]
+dev = [
+    {include-group = "test"},
+    {include-group = "quality"},
+    {include-group = "ci"},
+    "diff-cover==4.0.0",
+    "edx-i18n-tools",
+    "django-debug-toolbar",
+    "gunicorn",
+    "inflect",
+    "pywatchman",
+    "pathlib2",
+]
+
+[tool.uv]
+package = false
+# This repo has no "default" install: every `uv sync`/`uv run` invocation
+# names an explicit --group. Without this, uv's implicit default group
+# (named "dev") would be synced *in addition* to whatever --group is passed,
+# silently pulling the entire dev/test/quality/ci superset (and mysqlclient)
+# into every target, defeating the point of having separate groups.
+default-groups = []
+# `quality`/`doc`/`dev` all transitively include `test` (for its default
+# Django pin), so they each conflict with `django42` the same way `test`
+# does. Update this list if the include-group chain changes.
+conflicts = [
+    [
+        {group = "test"},
+        {group = "django42"},
+    ],
+    [
+        {group = "quality"},
+        {group = "django42"},
+    ],
+    [
+        {group = "doc"},
+        {group = "django42"},
+    ],
+    [
+        {group = "dev"},
+        {group = "django42"},
+    ],
+]
+#  DO NOT EDIT constraint-dependencies DIRECTLY.
+#  This list is managed by `edx_lint write_uv_constraints`
+#  and will be overwritten the next time `make upgrade` is run.
+#  - GLOBAL constraints: edit edx_lint/files/common_constraints.txt
+#  - REPO-SPECIFIC constraints: edit [tool.edx_lint].uv_constraints in this file
+constraint-dependencies = [
+    "Django<6.0",
+    "elasticsearch<7.14.0",
+    "path<16.15.0",
+    "edx-braze-client<1",
+]
+
+[tool.edx_lint]
+uv_constraints = [
+    # path>16.14.0 has removed the deprecated abspath function, which is breaking the docs build
+    "path<16.15.0",
+    # pinning braze-client below version 1, which will likely introduce a breaking-change
+    # as the package is converted to an openedx plugin.
+    # https://github.com/edx/braze-client/pull/30
+    "edx-braze-client<1",
+]
+
+[tool.isort]
+indent = '    '
+line_length = 80
+multi_line_output = 3
+lines_after_imports = 2
+include_trailing_comma = true
+skip = ["settings", "migrations"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "license_manager.settings.test"
+addopts = "--cov license_manager --cov-report term-missing --cov-report xml"
+norecursedirs = [".*", "docs", "requirements"]
+filterwarnings = [
+    "ignore:.*urlresolvers is deprecated in favor of.*:DeprecationWarning:auth_backends.views:5",
+    "ignore:.*invalid escape sequence.*:DeprecationWarning:.*(newrelic|uritemplate|psutil).*",
+    "ignore:.*the imp module is deprecated in favour of importlib.*:DeprecationWarning:.*distutils.*",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["license_manager"]
+omit = [
+    "license_manager/settings*",
+    "license_manager/conf*",
+    "*wsgi.py",
+    "*migrations*",
+    "*admin.py",
+    "*static*",
+    "*templates*",
+]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"

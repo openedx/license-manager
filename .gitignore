@@ -69,6 +69,7 @@ diff_*.html
 *.report
 report
 venv
+.venv
 acceptance_tests.*.log
 acceptance_tests.*.png
 
