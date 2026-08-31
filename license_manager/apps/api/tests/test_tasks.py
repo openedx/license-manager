@@ -106,6 +106,7 @@ class EmailTaskTests(TestCase):
             'name': self.enterprise_name,
             'sender_alias': self.enterprise_sender_alias,
             'contact_email': self.contact_email,
+            'default_language': 'en',
         }
 
         # Add an extra recipient with no associated license
@@ -142,6 +143,7 @@ class EmailTaskTests(TestCase):
                 'enterprise_customer_name': self.enterprise_name,
                 'enterprise_sender_alias': self.enterprise_sender_alias,
                 'enterprise_contact_email': self.contact_email,
+                'enterprise_default_language': 'en',
             }
             expected_recipient = {
                 'attributes': {'email': user_email},
@@ -182,6 +184,7 @@ class EmailTaskTests(TestCase):
                 'name': self.enterprise_name,
                 'sender_alias': self.enterprise_sender_alias,
                 'contact_email': self.contact_email,
+                'default_language': 'en',
             }
 
             tasks.send_assignment_email_task(
@@ -203,6 +206,7 @@ class EmailTaskTests(TestCase):
             'name': self.enterprise_name,
             'sender_alias': self.enterprise_sender_alias,
             'contact_email': self.contact_email,
+            'default_language': 'en',
         }
         with freeze_time(localized_utcnow()):
             # Add an extra recipient with no associated license
@@ -239,6 +243,7 @@ class EmailTaskTests(TestCase):
                     'enterprise_customer_name': self.enterprise_name,
                     'enterprise_sender_alias': self.enterprise_sender_alias,
                     'enterprise_contact_email': self.contact_email,
+                    'enterprise_default_language': 'en',
                 }
                 expected_recipient = {
                     'attributes': {'email': user_email},
@@ -282,6 +287,7 @@ class EmailTaskTests(TestCase):
             'name': self.enterprise_name,
             'sender_alias': self.enterprise_sender_alias,
             'contact_email': self.contact_email,
+            'default_language': 'en',
         }
 
         with self.assertRaises(BrazeClientError):
@@ -296,6 +302,58 @@ class EmailTaskTests(TestCase):
             ['last_remind_date'],
             False
         )
+
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', autospec=True, return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    def test_assignment_email_task_with_null_default_language(self, mock_enterprise_client, mock_braze_client):
+        """
+        Assert the assignment email task handles None default_language by using empty string.
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'contact_email': self.contact_email,
+            'default_language': None,  # Explicitly None
+        }
+
+        tasks.send_assignment_email_task(
+            self.custom_template_text,
+            self.email_recipient_list,
+            self.subscription_plan.uuid
+        )
+
+        # Verify that enterprise_default_language is empty string when source is None
+        mock_send_message = mock_braze_client.return_value.send_campaign_message
+        actual_recipients = mock_send_message.call_args_list[0][1]['recipients']
+        for recipient in actual_recipients:
+            assert recipient['trigger_properties']['enterprise_default_language'] == ''
+
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', autospec=True, return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    def test_send_reminder_email_task_with_null_default_language(self, mock_enterprise_client, mock_braze_client):
+        """
+        Assert the reminder email task handles None default_language by using empty string.
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'contact_email': self.contact_email,
+            'default_language': None,  # Explicitly None
+        }
+
+        tasks.send_reminder_email_task(
+            self.custom_template_text,
+            self.email_recipient_list,
+            self.subscription_plan.uuid
+        )
+
+        # Verify that enterprise_default_language is empty string when source is None
+        mock_send_message = mock_braze_client.return_value.send_campaign_message
+        actual_recipients = mock_send_message.call_args_list[0][1]['recipients']
+        for recipient in actual_recipients:
+            assert recipient['trigger_properties']['enterprise_default_language'] == ''
 
     def _verify_mock_send_email_arguments(self, send_email_args):
         """
@@ -328,6 +386,7 @@ class EmailTaskTests(TestCase):
             'name': self.enterprise_name,
             'sender_alias': self.enterprise_sender_alias,
             'contact_email': self.contact_email,
+            'default_language': 'en',
         }
 
         tasks.send_post_activation_email_task(self.enterprise_uuid, self.user_email)
@@ -342,6 +401,7 @@ class EmailTaskTests(TestCase):
             'enterprise_customer_name': self.enterprise_name,
             'enterprise_sender_alias': self.enterprise_sender_alias,
             'enterprise_contact_email': self.contact_email,
+            'enterprise_default_language': 'en',
         }
         expected_recipient = {
             'attributes': {'email': self.user_email},
@@ -367,10 +427,33 @@ class EmailTaskTests(TestCase):
             'name': self.enterprise_name,
             'sender_alias': self.enterprise_sender_alias,
             'contact_email': self.contact_email,
+            'default_language': 'en',
         }
 
         with self.assertRaises(BrazeClientError):
             tasks.send_post_activation_email_task(self.enterprise_uuid, self.user_email)
+
+    @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
+    @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
+    def test_send_post_activation_email_task_with_null_default_language(
+        self, mock_braze_client, mock_enterprise_client
+    ):
+        """
+        Assert the activation email task handles None default_language by using empty string.
+        """
+        mock_enterprise_client().get_enterprise_customer_data.return_value = {
+            'slug': self.enterprise_slug,
+            'name': self.enterprise_name,
+            'sender_alias': self.enterprise_sender_alias,
+            'contact_email': self.contact_email,
+            'default_language': None,  # Explicitly None
+        }
+
+        tasks.send_post_activation_email_task(self.enterprise_uuid, self.user_email)
+
+        # Verify that enterprise_default_language is empty string when source is None
+        actual_trigger_properties = mock_braze_client().send_campaign_message.call_args[1]['trigger_properties']
+        assert actual_trigger_properties['enterprise_default_language'] == ''
 
     @mock.patch('license_manager.apps.api.tasks.EnterpriseApiClient', return_value=mock.MagicMock())
     @mock.patch('license_manager.apps.api.tasks.BrazeApiClient', return_value=mock.MagicMock())
