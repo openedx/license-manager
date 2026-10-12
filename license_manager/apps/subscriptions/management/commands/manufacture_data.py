@@ -2,8 +2,9 @@
 Management command for making instances of models with test factories.
 """
 
-from edx_django_utils.data_generation.management.commands.manufacture_data import \
-    Command as BaseCommand
+from edx_django_utils.data_generation.management.commands.manufacture_data import (
+    Command as BaseCommand,
+)
 
 from license_manager.apps.subscriptions.tests.factories import *
 

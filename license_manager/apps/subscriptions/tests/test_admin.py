@@ -9,6 +9,7 @@ from django.test import RequestFactory, TestCase
 from license_manager.apps.subscriptions.admin import (
     CustomerAgreementAdmin,
     SubscriptionPlanAdmin,
+    get_related_object_link,
 )
 from license_manager.apps.subscriptions.models import (
     CustomerAgreement,
@@ -27,6 +28,16 @@ from license_manager.apps.subscriptions.tests.utils import (
 from license_manager.apps.subscriptions.utils import localized_utcnow
 
 from ..constants import REVOKED
+
+
+def test_related_object_link_escapes_object_string():
+    with mock.patch(
+        'license_manager.apps.subscriptions.admin.reverse',
+        return_value='/admin/object/',
+    ):
+        link = get_related_object_link('admin:object_change', 1, '<script>unsafe</script>')
+
+    assert str(link) == '<a href="/admin/object/">&lt;script&gt;unsafe&lt;/script&gt;</a><br/>'
 
 
 class SubscriptionCreationTests(TestCase):

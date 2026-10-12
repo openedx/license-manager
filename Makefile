@@ -67,10 +67,10 @@ coverage: clean
 	$(BROWSER) htmlcov/index.html
 
 isort_check: ## check that isort has been run
-	isort --check-only --diff -rc license_manager/
+	isort --check-only --diff license_manager/
 
 isort: ## run isort to sort imports in all Python files
-	isort --recursive --atomic license_manager/
+	isort --atomic license_manager/
 
 style: ## run Python style checker
 	pycodestyle license_manager *.py
