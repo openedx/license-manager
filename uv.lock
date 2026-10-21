@@ -222,11 +222,11 @@ wheels = [
 
 [[package]]
 name = "certifi"
-version = "2026.10.18"
+version = "2026.10.19"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7e/eb/a2aa1ac3ea30dd3f30ca57f40232138b6b0040719316ecb85daf61167771/certifi-2026.10.18.tar.gz", hash = "sha256:b9995d97b64d0431a5af837d8ca8cd6238104d1f319f04bd93ea43124d6c861e", size = 135227, upload-time = "2026-10-18T16:21:07.655Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a6/bd/1436c50cc46699de0230fbaacc1d1de7bfec413176099949e9d5112e88f2/certifi-2026.10.19.tar.gz", hash = "sha256:035c1e85572b141bf1c3a3eff0e33a8eb74917522f2559075ff8d2fea780a1ae", size = 137598, upload-time = "2026-10-20T02:24:16.604Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/08/ba/95dd616042484f7c83a06974388b37b837732740ee70bc5dc715b5fcd55a/certifi-2026.10.18-py3-none-any.whl", hash = "sha256:73191c47aaa79da394e8fee2dbc2ec827432cab56311122c9e47abf79e390f62", size = 134093, upload-time = "2026-10-18T16:21:06.276Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/51/29046e48f693c54e5b7412216d447a1d8362c9653148d98c02cdf65fa733/certifi-2026.10.19-py3-none-any.whl", hash = "sha256:42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b", size = 136464, upload-time = "2026-10-20T02:24:15.072Z" },
 ]
 
 [[package]]
@@ -234,7 +234,7 @@ name = "cffi"
 version = "2.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser", marker = "implementation_name != 'PyPy' or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "pycparser", marker = "implementation_name != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9e/ef/008a1939e372c06329a3fce4279c02f328488f3526744906eeec3da7ad5f/cffi-2.1.1.tar.gz", hash = "sha256:dd31f52ea1086513bb9df30f8fcee9b8918323ae067a3d5b78bc826a000712be", size = 530807, upload-time = "2026-08-03T21:21:18.939Z" }
 wheels = [
@@ -633,7 +633,7 @@ name = "cryptography"
 version = "50.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "cffi", marker = "platform_python_implementation != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9d/af/182eb91b0df3fe75c4d9f26fe70684569566745f6ba7e5c9c73a862c5252/cryptography-50.0.2.tar.gz", hash = "sha256:7b46165bb56eb4704e2eaaf86f3c940d19154535d9b0ca7d6d590b04060e00d5", size = 880623, upload-time = "2026-09-30T15:30:04.884Z" }
 wheels = [
@@ -769,9 +769,9 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "asgiref", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
-    { name = "sqlparse", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
-    { name = "tzdata", marker = "(sys_platform == 'win32' and extra == 'group-15-license-manager-dev') or (sys_platform == 'win32' and extra != 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "asgiref", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
+    { name = "sqlparse", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
+    { name = "tzdata", marker = "(sys_platform == 'win32' and extra != 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/85/fe/79e692b430c7721bf4b812c328bfe687e73e3f28f56611a6a18a97e887cc/django-5.2.18.tar.gz", hash = "sha256:461c5dd06d2ea16bd5ca37d3f46e4def1d6b0fe7588c6f4e2119517bb0af8b2d", size = 10910238, upload-time = "2026-10-06T13:01:09.371Z" }
 wheels = [
@@ -803,7 +803,7 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5d/ca/1288c2c7597484340c6ba5e3911c84b552511310633954d7aa496610e45a/django_autocomplete_light-5.0.0.tar.gz", hash = "sha256:115ee3541ee4a7ddd1b92396ea75d0f38d0b91899b0dc17259310975c728b32e", size = 117640, upload-time = "2026-06-18T01:43:28.909Z" }
 wheels = [
@@ -817,7 +817,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "celery" },
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a6/b5/9966c28e31014c228305e09d48b19b35522a8f941fe5af5f81f40dc8fa80/django_celery_results-2.6.0.tar.gz", hash = "sha256:9abcd836ae6b61063779244d8887a88fe80bbfaba143df36d3cb07034671277c", size = 83985, upload-time = "2025-04-10T08:23:52.677Z" }
 wheels = [
@@ -831,7 +831,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asgiref" },
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/21/39/55822b15b7ec87410f34cd16ce04065ff390e50f9e29f31d6d116fc80456/django_cors_headers-4.9.0.tar.gz", hash = "sha256:fe5d7cb59fdc2c8c646ce84b727ac2bca8912a247e6e68e1fb507372178e59e8", size = 21458, upload-time = "2025-09-18T10:40:52.326Z" }
 wheels = [
@@ -844,7 +844,7 @@ version = "0.7.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/34/1d/c56588f67130aeef8828e47535e8551337d2ae02f91f1414da61bc5e49fb/django-crum-0.7.9.tar.gz", hash = "sha256:65e9bc0f070a663fafc4d9e357f45fd4e6f01838b20a9e2fb7670f5706754288", size = 5168, upload-time = "2020-11-10T17:15:35.124Z" }
 wheels = [
@@ -870,7 +870,7 @@ version = "1.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/11/7a/12e987f4b7ea57fb3d66997984b6863af45fd5fb326bfea47904aa27a607/django-durationwidget-1.0.5.tar.gz", hash = "sha256:a77bba14c173cbfe50071ae08759ca37218acb8567639687b0119647cb78c53f", size = 71359, upload-time = "2019-03-12T06:38:06.129Z" }
 wheels = [
@@ -892,7 +892,7 @@ version = "4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/6d/b3/ed0f54ed706ec0b54fd251cc0364a249c6cd6c6ec97f04dc34be5e929eac/django_extensions-4.1.tar.gz", hash = "sha256:7b70a4d28e9b840f44694e3f7feb54f55d495f8b3fa6c5c0e5e12bcb2aa3cdeb", size = 283078, upload-time = "2025-04-11T01:15:39.617Z" }
 wheels = [
@@ -924,7 +924,7 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/07/ee/c0f950fe24f3e0b69d054ad957f9229632b50bdc78e968f966d8b4efe16a/django_filter-26.2.tar.gz", hash = "sha256:fd5cc83995fbe9f5f07fb5dcda16fde0f04de1ecf8ef82628b6c0ec921b751af", size = 144828, upload-time = "2026-10-03T12:01:01.007Z" }
 wheels = [
@@ -937,7 +937,7 @@ version = "2.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/6f/cc/ebc6f910e61b6c0614575aa14fa801d92ccc2c583be6706c8dbd82f599ba/django_log_request_id-2.1.2.tar.gz", hash = "sha256:4fe8e0702b09e8b08676f237d94063e0d54fc4d8867570bea6719ceba0a32486", size = 6795, upload-time = "2026-03-12T11:31:35.002Z" }
 wheels = [
@@ -950,7 +950,7 @@ version = "5.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/81/60/5e232c32a2c977cc1af8c70a38ef436598bc649ad89c2c4568454edde2c9/django_model_utils-5.0.0.tar.gz", hash = "sha256:041cdd6230d2fbf6cd943e1969318bce762272077f4ecd333ab2263924b4e5eb", size = 80559, upload-time = "2024-09-04T11:35:22.858Z" }
 wheels = [
@@ -964,7 +964,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "boto3" },
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/4f/8b/6fa3269f78012930544139aa5d71703a6bfb53d20257e63bafb5c722de05/django_ses-4.8.2.tar.gz", hash = "sha256:35f193be4c71c358e71eedc290eabf48227777377e58acdc67f3e8b6867ba651", size = 75632, upload-time = "2026-10-12T20:28:54.193Z" }
 wheels = [
@@ -996,7 +996,7 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/6b/1c/0689c13c0aa36df828947692f4e309f93c58e075219735c423edbbf6227d/django_simple_history-3.13.0.tar.gz", hash = "sha256:ca3c1e4ccd5f16f45fbbef6015ee2a246465fd9bd924100df8e9dfb368c4f26c", size = 236759, upload-time = "2026-07-22T13:41:29.588Z" }
 wheels = [
@@ -1009,7 +1009,7 @@ version = "5.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/22/e1/6f533da0d4ac89f427dfd9410e39bfc14ae3a23335ecd549d76be4b2a834/django_waffle-5.0.0.tar.gz", hash = "sha256:62f9d00eedf68dafb82657beab56e601bddedc1ea1ccfef91d83df8658708509", size = 37761, upload-time = "2025-06-12T07:38:54.895Z" }
 wheels = [
@@ -1053,7 +1053,7 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/8d/b2/1cee76b188301f7d03169ca77fab2b3d3ec5d01b3469189f944af2d7f11a/djangorestframework-3.18.3.tar.gz", hash = "sha256:446a9b352e7eff630421ab3f2328bd2401b109a9470afa4a31189994911ed030", size = 923563, upload-time = "2026-10-06T21:33:51.521Z" }
 wheels = [
@@ -1066,7 +1066,7 @@ version = "3.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "djangorestframework", version = "3.17.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3c/5d/d2862d98a1eaca0d05d0e2d0a4278fbcd8ff8353460edfb18c1d9969036b/djangorestframework-csv-3.0.2.tar.gz", hash = "sha256:b269b692feda1971e1342f395a21d339c6a16d2961ff64357a9a6188f27af10f", size = 32039, upload-time = "2023-12-12T03:38:15.239Z" }
 wheels = [
@@ -1112,9 +1112,9 @@ version = "1.19.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "djangorestframework", version = "3.17.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "pyjwt", extra = ["crypto"] },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/19/8e/3c60992bafd0ac51bcfa136ff9f5e1cff65ef45ebbcb393477672e699e82/drf-jwt-1.19.2.tar.gz", hash = "sha256:660bc66f992065cef59832adcbbdf871847e9738671c19e5121971e773768235", size = 38208, upload-time = "2022-01-09T09:23:38.903Z" }
@@ -1128,9 +1128,9 @@ version = "0.95.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "djangorestframework", version = "3.17.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/86/fa/82d61dd87bfbc94f9d33657e7c82f8fe3e029103d4be4b7536e4877ac544/drf_nested_routers-0.95.3.tar.gz", hash = "sha256:3d5ffad87b110c9d58ee0c688cf540a7fa4ccbf1080b2d318a5e2cf634322d96", size = 22398, upload-time = "2026-07-31T15:19:02.529Z" }
 wheels = [
@@ -1143,9 +1143,9 @@ version = "0.30.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "djangorestframework", version = "3.17.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "inflection" },
     { name = "jsonschema" },
     { name = "pyyaml" },
@@ -1187,13 +1187,13 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
-    { name = "edx-django-utils", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
-    { name = "edx-toggles", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
-    { name = "pyjwt", extra = ["crypto"], marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
-    { name = "six", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
-    { name = "social-auth-app-django", version = "5.9.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
-    { name = "social-auth-core", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
+    { name = "edx-django-utils", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
+    { name = "edx-toggles", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
+    { name = "pyjwt", extra = ["crypto"], marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
+    { name = "six", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
+    { name = "social-auth-app-django", version = "5.9.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
+    { name = "social-auth-core", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7d/00/acf6d974f9f5686b924127ebde4c9e82878fec587d4950257b911e85cd46/edx_auth_backends-5.1.0.tar.gz", hash = "sha256:6443407c7fc5e0b7d84a52071f01d1e5e0c133dcb5e8d369f353419e0893a273", size = 99974, upload-time = "2026-10-01T14:59:51.883Z" }
 wheels = [
@@ -1216,7 +1216,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "celery" },
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-model-utils" },
     { name = "jsonfield" },
 ]
@@ -1232,7 +1232,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-crum" },
     { name = "django-waffle" },
     { name = "psutil" },
@@ -1250,10 +1250,10 @@ version = "10.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-waffle" },
     { name = "djangorestframework", version = "3.17.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "drf-jwt" },
     { name = "edx-django-utils" },
     { name = "edx-opaque-keys" },
@@ -1272,7 +1272,7 @@ version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" } },
-    { name = "lxml", extra = ["html-clean"], marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "lxml", extra = ["html-clean"], marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "path" },
     { name = "polib" },
     { name = "pyyaml" },
@@ -1321,7 +1321,7 @@ version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-crum" },
     { name = "django-model-utils" },
     { name = "edx-drf-extensions" },
@@ -1354,7 +1354,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "code-annotations" },
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-crum" },
     { name = "django-waffle" },
     { name = "edx-django-utils" },
@@ -1381,7 +1381,7 @@ name = "faker"
 version = "40.43.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "tzdata", marker = "sys_platform == 'win32' or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/33/6c/b8793efc2f00a912ef17cf0b61b717cddf34607499efcb8a32238c119368/faker-40.43.0.tar.gz", hash = "sha256:02fae4327c03a4a6315e1b428a3878f435bfc276c93435ea349b95c0c9372361", size = 2032713, upload-time = "2026-10-09T20:06:29.652Z" }
 wheels = [
@@ -1414,8 +1414,8 @@ name = "gevent"
 version = "26.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "(platform_python_implementation == 'CPython' and sys_platform == 'win32') or (platform_python_implementation != 'CPython' and extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (platform_python_implementation != 'CPython' and extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (platform_python_implementation != 'CPython' and extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (platform_python_implementation != 'CPython' and extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test') or (sys_platform != 'win32' and extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (sys_platform != 'win32' and extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (sys_platform != 'win32' and extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (sys_platform != 'win32' and extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
-    { name = "greenlet", marker = "platform_python_implementation == 'CPython' or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "cffi", marker = "platform_python_implementation == 'CPython' and sys_platform == 'win32'" },
+    { name = "greenlet", marker = "platform_python_implementation == 'CPython'" },
     { name = "zope-event" },
     { name = "zope-interface" },
 ]
@@ -1663,7 +1663,7 @@ version = "3.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fa/e9/537e105246dba81d898853dbbe17eb3edd23d47a35074b99fd4add6f1662/jsonfield-3.2.0.tar.gz", hash = "sha256:ca53871bc3308ae4f4cddc3b4f99ed5c6fc6abb1832fbfb499bc6da566c70e4a", size = 17156, upload-time = "2025-07-04T23:06:24.883Z" }
 wheels = [
@@ -1725,29 +1725,29 @@ base = [
     { name = "bleach", extra = ["css"] },
     { name = "celery" },
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-autocomplete-light", version = "4.0.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django-autocomplete-light", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django-autocomplete-light", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-celery-results" },
     { name = "django-cors-headers" },
     { name = "django-durationwidget" },
     { name = "django-extensions" },
     { name = "django-filter", version = "25.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django-filter", version = "26.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django-filter", version = "26.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-log-request-id" },
     { name = "django-model-utils" },
     { name = "django-ses" },
     { name = "django-simple-history", version = "3.12.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django-simple-history", version = "3.13.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django-simple-history", version = "3.13.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-waffle" },
     { name = "djangoql" },
     { name = "djangorestframework", version = "3.17.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "djangorestframework-csv" },
     { name = "drf-nested-routers" },
     { name = "drf-spectacular" },
     { name = "edx-auth-backends", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "edx-auth-backends", version = "5.1.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "edx-auth-backends", version = "5.1.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "edx-braze-client" },
     { name = "edx-celeryutils" },
     { name = "edx-django-utils" },
@@ -1769,7 +1769,7 @@ ci = [
 dev = [
     { name = "analytics-python" },
     { name = "backoff" },
-    { name = "bleach", extra = ["css"], marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "bleach", extra = ["css"], marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "celery" },
     { name = "code-annotations" },
     { name = "coverage" },
@@ -1873,7 +1873,7 @@ django42 = [
 doc = [
     { name = "analytics-python" },
     { name = "backoff" },
-    { name = "bleach", extra = ["css"], marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "bleach", extra = ["css"], marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "celery" },
     { name = "code-annotations" },
     { name = "coverage" },
@@ -1929,29 +1929,29 @@ production = [
     { name = "bleach", extra = ["css"] },
     { name = "celery" },
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-autocomplete-light", version = "4.0.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django-autocomplete-light", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django-autocomplete-light", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-celery-results" },
     { name = "django-cors-headers" },
     { name = "django-durationwidget" },
     { name = "django-extensions" },
     { name = "django-filter", version = "25.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django-filter", version = "26.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django-filter", version = "26.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-log-request-id" },
     { name = "django-model-utils" },
     { name = "django-ses" },
     { name = "django-simple-history", version = "3.12.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django-simple-history", version = "3.13.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django-simple-history", version = "3.13.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-waffle" },
     { name = "djangoql" },
     { name = "djangorestframework", version = "3.17.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "djangorestframework-csv" },
     { name = "drf-nested-routers" },
     { name = "drf-spectacular" },
     { name = "edx-auth-backends", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "edx-auth-backends", version = "5.1.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "edx-auth-backends", version = "5.1.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "edx-braze-client" },
     { name = "edx-celeryutils" },
     { name = "edx-django-utils" },
@@ -1974,7 +1974,7 @@ production = [
 quality = [
     { name = "analytics-python" },
     { name = "backoff" },
-    { name = "bleach", extra = ["css"], marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "bleach", extra = ["css"], marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "celery" },
     { name = "code-annotations" },
     { name = "coverage" },
@@ -2023,7 +2023,7 @@ quality = [
 test = [
     { name = "analytics-python" },
     { name = "backoff" },
-    { name = "bleach", extra = ["css"], marker = "(extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra != 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test') or (extra != 'group-15-license-manager-doc' and extra != 'group-15-license-manager-quality' and extra == 'group-15-license-manager-test')" },
+    { name = "bleach", extra = ["css"], marker = "extra == 'group-15-license-manager-test' or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality')" },
     { name = "celery" },
     { name = "code-annotations" },
     { name = "coverage" },
@@ -2075,30 +2075,30 @@ test-base = [
     { name = "coverage" },
     { name = "ddt" },
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-autocomplete-light", version = "4.0.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django-autocomplete-light", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django-autocomplete-light", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-celery-results" },
     { name = "django-cors-headers" },
     { name = "django-durationwidget" },
     { name = "django-dynamic-fixture" },
     { name = "django-extensions" },
     { name = "django-filter", version = "25.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django-filter", version = "26.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django-filter", version = "26.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-log-request-id" },
     { name = "django-model-utils" },
     { name = "django-ses" },
     { name = "django-simple-history", version = "3.12.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "django-simple-history", version = "3.13.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "django-simple-history", version = "3.13.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "django-waffle" },
     { name = "djangoql" },
     { name = "djangorestframework", version = "3.17.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "djangorestframework", version = "3.18.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "djangorestframework-csv" },
     { name = "drf-nested-routers" },
     { name = "drf-spectacular" },
     { name = "edx-auth-backends", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-django42'" },
-    { name = "edx-auth-backends", version = "5.1.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "edx-auth-backends", version = "5.1.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
     { name = "edx-braze-client" },
     { name = "edx-celeryutils" },
     { name = "edx-django-utils" },
@@ -3030,7 +3030,7 @@ version = "4.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "astroid" },
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "dill" },
     { name = "isort" },
     { name = "mccabe" },
@@ -3163,7 +3163,7 @@ name = "pynacl"
 version = "1.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "cffi", marker = "platform_python_implementation != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d9/9a/4019b524b03a13438637b11538c82781a5eda427394380381af8f04f467a/pynacl-1.6.2.tar.gz", hash = "sha256:018494d6d696ae03c7e656e5e74cdfd8ea1326962cc401bcf018f1ed8436811c", size = 3511692, upload-time = "2026-01-01T17:48:10.851Z" }
 wheels = [
@@ -3210,7 +3210,7 @@ name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
@@ -3400,7 +3400,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "rpds-py" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/22/f5/df4e9027acead3ecc63e50fe1e36aca1523e1719559c499951bb4b53188f/referencing-0.37.0.tar.gz", hash = "sha256:44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8", size = 78036, upload-time = "2025-10-13T15:30:48.871Z" }
 wheels = [
@@ -3737,9 +3737,9 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "asgiref", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
-    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
-    { name = "social-auth-core", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "asgiref", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
+    { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
+    { name = "social-auth-core", marker = "extra == 'group-15-license-manager-dev' or extra != 'group-15-license-manager-django42' or extra == 'group-15-license-manager-doc' or extra == 'group-15-license-manager-quality' or extra == 'group-15-license-manager-test'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/62/f9/c761cf93cb0a102ddd59498ea560b398be6bd14b8d6a4c493cc011b4bb80/social_auth_app_django-5.9.0.tar.gz", hash = "sha256:5b79c53321f9528334d53ddb154452a3b7e598b7ff4c2c1302be9a76b1349e8d", size = 29751, upload-time = "2026-04-29T14:52:50.715Z" }
 wheels = [
@@ -3939,7 +3939,7 @@ dependencies = [
     { name = "pyproject-api" },
     { name = "python-discovery" },
     { name = "tomli-w" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
     { name = "virtualenv" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/63/6e/677274ae411fa13f5c2ea5c633a6abfa0886e949bd2ef53c7e564a0b0b2e/tox-4.67.1.tar.gz", hash = "sha256:a68602f64421b199016127364ee47347b958391d19c2b2e53fe95673a8fe98e9", size = 347211, upload-time = "2026-10-18T07:34:04.348Z" }
@@ -4007,7 +4007,7 @@ name = "tzlocal"
 version = "5.4.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "tzdata", marker = "sys_platform == 'win32' or (extra == 'group-15-license-manager-dev' and extra == 'group-15-license-manager-django42') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-doc') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-quality') or (extra == 'group-15-license-manager-django42' and extra == 'group-15-license-manager-test')" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/81/5b/879b2f932adfa7a053c360d50bc896c977fa6426109185f7c12ebdd0cb9d/tzlocal-5.4.4.tar.gz", hash = "sha256:8dbb8660838688a7b6ba4fed31d18dedf842afb4d47ca050d6d891c2c15f3be4", size = 31170, upload-time = "2026-06-29T08:03:40.026Z" }
 wheels = [
