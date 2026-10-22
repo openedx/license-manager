@@ -44,7 +44,7 @@ celery==5.6.3
     #   -r requirements/base.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2026.2.25
+certifi==2026.10.19
     # via
     #   -r requirements/base.txt
     #   requests
