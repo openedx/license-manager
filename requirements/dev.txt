@@ -53,7 +53,7 @@ celery==5.6.3
     #   -r requirements/validation.txt
     #   django-celery-results
     #   edx-celeryutils
-certifi==2026.2.25
+certifi==2026.10.19
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -360,7 +360,7 @@ path==16.14.0
     #   edx-i18n-tools
 pathlib2==2.3.7.post1
     # via -r requirements/validation.txt
-pip-tools==7.5.3
+pip-tools==7.6.2
     # via -r requirements/pip-tools.txt
 platformdirs==4.9.6
     # via
