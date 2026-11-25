@@ -180,6 +180,7 @@ def _batch_notify_or_remind_assigned_emails(
     enterprise_name = enterprise_customer.get('name')
     enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
     enterprise_contact_email = enterprise_customer.get('contact_email')
+    enterprise_default_language = enterprise_customer.get('default_language') or ''
 
     pending_license_by_email = {}
     emails_for_aliasing = []
@@ -198,6 +199,7 @@ def _batch_notify_or_remind_assigned_emails(
             'enterprise_customer_name': enterprise_name,
             'enterprise_sender_alias': enterprise_sender_alias,
             'enterprise_contact_email': enterprise_contact_email,
+            'enterprise_default_language': enterprise_default_language,
         }
         recipient = _aliased_recipient_object_from_email(user_email)
         recipient['attributes'].update(get_license_tracking_properties(pending_license))
@@ -292,6 +294,7 @@ def send_post_activation_email_task(enterprise_customer_uuid, user_email):
     enterprise_slug = enterprise_customer.get('slug')
     enterprise_sender_alias = get_enterprise_sender_alias(enterprise_customer)
     enterprise_contact_email = enterprise_customer.get('contact_email')
+    enterprise_default_language = enterprise_customer.get('default_language') or ''
 
     braze_campaign_id = settings.BRAZE_ACTIVATION_EMAIL_CAMPAIGN
     braze_trigger_properties = {
@@ -299,6 +302,7 @@ def send_post_activation_email_task(enterprise_customer_uuid, user_email):
         'enterprise_customer_name': enterprise_name,
         'enterprise_sender_alias': enterprise_sender_alias,
         'enterprise_contact_email': enterprise_contact_email,
+        'enterprise_default_language': enterprise_default_language,
     }
     recipient = _aliased_recipient_object_from_email(user_email)
 
